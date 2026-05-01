@@ -1,0 +1,339 @@
+"""meowcat 独立测试: CatBase mount/signal/perceive/_assemble 基础流程。
+
+验证:
+- mount / organ / unmount / has_organ / organs / assert_organs_mounted
+- mount 带 Protocol 校验 / 不匹配抛 OrganProtocolMismatchError
+- signal 合法调用 / 非法抛 IllegalNeuralPathError / awaitable 自动 await
+- perceive 入口 / 无 reflex 抛 NoReflexMatchedError
+- _assemble 自动装配 / wire_default / freeze
+- KittenBase signal 方法黑名单
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from meowcat import CatBase, KittenBase
+from meowcat.errors import (
+    IllegalNeuralPathError,
+    NoReflexMatchedError,
+    OrganNotMountedError,
+    OrganProtocolMismatchError,
+)
+from meowcat.protocols import AmygdalaProtocol, OrganProtocol
+from meowcat.reflex import Reflex
+
+
+# -- CatBase 器官管理 -----------------------------------------------
+
+
+class TestCatBaseOrgans:
+    """CatBase mount / organ / unmount / has_organ / organs 契约。"""
+
+    def test_mount_and_organ(self) -> None:
+        cat = CatBase("test")
+        sentinel = object()
+        cat.mount("brain", "hippocampus", sentinel)
+        assert cat.organ("brain", "hippocampus") is sentinel
+
+    def test_organ_not_mounted_raises(self) -> None:
+        cat = CatBase("test")
+        with pytest.raises(OrganNotMountedError) as exc:
+            cat.organ("brain", "nonexistent")
+        assert exc.value.category == "brain"
+        assert exc.value.name == "nonexistent"
+
+    def test_has_organ(self) -> None:
+        cat = CatBase("test")
+        cat.mount("sense", "ears", object())
+        assert cat.has_organ("sense", "ears") is True
+        assert cat.has_organ("sense", "eyes") is False
+
+    def test_unmount(self) -> None:
+        cat = CatBase("test")
+        cat.mount("sense", "ears", object())
+        assert cat.unmount("sense", "ears") is True
+        assert cat.has_organ("sense", "ears") is False
+        assert cat.unmount("sense", "ears") is False  # 再次卸载
+
+    def test_organs_snapshot_is_copy(self) -> None:
+        cat = CatBase("test")
+        a, b = object(), object()
+        cat.mount("brain", "a", a)
+        cat.mount("brain", "b", b)
+        snap = cat.organs("brain")
+        assert snap == {"a": a, "b": b}
+        # 修改快照不影响内部
+        snap["evil"] = object()
+        assert cat.has_organ("brain", "evil") is False
+
+    def test_assert_organs_mounted_passes(self) -> None:
+        cat = CatBase("test")
+        cat.mount("brain", "a", object())
+        cat.assert_organs_mounted([("brain", "a")])  # 不抛
+
+    def test_assert_organs_mounted_raises(self) -> None:
+        cat = CatBase("test")
+        with pytest.raises(OrganNotMountedError):
+            cat.assert_organs_mounted([("brain", "missing")])
+
+
+class TestMountProtocolCheck:
+    """mount 带 Protocol 校验。"""
+
+    def test_mount_valid_protocol(self) -> None:
+        cat = CatBase("test")
+
+        class RealOrgan:
+            name = "real"
+
+        cat.mount("brain", "a", RealOrgan(), protocol=OrganProtocol)  # 不抛
+
+    def test_mount_invalid_protocol_raises(self) -> None:
+        cat = CatBase("test")
+
+        class FakeOrgan:
+            pass  # 没有 name 属性
+
+        with pytest.raises(OrganProtocolMismatchError) as exc:
+            cat.mount("brain", "a", FakeOrgan(), protocol=OrganProtocol)
+        assert exc.value.category == "brain"
+        assert exc.value.name == "a"
+
+
+# -- CatBase signal（神经突触）--------------------------------------
+
+
+class TestCatBaseSignal:
+    """CatBase.signal 合法/非法/awaitable。"""
+
+    def test_signal_allowed_path(self) -> None:
+        import anyio
+
+        cat = CatBase("test")
+
+        class Target:
+            def greet(self, name: str) -> str:
+                return f"hello {name}"
+
+        cat.mount("brain", "cerebrum", object())
+        cat.mount("brain", "hippocampus", Target())
+        cat.wiring.connect(("brain", "cerebrum"), ("brain", "hippocampus"))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "cerebrum"), ("brain", "hippocampus"),
+                "greet", "world",
+            )
+            assert result == "hello world"
+
+        anyio.run(_run)
+
+    def test_signal_illegal_path_raises(self) -> None:
+        import anyio
+
+        cat = CatBase("test")
+        cat.mount("brain", "cerebrum", object())
+        cat.mount("sense", "paws", object())
+        # cerebrum→paws 不在 wiring 里
+
+        async def _run() -> None:
+            with pytest.raises(IllegalNeuralPathError):
+                await cat.signal(
+                    ("brain", "cerebrum"), ("sense", "paws"), "do_sth",
+                )
+
+        anyio.run(_run)
+
+    def test_signal_awaits_coroutine(self) -> None:
+        import anyio
+
+        cat = CatBase("test")
+
+        class AsyncTarget:
+            async def fetch(self) -> str:
+                return "async-result"
+
+        cat.mount("brain", "a", object())
+        cat.mount("brain", "b", AsyncTarget())
+        cat.wiring.connect(("brain", "a"), ("brain", "b"))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "a"), ("brain", "b"), "fetch",
+            )
+            assert result == "async-result"
+
+        anyio.run(_run)
+
+    def test_signal_emits_nerve_event(self) -> None:
+        import anyio
+
+        cat = CatBase("test")
+        seen: list[dict] = []
+
+        cat.on("nerve.signal", lambda p: seen.append(p))
+
+        class Target:
+            def ping(self) -> str:
+                return "pong"
+
+        cat.mount("brain", "a", object())
+        cat.mount("brain", "b", Target())
+        cat.wiring.connect(("brain", "a"), ("brain", "b"))
+
+        async def _run() -> None:
+            await cat.signal(("brain", "a"), ("brain", "b"), "ping")
+
+        anyio.run(_run)
+        assert len(seen) == 1
+        assert seen[0]["method"] == "ping"
+
+
+# -- CatBase perceive -----------------------------------------------
+
+
+class TestCatBasePerceive:
+    """CatBase.perceive 反射入口。"""
+
+    def test_perceive_no_reflex_raises(self) -> None:
+        import anyio
+
+        cat = CatBase("test")
+
+        async def _run() -> None:
+            with pytest.raises(NoReflexMatchedError):
+                async for _ in cat.perceive("hello"):
+                    pass
+
+        anyio.run(_run)
+
+    def test_perceive_with_reflex_no_stages(self) -> None:
+        """有 reflex 但无 stages：只沿 path 逐跳广播。"""
+        import anyio
+
+        cat = CatBase("test")
+        signals: list[dict] = []
+        cat.on("nerve.signal", lambda p: signals.append(p))
+
+        cat.wiring.connect(("brain", "a"), ("brain", "b"))
+        cat.register_reflex(Reflex(
+            name="ping",
+            trigger=lambda x: isinstance(x, str),
+            path=(("brain", "a"), ("brain", "b")),
+        ))
+        cat.freeze_nervous_system()
+
+        async def _run() -> None:
+            async for _ in cat.perceive("hello"):
+                pass
+
+        anyio.run(_run)
+        # 应该触发逐跳广播
+        assert len(signals) >= 1
+
+
+# -- CatBase _assemble ----------------------------------------------
+
+
+class TestCatBaseAssemble:
+    """CatBase._assemble 自动装配。"""
+
+    def test_assemble_mounts_brain_organs(self) -> None:
+        cat = CatBase("test")
+
+        class FakeCerebrum:
+            name = "fake"
+
+        cat.cerebrum = FakeCerebrum()  # type: ignore[attr-defined]
+        cat._assemble()
+        assert cat.has_organ("brain", "cerebrum")
+
+    def test_assemble_mounts_sense_organs(self) -> None:
+        cat = CatBase("test")
+
+        class FakeEars:
+            name = "fake"
+
+        cat.ears = FakeEars()  # type: ignore[attr-defined]
+        cat._assemble()
+        assert cat.has_organ("sense", "ears")
+
+    def test_assemble_mounts_voice_organs(self) -> None:
+        cat = CatBase("test")
+
+        class FakeMouth:
+            name = "fake"
+
+        cat.mouth = FakeMouth()  # type: ignore[attr-defined]
+        cat._assemble()
+        assert cat.has_organ("voice", "mouth")
+
+    def test_assemble_freezes_wiring(self) -> None:
+        cat = CatBase("test")
+        cat._assemble()
+        assert cat.wiring.frozen is True
+
+    def test_assemble_registers_text_dialogue_reflex(self) -> None:
+        cat = CatBase("test")
+        cat._assemble()
+        reflex = cat.reflexes.get("text_dialogue")
+        assert reflex is not None
+        assert reflex.name == "text_dialogue"
+
+
+# -- KittenBase -----------------------------------------------------
+
+
+class TestKittenBase:
+    """KittenBase signal 方法黑名单。"""
+
+    def test_kitten_base_is_catbase(self) -> None:
+        kitten = KittenBase("k1")
+        assert isinstance(kitten, CatBase)
+
+    def test_kitten_signal_blocks_forbidden_methods(self) -> None:
+        import anyio
+
+        kitten = KittenBase("k1")
+        kitten.mount("brain", "a", object())
+        kitten.mount("brain", "b", object())
+        kitten.wiring.connect(("brain", "a"), ("brain", "b"))
+
+        async def _run() -> None:
+            with pytest.raises(IllegalNeuralPathError) as exc:
+                await kitten.signal(
+                    ("brain", "a"), ("brain", "b"), "spawn_kitten",
+                )
+            assert "spawn_kitten" in str(exc.value)
+
+        anyio.run(_run)
+
+    def test_kitten_signal_blocks_absorb_merge(self) -> None:
+        import anyio
+
+        kitten = KittenBase("k1")
+        kitten.mount("brain", "a", object())
+        kitten.mount("brain", "b", object())
+        kitten.wiring.connect(("brain", "a"), ("brain", "b"))
+
+        async def _run() -> None:
+            with pytest.raises(IllegalNeuralPathError):
+                await kitten.signal(
+                    ("brain", "a"), ("brain", "b"), "absorb_merge",
+                )
+
+        anyio.run(_run)
+
+    def test_kitten_wiring_blocks_cerebrum_to_hippocampus(self) -> None:
+        kitten = KittenBase("k1")
+        kitten.mount("brain", "cerebrum", object())
+        kitten.mount("brain", "hippocampus", object())
+        # cerebrum→hippocampus 被 kitten wiring 禁止
+        assert not kitten.wiring.is_allowed(
+            ("brain", "cerebrum"), ("brain", "hippocampus"),
+        )
+        # 但 hippocampus→cerebrum 仍然允许（只读方向）
+        assert kitten.wiring.is_allowed(
+            ("brain", "hippocampus"), ("brain", "cerebrum"),
+        )

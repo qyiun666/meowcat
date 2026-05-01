@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meowcat"
+version = "0.2.0"
+description = "猫框架 — 定义猫的生物学蓝图（Protocol + 装配骨架 + 事件总线）"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.0",
+    "anyio>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["meowcat"]
