@@ -1,6 +1,6 @@
 # meowcat 🐱
 
-> **Build AI agents with a cat neuro-anatomy metaphor.**
+> **An agent framework built on the biological blueprint of a cat.**
 >
 > Framework layer: protocols, wiring, reflexes, tools — everything a cat needs.
 > `pip install meowcat` gives you a complete agent framework. Bring your own LLM.

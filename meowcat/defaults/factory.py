@@ -16,11 +16,13 @@ from meowcat.defaults.organs import (
     NoopEars,
     NoopEyes,
     NoopFrontal,
+    NoopHippocampus,
     NoopHypothalamus,
     NoopMouth,
     NoopPaws,
     NoopPurr,
     NoopTail,
+    NoopThalamus,
     NoopWhiskers,
 )
 from meowcat.defaults.stores import (
@@ -115,8 +117,9 @@ def create_cat(
     cat = CatBase(cat_id)
 
     # -- 脑区 ----------------------------------------------------------
-    cat.hippocampus = hippocampus  # type: ignore[attr-defined]
-    cat.thalamus = thalamus  # type: ignore[attr-defined]
+    # type: ignore[attr-defined]
+    cat.hippocampus = hippocampus or NoopHippocampus()
+    cat.thalamus = thalamus or NoopThalamus()  # type: ignore[attr-defined]
     cat.amygdala = amygdala or NoopAmygdala()  # type: ignore[attr-defined]
     cat.frontal = frontal or NoopFrontal()  # type: ignore[attr-defined]
     # type: ignore[attr-defined]

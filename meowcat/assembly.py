@@ -450,6 +450,55 @@ class CatBase:
         """
         return await self.loopseq_registry.run(self, name, **initial_input)
 
+    # -- CLI 门面方法 (v1.0.9) ---------------------------------------
+
+    async def search_memory(self, query: str, limit: int = 5) -> dict[str, Any]:
+        """搜索记忆。等价于 ``/search <query>``。
+
+        执行 ``memory_search`` 链（locate path），从海马体中检索相关记忆。
+
+        Args:
+            query: 搜索关键词
+            limit: 返回结果上限
+
+        Returns:
+            记忆检索结果 dict
+        """
+        return await self.chain_registry.run(
+            self, "memory_search", msg=query, session_id=self.cat_id,
+        )
+
+    async def memory_stats(self) -> dict[str, Any]:
+        """记忆统计。等价于 ``/stats``。
+
+        通过 signal 调用海马体的 ``stats`` 方法获取记忆统计信息。
+
+        Returns:
+            记忆统计 dict
+        """
+        from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS  # noqa: PLC0415
+        result = await self.signal(BRAINSTEM, HIPPOCAMPUS, "stats")
+        if isinstance(result, dict):
+            return result
+        return {"stats": result}
+
+    async def run_maintenance(
+        self, country_code: str | None = None,
+    ) -> dict[str, Any]:
+        """运行维护。等价于 ``/maintenance``。
+
+        执行 ``daily_maintenance`` 元闭环（自维护后体检）。
+
+        Args:
+            country_code: 可选的国家代码，用于按区域衰减策略
+
+        Returns:
+            维护结果 dict
+        """
+        return await self.run_loopseq(
+            "daily_maintenance",
+        )
+
 
 def mount_known_organs(cat: CatBase) -> None:
     """扫描 cat 上的已知器官属性并 mount 到 OrganHost。

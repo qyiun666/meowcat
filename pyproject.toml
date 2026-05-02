@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meowcat"
-version = "1.0.6"
-description = "猫框架 — 定义猫的生物学蓝图（Protocol + 装配骨架 + 事件总线）"
+version = "1.0.9"
+description = "An agent framework built on the biological blueprint of a cat"
 requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.0",

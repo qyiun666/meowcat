@@ -12,8 +12,11 @@ from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkabl
 # v1.0.5: re-export 从子模块，保持 from meowcat import ... 完全兼容
 from meowcat.protocols_brain import (
     AmygdalaProtocol,
+    AnomalyGrowthProtocol,
     BrainStemProtocol,
+    CorrectionGrowthProtocol,
     CortexProtocol,
+    CrystallizerProtocol,
     Diagnosable,
     FrontalCortexProtocol,
     GrowthProtocol,
@@ -22,6 +25,7 @@ from meowcat.protocols_brain import (
     LLMBrainProtocol,
     LLMProviderProtocol,
     OrganProtocol,
+    RoleEmergenceProtocol,
     ThalamusProtocol,
 )
 from meowcat.protocols_sense import (
@@ -29,6 +33,11 @@ from meowcat.protocols_sense import (
     EyesProtocol,
     PawsProtocol,
     WhiskersProtocol,
+)
+from meowcat.protocols_voice import (
+    MouthProtocol,
+    PurrProtocol,
+    TailProtocol,
 )
 from meowcat.protocols_storage import (
     GraphStorageProtocol,
@@ -61,6 +70,9 @@ __all__ = [
     "HypothalamusProtocol", "CortexProtocol",
     "EarsProtocol", "EyesProtocol", "WhiskersProtocol", "PawsProtocol",
     "GrowthProtocol",
+    "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
+    "CrystallizerProtocol", "RoleEmergenceProtocol",
+    "MouthProtocol", "PurrProtocol", "TailProtocol",
     "StageProtocol", "KittenProtocol",
     "OrchestratorProtocol", "SettingsProtocol", "CatProtocol",
     "AdapterProtocol",

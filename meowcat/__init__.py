@@ -1,4 +1,4 @@
-"""meowcat — 猫框架（猫的生物学蓝图）。依赖 pydantic>=2.0 + anyio>=4.0，零 meowagent import。"""
+"""meowcat — An agent framework built on the biological blueprint of a cat. 依赖 pydantic>=2.0 + anyio>=4.0，零 meowagent import。"""
 
 from meowcat.defaults import (
     InMemoryGraphStore,
@@ -11,11 +11,13 @@ from meowcat.defaults import (
     NoopEars,
     NoopEyes,
     NoopFrontal,
+    NoopHippocampus,
     NoopHypothalamus,
     NoopMouth,
     NoopPaws,
     NoopPurr,
     NoopTail,
+    NoopThalamus,
     NoopWhiskers,
     create_cat,
 )
@@ -23,13 +25,17 @@ from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
 from meowcat.reflex import Reflex, ReflexArc, ReflexRegistry, Trigger
 from meowcat.host import OrganHost
 from meowcat.nervous import Nervous
+from meowcat.pluggable import Pluggable
 from meowcat.organ_base import OrganMixin
 from meowcat.protocols import (
     AdapterProtocol,
     AmygdalaProtocol,
+    AnomalyGrowthProtocol,
     BrainStemProtocol,
     CatProtocol,
+    CorrectionGrowthProtocol,
     CortexProtocol,
+    CrystallizerProtocol,
     Diagnosable,
     EarsProtocol,
     EyesProtocol,
@@ -42,12 +48,16 @@ from meowcat.protocols import (
     L6StorageProtocol,
     LLMBrainProtocol,
     LLMProviderProtocol,
+    MouthProtocol,
     OrchestratorProtocol,
     OrganProtocol,
     PawsProtocol,
+    PurrProtocol,
+    RoleEmergenceProtocol,
     SettingsProtocol,
     SharedStorageProtocol,
     StageProtocol,
+    TailProtocol,
     ThalamusProtocol,
     VectorStorageProtocol,
     WhiskersProtocol,
@@ -162,7 +172,9 @@ __all__ = [
     "AdapterProtocol",
     "AmygdalaProtocol", "FrontalCortexProtocol", "HypothalamusProtocol",
     "CortexProtocol", "EarsProtocol", "EyesProtocol", "WhiskersProtocol",
-    "GrowthProtocol",
+    "GrowthProtocol", "MouthProtocol", "PurrProtocol", "TailProtocol",
+    "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
+    "CrystallizerProtocol", "RoleEmergenceProtocol",
     "PawsProtocol", "GraphStorageProtocol", "L6StorageProtocol",
     "VectorStorageProtocol", "SharedStorageProtocol", "StageProtocol",
     "LLMProviderProtocol", "Diagnosable",
@@ -221,6 +233,9 @@ __all__ = [
     "NoopAmygdala", "NoopBrainstem", "NoopFrontal", "NoopHypothalamus", "NoopCortex",
     "NoopEars", "NoopEyes", "NoopWhiskers",
     "NoopMouth", "NoopPaws", "NoopPurr", "NoopTail",
+    "NoopThalamus", "NoopHippocampus",
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
+    # v1.0.7 Pluggable
+    "Pluggable",
 ]

@@ -21,6 +21,8 @@ GOLDEN_BUILTIN_V059: frozenset[tuple[tuple[str, str], tuple[str, str]]] = frozen
     # amygdala 出边
     (("brain", "amygdala"), ("brain", "cerebellum")),
     (("brain", "amygdala"), ("brain", "cerebrum")),
+    (("brain", "amygdala"), ("growth", "anomaly_growth")),   # v1.0.8
+    (("brain", "amygdala"), ("growth", "correction_growth")),  # v1.0.8
     (("brain", "amygdala"), ("voice", "mouth")),
     # brainstem 出边（总调度）
     (("brain", "brainstem"), ("brain", "amygdala")),
@@ -73,15 +75,22 @@ GOLDEN_BUILTIN_V059: frozenset[tuple[tuple[str, str], tuple[str, str]]] = frozen
     (("growth", "anomaly_growth"), ("brain", "hippocampus")),
     (("growth", "correction_growth"), ("brain", "cortex")),
     (("growth", "correction_growth"), ("brain", "hippocampus")),
-    # 感官入边（→丘脑）
+    # 感官入边（→丘脑 + v1.0.8 应激反射直连杏仁核）
+    (("sense", "ears"), ("brain", "amygdala")),   # v1.0.8
     (("sense", "ears"), ("brain", "thalamus")),
+    (("sense", "eyes"), ("brain", "amygdala")),   # v1.0.8
     (("sense", "eyes"), ("brain", "thalamus")),
+    (("sense", "whiskers"), ("brain", "amygdala")),      # v1.0.8
     (("sense", "whiskers"), ("brain", "thalamus")),
+    (("sense", "whiskers"), ("growth", "anomaly_growth")),  # v1.0.8
 ])
 
 GOLDEN_FORBIDDEN_V059: frozenset[tuple[tuple[str, str], tuple[str, str]]] = frozenset([
     (("brain", "cerebrum"), ("sense", "paws")),
     (("brain", "cerebrum"), ("voice", "mouth")),
+    # v1.0.8: cerebrum 不直连生长器官
+    (("brain", "cerebrum"), ("growth", "anomaly_growth")),
+    (("brain", "cerebrum"), ("growth", "correction_growth")),
 ])
 
 GOLDEN_ORGAN_PROTOCOLS_V059: dict[tuple[str, str], str] = {
@@ -94,15 +103,19 @@ GOLDEN_ORGAN_PROTOCOLS_V059: dict[tuple[str, str], str] = {
     ("brain", "hippocampus"): "HippocampusProtocol",
     ("brain", "hypothalamus"): "HypothalamusProtocol",
     ("brain", "thalamus"): "ThalamusProtocol",
-    # v0.5.29: growth organ protocols
-    ("growth", "anomaly_growth"): "GrowthProtocol",
-    ("growth", "correction_growth"): "GrowthProtocol",
-    ("growth", "crystallizer"): "GrowthProtocol",
-    ("growth", "role_emergence"): "GrowthProtocol",
+    # v0.5.29: growth organ protocols（v1.0.8 具名化）
+    ("growth", "anomaly_growth"): "AnomalyGrowthProtocol",
+    ("growth", "correction_growth"): "CorrectionGrowthProtocol",
+    ("growth", "crystallizer"): "CrystallizerProtocol",
+    ("growth", "role_emergence"): "RoleEmergenceProtocol",
     ("sense", "ears"): "EarsProtocol",
     ("sense", "eyes"): "EyesProtocol",
     ("sense", "paws"): "PawsProtocol",
     ("sense", "whiskers"): "WhiskersProtocol",
+    # v1.0.7: voice protocols
+    ("voice", "mouth"): "MouthProtocol",
+    ("voice", "purr"): "PurrProtocol",
+    ("voice", "tail"): "TailProtocol",
 }
 
 
@@ -130,11 +143,11 @@ def test_organ_protocols_unchanged_from_v059() -> None:
     assert actual == GOLDEN_ORGAN_PROTOCOLS_V059
 
 
-def test_builtin_nervous_system_size_is_47() -> None:
-    """v0.5.29: 47 条（新增 4 条 growth organ 入边 + 4 条出边），变化即信号。"""
-    assert len(BUILTIN_NERVOUS_SYSTEM) == 47
+def test_builtin_nervous_system_size_is_53() -> None:
+    """v1.0.8: 53 条（新增 6 条 wiring: 3×sensor→amygdala + whiskers→anomaly + amygdala→growth×2）。"""
+    assert len(BUILTIN_NERVOUS_SYSTEM) == 53
 
 
-def test_forbidden_paths_size_is_2() -> None:
-    """v0.5.9 → v0.5.10 禁止边固定 2 条，变化即信号。"""
-    assert len(FORBIDDEN_PATHS) == 2
+def test_forbidden_paths_size_is_4() -> None:
+    """v1.0.8: 禁止边增至 4 条（新增 cerebrum→anomaly_growth + cerebrum→correction_growth）。"""
+    assert len(FORBIDDEN_PATHS) == 4

@@ -16,6 +16,8 @@ __all__ = [
     "LLMBrainProtocol", "AmygdalaProtocol", "FrontalCortexProtocol",
     "HypothalamusProtocol", "CortexProtocol",
     "LLMProviderProtocol", "GrowthProtocol",
+    "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
+    "CrystallizerProtocol", "RoleEmergenceProtocol",
 ]
 
 # -- 基础 ---------------------------------------------------------
@@ -151,8 +153,7 @@ class ThalamusProtocol(Protocol):
     **实现方**: 应用层（脑区器官）
     """
 
-    async def locate(self, msg: str, session_id: str, chroma: Any |
-                     None = None, weights: Any | None = None) -> LocateResultShape: ...  # type: ignore[name-defined]  # noqa: F821
+    async def locate(self, msg: str, session_id: str) -> LocateResultShape: ...  # type: ignore[name-defined]  # noqa: F821
 
     def decide_route(self, **kwargs: Any) -> dict[str, Any]: ...
 
@@ -202,8 +203,6 @@ class AmygdalaProtocol(Protocol):
     def assess_tool_risk(
         tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
 
-    def tag_emotion(self, episode: dict[str, Any]) -> dict[str, Any]: ...
-
 
 @runtime_checkable
 class FrontalCortexProtocol(Protocol):
@@ -241,11 +240,6 @@ class HypothalamusProtocol(Protocol):
     def decay_memories(self, now: Any | None = None) -> dict[str, Any]: ...
     def compress_long_history(self) -> dict[str, Any]: ...
 
-    def wake_by_name(self, name: str, session_id: str |
-                     None = None) -> list[Any]: ...
-    def wake_by_keywords(
-        self, keywords: list[str], session_id: str | None = None) -> list[Any]: ...
-
 
 @runtime_checkable
 class CortexProtocol(Protocol):
@@ -265,23 +259,87 @@ class CortexProtocol(Protocol):
     def weaknesses(self) -> list[dict[str, Any]]: ...
     def synthesize(self, max_tokens: int = 400) -> str: ...
 
-# -- 生长器官 (Growth) --------------------------------------------
+# -- 生长器官 (Growth) — v1.0.8 具名化 ---------------------------
+
+
+@runtime_checkable
+class AnomalyGrowthProtocol(OrganProtocol, Protocol):
+    """异常生长 — 记录异常模式，驱动演化学习。
+
+    **坐标**: ``("growth", "anomaly_growth")``
+    **入边**: BRAINSTEM, AMYGDALA, WHISKERS (v1.0.8 新增安全直连)
+    **出边**: HIPPOCAMPUS, CORTEX
+    **反射弧**: 无直接反射弧；通过 BRAINSTEM 触发
+    **实现方**: 应用层（生长器官）
+    """
+    name: str
+
+    def record(self, reason: str, snippet: str, confidence: float = 0.8,
+               phase: str = "input", session_id: str = "") -> Any: ...
+
+    def diagnose(self) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class CorrectionGrowthProtocol(OrganProtocol, Protocol):
+    """纠正生长 — 记录用户纠正，固化经验。
+
+    **坐标**: ``("growth", "correction_growth")``
+    **入边**: BRAINSTEM, AMYGDALA (v1.0.8 新增安全直连)
+    **出边**: HIPPOCAMPUS, CORTEX
+    **反射弧**: 无直接反射弧；通过 BRAINSTEM 触发
+    **实现方**: 应用层（生长器官）
+    """
+    name: str
+
+    def record(self, wrong: str, correct: str, session_id: str = "",
+               topic: str = "") -> Any: ...
+
+    def diagnose(self) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class CrystallizerProtocol(OrganProtocol, Protocol):
+    """结晶器 — 将高频操作固化为 Skill/Tool。
+
+    **坐标**: ``("growth", "crystallizer")``
+    **入边**: BRAINSTEM
+    **出边**: 无（终端器官）
+    **反射弧**: 无直接反射弧
+    **实现方**: 应用层（生长器官）
+    """
+    name: str
+
+    def crystallize(self, slug: str, hit_count: int) -> bool: ...
+    def hotspots(self, threshold: int |
+                 None = None) -> list[tuple[str, int]]: ...
+
+    def diagnose(self) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class RoleEmergenceProtocol(OrganProtocol, Protocol):
+    """角色涌现 — 从行为模式中提取隐式角色。
+
+    **坐标**: ``("growth", "role_emergence")``
+    **入边**: BRAINSTEM
+    **出边**: 无（终端器官）
+    **反射弧**: 无直接反射弧
+    **实现方**: 应用层（生长器官）
+    """
+    name: str
+
+    def record(self, pattern: str, evidence: str) -> Any: ...
+    def diagnose(self) -> dict[str, Any]: ...
 
 
 @runtime_checkable
 class GrowthProtocol(OrganProtocol, Protocol):
-    """生长器官协议 — 闭环 C（自生长回路）的四个器官共用接口。
+    """生长器官协议 — deprecated（v1.0.8）。
 
-    框架层只声明协议签名和 wiring，零实现。
-    meowagent 应用层实现具体逻辑（AnomalyGrowth / CorrectionGrowth /
-    CrystallizationDetector / RoleEmergence）。
-
-    **坐标** (ANOMALY_GROWTH): ``("growth", "anomaly_growth")`` — 入边: BRAINSTEM; 出边: HIPPOCAMPUS, CORTEX
-    **坐标** (CORRECTION_GROWTH): ``("growth", "correction_growth")`` — 入边: BRAINSTEM; 出边: HIPPOCAMPUS, CORTEX
-    **坐标** (CRYSTALLIZER): ``("growth", "crystallizer")`` — 入边: BRAINSTEM; 出边: 无
-    **坐标** (ROLE_EMERGENCE): ``("growth", "role_emergence")`` — 入边: BRAINSTEM; 出边: 无
-    **反射弧**: 无直接反射弧；通过 BRAINSTEM 在生长检查时触发
-    **实现方**: 应用层（生长器官）
+    已拆分为四个具名协议：AnomalyGrowthProtocol / CorrectionGrowthProtocol /
+    CrystallizerProtocol / RoleEmergenceProtocol。
+    保留本协议作为旧代码兼容别名，新代码请使用具名协议。
     """
 
     # record() 是四个生长器官的共同方法，签名因器官而异

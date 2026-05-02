@@ -49,8 +49,8 @@ from meowcat.biology import (
 def test_organ_specs_count_matches_organ_protocols() -> None:
     """每条 spec 对应一个 Protocol，数量一致。"""
     assert len(ORGAN_SPECS) == 20
-    # MOUTH/PURR/TAIL 使用 protocol=None，不在 ORGAN_PROTOCOLS 中
-    assert len(ORGAN_PROTOCOLS) == 17
+    # v1.0.7: MOUTH/PURR/TAIL now have protocols, count = 20
+    assert len(ORGAN_PROTOCOLS) == 20
 
 
 def test_organ_specs_coords_unique() -> None:
@@ -135,11 +135,11 @@ def test_cerebellum_reaches_all_effectors() -> None:
 
 
 def test_all_sensors_go_to_thalamus() -> None:
-    """耳/眼/触须的唯一出边都是丘脑。"""
+    """耳/眼/触须的出边都包含丘脑。v1.0.8 新增应激反射直连杏仁核。"""
     for sensor in SENSORS:
         spec = next(s for s in ORGAN_SPECS if s.coord == sensor)
-        assert spec.out_edges == (THALAMUS,), (
-            f"{sensor} out_edges={spec.out_edges}"
+        assert THALAMUS in spec.out_edges, (
+            f"{sensor} out_edges={spec.out_edges} missing THALAMUS"
         )
 
 

@@ -234,14 +234,13 @@ class TestRuntimeCheckable:
             async def hear(self, raw): return {}
             def extract_keywords(self, text, top_k=5) -> list: return []
             def detect_language(self, text) -> str: return ""
+            def tag_emotion(self, episode) -> dict: return episode
         assert isinstance(Dummy(), EarsProtocol)
 
     def test_eyes_checkable(self) -> None:
         class Dummy:
             name: str = "eyes"
             async def see(self, img, mime="image/png") -> dict: return {}
-            async def scan_screen(self, region=None) -> dict: return {}
-            def describe(self, path) -> str: return ""
         assert isinstance(Dummy(), EyesProtocol)
 
     def test_whiskers_checkable(self) -> None:
@@ -256,10 +255,10 @@ class TestRuntimeCheckable:
     def test_paws_checkable(self) -> None:
         class Dummy:
             name: str = "paws"
+            async def execute(self, tool_name, params) -> dict: return {}
             async def touch_file(self, path, content=None) -> dict: return {}
             async def run_command(self, cmd, **kw) -> dict: return {}
             async def interact_with_tool(self, sn, params) -> dict: return {}
-            def get_execution_log(self) -> list: return []
         assert isinstance(Dummy(), PawsProtocol)
 
     def test_stage_checkable(self) -> None:

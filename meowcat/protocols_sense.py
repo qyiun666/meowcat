@@ -26,11 +26,15 @@ class EarsProtocol(Protocol):
     async def hear(self, raw_input: str | bytes) -> dict[str, Any]: ...
     def extract_keywords(self, text: str, top_k: int = 5) -> list[str]: ...
     def detect_language(self, text: str) -> str: ...
+    def tag_emotion(self, episode: dict[str, Any]) -> dict[str, Any]: ...
 
 
 @runtime_checkable
 class EyesProtocol(Protocol):
-    """眼睛 — 图像/视频视觉输入。支持截图扫描和图片描述。
+    """眼睛 — 图像/视频视觉输入。
+
+    v1.0.8: scan_screen / describe 已移除（属于应用层特定功能），
+    只保留通用 see 方法。
 
     **坐标**: ``("sense", "eyes")``
     **入边**: 无（纯输入端，仅接受外部调用）
@@ -42,10 +46,6 @@ class EyesProtocol(Protocol):
 
     async def see(self, image_data: bytes,
                   mime_type: str = "image/png") -> dict[str, Any]: ...
-    async def scan_screen(
-        self, region: tuple[int, int, int, int] | None = None) -> dict[str, Any]: ...
-
-    def describe(self, image_path: str) -> str: ...
 
 
 @runtime_checkable
@@ -80,12 +80,15 @@ class PawsProtocol(Protocol):
     """
     name: str
 
+    async def execute(self, tool_name: str,
+                      params: dict[str, Any]) -> dict[str, Any]: ...
+
+    # -- deprecated（v1.0.8，内部 delegate 到 execute）-----------
     async def touch_file(self, path: str, content: str |
                          None = None) -> dict[str, Any]: ...
 
     async def run_command(self, command: str, **
                           kwargs: Any) -> dict[str, Any]: ...
+
     async def interact_with_tool(
         self, skill_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
-
-    def get_execution_log(self) -> list[dict[str, Any]]: ...

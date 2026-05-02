@@ -12,11 +12,13 @@ from meowcat.defaults.organs import (
     NoopEars,
     NoopEyes,
     NoopFrontal,
+    NoopHippocampus,
     NoopHypothalamus,
     NoopMouth,
     NoopPaws,
     NoopPurr,
     NoopTail,
+    NoopThalamus,
     NoopWhiskers,
 )
 from meowcat.defaults.stores import (
@@ -30,6 +32,7 @@ __all__ = [
     "create_cat",
     "NoopAmygdala", "NoopBrainstem", "NoopFrontal", "NoopHypothalamus", "NoopCortex",
     "NoopEars", "NoopEyes", "NoopMouth", "NoopPaws", "NoopPurr", "NoopTail", "NoopWhiskers",
+    "NoopThalamus", "NoopHippocampus",
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
 ]

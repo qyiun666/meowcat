@@ -73,8 +73,10 @@ class Colony:
         self.colony_id = colony_id
         self._storage = storage
         self._cats: dict[str, CatBase] = {}
-        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set()
-        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set()
+        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set(
+        )
+        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set(
+        )
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
@@ -146,7 +148,8 @@ class Colony:
 
         # 注入 memory_snapshot（上下文切片）
         if memory_snapshot:
-            cat._memory_snapshot = memory_snapshot  # type: ignore[attr-defined]
+            # type: ignore[attr-defined]
+            cat._memory_snapshot = memory_snapshot
 
         self.register(cat)
         return cat
@@ -195,6 +198,27 @@ class Colony:
         """
         return list(self._cats.keys())
 
+    # -- 别名方法 (v1.0.9) -------------------------------------------
+
+    def adopt(self, cat: CatBase) -> None:
+        """收养一只猫（register 的语义别名）。
+
+        Args:
+            cat: CatBase 实例。
+        """
+        self.register(cat)
+
+    def release(self, cat_id: str) -> None:
+        """释放一只猫（unregister 的语义别名）。
+
+        Args:
+            cat_id: 猫唯一标识。
+
+        Raises:
+            KeyError: 猫不存在。
+        """
+        self.unregister(cat_id)
+
     # -- 共享存储（命名空间隔离）--------------------------------------
 
     def _ns_key(self, cat_id: str, key: str) -> str:
@@ -232,7 +256,8 @@ class Colony:
         委托给底层 storage.watch()。返回 AsyncIterator。
         """
         ns_pattern = f"{cat_id}/{pattern}"
-        async for item in self._storage.watch(ns_pattern):  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        async for item in self._storage.watch(ns_pattern):
             yield item
 
     # -- 结果回传 ----------------------------------------------------

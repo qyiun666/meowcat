@@ -100,17 +100,23 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
     """构造 ORGAN_SPECS（惰性 import protocols，避免循环）。"""
     from meowcat.protocols import (  # noqa: PLC0415
         AmygdalaProtocol,
+        AnomalyGrowthProtocol,
         BrainStemProtocol,
+        CorrectionGrowthProtocol,
         CortexProtocol,
+        CrystallizerProtocol,
         EarsProtocol,
         EyesProtocol,
         FrontalCortexProtocol,
-        GrowthProtocol,
         HippocampusProtocol,
         HypothalamusProtocol,
         LLMBrainProtocol,
+        MouthProtocol,
         OrganProtocol,
         PawsProtocol,
+        PurrProtocol,
+        RoleEmergenceProtocol,
+        TailProtocol,
         ThalamusProtocol,
         WhiskersProtocol,
     )
@@ -153,7 +159,8 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
         OrganSpec(
             coord=AMYGDALA, protocol=AmygdalaProtocol,
             in_edges=(THALAMUS, BRAINSTEM),
-            out_edges=(CEREBELLUM, MOUTH, CEREBRUM),       # 应激反射 + 安全推理
+            out_edges=(CEREBELLUM, MOUTH, CEREBRUM,
+                       ANOMALY_GROWTH, CORRECTION_GROWTH),
         ),
         OrganSpec(
             coord=FRONTAL, protocol=FrontalCortexProtocol,
@@ -185,51 +192,51 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
         # -- 感官 ----------------------------------------------
         OrganSpec(
             coord=EARS, protocol=EarsProtocol,
-            in_edges=(), out_edges=(THALAMUS,),
+            in_edges=(), out_edges=(THALAMUS, AMYGDALA),
         ),
         OrganSpec(
             coord=EYES, protocol=EyesProtocol,
-            in_edges=(), out_edges=(THALAMUS,),
+            in_edges=(), out_edges=(THALAMUS, AMYGDALA),
         ),
         OrganSpec(
             coord=WHISKERS, protocol=WhiskersProtocol,
-            in_edges=(), out_edges=(THALAMUS,),
+            in_edges=(), out_edges=(THALAMUS, AMYGDALA, ANOMALY_GROWTH),
         ),
         # PAWS 是效应器：仅 cerebellum→paws 一条入边（与 v0.5.9 一致）
         OrganSpec(
             coord=PAWS, protocol=PawsProtocol,
             in_edges=(CEREBELLUM,), out_edges=(),
         ),
-        # -- 嗓音（弱约束效应器，protocol=None 不校验方法）-----
+        # -- 嗓音（v1.0.7 补齐 Protocol）------------------------------
         OrganSpec(
-            coord=MOUTH, protocol=None,
+            coord=MOUTH, protocol=MouthProtocol,
             in_edges=(CEREBELLUM, AMYGDALA, BRAINSTEM), out_edges=(),
         ),
         OrganSpec(
-            coord=PURR, protocol=None,
+            coord=PURR, protocol=PurrProtocol,
             in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
         ),
         OrganSpec(
-            coord=TAIL, protocol=None,
+            coord=TAIL, protocol=TailProtocol,
             in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
         ),
-        # -- 生长器官（v0.5.29 meowcat 侧只声明，不实现）------
+        # -- 生长器官（v1.0.8 具名化协议）-------------------
         OrganSpec(
-            coord=ANOMALY_GROWTH, protocol=GrowthProtocol,
-            in_edges=(BRAINSTEM,),
+            coord=ANOMALY_GROWTH, protocol=AnomalyGrowthProtocol,
+            in_edges=(BRAINSTEM, AMYGDALA, WHISKERS),
             out_edges=(HIPPOCAMPUS, CORTEX),
         ),
         OrganSpec(
-            coord=CORRECTION_GROWTH, protocol=GrowthProtocol,
-            in_edges=(BRAINSTEM,),
+            coord=CORRECTION_GROWTH, protocol=CorrectionGrowthProtocol,
+            in_edges=(BRAINSTEM, AMYGDALA),
             out_edges=(HIPPOCAMPUS, CORTEX),
         ),
         OrganSpec(
-            coord=CRYSTALLIZER, protocol=GrowthProtocol,
+            coord=CRYSTALLIZER, protocol=CrystallizerProtocol,
             in_edges=(BRAINSTEM,), out_edges=(),
         ),
         OrganSpec(
-            coord=ROLE_EMERGENCE, protocol=GrowthProtocol,
+            coord=ROLE_EMERGENCE, protocol=RoleEmergenceProtocol,
             in_edges=(BRAINSTEM,), out_edges=(),
         ),
     )
@@ -278,6 +285,9 @@ FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = (
     (CEREBRUM, PAWS),
     # cerebrum 不应直接驱动发声。所有 side effect 收拢到 cerebellum→effectors 管道
     (CEREBRUM, MOUTH),
+    # v1.0.8: cerebrum 不直连生长器官。生长是副作用，统一走 cerebellum 或 brainstem
+    (CEREBRUM, ANOMALY_GROWTH),
+    (CEREBRUM, CORRECTION_GROWTH),
 )
 """默认禁止通路清单（优先级高于允许边）。"""
 
