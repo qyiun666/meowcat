@@ -106,6 +106,14 @@ class Wiring:
         """当前所有禁止边的不可变快照。"""
         return frozenset(self._forbidden)
 
+    def is_organ_wired(self, organ: Organ) -> bool:
+        """器官是否出现在任意允许边中（作为源或目标）。"""
+        for frm, to in self._allowed:
+            if organ in (frm, to):
+                if (frm, to) not in self._forbidden:
+                    return True
+        return False
+
     def snapshot(self) -> "WiringSnapshot":
         """返回当前图的不可变视图，便于反射执行时冻结读取。"""
         return WiringSnapshot(

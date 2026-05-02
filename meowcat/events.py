@@ -17,6 +17,8 @@ from typing import Any, Callable
 
 Handler = Callable[..., Any]
 
+__all__ = ["EventBus", "Handler"]
+
 
 class EventBus:
     """猫神经系统：事件名 ↔ handler 列表。"""

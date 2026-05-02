@@ -105,6 +105,9 @@ class NoopCortex:
     def weaknesses(self) -> list[dict[str, Any]]:
         return []
 
+    def synthesize(self, max_tokens: int = 400) -> str:
+        return ""
+
 
 class NoopEars:
     """默认耳朵：听不出关键词，语言固定 unknown。"""
@@ -165,6 +168,9 @@ class NoopMouth:
 
     name: str = "noop_mouth"
 
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
     async def speak(self, text: str, **kwargs: Any) -> str:
         return ""
 
@@ -173,6 +179,9 @@ class NoopPurr:
     """默认咕噜：不流式输出。"""
 
     name: str = "noop_purr"
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
 
     async def stream(self, text: str, **kwargs: Any) -> Any:
         pass
@@ -183,5 +192,54 @@ class NoopTail:
 
     name: str = "noop_tail"
 
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
     async def render(self, state: dict[str, Any]) -> None:
         pass
+
+
+class NoopBrainstem:
+    """默认脑干：不构建 system prompt，不取消当前任务。
+
+    适合 minimal 猫——只做纯推理、不要总调度。
+    """
+
+    name: str = "noop_brainstem"
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    async def build_system_prompt(self, route: str) -> str:
+        return ""
+
+    def cancel_current(self) -> bool:
+        return False
+
+
+class NoopPaws:
+    """默认爪子：不执行任何工具/命令。
+
+    适合纯问答猫——不需要文件操作和命令执行。
+    """
+
+    name: str = "noop_paws"
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    def get_execution_log(self) -> list[dict[str, Any]]:
+        return []
+
+    async def touch_file(
+        self, path: str, content: str | None = None
+    ) -> dict[str, Any]:
+        return {"ok": False, "reason": "noop_paws: touch_file disabled"}
+
+    async def run_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
+        return {"ok": False, "reason": "noop_paws: run_command disabled"}
+
+    async def interact_with_tool(
+        self, skill_name: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
+        return {"ok": False, "reason": "noop_paws: tool disabled"}

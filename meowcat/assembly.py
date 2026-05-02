@@ -1,51 +1,162 @@
-"""meowcat 装配骨架 — 猫的基类。
+"""meowcat 装配骨架 — 猫的基类（v0.5.9 门面化）。
 
 meowcat 定义猫的骨架和生命周期，meowagent 子类决定用什么材料的器官。
 
-骨架做四件事：
+**v0.5.9 子系统解耦**：CatBase 不再是 440 行大类，而是 :class:`OrganHost` +
+:class:`Nervous` + :class:`ReflexArc` + :class:`EventBus` 的组合者，并通过门面
+方法保持 v0.5.0 以来的外部 API 100% 兼容。
 
-1. **注册/查找器官**（``mount`` / ``organ``）——附可选 Protocol 校验
-2. **事件总线**（``on`` / ``emit``）——神经信号
-3. **神经突触**（``signal``）——器官互访的唯一合法通道，wiring 校验
-4. **生命周期**（``start`` / ``shutdown`` / ``perceive``）
+五大子系统（每个都可独立实例化、可单飞）：
 
-不做：具体器官实例化、配置加载、IO——这些都是 meowagent 的事。
++----------------+---------------------------+----------------------+
+| 子系统         | 职责                      | 可单飞               |
++================+===========================+======================+
+| OrganHost      | 器官容器（mount/organ）    | ✓                    |
++----------------+---------------------------+----------------------+
+| Wiring         | 通路图（纯数据结构）       | ✓                    |
++----------------+---------------------------+----------------------+
+| Nervous        | signal + probe 调度        | ✓（需 host + events）|
++----------------+---------------------------+----------------------+
+| ReflexArc      | perceive 反射入口          | ✓（需 events）       |
++----------------+---------------------------+----------------------+
+| EventBus       | 事件总线                   | ✓（零依赖）          |
++----------------+---------------------------+----------------------+
 
-v0.5.1 在 v0.5.0 骨架上新增 wiring/reflex/perceive 三件套：真约束 + 反射入口。
+CatBase 只做四件事：
+
+1. **组合五大子系统**（``_host`` / ``_events`` / ``_nervous`` / ``_reflex``）
+2. **门面转发**：外部调用 ``cat.mount/signal/perceive`` 自动路由到对应子系统
+3. **生命周期**（``start`` / ``shutdown``）
+4. **协调 freeze**：先 reflex 校验 path，再 wiring freeze
+
+不做：具体器官实例化、配置加载、IO —— 这些都是 meowagent 的事。
+
+**残疾猫是一等公民**：``CatBase("x", enable_wiring=False)`` 可以跑，
+``enable_reflex=False`` 也可以跑，对应的 signal/perceive 会抛 RuntimeError
+明确提示子系统未启用。
 """
 
 from __future__ import annotations
 
-import inspect
 from typing import Any, AsyncIterator
 
-from meowcat import biology
-from meowcat.errors import (
-    IllegalNeuralPathError,
-    NoReflexMatchedError,
-    OrganNotMountedError,
-    OrganProtocolMismatchError,
-)
+from meowcat.errors import IllegalNeuralPathError
 from meowcat.events import EventBus, Handler
-from meowcat.loop import Lifecycle, NerveEvent
-from meowcat.perception import PerceptionContext, infer_modality
-from meowcat.pipeline import Pipeline
-from meowcat.reflex import Reflex, ReflexRegistry
+from meowcat.host import OrganHost
+from meowcat.loop import Lifecycle
+from meowcat.nervous import Nervous
+from meowcat.reflex import Reflex, ReflexArc
+from meowcat.tools.skill import SkillRegistry
+from meowcat.tools.tool import ToolRegistry
 from meowcat.wiring import Organ, Wiring
 
 
 class CatBase:
-    """猫装配基类。"""
+    """猫装配基类（v0.5.9 组合者，v1.0.1 统一分身猫模型）。
 
-    def __init__(self, cat_id: str) -> None:
-        self.cat_id = cat_id
-        self._organs: dict[str, dict[str, Any]] = {}
-        self._events: EventBus = EventBus()
-        # v0.5.1 新增：神经系统
-        self.wiring: Wiring = Wiring()
-        self.reflexes: ReflexRegistry = ReflexRegistry()
+    v1.0.1: 新增 ``parent_id`` / ``allowed_organs`` / ``forbidden_methods``，
+    替代原 KittenBase 类。分身猫 = 一只带了 ``parent_id`` 且器官/方法权限受限
+    的 CatBase。
+    """
 
-    # -- 器官注册 ----------------------------------------------------
+    def __init__(
+        self,
+        cat_id: str,
+        *,
+        parent_id: str | None = None,
+        allowed_organs: frozenset[str] | None = None,
+        forbidden_methods: frozenset[str] = frozenset(),
+        enable_wiring: bool = True,
+        enable_reflex: bool = True,
+    ) -> None:
+        """构造猫骨架。
+
+        Args:
+            cat_id: 猫唯一标识
+            parent_id: 父猫标识（纯字符串，不做对象引用）。用于追踪和结果回传路由。
+            allowed_organs: 允许访问的器官属性名集合。``None`` = 全部允许（默认）。
+                有值时 ``__getattribute__`` 拦截禁止器官访问。
+            forbidden_methods: 方法级黑名单。``signal(..., method=X)``
+                时 ``X in forbidden_methods`` 则抛 :class:`IllegalNeuralPathError`。
+                分身猫用此禁用 ``spawn_kitten`` / ``absorb_merge`` 等主猫专属方法。
+            enable_wiring: False 时不创建 Nervous 子系统，``signal/probe``
+                调用会抛 RuntimeError。适合"裸容器"场景。
+            enable_reflex: False 时不创建 ReflexArc 子系统，``perceive/
+                register_reflex`` 调用会抛 RuntimeError。适合"只走 signal、
+                不走 reflex"场景。
+        """
+        self._parent_id = parent_id
+        # v1.0.1: 先设 _allowed_organs=None 避免 __init__ 内部 self.xxx
+        # 赋值被 __getattribute__ 拦截；末尾再设为真实值。
+        self._allowed_organs: frozenset[str] | None = None
+        self._host = OrganHost(cat_id)
+        self._events = EventBus()
+        self._nervous: Nervous | None = (
+            Nervous(self._host, self._events,
+                    forbidden_methods=forbidden_methods)
+            if enable_wiring else None
+        )
+        self._reflex: ReflexArc | None = (
+            ReflexArc(self._events, self._nervous) if enable_reflex else None
+        )
+        # v0.5.23: 工具/Skill 注册中心 — 每只猫都有爪子
+        self.tool_registry = ToolRegistry()
+        self.skill_registry = SkillRegistry()
+        # v0.5.27: 路径注册中心 — 原子路径表
+        from meowcat.path import PathRegistry, register_builtin_paths  # noqa: PLC0415
+        self.path_registry = PathRegistry()
+        register_builtin_paths(self.path_registry)
+        # v0.5.28a: 链路注册中心 — Path 序列组合
+        from meowcat.chain import ChainRegistry, register_builtin_chains  # noqa: PLC0415
+        self.chain_registry = ChainRegistry()
+        register_builtin_chains(self.chain_registry)
+        # v0.5.28b: 闭环注册中心 — Chain + 触发/退出事件
+        from meowcat.loops import LoopRegistry, register_default_loops  # noqa: PLC0415
+        self.loop_registry = LoopRegistry()
+        register_default_loops(self.loop_registry, self.chain_registry)
+        # v1.0.4: 元闭环注册中心 — Loop 序列组合
+        from meowcat.loops import LoopSequenceRegistry  # noqa: PLC0415
+        self.loopseq_registry = LoopSequenceRegistry()
+        # v1.0.1: allowed_organs 必须在所有属性设置完之后才赋值，
+        # 避免 __init__ 内部 self.xxx 赋值被 __getattribute__ 拦截
+        self._allowed_organs = allowed_organs
+
+    # -- 只读门面属性 ------------------------------------------------
+
+    @property
+    def parent_id(self) -> str | None:
+        """父猫标识（纯字符串，无对象引用）。"""
+        return self._parent_id
+
+    @property
+    def cat_id(self) -> str:
+        """猫唯一标识（从 ``_host`` 读取）。"""
+        return self._host.cat_id
+
+    @property
+    def wiring(self) -> Wiring:
+        """神经通路图（Nervous 禁用时抛 :class:`AttributeError`）。"""
+        if self._nervous is None:
+            raise AttributeError(
+                "wiring disabled — construct with enable_wiring=True",
+            )
+        return self._nervous.wiring
+
+    @property
+    def reflexes(self) -> "ReflexRegistry":
+        """反射注册表（ReflexArc 禁用时抛 :class:`AttributeError`）。"""
+        if self._reflex is None:
+            raise AttributeError(
+                "reflex disabled — construct with enable_reflex=True",
+            )
+        return self._reflex.registry
+
+    @property
+    def events(self) -> EventBus:
+        """事件总线（永远可用）。"""
+        return self._events
+
+    # -- 器官容器门面 ------------------------------------------------
 
     def mount(
         self,
@@ -55,64 +166,35 @@ class CatBase:
         *,
         protocol: type | None = None,
     ) -> None:
-        """挂载一个器官。
-
-        Args:
-            category: 器官分类（``brain`` / ``sense`` / ``voice`` / ``storage`` 等）
-            name: 器官名（``hippocampus`` / ``ears`` / ``tail`` 等）
-            organ: 具体实现实例
-            protocol: 可选 ``@runtime_checkable`` Protocol 类，
-                非 None 时 ``isinstance(organ, protocol)`` 校验，
-                不匹配抛 :class:`OrganProtocolMismatchError`。
-        """
-        if protocol is not None and not isinstance(organ, protocol):
-            raise OrganProtocolMismatchError(
-                category, name, protocol, organ,
-            )
-        self._organs.setdefault(category, {})[name] = organ
+        """挂载器官（转发到 :class:`OrganHost`）。"""
+        self._host.mount(category, name, organ, protocol=protocol)
 
     def organ(self, category: str, name: str) -> Any:
-        """取出一个已挂载的器官。未挂载抛 :class:`OrganNotMountedError`。"""
-        bucket = self._organs.get(category)
-        if bucket is None or name not in bucket:
-            raise OrganNotMountedError(category, name)
-        return bucket[name]
+        """取出器官（转发到 :class:`OrganHost`）。"""
+        return self._host.organ(category, name)
 
     def organs(self, category: str) -> dict[str, Any]:
-        """返回某个分类下所有器官的快照（只读拷贝）。"""
-        return dict(self._organs.get(category, {}))
+        """分类下所有器官快照。"""
+        return self._host.organs(category)
 
     def has_organ(self, category: str, name: str) -> bool:
         """检查器官是否已挂载。"""
-        return name in self._organs.get(category, {})
+        return self._host.has_organ(category, name)
 
     def unmount(self, category: str, name: str) -> bool:
-        """卸载一个器官，不存在返回 False。"""
-        bucket = self._organs.get(category)
-        if bucket is None or name not in bucket:
-            return False
-        del bucket[name]
-        return True
+        """卸载器官。"""
+        return self._host.unmount(category, name)
 
     def assert_organs_mounted(
         self, required: list[tuple[str, str]],
     ) -> None:
-        """断言必需器官已挂载，否则抛 :class:`OrganNotMountedError`。
+        """断言必需器官已挂载。"""
+        self._host.assert_organs_mounted(required)
 
-        用于子类（如应用层主猫 Cat）在 ``__init__`` 末尾校验解剖完整性。
-        具体“主猫必须有哪些器官”由应用层决定，meowcat 只提供校验机制。
-
-        Args:
-            required: ``[(category, name), ...]`` 必需器官清单
-        """
-        for category, name in required:
-            if not self.has_organ(category, name):
-                raise OrganNotMountedError(category, name)
-
-    # -- 事件 --------------------------------------------------------
+    # -- 事件门面 ----------------------------------------------------
 
     def on(self, event: str, handler: Handler | None = None) -> Any:
-        """注册事件 handler（装饰器或函数调用两种用法）。"""
+        """注册事件 handler。"""
         return self._events.on(event, handler)
 
     def off(self, event: str, handler: Handler) -> bool:
@@ -123,12 +205,40 @@ class CatBase:
         """触发事件。"""
         await self._events.emit(event, payload)
 
-    @property
-    def events(self) -> EventBus:
-        """暴露底层 EventBus 给子类做深度定制（一般不需要用到）。"""
-        return self._events
+    # -- 器官属性访问控制 (v1.0.1) -----------------------------------
 
-    # -- 神经突触（v0.5.1 新增）------------------------------------
+    def __getattribute__(self, name: str) -> Any:
+        """拦截禁止器官名的直接访问。
+
+        ``allowed_organs`` 为 None 时全部放行（默认）。
+        有值时非 ``_`` 前缀、不在允许集合中、也不在 ``_ALWAYS_ALLOWED`` 中的
+        属性名抛 :class:`IllegalNeuralPathError`。
+
+        热路径：``_`` 前缀私有属性零开销跳过 → O(1) frozenset 查找。
+        """
+        if name.startswith('_'):
+            return super().__getattribute__(name)
+        allowed = super().__getattribute__('_allowed_organs')
+        if allowed is not None and name not in allowed:
+            if name not in CatBase._ALWAYS_ALLOWED:
+                raise IllegalNeuralPathError(
+                    ("_cat", "_cat"), ("_cat", name),
+                    reason=(
+                        f"猫 '{super().__getattribute__('cat_id')}' "
+                        f"无权访问 '{name}' 器官。"
+                    ),
+                )
+        return super().__getattribute__(name)
+
+    _ALWAYS_ALLOWED: frozenset[str] = frozenset({
+        "cat_id", "parent_id",
+        "tool_registry", "skill_registry",
+        "path_registry", "chain_registry", "loop_registry",
+        "loopseq_registry",
+        "wiring", "reflexes", "events",
+    })
+
+    # -- 神经突触门面 ------------------------------------------------
 
     async def signal(
         self,
@@ -138,67 +248,54 @@ class CatBase:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """器官互访的唯一合法通道。
+        """器官互访（转发到 :class:`Nervous`）。
 
-        流程：
-
-        1. ``wiring.assert_allowed(from, to)``——非法抛
-           :class:`IllegalNeuralPathError`
-        2. emit ``nerve.signal`` 事件（便于调试/埋点）
-        3. 从 ``self.organs(to_organ[0])`` 取出目标器官
-        4. ``getattr(target, method)(*args, **kwargs)``，
-           若返回 awaitable 自动 await
-
-        Args:
-            from_organ: 调用方器官坐标 ``(category, name)``
-            to_organ: 目标器官坐标 ``(category, name)``
-            method: 目标上要调用的方法名
-            *args, **kwargs: 转发给目标方法
-
-        Returns:
-            目标方法的返回值（已 unwrap 过 awaitable）
+        Raises:
+            RuntimeError: ``enable_wiring=False`` 时子系统未启用。
         """
-        self.wiring.assert_allowed(from_organ, to_organ)
-
-        await self._events.emit(
-            NerveEvent.SIGNAL,
-            {
-                "from": from_organ,
-                "to": to_organ,
-                "method": method,
-            },
+        if self._nervous is None:
+            raise RuntimeError(
+                "signal unavailable — cat was constructed with enable_wiring=False",
+            )
+        return await self._nervous.signal(
+            from_organ, to_organ, method, *args, **kwargs,
         )
 
-        target = self.organ(*to_organ)
-        fn = getattr(target, method)
-        result = fn(*args, **kwargs)
-        if inspect.isawaitable(result):
-            result = await result
-        return result
+    async def probe(self, to_organ: Organ) -> dict[str, Any]:
+        """只读诊断（转发到 :class:`Nervous`）。"""
+        if self._nervous is None:
+            raise RuntimeError(
+                "probe unavailable — cat was constructed with enable_wiring=False",
+            )
+        return await self._nervous.probe(to_organ)
 
     # -- 神经系统装配 ------------------------------------------------
 
     def wire_default_nervous_system(self) -> None:
-        """一键装配生物学默认神经通路表。
-
-        等价于调用 :func:`meowcat.biology.apply_default_wiring(self.wiring)`。
-        可在 ``__init__`` 末尾调用，也可由应用层按需延后。
-        """
-        biology.apply_default_wiring(self.wiring)
+        """装配默认神经通路表。``enable_wiring=False`` 时 no-op。"""
+        if self._nervous is None:
+            return
+        self._nervous.wire_default()
 
     def register_reflex(self, reflex: Reflex) -> None:
-        """注册一条反射弧。"""
-        self.reflexes.register(reflex)
+        """注册反射弧。"""
+        if self._reflex is None:
+            raise RuntimeError(
+                "register_reflex unavailable — enable_reflex=False",
+            )
+        self._reflex.register(reflex)
 
     def freeze_nervous_system(self) -> None:
-        """冻结 wiring 并校验所有已注册反射 path 合法。
+        """冻结神经系统：先校验 reflex.path 合法、再冻结 wiring。
 
-        一般在应用层完成 ``mount`` + ``register_reflex`` 后调用。
-        之后 ``wiring.connect/forbid`` 都会抛；任一 reflex path
-        不合法则抛 :class:`ReflexPathInvalidError`。
+        协调顺序很关键：reflex.validate_paths 需要读取 ``nervous.wiring``，
+        一旦 wiring freeze 后仍可读，所以顺序理论上可互换，这里采取"先校验、
+        再冻结"的保守顺序，便于未来 freeze 改为清理 wiring 临时状态时也安全。
         """
-        self.reflexes.validate(self.wiring)
-        self.wiring.freeze()
+        if self._reflex is not None:
+            self._reflex.validate_paths()
+        if self._nervous is not None:
+            self._nervous.freeze()
 
     # -- 感知入口 ----------------------------------------------------
 
@@ -207,116 +304,90 @@ class CatBase:
         input: Any,
         **extras: Any,
     ) -> AsyncIterator[Any]:
-        """猫对外的唯一反射入口：给个刺激，自动走对应神经链路。
+        """猫对外的唯一反射入口（转发到 :class:`ReflexArc`）。
 
-        流程：
-
-        1. ``reflexes.match(input)`` 找到第一个命中的反射；
-           无命中抛 :class:`NoReflexMatchedError`
-        2. 构造 :class:`PerceptionContext`，emit ``lifecycle.perceive_start``
-        3. 若 ``reflex.stages`` 非空：用 :class:`Pipeline` 驱动并 yield 事件
-           否则：按 ``reflex.path`` 逐跳 emit ``nerve.signal``（让业务 handler 接）
-        4. emit ``lifecycle.perceive_end``
-
-        Returns:
-            事件流（``AsyncIterator``）。调用方用 ``async for`` 消费。
-            ctx.final_reply 也会被顺带回写。
+        Raises:
+            RuntimeError: ``enable_reflex=False`` 时子系统未启用。
+            NoReflexMatchedError: 无反射命中 ``input``。
         """
-        reflex = self.reflexes.match(input)
-        if reflex is None:
-            raise NoReflexMatchedError(repr(input))
-
-        ctx = PerceptionContext(
-            input=input,
-            modality=infer_modality(input),
-            reflex_name=reflex.name,
-            cat=self,
-            extras=dict(extras),
-        )
-
-        await self._events.emit(
-            Lifecycle.PERCEIVE_START,
-            {"input": input, "reflex_name": reflex.name},
-        )
-
-        if reflex.stages:
-            pipeline = Pipeline(list(reflex.stages))
-            async for ev in pipeline.execute(ctx):
-                yield ev
-        else:
-            # 无 Stage：只沿 path 逐跳广播，让业务层 handler 接
-            for frm, to in reflex.hops():
-                # path 在 freeze 时已校验过，这里直接走 signal 广播点
-                await self._events.emit(
-                    NerveEvent.SIGNAL,
-                    {"from": frm, "to": to, "method": "__perceive__"},
-                )
-
-        await self._events.emit(
-            Lifecycle.PERCEIVE_END,
-            {"reflex_name": reflex.name, "reply": ctx.final_reply},
-        )
+        if self._reflex is None:
+            raise RuntimeError(
+                "perceive unavailable — enable_reflex=False",
+            )
+        async for ev in self._reflex.perceive(input, cat=self, **extras):
+            yield ev
 
     # -- 装配工具 ----------------------------------------------------
 
-    def _assemble(self, *, reflex_stages: list[Any] | None = None) -> None:
+    def _assemble(
+        self,
+        *,
+        reflex_stages: list[Any] | None = None,
+        reflexes: list[Reflex] | None = None,
+    ) -> None:
         """自动扫描 ``self`` 上的器官属性并完成骨架装配。
 
-        扫描已知器官名、mount 到 ``_organs``、
-        装配默认神经系统、注册默认 reflex、冻结。
+        v0.5.9: 实际逻辑在顶层函数 :func:`assemble_default_cat` 中，此方法
+        仅作为薄包装保持向后兼容。子类（如 meowagent.Cat）只需在 ``__init__``
+        末尾继续调 ``self._assemble(reflex_stages=[...])``，行为不变。
 
-        子类只需在 ``__init__`` 末尾调用一次。
+        v0.5.20: 新增 ``reflexes`` 参数，透传给 ``assemble_default_cat()``。
+
+        v0.5.21: ``assemble_default_cat()`` 不再 freeze，由本方法负责。
 
         Args:
             reflex_stages: 默认 text_dialogue reflex 的 stages 列表。
                            为 None 则使用空列表。
-
-        Usage::
-
-            class MyCat(CatBase):
-                def __init__(self, cat_id):
-                    super().__init__(cat_id)
-                    self.cerebrum = MyCerebrum()
-                    # ... 创建所有器官 ...
-                    self._assemble(reflex_stages=[MyStage()])
+            reflexes: 反射弧列表，None 时不注册任何 reflex。
         """
-        from meowcat.biology import DEFAULT_REFLEX_PATHS
-        from meowcat.reflex import Reflex
-
-        _BRAIN_NAMES = {
-            "hippocampus", "thalamus", "amygdala", "frontal",
-            "hypothalamus", "cerebellum", "cerebrum", "brainstem", "cortex",
-        }
-        _SENSE_NAMES = {"ears", "eyes", "whiskers", "paws"}
-        _VOICE_NAMES = {"mouth", "purr", "tail"}
-
-        for name in _BRAIN_NAMES:
-            obj = getattr(self, name, None)
-            if obj is not None:
-                self.mount("brain", name, obj)
-
-        for name in _SENSE_NAMES:
-            obj = getattr(self, name, None)
-            if obj is not None:
-                self.mount("sense", name, obj)
-
-        for name in _VOICE_NAMES:
-            obj = getattr(self, name, None)
-            if obj is not None:
-                self.mount("voice", name, obj)
-
-        self.wire_default_nervous_system()
-
-        if "text_dialogue" in DEFAULT_REFLEX_PATHS:
-            path = list(DEFAULT_REFLEX_PATHS["text_dialogue"])
-            self.register_reflex(Reflex(
-                name="text_dialogue",
-                trigger=lambda x: isinstance(x, str) and not x.startswith("/"),
-                path=path,
-                stages=reflex_stages if reflex_stages is not None else [],
-            ))
-
+        assemble_default_cat(
+            self, reflex_stages=reflex_stages, reflexes=reflexes)
         self.freeze_nervous_system()
+
+    # -- 诊断快捷方法 ------------------------------------------------
+
+    async def health_check(self) -> dict[str, Any]:
+        """全身体检 — 返回所有器官的诊断快照。
+
+        快捷方式，等价于 ``Stethoscope.probe_all(self)``。
+
+        Returns:
+            ``{"brain:hippocampus": {...}, "sense:ears": {...}, ...}``
+        """
+        from meowcat.diagnose import Stethoscope  # noqa: PLC0415
+        return await Stethoscope.probe_all(self)
+
+    async def brain_check(self) -> dict[str, Any]:
+        """只检查大脑区域器官。
+
+        快捷方式，等价于 ``Stethoscope.probe_category(self, "brain")``。
+
+        Returns:
+            ``{"hippocampus": {...}, "cerebrum": {...}, ...}``
+        """
+        from meowcat.diagnose import Stethoscope  # noqa: PLC0415
+        return await Stethoscope.probe_category(self, "brain")
+
+    def wiring_diagram(self, format: str = "mermaid") -> str:
+        """生成 wiring 图的可视化字符串。
+
+        wiring 禁用时抛 :class:`AttributeError`。
+
+        Args:
+            format: ``"mermaid"`` 或 ``"dot"``
+
+        Returns:
+            mermaid 或 dot 格式的图描述字符串
+
+        Examples:
+
+            >>> print(cat.wiring_diagram())
+            >>> print(cat.wiring_diagram(format="dot"))
+        """
+        from meowcat.diagnose import render_wiring  # noqa: PLC0415
+        # 收集所有已挂载器官作为孤立节点检测的输入
+        mounted: frozenset[Organ] = frozenset(self._host.list_all_organs())
+        return render_wiring(self.wiring, format=format, organs=mounted)
 
     # -- 生命周期 ----------------------------------------------------
 
@@ -328,55 +399,137 @@ class CatBase:
         """关闭猫。子类可重写，**务必调用 ``await super().shutdown()``**。"""
         await self._events.emit(Lifecycle.SHUTDOWN, {"cat": self})
 
+    # -- 闭环执行 ----------------------------------------------------
 
-class KittenBase(CatBase):
-    """分身猫基类 — wiring 裁剪版 CatBase。
+    async def run_loop(self, name: str, **initial_input: Any) -> dict[str, Any]:
+        """执行一个闭环：触发事件 → 跑 chain → 退出事件。
 
-    继承 CatBase 完整骨架（mount/signal/perceive/reflexes），但：
+        等价于::
 
-    - 默认装配 ``apply_kitten_wiring``（cerebrum→hippocampus 禁止，
-      分身猫只读记忆不写入）
-    - ``signal()`` 重写：校验 ``KITTEN_FORBIDDEN_METHODS``，
-      阻止分身猫调用 ``spawn_kitten`` / ``absorb_merge`` 等主猫专属方法
+            self.loop_registry.run(self, name, **initial_input)
 
-    用法::
+        Args:
+            name: 闭环名称（如 ``"conversation"``）
+            **initial_input: 初始输入，传入 chain 的第一步
 
-        from meowcat.assembly import KittenBase
+        Returns:
+            chain 执行结果（dict）
 
-        class KittenAgent(KittenBase):
-            def __init__(self, kitten_id: str, ...):
-                super().__init__(kitten_id)
-                # 再挂载分身猫需要的器官...
-            def wire_default_nervous_system(self):
-                biology.apply_kitten_wiring(self.wiring)
+        Raises:
+            KeyError: 闭环不存在
 
-    v0.5.4 新增。
+        Examples:
+
+            result = await cat.run_loop("conversation", message="你好")
+        """
+        return await self.loop_registry.run(self, name, **initial_input)
+
+    # -- 元闭环执行 (v1.0.4) -----------------------------------------
+
+    async def run_loopseq(self, name: str, **initial_input: Any) -> dict[str, Any]:
+        """执行一个元闭环：组合多个 Loop 顺序或并发执行。
+
+        等价于::
+
+            self.loopseq_registry.run(self, name, **initial_input)
+
+        Args:
+            name: 元闭环名称（如 ``"daily_maintenance"``）
+            **initial_input: 初始输入
+
+        Returns:
+            最后一步结果（sequential）或 ``{loop_name: result, ...}``
+            （event_driven）
+
+        Raises:
+            KeyError: 元闭环不存在
+
+        Examples:
+
+            result = await cat.run_loopseq("daily_maintenance")
+        """
+        return await self.loopseq_registry.run(self, name, **initial_input)
+
+
+def mount_known_organs(cat: CatBase) -> None:
+    """扫描 cat 上的已知器官属性并 mount 到 OrganHost。
+
+    覆盖 brain / sense / voice 三类核心器官。Growth 器官由应用层自行挂载。
+    ``factory.create_cat()`` 和 ``assemble_default_cat()`` 共用此函数，
+    消灭两处重复的器官名列表。
+
+    Args:
+        cat: 已设置器官属性的 CatBase 实例
     """
+    _BRAIN_NAMES = {
+        "hippocampus", "thalamus", "amygdala", "frontal",
+        "hypothalamus", "cerebellum", "cerebrum", "brainstem", "cortex",
+    }
+    _SENSE_NAMES = {"ears", "eyes", "whiskers", "paws"}
+    _VOICE_NAMES = {"mouth", "purr", "tail"}
 
-    def __init__(self, cat_id: str) -> None:
-        super().__init__(cat_id)
-        # 分身猫默认装配受限 wiring（不 freeze，由应用层决定时机）
-        biology.apply_kitten_wiring(self.wiring)
+    for name in _BRAIN_NAMES:
+        organ = getattr(cat, name, None)
+        if organ is not None:
+            cat.mount("brain", name, organ)
 
-    async def signal(
-        self,
-        from_organ: Organ,
-        to_organ: Organ,
-        method: str,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        """分身猫信号——比主猫多一层方法黑名单校验。"""
-        if method in biology.KITTEN_FORBIDDEN_METHODS:
-            raise IllegalNeuralPathError(
-                from_organ, to_organ,
-                reason=f"分身猫禁止调用 '{method}'（主猫专属能力）",
-            )
-        return await super().signal(from_organ, to_organ, method, *args, **kwargs)
+    for name in _SENSE_NAMES:
+        organ = getattr(cat, name, None)
+        if organ is not None:
+            cat.mount("sense", name, organ)
 
-    def wire_default_nervous_system(self) -> None:
-        """分身猫专用 wiring 装配（裁剪版）。"""
-        biology.apply_kitten_wiring(self.wiring)
+    for name in _VOICE_NAMES:
+        organ = getattr(cat, name, None)
+        if organ is not None:
+            cat.mount("voice", name, organ)
 
 
-__all__ = ["CatBase", "KittenBase"]
+# -- 顶层装配函数（v0.5.9 新增）-------------------------------------
+
+def assemble_default_cat(
+    cat: CatBase,
+    *,
+    reflex_stages: list[Any] | None = None,
+    reflexes: list[Reflex] | None = None,
+) -> None:
+    """一键装配默认猫：扫描器官属性 → mount → wire → register reflex。
+
+    v0.5.21: 不再调用 freeze_nervous_system()，由调用方控制冻结时机。
+    调用方可在 wiring + reflex 注册完成后自行 freeze。
+
+    流程：
+
+    1. 扫描 ``cat`` 上的已知器官属性名 ``mount`` 到 host
+    2. ``cat.wire_default_nervous_system()`` 装配生物学默认通路
+    3. 注册 reflex（调用方传入）
+
+    Args:
+        cat: 已设置器官属性的 CatBase 实例
+        reflex_stages: 默认 text_dialogue reflex 的 stages 列表
+                        （仅当 reflexes 中有 text_dialogue 时生效）
+        reflexes: 反射弧列表，None 时不注册任何 reflex
+    """
+    mount_known_organs(cat)
+    cat.wire_default_nervous_system()
+
+    # v0.5.23: 注册通用内置工具（每只猫都需要的基础工具）
+    from meowcat.tools.builtin import BUILTIN_TOOLS  # noqa: PLC0415
+    for t in BUILTIN_TOOLS:
+        cat.tool_registry.register(t)
+
+    # 反射弧（调用方传入）
+    if reflexes:
+        for ref in reflexes:
+            # 如果有 reflex_stages 且是 text_dialogue，注入 stages
+            if ref.name == "text_dialogue" and reflex_stages is not None:
+                ref = Reflex(
+                    name=ref.name,
+                    trigger=ref.trigger,
+                    path=ref.path,
+                    priority=ref.priority,
+                    stages=list(reflex_stages),
+                )
+            cat.register_reflex(ref)
+
+
+__all__ = ["CatBase", "assemble_default_cat", "mount_known_organs"]

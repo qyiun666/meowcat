@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 
@@ -19,6 +20,117 @@ class InMemoryGraphStore:
 
     async def save(self, cat_id: str, graph_data: dict[str, Any]) -> None:
         self._graphs[cat_id] = graph_data
+
+
+class InMemoryVectorStore:
+    """默认向量存储 — 纯 Python dict + 余弦相似度，进程重启即丢失。"""
+
+    def __init__(self) -> None:
+        import math
+        self._math = math
+        self._store: dict[str, list[float]] = {}
+
+    async def store(self, entity_id: str, embedding: list[float]) -> None:
+        self._store[entity_id] = embedding
+
+    async def search(
+        self, embedding: list[float], top_k: int = 5,
+    ) -> list[str]:
+        if not self._store:
+            return []
+        scored: list[tuple[float, str]] = []
+        for eid, emb in self._store.items():
+            sim = self._cosine_similarity(embedding, emb)
+            scored.append((sim, eid))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [eid for _, eid in scored[:top_k]]
+
+    # -- Protocol 兼容方法 ------------------------------------------
+    async def add(self, text: str, metadata: dict[str, Any]) -> str:
+        return ""
+
+    async def delete(self, doc_id: str) -> bool:
+        return self._store.pop(doc_id, None) is not None
+
+    # -- 内部 ------------------------------------------------------
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = self._math.sqrt(sum(x * x for x in a))
+        norm_b = self._math.sqrt(sum(y * y for y in b))
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)
+
+
+class InMemorySharedStore:
+    """默认共享存储 — 纯 Python dict，进程重启即丢失。
+
+    Colony 共享记忆的默认实现，适合单进程原型。
+    """
+
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
+        self._watchers: dict[str, list[asyncio.Queue]] = {}
+
+    async def get(self, key: str) -> Any:
+        return self._data.get(key)
+
+    async def set(self, key: str, value: Any) -> None:
+        self._data[key] = value
+        # 通知 watchers
+        self._notify_watchers(key, value)
+
+    async def delete(self, key: str) -> None:
+        self._data.pop(key, None)
+        self._notify_watchers(key, None)
+
+    async def list_keys(self) -> list[str]:
+        """列出所有存储 key。"""
+        return list(self._data.keys())
+
+    async def watch(self, pattern: str) -> Any:
+        """监听匹配 pattern 的 key 变更。
+
+        返回 AsyncIterator，每次变更 yield (key, value) 元组。
+        pattern 支持前缀匹配：key.startswith(pattern)。
+        """
+        q: asyncio.Queue = asyncio.Queue()
+        if pattern not in self._watchers:
+            self._watchers[pattern] = []
+        self._watchers[pattern].append(q)
+        try:
+            while True:
+                item = await q.get()
+                yield item
+        finally:
+            watchers = self._watchers.get(pattern, [])
+            if q in watchers:
+                watchers.remove(q)
+
+    def _notify_watchers(self, key: str, value: Any) -> None:
+        """通知匹配的 watchers。"""
+        for pattern, queues in list(self._watchers.items()):
+            if key.startswith(pattern):
+                for q in queues:
+                    try:
+                        q.put_nowait((key, value))
+                    except asyncio.QueFull:
+                        pass
+
+    # -- Protocol 兼容方法 ------------------------------------------
+    async def load(self) -> dict[str, Any]:
+        return dict(self._data)
+
+    async def save(self, data: dict[str, Any]) -> None:
+        self._data.update(data)
+        for key in data:
+            self._notify_watchers(key, data[key])
+
+    async def merge(self, delta: dict[str, Any]) -> dict[str, Any]:
+        self._data.update(delta)
+        for key in delta:
+            self._notify_watchers(key, delta[key])
+        return dict(self._data)
 
 
 class InMemoryL6Store:

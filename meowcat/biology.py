@@ -15,114 +15,274 @@
 - ``cerebrum → paws`` ：大脑不直连四肢
 - ``cerebrum → mouth``：大脑不直接驱动发声
 
+**v0.5.10 通路元数据化**：每个器官的入/出边集中在 ``ORGAN_SPECS``
+单源表里声明，``BUILTIN_NERVOUS_SYSTEM`` 和 ``ORGAN_PROTOCOLS`` 由该表
+自动聚合得到。新增/迁移器官只改 ``ORGAN_SPECS`` 一处，避免边列表漂移。
+
 本文件零第三方依赖，零 meowagent import。
 """
 
 from __future__ import annotations
 
-from typing import Final
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Final
 
+# 坐标常量从 anatomy.py re-export（对外 API 路径保持不变）
+from meowcat.anatomy import (
+    AMYGDALA,
+    ANOMALY_GROWTH,
+    BRAIN,
+    BRAIN_REGIONS,
+    BRAINSTEM,
+    CEREBELLUM,
+    CEREBRUM,
+    CORRECTION_GROWTH,
+    CORTEX,
+    CRYSTALLIZER,
+    EARS,
+    EFFECTORS,
+    EYES,
+    FRONTAL,
+    GROWTH,
+    HIPPOCAMPUS,
+    HYPOTHALAMUS,
+    MOUTH,
+    PAWS,
+    PURR,
+    ROLE_EMERGENCE,
+    SENSE,
+    SENSORS,
+    STORAGE,
+    TAIL,
+    THALAMUS,
+    VOICE,
+    VOICES,
+    WHISKERS,
+)
 from meowcat.wiring import Edge, Organ, Wiring
 
-# -- 节点分类常量 -----------------------------------------------
+if TYPE_CHECKING:
+    pass
 
-BRAIN: Final[str] = "brain"
-SENSE: Final[str] = "sense"
-VOICE: Final[str] = "voice"
-STORAGE: Final[str] = "storage"
 
-# -- 关键器官坐标 -----------------------------------------------
+# -- 器官规范表（单源真相） ---------------------------------------
 
-THALAMUS: Final[Organ] = (BRAIN, "thalamus")
-HIPPOCAMPUS: Final[Organ] = (BRAIN, "hippocampus")
-CEREBRUM: Final[Organ] = (BRAIN, "cerebrum")
-CEREBELLUM: Final[Organ] = (BRAIN, "cerebellum")
-AMYGDALA: Final[Organ] = (BRAIN, "amygdala")
-FRONTAL: Final[Organ] = (BRAIN, "frontal")
-HYPOTHALAMUS: Final[Organ] = (BRAIN, "hypothalamus")
-CORTEX: Final[Organ] = (BRAIN, "cortex")
-BRAINSTEM: Final[Organ] = (BRAIN, "brainstem")
+@dataclass(frozen=True)
+class OrganSpec:
+    """单个器官的解剖规范。
 
-EARS: Final[Organ] = (SENSE, "ears")
-EYES: Final[Organ] = (SENSE, "eyes")
-WHISKERS: Final[Organ] = (SENSE, "whiskers")
-PAWS: Final[Organ] = (SENSE, "paws")
+    每条记录声明一个器官：
+    - ``coord``: 器官坐标（category, name）
+    - ``protocol``: 该坐标对应的 Protocol 类型（runtime 校验用）
+    - ``in_edges``: 入边——谁能调我（组合为 ``(src, self) in BUILTIN``）
+    - ``out_edges``: 出边——我能调谁（组合为 ``(self, dst) in BUILTIN``）
+    - ``read_methods``: 该器官声明的只读方法名（可选，用于文档/审计）
+    - ``write_methods``: 该器官声明的写方法名（触发写权限校验）
+    - ``write_callers``: 允许调用 write_methods 的器官（空=写校验不生效）
 
-MOUTH: Final[Organ] = (VOICE, "mouth")
-PURR: Final[Organ] = (VOICE, "purr")
-TAIL: Final[Organ] = (VOICE, "tail")
+    方法级权限由 ``Nervous.signal()`` 在 wiring 校验后执行：
+    ``from_organ not in write_callers`` 则抛 ``IllegalNeuralPathError``。
 
-SENSORS: Final[tuple[Organ, ...]] = (EARS, EYES, WHISKERS)
-VOICES: Final[tuple[Organ, ...]] = (MOUTH, PURR, TAIL)
-EFFECTORS: Final[tuple[Organ, ...]] = (PAWS, MOUTH, PURR, TAIL)
-BRAIN_REGIONS: Final[tuple[Organ, ...]] = (
-    THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM,
-    AMYGDALA, FRONTAL, HYPOTHALAMUS, CORTEX, BRAINSTEM,
+    新增/迁移器官只需改动本表一条记录，``BUILTIN_NERVOUS_SYSTEM`` 和
+    ``ORGAN_PROTOCOLS`` 自动同步。
+    """
+
+    coord: Organ
+    protocol: type
+    in_edges: tuple[Organ, ...] = ()
+    out_edges: tuple[Organ, ...] = ()
+    read_methods: tuple[str, ...] = ()
+    write_methods: tuple[str, ...] = ()
+    write_callers: tuple[Organ, ...] = ()
+
+
+def _build_organ_specs() -> tuple[OrganSpec, ...]:
+    """构造 ORGAN_SPECS（惰性 import protocols，避免循环）。"""
+    from meowcat.protocols import (  # noqa: PLC0415
+        AmygdalaProtocol,
+        BrainStemProtocol,
+        CortexProtocol,
+        EarsProtocol,
+        EyesProtocol,
+        FrontalCortexProtocol,
+        GrowthProtocol,
+        HippocampusProtocol,
+        HypothalamusProtocol,
+        LLMBrainProtocol,
+        OrganProtocol,
+        PawsProtocol,
+        ThalamusProtocol,
+        WhiskersProtocol,
+    )
+    return (
+        # -- 脑区 ----------------------------------------------
+        OrganSpec(
+            coord=THALAMUS, protocol=ThalamusProtocol,
+            in_edges=SENSORS,                              # 感官 → 丘脑
+            out_edges=(CEREBRUM, BRAINSTEM, AMYGDALA,
+                       HIPPOCAMPUS),  # 丘脑 → 大脑/脑干/杏仁核/海马
+        ),
+        OrganSpec(
+            coord=HIPPOCAMPUS, protocol=HippocampusProtocol,
+            in_edges=(CEREBRUM, FRONTAL, HYPOTHALAMUS, BRAINSTEM),
+            out_edges=(CEREBRUM, CORTEX),
+            read_methods=(
+                "entities", "episodes",
+                "locate", "get_entity", "get_all", "get_by_name",
+                "get_related", "stats", "fts_search", "to_dict",
+            ),
+            write_methods=(
+                "remember", "add_entity", "add_episode",
+                "connect", "decay", "weaken_connections",
+                "cleanup_orphan_connections", "from_dict",
+                "record_access", "set_dormant", "append_content",
+                "update_importance", "set_last_seen",
+            ),
+            write_callers=(BRAINSTEM, HYPOTHALAMUS),
+        ),
+        OrganSpec(
+            coord=CEREBRUM, protocol=LLMBrainProtocol,
+            in_edges=(THALAMUS, HIPPOCAMPUS, FRONTAL, BRAINSTEM),
+            out_edges=(HIPPOCAMPUS, CEREBELLUM, FRONTAL),
+        ),
+        OrganSpec(
+            coord=CEREBELLUM, protocol=LLMBrainProtocol,
+            in_edges=(CEREBRUM, AMYGDALA, BRAINSTEM),
+            out_edges=EFFECTORS,                           # paws/mouth/purr/tail
+        ),
+        OrganSpec(
+            coord=AMYGDALA, protocol=AmygdalaProtocol,
+            in_edges=(THALAMUS, BRAINSTEM),
+            out_edges=(CEREBELLUM, MOUTH, CEREBRUM),       # 应激反射 + 安全推理
+        ),
+        OrganSpec(
+            coord=FRONTAL, protocol=FrontalCortexProtocol,
+            in_edges=(CEREBRUM, BRAINSTEM),
+            out_edges=(CEREBRUM, HIPPOCAMPUS, BRAINSTEM),
+        ),
+        OrganSpec(
+            coord=HYPOTHALAMUS, protocol=HypothalamusProtocol,
+            in_edges=(BRAINSTEM,),
+            out_edges=(HYPOTHALAMUS, HIPPOCAMPUS, CORTEX),  # 含自环
+        ),
+        OrganSpec(
+            coord=CORTEX, protocol=CortexProtocol,
+            in_edges=(HIPPOCAMPUS, HYPOTHALAMUS, BRAINSTEM),
+            out_edges=(),
+        ),
+        OrganSpec(
+            coord=BRAINSTEM, protocol=BrainStemProtocol,
+            in_edges=(THALAMUS,),
+            # 总调度：到所有脑区（除自己）/感官/嗓音；PAWS 不在此列
+            # （brainstem→paws 边不存在于 v0.5.9 黄金集合，SENSORS 不含 PAWS）
+            out_edges=(
+                THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM,
+                AMYGDALA, FRONTAL, HYPOTHALAMUS, CORTEX,
+                ANOMALY_GROWTH, CORRECTION_GROWTH, CRYSTALLIZER, ROLE_EMERGENCE,
+                *SENSORS, *VOICES,
+            ),
+        ),
+        # -- 感官 ----------------------------------------------
+        OrganSpec(
+            coord=EARS, protocol=EarsProtocol,
+            in_edges=(), out_edges=(THALAMUS,),
+        ),
+        OrganSpec(
+            coord=EYES, protocol=EyesProtocol,
+            in_edges=(), out_edges=(THALAMUS,),
+        ),
+        OrganSpec(
+            coord=WHISKERS, protocol=WhiskersProtocol,
+            in_edges=(), out_edges=(THALAMUS,),
+        ),
+        # PAWS 是效应器：仅 cerebellum→paws 一条入边（与 v0.5.9 一致）
+        OrganSpec(
+            coord=PAWS, protocol=PawsProtocol,
+            in_edges=(CEREBELLUM,), out_edges=(),
+        ),
+        # -- 嗓音（弱约束效应器，protocol=None 不校验方法）-----
+        OrganSpec(
+            coord=MOUTH, protocol=None,
+            in_edges=(CEREBELLUM, AMYGDALA, BRAINSTEM), out_edges=(),
+        ),
+        OrganSpec(
+            coord=PURR, protocol=None,
+            in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
+        ),
+        OrganSpec(
+            coord=TAIL, protocol=None,
+            in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
+        ),
+        # -- 生长器官（v0.5.29 meowcat 侧只声明，不实现）------
+        OrganSpec(
+            coord=ANOMALY_GROWTH, protocol=GrowthProtocol,
+            in_edges=(BRAINSTEM,),
+            out_edges=(HIPPOCAMPUS, CORTEX),
+        ),
+        OrganSpec(
+            coord=CORRECTION_GROWTH, protocol=GrowthProtocol,
+            in_edges=(BRAINSTEM,),
+            out_edges=(HIPPOCAMPUS, CORTEX),
+        ),
+        OrganSpec(
+            coord=CRYSTALLIZER, protocol=GrowthProtocol,
+            in_edges=(BRAINSTEM,), out_edges=(),
+        ),
+        OrganSpec(
+            coord=ROLE_EMERGENCE, protocol=GrowthProtocol,
+            in_edges=(BRAINSTEM,), out_edges=(),
+        ),
+    )
+
+
+ORGAN_SPECS: Final[tuple[OrganSpec, ...]] = _build_organ_specs()
+"""一只"正常猫"的完整器官解剖规范表。
+
+新增/迁移器官时只改此表一条记录，``BUILTIN_NERVOUS_SYSTEM`` 和
+``ORGAN_PROTOCOLS`` 自动同步。
+"""
+
+
+# -- 从 ORGAN_SPECS 派生的只读视图 --------------------------------
+
+ORGAN_PROTOCOLS: Final[dict[Organ, type]] = {
+    s.coord: s.protocol for s in ORGAN_SPECS if s.protocol is not None
+}
+"""每个器官坐标对应的 Protocol 类型（由 ORGAN_SPECS 聚合生成）。
+
+由 ``CatBase._assemble()`` 在自动挂载时读取，
+应用层器官实现不满足 Protocol 时启动即失败。
+"""
+
+
+def _aggregate_edges() -> tuple[Edge, ...]:
+    """从 ORGAN_SPECS 聚合所有默认允许边（去重 + 稳定排序）。"""
+    edges: set[Edge] = set()
+    for s in ORGAN_SPECS:
+        for src in s.in_edges:
+            edges.add((src, s.coord))
+        for dst in s.out_edges:
+            edges.add((s.coord, dst))
+    return tuple(sorted(edges))
+
+
+BUILTIN_NERVOUS_SYSTEM: Final[tuple[Edge, ...]] = _aggregate_edges()
+"""一张"正常猫"默认的允许边清单（由 ORGAN_SPECS 聚合生成）。"""
+
+
+# -- 禁止边（工程护栏，显式硬编码不走 OrganSpec） ---------------
+
+FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = (
+    # cerebrum 不应产生副作用。所有 side effect 收拢到 cerebellum→effectors 管道，
+    # 便于审计/拦截/mock
+    (CEREBRUM, PAWS),
+    # cerebrum 不应直接驱动发声。所有 side effect 收拢到 cerebellum→effectors 管道
+    (CEREBRUM, MOUTH),
 )
+"""默认禁止通路清单（优先级高于允许边）。"""
 
 
-def _make_default_allowed() -> list[Edge]:
-    """构造默认允许边清单（去重由 set 保证）。"""
-    edges: list[Edge] = []
-
-    # 感官 → 丘脑（丘脑是感官中枢）
-    for s in SENSORS:
-        edges.append((s, THALAMUS))
-
-    # 记忆回路：海马 ↔ 大脑皮层，海马 → 皮层（世界观）
-    edges.append((HIPPOCAMPUS, CEREBRUM))
-    edges.append((CEREBRUM, HIPPOCAMPUS))
-    edges.append((HIPPOCAMPUS, CORTEX))
-
-    # 运动回路：大脑 → 小脑 → 效应器
-    edges.append((CEREBRUM, CEREBELLUM))
-    for eff in EFFECTORS:
-        edges.append((CEREBELLUM, eff))
-
-    # 应激反射：杏仁核 → 小脑 / 嘴（绕开大脑）
-    edges.append((AMYGDALA, CEREBELLUM))
-    edges.append((AMYGDALA, MOUTH))
-
-    # 稳态：下丘脑 → 下丘脑（自律维护）/ 海马 / 皮层
-    edges.append((HYPOTHALAMUS, HYPOTHALAMUS))
-    edges.append((HYPOTHALAMUS, HIPPOCAMPUS))
-    edges.append((HYPOTHALAMUS, CORTEX))
-
-    # 工作记忆：前额叶 ↔ 大脑，前额叶 → 海马（检索）
-    edges.append((FRONTAL, CEREBRUM))
-    edges.append((CEREBRUM, FRONTAL))
-    edges.append((FRONTAL, HIPPOCAMPUS))
-
-    # 脑干：总调度，可到所有脑区/感官/嗓音
-    for target in (*BRAIN_REGIONS, *SENSORS, *VOICES):
-        if target == BRAINSTEM:
-            continue
-        edges.append((BRAINSTEM, target))
-
-    # 丘脑 → 大脑（路由后转高层），丘脑 → 脑干（回环）
-    edges.append((THALAMUS, CEREBRUM))
-    edges.append((THALAMUS, BRAINSTEM))
-    edges.append((THALAMUS, AMYGDALA))  # 感官有威胁直连杏仁核
-
-    return edges
-
-
-def _make_default_forbidden() -> list[Edge]:
-    """构造默认禁止边清单。"""
-    forbid: list[Edge] = []
-    # 生物学铁律：大脑不直连四肢/嘴（必须经小脑/脑干）
-    forbid.append((CEREBRUM, PAWS))
-    forbid.append((CEREBRUM, MOUTH))
-    return forbid
-
-
-BUILTIN_NERVOUS_SYSTEM: Final[tuple[Edge, ...]
-                              ] = tuple(_make_default_allowed())
-"""一张"正常猫"默认的允许边清单。"""
-
-FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = tuple(_make_default_forbidden())
-"""默认禁止通路清单（优先级高于允许）。"""
-
+# -- 装配函数 ----------------------------------------------------
 
 def apply_default_wiring(wiring: Wiring) -> None:
     """把默认神经解剖装到 wiring 上。
@@ -134,76 +294,24 @@ def apply_default_wiring(wiring: Wiring) -> None:
     wiring.forbid_many(FORBIDDEN_PATHS)
 
 
-# -- 分身猫 wiring 裁剪 ------------------------------------------------
-
-KITTEN_FORBIDDEN_METHODS: Final[frozenset[str]] = frozenset({
-    "spawn_kitten",
-    "absorb_merge",
-})
-"""分身猫禁止调用的方法名集合。
-
-由 ``KittenBase.signal()`` 校验——这些方法属于主猫专属能力，
-分身猫调用直接抛 :class:`IllegalNeuralPathError`。
-
-规则：
-- ``spawn_kitten``: 分身猫不能递归派生下级 kitten
-- ``absorb_merge``: 分身猫不能吸收合并（主猫专属）
-"""
-
-
-def apply_kitten_wiring(wiring: Wiring) -> None:
-    """为分身猫装配受限神经通路表。
-
-    在默认 wiring 基础上追加分身猫特有禁止边：
-    - ``(brain,cerebrum) → (brain,hippocampus)`` 改单向（只读记忆），
-      分身猫不改主猫记忆。
-
-    注意：方法级限制（spawn_kitten / absorb_merge）不在此处校验，
-    由 ``KittenBase.signal()`` 重写负责。
-    """
-    apply_default_wiring(wiring)
-    # 分身猫额外禁止：大脑皮层不能写入海马体（只读记忆）
-    # 注意：默认表里 cerebrum↔hippocampus 是双向的，
-    # 分身猫只保留 hippocampus→cerebrum（读取方向）
-    wiring.forbid(CEREBRUM, HIPPOCAMPUS)
-
-
-# -- 默认反射弧 path（供 meowagent 构造 Reflex 时引用） ---------
-
-DEFAULT_REFLEX_PATHS: Final[dict[str, tuple[Organ, ...]]] = {
-    # 文本对话：耳朵 → 丘脑 → 脑干 → 大脑 →（经小脑）→ 嘴
-    # 注意 path 只是"声明走过哪些器官"，实际 signal 调用仍逐跳校验
-    "text_dialogue": (
-        EARS, THALAMUS, BRAINSTEM, CEREBRUM, CEREBELLUM, MOUTH,
-    ),
-    # 视觉输入：眼睛 → 丘脑 → 大脑 →（经小脑）→ 嘴
-    "visual": (
-        EYES, THALAMUS, CEREBRUM, CEREBELLUM, MOUTH,
-    ),
-    # 危险应激：耳朵 → 丘脑 → 杏仁核 → 嘴（绕开大脑）
-    "danger": (
-        EARS, THALAMUS, AMYGDALA, MOUTH,
-    ),
-    # 动作命令：耳朵 → 丘脑 → 小脑 → 四肢（不经大脑，更快）
-    # 注意：严肃场景下仍应经脑干+大脑裁决；这里是快速反射通路
-    "action_order": (
-        EARS, THALAMUS, CEREBELLUM, PAWS,
-    ),
-}
-
-
 __all__ = [
-    # 分类常量
-    "BRAIN", "SENSE", "VOICE", "STORAGE",
-    # 器官坐标
+    # 分类常量（re-export from anatomy）
+    "BRAIN", "SENSE", "VOICE", "STORAGE", "GROWTH",
+    # 器官坐标（re-export from anatomy）
     "THALAMUS", "HIPPOCAMPUS", "CEREBRUM", "CEREBELLUM", "AMYGDALA",
     "FRONTAL", "HYPOTHALAMUS", "CORTEX", "BRAINSTEM",
     "EARS", "EYES", "WHISKERS", "PAWS",
+    "ANOMALY_GROWTH", "CORRECTION_GROWTH",
+    "CRYSTALLIZER", "ROLE_EMERGENCE",
     "MOUTH", "PURR", "TAIL",
+
     "SENSORS", "VOICES", "EFFECTORS", "BRAIN_REGIONS",
+    # v0.5.10 器官规范表
+    "OrganSpec", "ORGAN_SPECS",
     # 表 + 装配函数
     "BUILTIN_NERVOUS_SYSTEM", "FORBIDDEN_PATHS",
+    "ORGAN_PROTOCOLS",
     "apply_default_wiring",
-    "apply_kitten_wiring", "KITTEN_FORBIDDEN_METHODS",
-    "DEFAULT_REFLEX_PATHS",
+
+
 ]

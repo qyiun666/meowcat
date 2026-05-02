@@ -11,6 +11,14 @@ from pydantic import BaseModel, Field
 
 from meowcat.protocols import BrainStemProtocol
 
+__all__ = [
+    "EntityShape", "ConnectionShape", "EpisodeShape", "FocusShape",
+    "SubTaskShape", "TaskResultShape", "OrchestratorReportShape",
+    "MaintenanceReportShape", "CandidateShape", "LocateResultShape",
+    "StageEvent", "PipelineContext", "LoopEvent",
+    "MergeProposalShape", "KittenCapability",
+]
+
 # -- 脑区形状 -----------------------------------------------------
 
 
@@ -131,12 +139,12 @@ class LocateResultShape(BaseModel):
 # -- Pipeline / 事件 ----------------------------------------------
 
 
-EventKind = Literal["thinking", "output", "short_circuit"]
+_EventKind = Literal["thinking", "output", "short_circuit"]
 
 
 class StageEvent(BaseModel):
     """Stage 产出的统一事件。"""
-    kind: EventKind
+    kind: _EventKind
     content: str = ""
     reply: str | None = None
 

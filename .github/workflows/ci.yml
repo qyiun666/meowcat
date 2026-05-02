@@ -32,10 +32,20 @@ jobs:
       - name: 零 meowagent 依赖检查
         run: |
           python -c "import meowcat; print('meowcat', meowcat.__version__)"
-          python -c "import sys; sys.path.insert(0,'.'); \
-            import ast, os; \
-            code = [open(f'meowcat/{f}').read() for f in os.listdir('meowcat') if f.endswith('.py')] + \
-                   [open(f'meowcat/defaults/{f}').read() for f in os.listdir('meowcat/defaults') if f.endswith('.py')]; \
-            combined = '\n'.join(code); \
-            assert 'import meowagent' not in combined, 'FATAL: meowcat imports meowagent!'; \
-            print('Purity check PASSED')"
+          python -c "
+          import ast, os, pathlib
+          bad = []
+          for f in pathlib.Path('meowcat').rglob('*.py'):
+              try:
+                  tree = ast.parse(f.read_text())
+              except SyntaxError:
+                  continue
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import) and any('meowagent' in a.name for a in node.names):
+                      bad.append(str(f))
+                  elif isinstance(node, ast.ImportFrom) and node.module and 'meowagent' in node.module:
+                      bad.append(str(f))
+          if bad:
+              raise SystemExit(f'FATAL: meowcat imports meowagent in: {bad}')
+          print('Purity check PASSED')
+          "
