@@ -32,7 +32,7 @@ meowcat builds agents from atomic to composite:
 
 | Layer | Module       | Concept                                                     |
 | ----- | ------------ | ----------------------------------------------------------- |
-| Organ | `biology.py` | 17 default organs (THALAMUS, HIPPOCAMPUS, CEREBRUM...)      |
+| Organ | `biology.py` | 20 default organs (THALAMUS, HIPPOCAMPUS, CEREBRUM...)      |
 | Path  | `path.py`    | 25 builtin atomic paths ("locate", "deep_reason"...)        |
 | Chain | `chain.py`   | 5 builtin chains (MEMORY_SEARCH_CHAIN, FULL_REASONING...)   |
 | Loop  | `loops.py`   | 5 default loops (CONVERSATION_LOOP, TOOL_EXECUTION_LOOP...) |
