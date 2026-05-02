@@ -1,0 +1,72 @@
+"""python -m meowcat new <name> — 猫项目脚手架。
+
+对标 Flask ``flask new`` / FastAPI ``fastapi new`` — 极简。
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+TEMPLATES: dict[str, str] = {
+    "cat.py": '''"""{{name}} — 你的定制猫。"""
+from meowcat import CatBase, assemble_default_cat
+
+
+class {{name_class}}(CatBase):
+    """你的猫。挂自定义器官后调 assemble_default_cat。"""
+    pass
+
+
+async def main() -> None:
+    cat = {{name_class}}("{{name}}")
+    assemble_default_cat(cat)
+    await cat.start()
+    print(f"{{name}} is ready.")
+    result = await cat.run_loop("conversation", message="你好，介绍一下你自己")
+    print(result)
+    await cat.shutdown()
+''',
+    "main.py": '''"""{{name}} 入口。"""
+import asyncio
+from cat import main
+
+if __name__ == "__main__":
+    asyncio.run(main())
+''',
+}
+
+
+def new_project(name: str, target_dir: Path | None = None) -> Path:
+    """生成 meowcat 骨架项目。"""
+    dir_ = (target_dir or Path.cwd()) / name
+    dir_.mkdir(parents=True, exist_ok=True)
+
+    name_class = "".join(w.capitalize()
+                         for w in name.replace("-", "_").split("_"))
+
+    for filename, template in TEMPLATES.items():
+        content = template.replace("{{name}}", name).replace(
+            "{{name_class}}", name_class)
+        (dir_ / filename).write_text(content)
+
+    print(f"Created {dir_}/")
+    print(f"  {name}/cat.py")
+    print(f"  {name}/main.py")
+    print(f"\ncd {name} && python main.py")
+    return dir_
+
+
+def main() -> None:
+    """python -m meowcat CLI 入口。"""
+    if len(sys.argv) < 3 or sys.argv[1] != "new":
+        print("Usage: python -m meowcat new <project-name>")
+        print("Example: python -m meowcat new my-cat")
+        sys.exit(1)
+
+    name = sys.argv[2]
+    new_project(name)
+
+
+if __name__ == "__main__":
+    main()
