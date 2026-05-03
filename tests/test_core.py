@@ -129,6 +129,68 @@ class TestCreateCat:
         # amygdalla 未提供，应为 Noop
         assert isinstance(cat.amygdala, NoopAmygdala)
 
+    def test_on_before_freeze_called_before_freeze(self) -> None:
+        """on_before_freeze 钩子在 wiring freeze 之前调用。"""
+        hook_called = []
+        wiring_frozen_at_hook = []
+
+        async def hook(cat: CatBase) -> None:
+            hook_called.append(True)
+            wiring_frozen_at_hook.append(cat.wiring._frozen)
+
+        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+                         on_before_freeze=hook)
+        assert len(hook_called) == 1
+        # 钩子执行时 wiring 还未冻结
+        assert wiring_frozen_at_hook[0] is False
+        # 钩子执行后 wiring 已冻结
+        assert cat.wiring._frozen is True
+
+    def test_on_assembled_called_after_freeze(self) -> None:
+        """on_assembled 钩子在 wiring freeze 之后调用。"""
+        hook_called = []
+        wiring_frozen_at_hook = []
+
+        async def hook(cat: CatBase) -> None:
+            hook_called.append(True)
+            wiring_frozen_at_hook.append(cat.wiring._frozen)
+
+        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+                         on_assembled=hook)
+        assert len(hook_called) == 1
+        # on_assembled 执行时 wiring 已经冻结
+        assert wiring_frozen_at_hook[0] is True
+
+    def test_both_hooks_execution_order(self) -> None:
+        """两个钩子都传入时，执行顺序: on_before_freeze → freeze → on_assembled。"""
+        order = []
+
+        async def before_hook(cat: CatBase) -> None:
+            order.append("before")
+            assert cat.wiring._frozen is False
+
+        async def after_hook(cat: CatBase) -> None:
+            order.append("after")
+            assert cat.wiring._frozen is True
+
+        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+                         on_before_freeze=before_hook,
+                         on_assembled=after_hook)
+        assert order == ["before", "after"]
+
+    def test_on_before_freeze_can_inject_organ(self) -> None:
+        """on_before_freeze 钩子中可以 mount 新器官。"""
+        async def hook(cat: CatBase) -> None:
+            cat.mount("brain", "custom_organ", NoopAmygdala())
+            cat.wiring.connect(("brain", "custom_organ"), ("brain", "thalamus"))
+
+        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+                         on_before_freeze=hook)
+        # 钩子中注入的器官可见
+        assert cat.has_organ("brain", "custom_organ")
+        # wiring 边已建立（在 freeze 前）
+        assert cat.wiring.is_allowed(("brain", "custom_organ"), ("brain", "thalamus"))
+
 
 class TestModels:
     """所有 Shape 构造 + 序列化。"""

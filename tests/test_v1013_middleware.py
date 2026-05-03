@@ -403,6 +403,100 @@ class TestTimeoutGuard:
 
         anyio.run(_run)
 
+    def test_on_timeout_sync_callback(self) -> None:
+        """超时时触发同步 on_timeout 回调。"""
+        import anyio
+
+        cat = _new_cat()
+        cat.mount("brain", "b", _DummyOrgan())
+
+        called = []
+
+        def _on_timeout(ctx):
+            called.append(ctx.method)
+
+        cat.use_middleware(TimeoutGuard(
+            deadline=time.monotonic() - 1,
+            on_timeout=_on_timeout,
+        ))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "a"), ("brain", "b"), "echo", "hello",
+            )
+            assert result is None
+            assert called == ["echo"]
+
+        anyio.run(_run)
+
+    def test_on_timeout_async_callback(self) -> None:
+        """超时时触发异步 on_timeout 回调。"""
+        import anyio
+
+        cat = _new_cat()
+        cat.mount("brain", "b", _DummyOrgan())
+
+        called = []
+
+        async def _on_timeout(ctx):
+            called.append(ctx.method)
+
+        cat.use_middleware(TimeoutGuard(
+            deadline=time.monotonic() - 1,
+            on_timeout=_on_timeout,
+        ))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "a"), ("brain", "b"), "echo", "hello",
+            )
+            assert result is None
+            assert called == ["echo"]
+
+        anyio.run(_run)
+
+    def test_on_timeout_not_called_before_deadline(self) -> None:
+        """未超时时不触发 on_timeout 回调。"""
+        import anyio
+
+        cat = _new_cat()
+        cat.mount("brain", "b", _DummyOrgan())
+
+        called = []
+
+        def _on_timeout(ctx):
+            called.append(ctx.method)
+
+        cat.use_middleware(TimeoutGuard(
+            deadline=time.monotonic() + 30,
+            on_timeout=_on_timeout,
+        ))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "a"), ("brain", "b"), "echo", "hello",
+            )
+            assert result is not None
+            assert called == []
+
+        anyio.run(_run)
+
+    def test_on_timeout_none_no_crash(self) -> None:
+        """不传 on_timeout 时无副作用（向后兼容）。"""
+        import anyio
+
+        cat = _new_cat()
+        cat.mount("brain", "b", _DummyOrgan())
+        cat.use_middleware(TimeoutGuard(deadline=time.monotonic() - 1))
+
+        async def _run() -> None:
+            result = await cat.signal(
+                ("brain", "a"), ("brain", "b"), "echo", "hello",
+            )
+            assert result is None
+
+        anyio.run(_run)
+
 
 # -- 10. 内置中间件: ContextInjector --------------------------------
 

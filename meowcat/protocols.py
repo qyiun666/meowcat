@@ -59,6 +59,8 @@ if TYPE_CHECKING:
         LocateResultShape,
         MaintenanceReportShape,
         MergeProposalShape,
+        PipelineContext,
+        StageEvent,
         SubTaskShape,
     )
 
@@ -94,7 +96,7 @@ class StageProtocol(Protocol):
     **Implemented by**: app layer (Pipeline Stage)
     """
     name: str
-    async def run(self, ctx: Any) -> AsyncIterator[Any]: ...
+    async def run(self, ctx: PipelineContext) -> AsyncIterator[StageEvent]: ...
 
 
 # -- Security (v1.0.18) -----------------------------------------------
@@ -109,7 +111,8 @@ class SecurityPolicyProtocol(Protocol):
     """
 
     def is_danger(self, input: str) -> bool: ...
-    def assess_tool_risk(self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
+    def assess_tool_risk(
+        self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
 
 
 # -- Kitten blueprint ------------------------------------------------
@@ -136,7 +139,8 @@ class KittenProtocol(Protocol):
     role: str
     workspace: Any
     capability: KittenCapability
-    memory_snapshot: dict[str, Any]  # read-only memory snapshot injected at spawn
+    # read-only memory snapshot injected at spawn
+    memory_snapshot: dict[str, Any]
 
     # organs only
     cerebellum: LLMBrainProtocol

@@ -566,6 +566,151 @@ class TestCliAdapter:
 
 
 # ═══════════════════════════════════════════════════════════════════
+# 6b. CliAdapter — queue mode (v1.0.4 Textual TUI)
+# ═══════════════════════════════════════════════════════════════════
+
+class TestCliAdapterQueue:
+    """CliAdapter queue 模式 — Textual TUI async event loop 兼容。"""
+
+    def test_queue_mode_construct(self) -> None:
+        """queue 模式构造成功，_queue 不为 None。"""
+        adapter = CliAdapter(mode="queue")
+        assert adapter._mode == "queue"
+        assert adapter._queue is not None
+        assert isinstance(adapter, IoAdapterProtocol)
+
+    def test_stdio_mode_default(self) -> None:
+        """默认 mode='stdio'，_queue 为 None。"""
+        adapter = CliAdapter()
+        assert adapter._mode == "stdio"
+        assert adapter._queue is None
+
+    def test_invalid_mode_raises(self) -> None:
+        """非法 mode 抛 ValueError。"""
+        with pytest.raises(ValueError, match="mode"):
+            CliAdapter(mode="invalid")
+
+    @pytest.mark.asyncio
+    async def test_enqueue_without_queue_raises(self) -> None:
+        """stdio 模式下调用 enqueue 抛 RuntimeError。"""
+        adapter = CliAdapter()
+        with pytest.raises(RuntimeError, match="enqueue"):
+            await adapter.enqueue("hello")
+
+    @pytest.mark.asyncio
+    async def test_queue_single_message(self) -> None:
+        """queue 模式：enqueue 一条消息 → on_message 被调用。"""
+        adapter = CliAdapter(mode="queue")
+        calls: list[tuple[str, SignalContext]] = []
+
+        async def on_message(text: str, ctx: SignalContext) -> str | None:
+            calls.append((text, ctx))
+            return f"reply: {text}"
+
+        async def on_stream(text, ctx):
+            return None
+
+        # 启动 serve loop
+        serve_task = asyncio.create_task(
+            adapter.serve(on_message, on_stream))
+
+        # 喂入消息
+        await adapter.enqueue("hello queue")
+
+        # 等待处理
+        await asyncio.sleep(0.1)
+
+        # 停止
+        await adapter.stop()
+        serve_task.cancel()
+        try:
+            await serve_task
+        except asyncio.CancelledError:
+            pass
+
+        assert len(calls) == 1
+        assert calls[0][0] == "hello queue"
+        assert calls[0][1].platform == "cli"
+        assert calls[0][1].user_id == "cli-user"
+
+    @pytest.mark.asyncio
+    async def test_queue_multiple_messages(self) -> None:
+        """queue 模式：多条消息依次处理。"""
+        adapter = CliAdapter(mode="queue")
+        calls: list[str] = []
+
+        async def on_message(text, ctx):
+            calls.append(text)
+            return f"r:{text}"
+
+        async def on_stream(text, ctx):
+            return None
+
+        serve_task = asyncio.create_task(
+            adapter.serve(on_message, on_stream))
+
+        await adapter.enqueue("msg1")
+        await adapter.enqueue("msg2")
+        await adapter.enqueue("msg3")
+
+        await asyncio.sleep(0.15)
+
+        await adapter.stop()
+        serve_task.cancel()
+        try:
+            await serve_task
+        except asyncio.CancelledError:
+            pass
+
+        assert calls == ["msg1", "msg2", "msg3"]
+
+    @pytest.mark.asyncio
+    async def test_queue_send_to_stdout(self) -> None:
+        """queue 模式下 send() 仍然输出到 stdout。"""
+        adapter = CliAdapter(mode="queue")
+        with patch("builtins.print") as mock_print:
+            await adapter.send("queue output", "s1")
+            mock_print.assert_called_once_with("queue output", flush=True)
+
+    @pytest.mark.asyncio
+    async def test_queue_stream_chunk(self) -> None:
+        """queue 模式下 stream_chunk 正常输出。"""
+        adapter = CliAdapter(mode="queue")
+        with patch("builtins.print") as mock_print:
+            await adapter.stream_chunk("chunk", "s1")
+            mock_print.assert_called_once_with("chunk", end="", flush=True)
+
+    @pytest.mark.asyncio
+    async def test_queue_stop_before_enqueue(self) -> None:
+        """stop 后 serve loop 退出，不再处理消息。"""
+        adapter = CliAdapter(mode="queue")
+        calls: list[str] = []
+
+        async def on_message(text, ctx):
+            calls.append(text)
+            return "ok"
+
+        async def on_stream(text, ctx):
+            return None
+
+        serve_task = asyncio.create_task(
+            adapter.serve(on_message, on_stream))
+
+        # 先 cancel serve task 真正停止 loop
+        serve_task.cancel()
+        try:
+            await serve_task
+        except asyncio.CancelledError:
+            pass
+
+        # serve loop 已退出，enqueue 不再触发 on_message
+        await adapter.enqueue("after stop")
+        await asyncio.sleep(0.1)
+
+        assert calls == []
+
+
+# ═══════════════════════════════════════════════════════════════════
 # 7. WebhookAdapter
 # ═══════════════════════════════════════════════════════════════════
 

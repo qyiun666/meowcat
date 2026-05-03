@@ -11,7 +11,10 @@ conversation Stages in order.
 
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
+
+if TYPE_CHECKING:
+    from meowcat.models import PipelineContext, StageEvent
 
 from meowcat.pluggable import Pluggable
 
@@ -46,7 +49,7 @@ class BaseStage(Pluggable):
     def diagnose(self) -> dict[str, Any]:
         return {}
 
-    async def run(self, ctx: Any) -> AsyncIterator[Any]:
+    async def run(self, ctx: PipelineContext) -> AsyncIterator[StageEvent]:
         """Default no-op: yields nothing. Override in subclass."""
         if False:
             yield

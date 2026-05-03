@@ -8,9 +8,10 @@ directly via ``cat.use_middleware(...)``.
 
 from __future__ import annotations
 
+import inspect
 import logging
 import time
-from typing import Any
+from typing import Any, Callable
 
 from meowcat.nervous import SignalCall, SignalMiddleware
 
@@ -87,18 +88,36 @@ class TimeoutGuard:
 
     Args:
         deadline: deadline time (time.monotonic() timestamp)
+        on_timeout: optional callback invoked when timeout occurs.
+            Receives :class:`SignalCall` ctx. Can be sync or async.
+            Use to notify organs (e.g. Amygdala recording anomaly).
 
     Example:
 
         # all signals blocked after 2 seconds
         cat.use_middleware(TimeoutGuard(deadline=time.monotonic() + 2.0))
+
+        # with timeout notification
+        cat.use_middleware(TimeoutGuard(
+            deadline=time.monotonic() + 2.0,
+            on_timeout=lambda ctx: cat.emit("paws_timeout", ctx),
+        ))
     """
 
-    def __init__(self, deadline: float) -> None:
+    def __init__(
+        self,
+        deadline: float,
+        on_timeout: Callable[[SignalCall], Any] | None = None,
+    ) -> None:
         self._deadline = deadline
+        self._on_timeout = on_timeout
 
     async def before(self, ctx: SignalCall) -> SignalCall | None:
         if time.monotonic() >= self._deadline:
+            if self._on_timeout is not None:
+                result = self._on_timeout(ctx)
+                if inspect.isawaitable(result):
+                    await result
             return None  # short-circuit: timeout
         return ctx
 

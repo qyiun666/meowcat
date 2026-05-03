@@ -10,7 +10,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from meowcat.assembly import CatBase, mount_known_organs
+import anyio
+
+from meowcat.assembly import CatBase, CatHook, mount_known_organs
 from meowcat.defaults.organs import (
     NoopAmygdala,
     NoopBrainstem,
@@ -128,6 +130,9 @@ def create_cat(
     shared_store: SharedStorageProtocol | None = None,
     # ━━ Reflex arcs ━━
     reflexes: list[Reflex] | None = None,
+    # ━━ Assembly hooks ━━
+    on_before_freeze: CatHook | None = None,
+    on_assembled: CatHook | None = None,
 ) -> CatBase:
     """Create a fully assembled cat with one line of code.
 
@@ -152,6 +157,10 @@ def create_cat(
         renovate_organs: Organ names to upgrade to简装修 when renovated=False.
         brainstem: Brainstem dispatcher, not mounted when None.
         reflexes: Reflex arc list.
+        on_before_freeze: Async hook called after wiring + reflex registration,
+            before freeze. Use for injecting extra organs / wiring paths.
+        on_assembled: Async hook called after freeze, before return.
+            Use for registering Path/Chain/Loop, setting runtime attributes.
         Other organs: Optional, defaults determined by ``renovated`` mode.
 
     Returns:
@@ -244,8 +253,16 @@ def create_cat(
         for ref in reflexes:
             cat.register_reflex(ref)
 
+    # -- Assembly hook: before freeze (inject extra organs / wiring) --
+    if on_before_freeze:
+        anyio.run(on_before_freeze, cat)
+
     # Freeze
     cat.freeze_nervous_system()
+
+    # -- Assembly hook: after freeze (register paths / set runtime attrs) --
+    if on_assembled:
+        anyio.run(on_assembled, cat)
 
     return cat
 

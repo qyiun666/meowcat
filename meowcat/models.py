@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from meowcat.protocols import BrainStemProtocol
+from meowcat.protocols import AdapterProtocol, BrainStemProtocol, CatProtocol
 
 __all__ = [
     "EntityShape", "ConnectionShape", "EpisodeShape", "FocusShape",
@@ -182,6 +182,11 @@ class PipelineContext(BaseModel):
     short_circuited: bool = False
     final_reply: str | None = None
     extras: dict[str, Any] = Field(default_factory=dict)
+    # v1.0.1: third-party adaptation fields
+    cat: CatProtocol | None = None
+    turn: int = 0
+    session_id: str = ""
+    adapter: AdapterProtocol | None = None
 
 
 class LoopEvent(BaseModel):
