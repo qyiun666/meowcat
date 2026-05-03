@@ -1,11 +1,10 @@
-"""meowcat 独立测试: v0.5.22 新增原语（Stethoscope / Needle / Pathways）。
+"""meowcat 独立测试: v0.5.22 新增原语（Stethoscope / Needle）。
 
 验证:
 - Stethoscope.probe_all / probe_category / probe_organ
 - CatBase.health_check / brain_check
 - Needle.poke / poke_memory / poke_focus / poke_worldview
 - Needle 环境变量禁用
-- Pathways 单步通路 + build_conversation_pipeline
 """
 
 from __future__ import annotations
@@ -20,7 +19,6 @@ from meowcat import CatBase
 from meowcat.diagnose import Stethoscope
 from meowcat.errors import OrganNotMountedError
 from meowcat.inject import Needle, NeedleDisabledError
-from meowcat.pathways import Pathways
 
 
 # -- 测试用器官 ---------------------------------------------------
@@ -311,89 +309,3 @@ class TestNeedle:
             with pytest.raises(NeedleDisabledError):
                 Needle(cat)
 
-
-# -- Pathways -----------------------------------------------------
-
-
-class TestPathways:
-    """Pathways 预设通路 — 使用未映射坐标绕过 Protocol 契约校验。"""
-
-    def test_build_conversation_pipeline(self):
-        """端到端对话流水线。使用未映射坐标避免 v0.5.11 Protocol 拦截。"""
-        cat = CatBase("test")
-
-        # 使用未映射坐标（不在 biology.ORGAN_PROTOCOLS 中），
-        # 绕过 Protocol 契约校验以测试通路编排逻辑。
-        TH = ("brain", "_thalamus")
-        HC = ("brain", "_hippocampus")
-        CB = ("brain", "_cerebrum")
-        CL = ("brain", "_cerebellum")
-        MH = ("voice", "_mouth")
-
-        class FakeHippocampus:
-            name = "hippo"
-
-            async def locate(self, query=None, **kw):
-                return {"found": query}
-
-        class FakeCerebrum:
-            name = "cerebrum"
-
-            async def generate(self, prompt=None, context=None, **kw):
-                return f"reply to: {prompt}"
-
-        class FakeCerebellum:
-            name = "cerebellum"
-
-            async def say(self, text=None, **kw):
-                return "said"
-
-        class FakeMouth:
-            name = "mouth"
-
-            async def say(self, text=None, **kw):
-                return f"mouth said: {text}"
-
-        cat.mount(*TH, object())  # thalamus 中继
-        cat.mount(*HC, FakeHippocampus())
-        cat.mount(*CB, FakeCerebrum())
-        cat.mount(*CL, FakeCerebellum())
-        cat.mount(*MH, FakeMouth())
-
-        cat.wiring.connect(TH, HC)
-        cat.wiring.connect(TH, CB)
-        cat.wiring.connect(TH, CL)
-        cat.wiring.connect(CL, MH)
-
-        # 使用临时打补丁的 Pathways（用未映射坐标）
-        from meowcat.pathways import Pathways as Base
-
-        class TestPathways(Base):
-            @staticmethod
-            async def locate(cat, query):
-                return await cat.signal(TH, HC, "locate", query=query)
-
-            @staticmethod
-            async def deep_reason(cat, prompt, context=""):
-                return await cat.signal(TH, CB, "generate", prompt=prompt, context=context)
-
-            @staticmethod
-            async def say(cat, text):
-                return await cat.signal(CL, MH, "say", text=text)
-
-            @staticmethod
-            def build_conversation_pipeline(cat):
-                async def pipeline(user_input):
-                    memory = await TestPathways.locate(cat, user_input)
-                    context = str(memory) if memory else ""
-                    reply = await TestPathways.deep_reason(cat, user_input, context=context)
-                    await TestPathways.say(cat, reply)
-                    return reply
-                return pipeline
-
-        async def _run():
-            pipeline = TestPathways.build_conversation_pipeline(cat)
-            result = await pipeline("你好")
-            assert "reply to: 你好" == result
-
-        anyio.run(_run)

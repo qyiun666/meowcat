@@ -96,4 +96,14 @@ class GatewayProtocol(Protocol):
         ...
 
 
-__all__ = ["SignalContext", "IoAdapterProtocol", "GatewayProtocol"]
+__all__ = ["SignalContext", "IoAdapterProtocol", "GatewayProtocol", "HTTP_REASONS"]
+
+
+# RFC 7230 HTTP reason phrases — shared by all HTTP-based adapters
+HTTP_REASONS: dict[int, str] = {
+    200: "OK",
+    400: "Bad Request",
+    403: "Forbidden",
+    404: "Not Found",
+    500: "Internal Server Error",
+}

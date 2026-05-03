@@ -43,11 +43,11 @@ class Pipeline:
         silently skips if fields are missing — does not decide for the business layer."""
         try:
             ctx.short_circuited = True
-        except (AttributeError, ValueError):
+        except AttributeError:
             pass
         try:
             ctx.final_reply = getattr(ev, "reply", None)
-        except (AttributeError, ValueError):
+        except AttributeError:
             pass
 
 

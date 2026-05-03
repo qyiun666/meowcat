@@ -12,9 +12,26 @@ This file has zero third-party dependencies, zero meowagent imports.
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Final
 
 from meowcat.wiring import Organ
+
+
+class ImplementationStyle(str, Enum):
+    """器官内部实现风格 — 插头类型.
+
+    - ALGORITHM: 纯算法 (正则, 字典查找, 字符串处理)
+    - RULE:      声明式规则 (黑白名单, 阈值触发)
+    - MODEL:     ML模型 (LLM, 分类器, 嵌入)
+    - HYBRID:    混合 (算法 + 模型组合)
+
+    器官 = 插槽 (入口出口 Protocol), 实现 = 插头 (任选风格).
+    """
+    ALGORITHM = "algorithm"
+    RULE = "rule"
+    MODEL = "model"
+    HYBRID = "hybrid"
 
 # -- Node category constants -----------------------------------------------
 
@@ -103,6 +120,7 @@ ORGAN_BY_NAME: Final[dict[str, Organ]] = {
 
 
 __all__ = [
+    "ImplementationStyle",
     # category constants
     "BRAIN", "SENSE", "VOICE", "STORAGE", "GROWTH",
     # brain region coordinates

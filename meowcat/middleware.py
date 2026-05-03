@@ -67,7 +67,9 @@ class RateLimiter:
     async def before(self, ctx: SignalCall) -> SignalCall | None:
         key = (ctx.to_organ, ctx.method)
         now = time.monotonic()
-        bucket = self._buckets.setdefault(key, [])
+        if key not in self._buckets:
+            self._buckets[key] = []
+        bucket = self._buckets[key]
         # purge expired entries
         cutoff = now - self._window
         bucket[:] = [t for t in bucket if t > cutoff]

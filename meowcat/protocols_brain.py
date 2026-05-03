@@ -18,7 +18,7 @@ __all__ = [
     "BrainStemProtocol", "HippocampusProtocol", "ThalamusProtocol",
     "LLMBrainProtocol", "AmygdalaProtocol", "FrontalCortexProtocol",
     "HypothalamusProtocol", "CortexProtocol",
-    "LLMProviderProtocol", "GrowthProtocol",
+    "LLMProviderProtocol",
     "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
     "CrystallizerProtocol", "RoleEmergenceProtocol",
 ]
@@ -350,19 +350,3 @@ class RoleEmergenceProtocol(OrganProtocol, Protocol):
 
     def record(self, pattern: str, evidence: str) -> Any: ...
     def diagnose(self) -> dict[str, Any]: ...
-
-
-@runtime_checkable
-class GrowthProtocol(OrganProtocol, Protocol):
-    """Growth organ protocol — deprecated (v1.0.8).
-
-    Split into four named protocols: AnomalyGrowthProtocol /
-    CorrectionGrowthProtocol / CrystallizerProtocol /
-    RoleEmergenceProtocol.
-    Retained as a legacy compat alias; new code should use named protocols.
-    """
-
-    # record() is the common method across four growth organs;
-    # signatures vary per organ.
-    # The framework layer does not constrain parameters;
-    # only validates pathways at the wiring level.

@@ -26,6 +26,9 @@ class PerceptionContext(BaseModel):
     """Execution context for ``cat.perceive``.
 
     Used by Reflex.stages for shared state; serves as ``ctx`` on the Pipeline.
+
+    v1.0.18: added reply / set_state / get_state / accumulate_reply for Stage
+    bypass refactoring (no more bs._xxx private attribute access).
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -48,8 +51,25 @@ class PerceptionContext(BaseModel):
     final_reply: str | None = None
     """Final reply (for CLI/TUI consumption)."""
 
+    reply: str = ""
+    """Accumulated reply content across Stages (v1.0.18)."""
+
     extras: dict[str, Any] = Field(default_factory=dict)
     """Catch-all bag for app-layer custom fields."""
+
+    # ── helpers for cross-Stage state (v1.0.18) ──
+
+    def set_state(self, key: str, value: Any) -> None:
+        """Persist a named value in extras for downstream Stages."""
+        self.extras[key] = value
+
+    def get_state(self, key: str, default: Any = None) -> Any:
+        """Read a named value from extras; returns default if missing."""
+        return self.extras.get(key, default)
+
+    def accumulate_reply(self, content: str) -> None:
+        """Append content to the accumulated reply string."""
+        self.reply += content
 
 
 # -- Modality inference ---------------------------------------------------

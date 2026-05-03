@@ -14,16 +14,7 @@ import json
 import logging
 from typing import Any, AsyncIterator, Awaitable, Callable
 
-from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
-
-# HTTP status code → RFC 7230 reason phrase
-_HTTP_REASONS: dict[int, str] = {
-    200: "OK",
-    400: "Bad Request",
-    403: "Forbidden",
-    404: "Not Found",
-    500: "Internal Server Error",
-}
+from meowcat.gateway.protocol import HTTP_REASONS, IoAdapterProtocol, SignalContext
 
 _logger = logging.getLogger(__name__)
 
@@ -155,7 +146,7 @@ class WebhookAdapter:
     async def _respond(writer: asyncio.StreamWriter, status: int) -> None:
         """Send simple HTTP response."""
         body = b"OK" if status == 200 else b""
-        reason = _HTTP_REASONS.get(status, "OK")
+        reason = HTTP_REASONS.get(status, "OK")
         writer.write(
             f"HTTP/1.1 {status} {reason}\r\n"
             f"Content-Length: {len(body)}\r\n"

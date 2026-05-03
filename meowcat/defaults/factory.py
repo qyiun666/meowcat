@@ -27,6 +27,29 @@ from meowcat.defaults.organs import (
     NoopThalamus,
     NoopWhiskers,
 )
+from meowcat.defaults.renovated import (
+    RenovatedAmygdala,
+    RenovatedAnomalyGrowth,
+    RenovatedBrainstem,
+    RenovatedCorrectionGrowth,
+    RenovatedCortex,
+    RenovatedCrystallizer,
+    RenovatedEars,
+    RenovatedEyes,
+    RenovatedFrontal,
+    RenovatedHippocampus,
+    RenovatedHypothalamus,
+    RenovatedMouth,
+    RenovatedPaws,
+    RenovatedPurr,
+    RenovatedRoleEmergence,
+    RenovatedTail,
+    RenovatedThalamus,
+    RenovatedWhiskers,
+)
+from meowcat.defaults.presets import KeywordPreset, PromptPreset
+
+_UNSET = object()
 from meowcat.defaults.stores import (
     InMemoryGraphStore,
     InMemoryL6Store,
@@ -65,9 +88,17 @@ VOICE = "voice"
 def create_cat(
     cat_id: str,
     *,
-    # ━━ Required: LLM organs (no default, must provide) ━━
+    # ━━ Required: LLM organs ━━
     cerebrum: LLMBrainProtocol,
-    cerebellum: LLMBrainProtocol | None = None,
+    cerebellum: LLMBrainProtocol | None = _UNSET,  # type: ignore[assignment]
+    # ━━ Renovation mode ━━
+    renovated: bool = True,
+    bare_organs: set[str] | None = None,
+    renovate_organs: set[str] | None = None,
+    # ━━ Keyword & Prompt presets (二语 行业 可挂载) ━━
+    keyword: KeywordPreset | None = None,
+    prompt: PromptPreset | None = None,
+    cat_name: str = "MeowCat",
     # ━━ Optional: brain regions ━━
     hippocampus: HippocampusProtocol | None = None,
     thalamus: ThalamusProtocol | None = None,
@@ -85,6 +116,11 @@ def create_cat(
     mouth: Any = None,
     purr: Any = None,
     tail: Any = None,
+    # ━━ Growth organs ━━
+    anomaly_growth: Any = None,
+    correction_growth: Any = None,
+    crystallizer: Any = None,
+    role_emergence: Any = None,
     # ━━ Storage ━━
     graph_store: GraphStorageProtocol | None = None,
     l6_store: L6StorageProtocol | None = None,
@@ -95,13 +131,28 @@ def create_cat(
 ) -> CatBase:
     """Create a fully assembled cat with one line of code.
 
+    Two tiers of default organs:
+
+    * **简装修** (renovated=True, default): pre-installed with useful defaults —
+      safety regex, keyword routing, memory store, tool integration.
+      Out-of-box working cat. Production apps extend/replace as needed.
+    * **毛坯** (renovated=False): pure Noop* stubs — methods return empty/safe
+      defaults. Use for full control or testing wiring.
+
+    Per-organ overrides with ``bare_organs`` / ``renovate_organs``:
+      - ``renovated=True``: add organ names to ``bare_organs`` to keep毛坯
+      - ``renovated=False``: add organ names to ``renovate_organs`` to upgrade
+
     Args:
         cat_id: Unique ID of the cat.
         cerebrum: **Required** A-brain instance (satisfying LLMBrainProtocol).
         cerebellum: B-brain instance, defaults to same instance as cerebrum.
-        brainstem: Brainstem dispatcher, not mounted when None (minimal cat doesn't need it).
-        reflexes: Reflex arc list, no reflex registered when None (caller injects manually).
-        Other organs: Optional, defaults to Noop* / InMemory* if not provided.
+        renovated: Use简装修 (True) or毛坯 (False). Default True.
+        bare_organs: Organ names to keep as毛坯 when renovated=True.
+        renovate_organs: Organ names to upgrade to简装修 when renovated=False.
+        brainstem: Brainstem dispatcher, not mounted when None.
+        reflexes: Reflex arc list.
+        Other organs: Optional, defaults determined by ``renovated`` mode.
 
     Returns:
         A CatBase instance with mount + wiring + reflex + freeze completed.
@@ -111,36 +162,67 @@ def create_cat(
         from meowcat.defaults import create_cat
         from my_impl import MyCerebrum
 
-        cat = create_cat("my-bot", cerebrum=MyCerebrum(model="gpt-4"))
-        await cat.start()
-        reply = await cat.perceive("hello")
+        # 简装修 (default): safety, memory, routing all work
+        cat = create_cat("bot", cerebrum=MyCerebrum(model="gpt-4"))
+
+        # 毛坯: only cerebrum is real, others are stubs
+        cat = create_cat("bot", cerebrum=MyCerebrum(), renovated=False)
+
+        # 简装修 but keep amygdala as bare (no safety checks)
+        cat = create_cat("bot", cerebrum=MyCerebrum(), bare_organs={"amygdala"})
     """
+
+    _bare = bare_organs or set()
+    _reno = renovate_organs or set()
+
+    def _pick_no_init(bare_cls: type, reno_cls: type, organ_name: str, **reno_kw: Any) -> Any:
+        if renovated:
+            return reno_cls(**reno_kw) if organ_name not in _bare else bare_cls()
+        else:
+            return reno_cls(**reno_kw) if organ_name in _reno else bare_cls()
 
     cat = CatBase(cat_id)
 
     # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]
-    cat.hippocampus = hippocampus or NoopHippocampus()
-    cat.thalamus = thalamus or NoopThalamus()  # type: ignore[attr-defined]
-    cat.amygdala = amygdala or NoopAmygdala()  # type: ignore[attr-defined]
-    cat.frontal = frontal or NoopFrontal()  # type: ignore[attr-defined]
+    cat.hippocampus = hippocampus or _pick_no_init(NoopHippocampus, RenovatedHippocampus, "hippocampus")
+    cat.thalamus = thalamus or _pick_no_init(NoopThalamus, RenovatedThalamus, "thalamus", keyword=keyword)  # type: ignore[attr-defined]
+    cat.amygdala = amygdala or _pick_no_init(NoopAmygdala, RenovatedAmygdala, "amygdala", keyword=keyword)  # type: ignore[attr-defined]
+    cat.frontal = frontal or _pick_no_init(NoopFrontal, RenovatedFrontal, "frontal", keyword=keyword)  # type: ignore[attr-defined]
     # type: ignore[attr-defined]
-    cat.hypothalamus = hypothalamus or NoopHypothalamus()
-    cat.cerebellum = cerebellum or cerebrum  # type: ignore[attr-defined]
+    cat.hypothalamus = hypothalamus or _pick_no_init(NoopHypothalamus, RenovatedHypothalamus, "hypothalamus")
+    # type: ignore[attr-defined]
+    cat.cerebellum = cerebrum if cerebellum is _UNSET else cerebellum
     cat.cerebrum = cerebrum  # type: ignore[attr-defined]
-    cat.cortex = cortex or NoopCortex()  # type: ignore[attr-defined]
+    cat.cortex = cortex or _pick_no_init(NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
     cat.brainstem = brainstem  # type: ignore[attr-defined]
 
     # -- Senses ----------------------------------------------------------
-    cat.ears = ears or NoopEars()  # type: ignore[attr-defined]
-    cat.eyes = eyes or NoopEyes()  # type: ignore[attr-defined]
-    cat.whiskers = whiskers or NoopWhiskers()  # type: ignore[attr-defined]
-    cat.paws = paws or NoopPaws()  # type: ignore[attr-defined]
+    cat.ears = ears or _pick_no_init(NoopEars, RenovatedEars, "ears", keyword=keyword)  # type: ignore[attr-defined]
+    cat.eyes = eyes or _pick_no_init(NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
+    cat.whiskers = whiskers or _pick_no_init(NoopWhiskers, RenovatedWhiskers, "whiskers")  # type: ignore[attr-defined]
+    cat.paws = paws or _pick_no_init(NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
 
     # -- Outputs ---------------------------------------------------------
-    cat.mouth = mouth or NoopMouth()  # type: ignore[attr-defined]
-    cat.purr = purr or NoopPurr()  # type: ignore[attr-defined]
-    cat.tail = tail or NoopTail()  # type: ignore[attr-defined]
+    cat.mouth = mouth or _pick_no_init(NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
+    cat.purr = purr or _pick_no_init(NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
+    cat.tail = tail or _pick_no_init(NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
+
+    # -- Growth organs ---------------------------------------------------
+    from meowcat.defaults.organs import (
+        NoopAnomalyGrowth as _NoopAG,
+        NoopCorrectionGrowth as _NoopCG,
+        NoopCrystallizer as _NoopCr,
+        NoopRoleEmergence as _NoopRE,
+    )
+    # type: ignore[attr-defined]
+    cat.anomaly_growth = anomaly_growth or _pick_no_init(_NoopAG, RenovatedAnomalyGrowth, "anomaly_growth")
+    # type: ignore[attr-defined]
+    cat.correction_growth = correction_growth or _pick_no_init(_NoopCG, RenovatedCorrectionGrowth, "correction_growth")
+    # type: ignore[attr-defined]
+    cat.crystallizer = crystallizer or _pick_no_init(_NoopCr, RenovatedCrystallizer, "crystallizer")
+    # type: ignore[attr-defined]
+    cat.role_emergence = role_emergence or _pick_no_init(_NoopRE, RenovatedRoleEmergence, "role_emergence")
 
     # -- Storage ---------------------------------------------------------
     # type: ignore[attr-defined]
@@ -152,7 +234,6 @@ def create_cat(
     cat._shared_store = shared_store or InMemorySharedStore()
 
     # -- Auto-assembly ---------------------------------------------------
-    # mount all set attributes (shared assembly.mount_known_organs)
     mount_known_organs(cat)
 
     # Nervous system
@@ -167,3 +248,5 @@ def create_cat(
     cat.freeze_nervous_system()
 
     return cat
+
+

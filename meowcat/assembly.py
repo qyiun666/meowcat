@@ -670,8 +670,7 @@ class CatBase:
 def mount_known_organs(cat: CatBase) -> None:
     """Scan known organ attributes on cat and mount to OrganHost.
 
-    Covers brain / sense / voice three core organ categories.
-    Growth organs are mounted by the application layer.
+    Covers brain / sense / voice / growth four core organ categories.
     Shared by ``factory.create_cat()`` and ``assemble_default_cat()``
     to eliminate duplicate organ name lists.
 
@@ -684,6 +683,9 @@ def mount_known_organs(cat: CatBase) -> None:
     }
     _SENSE_NAMES = {"ears", "eyes", "whiskers", "paws"}
     _VOICE_NAMES = {"mouth", "purr", "tail"}
+    _GROWTH_NAMES = {
+        "anomaly_growth", "correction_growth", "crystallizer", "role_emergence",
+    }
 
     for name in _BRAIN_NAMES:
         organ = getattr(cat, name, None)
@@ -699,6 +701,11 @@ def mount_known_organs(cat: CatBase) -> None:
         organ = getattr(cat, name, None)
         if organ is not None:
             cat.mount("voice", name, organ)
+
+    for name in _GROWTH_NAMES:
+        organ = getattr(cat, name, None)
+        if organ is not None:
+            cat.mount("growth", name, organ)
 
 
 # -- Top-level assembly function (v0.5.9 added) ------------------------------

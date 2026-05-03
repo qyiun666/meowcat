@@ -24,18 +24,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from meowcat.chain import BUILTIN_CHAINS, Chain
+from meowcat.chain import BUILTIN_CHAINS, Chain, MAINTENANCE_CHAIN as _MC, DIAGNOSTIC_CHAIN as _DC
 from meowcat.loop import Lifecycle
 
 
 # -- Lookup reusable Chains from BUILTIN_CHAINS -------------------------
 
-_MAINTENANCE_CHAIN: Chain = next(
-    (c for c in BUILTIN_CHAINS if c.name == "maintenance"),
-)
-_DIAGNOSTIC_CHAIN: Chain = next(
-    (c for c in BUILTIN_CHAINS if c.name == "diagnostic"),
-)
+_MAINTENANCE_CHAIN: Chain = _MC
+_DIAGNOSTIC_CHAIN: Chain = _DC
 
 
 # -- Loop dataclass -------------------------------------------------
@@ -431,10 +427,9 @@ class LoopSequenceRegistry:
                 try:
                     loop_name, result = await t
                     results[loop_name] = result
-                except Exception as e:
-                    # find the failed task
+                except Exception:
                     for i, task in enumerate(tasks):
-                        if task.done() and task.exception():
+                        if task is t:
                             results[seq.loops[i]] = {
                                 "_error": str(task.exception()),
                             }

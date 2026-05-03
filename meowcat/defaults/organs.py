@@ -16,6 +16,7 @@ from __future__ import annotations
 import time as _time
 from typing import Any
 
+from meowcat.anatomy import ImplementationStyle
 from meowcat.defaults.stores import InMemoryGraphStore
 from meowcat.pluggable import Pluggable
 
@@ -37,6 +38,7 @@ class NoopAmygdala(Pluggable):
     }
 
     name: str = "noop_amygdala"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -83,6 +85,7 @@ class NoopFrontal(Pluggable):
     }
 
     name: str = "noop_frontal"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -123,6 +126,7 @@ class NoopHypothalamus(Pluggable):
     }
 
     name: str = "noop_hypothalamus"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -153,6 +157,7 @@ class NoopCortex(Pluggable):
     }
 
     name: str = "noop_cortex"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -185,6 +190,7 @@ class NoopBrainstem(Pluggable):
     }
 
     name: str = "noop_brainstem"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -215,6 +221,7 @@ class NoopCerebrum(Pluggable):
     }
 
     name: str = "noop_cerebrum"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -263,6 +270,7 @@ class NoopCerebellum(Pluggable):
     }
 
     name: str = "noop_cerebellum"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -315,6 +323,7 @@ class NoopEars(Pluggable):
     }
 
     name: str = "noop_ears"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -353,6 +362,7 @@ class NoopEyes(Pluggable):
     }
 
     name: str = "noop_eyes"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -377,6 +387,7 @@ class NoopWhiskers(Pluggable):
     }
 
     name: str = "noop_whiskers"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -426,6 +437,7 @@ class NoopMouth(Pluggable):
     }
 
     name: str = "noop_mouth"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -450,6 +462,7 @@ class NoopPurr(Pluggable):
     }
 
     name: str = "noop_purr"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -474,6 +487,7 @@ class NoopTail(Pluggable):
     }
 
     name: str = "noop_tail"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -503,6 +517,7 @@ class NoopPaws(Pluggable):
     }
 
     name: str = "noop_paws"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -547,6 +562,7 @@ class NoopThalamus(Pluggable):
     }
 
     name: str = "noop_thalamus"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -582,6 +598,7 @@ class NoopHippocampus(Pluggable):
     }
 
     name: str = "noop_hippocampus"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -789,6 +806,7 @@ class NoopAnomalyGrowth(Pluggable):
     }
 
     name: str = "noop_anomaly_growth"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -820,6 +838,7 @@ class NoopCorrectionGrowth(Pluggable):
     }
 
     name: str = "noop_correction_growth"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -852,6 +871,7 @@ class NoopCrystallizer(Pluggable):
     }
 
     name: str = "noop_crystallizer"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -883,6 +903,7 @@ class NoopRoleEmergence(Pluggable):
     }
 
     name: str = "noop_role_emergence"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)

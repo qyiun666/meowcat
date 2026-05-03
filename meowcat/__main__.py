@@ -12,22 +12,15 @@ from pathlib import Path
 
 TEMPLATES: dict[str, str] = {
     "cat.py": '''"""{{name}} -- your custom cat."""
-from meowcat import CatBase, assemble_default_cat
-
-
-class {{name_class}}(CatBase):
-    """Your cat. Call assemble_default_cat after mounting custom organs."""
-    pass
+from meowcat.defaults import create_cat
+from meowcat.defaults.organs import NoopCerebrum
 
 
 async def main() -> None:
-    cat = {{name_class}}("{{name}}")
-    assemble_default_cat(cat)
-    await cat.start()
+    cat = create_cat("{{name}}", cerebrum=NoopCerebrum())
     print(f"{{name}} is ready.")
-    result = await cat.run_loop("conversation", message="Hello, introduce yourself")
+    result = await cat.run_loop("conversation", message="Hello!")
     print(result)
-    await cat.shutdown()
 ''',
     "main.py": '''"""{{name}} entry point."""
 import asyncio
@@ -44,12 +37,8 @@ def new_project(name: str, target_dir: Path | None = None) -> Path:
     dir_ = (target_dir or Path.cwd()) / name
     dir_.mkdir(parents=True, exist_ok=True)
 
-    name_class = "".join(w.capitalize()
-                         for w in name.replace("-", "_").split("_"))
-
     for filename, template in TEMPLATES.items():
-        content = template.replace("{{name}}", name).replace(
-            "{{name_class}}", name_class)
+        content = template.replace("{{name}}", name)
         (dir_ / filename).write_text(content)
 
     print(f"Created {dir_}/")

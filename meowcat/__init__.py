@@ -27,6 +27,28 @@ from meowcat.defaults import (
     NoopTail,
     NoopThalamus,
     NoopWhiskers,
+    RENOVATED_ORGAN_MAP,
+    RenovatedAmygdala,
+    RenovatedAnomalyGrowth,
+    RenovatedBrainstem,
+    RenovatedCerebellum,
+    RenovatedCerebrum,
+    RenovatedCorrectionGrowth,
+    RenovatedCortex,
+    RenovatedCrystallizer,
+    RenovatedEars,
+    RenovatedEyes,
+    RenovatedFrontal,
+    RenovatedHippocampus,
+    RenovatedHypothalamus,
+    RenovatedMouth,
+    RenovatedPaws,
+    RenovatedPurr,
+    RenovatedRoleEmergence,
+    RenovatedTail,
+    RenovatedThalamus,
+    RenovatedWhiskers,
+    _UNSET,
     create_cat,
 )
 from meowcat.defaults.stages import (
@@ -40,6 +62,7 @@ from meowcat.defaults.stages import (
     build_default_pipeline,
 )
 from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
+from meowcat.anatomy import ImplementationStyle
 from meowcat.reflex import BUILTIN_REFLEX_PATHS, Reflex, ReflexArc, ReflexRegistry, Trigger
 from meowcat.host import OrganHost
 from meowcat.nervous import Nervous, SignalCall, SignalMiddleware
@@ -66,7 +89,6 @@ from meowcat.protocols import (
     FederationTransport,
     FrontalCortexProtocol,
     GraphStorageProtocol,
-    GrowthProtocol,
     HippocampusProtocol,
     HypothalamusProtocol,
     KittenProtocol,
@@ -210,7 +232,7 @@ __all__ = [
     "AdapterProtocol",
     "AmygdalaProtocol", "FrontalCortexProtocol", "HypothalamusProtocol",
     "CortexProtocol", "EarsProtocol", "EyesProtocol", "WhiskersProtocol",
-    "GrowthProtocol", "MouthProtocol", "PurrProtocol", "TailProtocol",
+    "MouthProtocol", "PurrProtocol", "TailProtocol",
     "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
     "CrystallizerProtocol", "RoleEmergenceProtocol",
     "SecurityPolicyProtocol",

@@ -294,22 +294,15 @@ class Colony:
 
     # -- Broadcast ----------------------------------------------------
 
-    async def broadcast(self, event: str, **data: Any) -> list[Any]:
-        """Broadcast an event to all cats in the colony.
-
-        Emits the same event to every cat, collecting all handler return values.
+    async def broadcast(self, event: str, **data: Any) -> None:
+        """Broadcast an event to all cats in the colony (fire-and-forget).
 
         Args:
             event: Event name.
             **data: Event data.
-
-        Returns:
-            List of return values from all cat handlers.
         """
-        results: list[Any] = []
         for cat in self._cats.values():
             await cat.emit(event, data)
-        return results
 
     async def health_check_all(self) -> dict[str, dict]:
         """Run health check on all cats.
