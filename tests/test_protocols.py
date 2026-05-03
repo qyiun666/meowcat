@@ -12,22 +12,31 @@ import pytest
 
 from meowcat.defaults.organs import (
     NoopAmygdala,
+    NoopAnomalyGrowth,
+    NoopCerebellum,
+    NoopCerebrum,
+    NoopCorrectionGrowth,
     NoopCortex,
+    NoopCrystallizer,
     NoopEars,
     NoopEyes,
     NoopFrontal,
     NoopHypothalamus,
     NoopMouth,
     NoopPurr,
+    NoopRoleEmergence,
     NoopTail,
     NoopWhiskers,
 )
 from meowcat.defaults.stores import InMemoryGraphStore, InMemoryL6Store
 from meowcat.protocols import (
     AmygdalaProtocol,
+    AnomalyGrowthProtocol,
     BrainStemProtocol,
     CatProtocol,
+    CorrectionGrowthProtocol,
     CortexProtocol,
+    CrystallizerProtocol,
     EarsProtocol,
     EyesProtocol,
     FrontalCortexProtocol,
@@ -41,6 +50,7 @@ from meowcat.protocols import (
     OrchestratorProtocol,
     OrganProtocol,
     PawsProtocol,
+    RoleEmergenceProtocol,
     SettingsProtocol,
     SharedStorageProtocol,
     StageProtocol,
@@ -63,6 +73,8 @@ class TestProtocolImport:
             EarsProtocol, EyesProtocol, WhiskersProtocol, PawsProtocol,
             StageProtocol, KittenProtocol, OrchestratorProtocol,
             SettingsProtocol, CatProtocol,
+            AnomalyGrowthProtocol, CorrectionGrowthProtocol,
+            CrystallizerProtocol, RoleEmergenceProtocol,
         ]
         for p in protocols:
             assert p is not None, f"Failed to import {p}"
@@ -138,6 +150,45 @@ class TestNoopSatisfiesProtocol:
     def test_noop_whiskers(self) -> None:
         w = NoopWhiskers()
         assert isinstance(w, WhiskersProtocol)
+
+    # -- v1.0.16: Growth + LLM organs ----------------------------------
+
+    def test_noop_cerebrum(self) -> None:
+        c = NoopCerebrum()
+        assert isinstance(c, LLMBrainProtocol)
+        assert c.name == "noop_cerebrum"
+        assert c.diagnose() == {}
+        c.reload_config()  # no-op
+
+    def test_noop_cerebellum(self) -> None:
+        c = NoopCerebellum()
+        assert isinstance(c, LLMBrainProtocol)
+        assert c.name == "noop_cerebellum"
+
+    def test_noop_anomaly_growth(self) -> None:
+        a = NoopAnomalyGrowth()
+        assert isinstance(a, AnomalyGrowthProtocol)
+        assert a.name == "noop_anomaly_growth"
+        result = a.record("drift", "snippet", 0.9)
+        assert isinstance(result, dict)
+
+    def test_noop_correction_growth(self) -> None:
+        c = NoopCorrectionGrowth()
+        assert isinstance(c, CorrectionGrowthProtocol)
+        result = c.record("wrong", "correct", session_id="s1")
+        assert isinstance(result, dict)
+
+    def test_noop_crystallizer(self) -> None:
+        c = NoopCrystallizer()
+        assert isinstance(c, CrystallizerProtocol)
+        assert c.crystallize("my_skill", 3) is False
+        assert c.hotspots(2) == []
+
+    def test_noop_role_emergence(self) -> None:
+        r = NoopRoleEmergence()
+        assert isinstance(r, RoleEmergenceProtocol)
+        result = r.record("pattern_x", "evidence_y")
+        assert isinstance(result, dict)
 
 
 class TestInMemoryStores:

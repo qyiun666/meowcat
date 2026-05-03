@@ -203,6 +203,101 @@ class NoopBrainstem(Pluggable):
         return False
 
 
+class NoopCerebrum(Pluggable):
+    """Default cerebrum: no deep reasoning, no stream generation.
+
+    Mode C — generate / stream_generate full replacement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "str"},
+        "stream_generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "AsyncIterator[str]"},
+    }
+
+    name: str = "noop_cerebrum"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    async def generate(
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
+    ) -> str:
+        for _name, r in self._run_plugs(
+            "generate", prompt, system_prompt, temperature, max_tokens,
+        ):
+            if isinstance(r, str):
+                return r
+        return ""
+
+    async def stream_generate(
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
+    ) -> Any:
+        for _name, r in self._run_plugs(
+            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+        ):
+            return r
+        # empty async generator fallback
+        async def _empty():
+            if False:
+                yield ""
+        return _empty()
+
+    def reload_config(self) -> None:
+        pass
+
+
+class NoopCerebellum(Pluggable):
+    """Default cerebellum: no fast reasoning, no stream generation.
+
+    Mode C — generate / stream_generate full replacement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "str"},
+        "stream_generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "AsyncIterator[str]"},
+    }
+
+    name: str = "noop_cerebellum"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    async def generate(
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
+    ) -> str:
+        for _name, r in self._run_plugs(
+            "generate", prompt, system_prompt, temperature, max_tokens,
+        ):
+            if isinstance(r, str):
+                return r
+        return ""
+
+    async def stream_generate(
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
+    ) -> Any:
+        for _name, r in self._run_plugs(
+            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+        ):
+            return r
+        async def _empty():
+            if False:
+                yield ""
+        return _empty()
+
+    def reload_config(self) -> None:
+        pass
+
+
 # ===================================================================
 # Senses
 # ===================================================================
@@ -676,3 +771,128 @@ class NoopHippocampus(Pluggable):
                 continue
             results.append({"entity_id": eid, **entity})
         return results
+
+
+# ===================================================================
+# Growth Organs — v1.0.16
+# ===================================================================
+
+
+class NoopAnomalyGrowth(Pluggable):
+    """Default anomaly growth: does not record anomaly patterns.
+
+    Mode B — record merge enhancement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "record": {"in": "reason: str, snippet: str, confidence: float, phase: str, session_id: str", "out": "Any"},
+    }
+
+    name: str = "noop_anomaly_growth"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    def record(
+        self, reason: str, snippet: str, confidence: float = 0.8,
+        phase: str = "input", session_id: str = "",
+    ) -> Any:
+        result: dict[str, Any] = {"recorded": False}
+        for _name, r in self._run_plugs(
+            "record", reason, snippet, confidence, phase, session_id,
+        ):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
+
+
+class NoopCorrectionGrowth(Pluggable):
+    """Default correction growth: does not record user corrections.
+
+    Mode B — record merge enhancement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "record": {"in": "wrong: str, correct: str, session_id: str, topic: str", "out": "Any"},
+    }
+
+    name: str = "noop_correction_growth"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    def record(
+        self, wrong: str, correct: str, session_id: str = "",
+        topic: str = "",
+    ) -> Any:
+        result: dict[str, Any] = {"recorded": False}
+        for _name, r in self._run_plugs(
+            "record", wrong, correct, session_id, topic,
+        ):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
+
+
+class NoopCrystallizer(Pluggable):
+    """Default crystallizer: does not crystallize skills.
+
+    Mode C — crystallize / hotspots full replacement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "crystallize": {"in": "slug: str, hit_count: int", "out": "bool"},
+        "hotspots": {"in": "threshold: int|None", "out": "list[tuple[str,int]]"},
+    }
+
+    name: str = "noop_crystallizer"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    def crystallize(self, slug: str, hit_count: int) -> bool:
+        for _name, r in self._run_plugs("crystallize", slug, hit_count):
+            if isinstance(r, bool):
+                return r
+        return False
+
+    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]:
+        for _name, r in self._run_plugs("hotspots", threshold):
+            if isinstance(r, list):
+                return r
+        return []
+
+
+class NoopRoleEmergence(Pluggable):
+    """Default role emergence: does not record role patterns.
+
+    Mode B — record merge enhancement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "record": {"in": "pattern: str, evidence: str", "out": "Any"},
+    }
+
+    name: str = "noop_role_emergence"
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+
+    def diagnose(self) -> dict[str, Any]:
+        return {}
+
+    def record(self, pattern: str, evidence: str) -> Any:
+        result: dict[str, Any] = {"recorded": False}
+        for _name, r in self._run_plugs("record", pattern, evidence):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
