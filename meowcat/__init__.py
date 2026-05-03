@@ -205,7 +205,7 @@ from meowcat.gateway import (
     WsAdapter,
 )
 from meowcat.gateway.protocol import SignalContext, IoAdapterProtocol, GatewayProtocol
-from meowcat.cli import Command, CommandContext, CommandRouter, I18n, register_system_commands, is_debug
+from meowcat.cli import Command, CommandContext, CommandRouter, I18n, register_system_commands, register_colony_commands, is_debug
 from meowcat import anatomy as anatomy
 from meowcat import biology as biology
 from meowcat import organ_roles as organ_roles
@@ -327,4 +327,6 @@ __all__ = [
     "Command", "CommandContext", "CommandRouter",
     # v1.1.11 System commands
     "register_system_commands", "is_debug",
+    # v1.1.12 Colony commands
+    "register_colony_commands",
 ]
