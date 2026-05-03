@@ -29,6 +29,16 @@ from meowcat.defaults.organs import (
     NoopThalamus,
     NoopWhiskers,
 )
+from meowcat.defaults.stages import (
+    BaseStage,
+    NoopCompressStage,
+    NoopExecuteStage,
+    NoopIngestStage,
+    NoopLocateStage,
+    NoopPostStage,
+    NoopRouteStage,
+    build_default_pipeline,
+)
 from meowcat.defaults.stores import (
     InMemoryGraphStore,
     InMemoryL6Store,
@@ -44,6 +54,11 @@ __all__ = [
     "NoopThalamus", "NoopHippocampus",
     # v1.0.16 Growth organs
     "NoopAnomalyGrowth", "NoopCorrectionGrowth", "NoopCrystallizer", "NoopRoleEmergence",
+    # v1.0.17 Pipeline Stages
+    "BaseStage",
+    "NoopIngestStage", "NoopLocateStage", "NoopRouteStage",
+    "NoopExecuteStage", "NoopPostStage", "NoopCompressStage",
+    "build_default_pipeline",
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
 ]

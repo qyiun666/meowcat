@@ -29,6 +29,16 @@ from meowcat.defaults import (
     NoopWhiskers,
     create_cat,
 )
+from meowcat.defaults.stages import (
+    BaseStage,
+    NoopCompressStage,
+    NoopExecuteStage,
+    NoopIngestStage,
+    NoopLocateStage,
+    NoopPostStage,
+    NoopRouteStage,
+    build_default_pipeline,
+)
 from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
 from meowcat.reflex import Reflex, ReflexArc, ReflexRegistry, Trigger
 from meowcat.host import OrganHost
@@ -265,6 +275,11 @@ __all__ = [
     "NoopThalamus", "NoopHippocampus",
     # v1.0.16 Growth organs
     "NoopAnomalyGrowth", "NoopCorrectionGrowth", "NoopCrystallizer", "NoopRoleEmergence",
+    # v1.0.17 Pipeline Stages
+    "BaseStage",
+    "NoopIngestStage", "NoopLocateStage", "NoopRouteStage",
+    "NoopExecuteStage", "NoopPostStage", "NoopCompressStage",
+    "build_default_pipeline",
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
     # v1.0.7 Pluggable
