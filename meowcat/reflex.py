@@ -1,17 +1,17 @@
-"""meowcat 反射弧 —— 刺激→反应的执行契约。
+"""meowcat reflex arcs — stimulus→response execution contract.
 
-:class:`Reflex` 三要素：
-- ``trigger``: 何时触发（callable(input)→bool）
-- ``path``: 神经信号流经的器官序列（校验用）
-- ``stages``: 可选的 Stage 列表（有就走 Pipeline；没有就只沿 path 发 EventBus）
+:class:`Reflex` three elements:
+- ``trigger``: when to fire (callable(input)→bool)
+- ``path``: organ sequence the neural signal travels through (for validation)
+- ``stages``: optional Stage list (if present, runs Pipeline; otherwise only emits EventBus along path)
 
-:class:`ReflexRegistry` 按 priority 倒序保存，``match(input)`` 返回第一个命中的。
+:class:`ReflexRegistry` stores by priority descending; ``match(input)`` returns the first hit.
 
-:class:`ReflexArc` (v0.5.9) 封装 registry + events + 可选 nervous，提供
-``perceive()`` 反射入口。可独立实例化，不依赖 CatBase。
+:class:`ReflexArc` (v0.5.9) encapsulates registry + events + optional nervous, providing
+``perceive()`` reflex entry point. Can be instantiated independently, no CatBase dependency.
 
-启动时 ``cat.freeze_nervous_system()`` 会 ``validate(wiring)`` 校验每条 Reflex
-的 path 相邻跳在 wiring 里合法，不合法抛 :class:`ReflexPathInvalidError`。
+At startup, ``cat.freeze_nervous_system()`` calls ``validate(wiring)`` to check each Reflex's
+path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvalidError`.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -37,89 +37,89 @@ Trigger = Callable[[Any], bool]
 
 
 class Reflex(BaseModel):
-    """一条反射弧。"""
+    """A single reflex arc."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     name: str
-    """反射名（如 ``text_dialogue`` / ``visual`` / ``danger`` / ``action_order``）。"""
+    """Reflex name (e.g. ``text_dialogue`` / ``visual`` / ``danger`` / ``action_order``)."""
 
     trigger: Trigger
-    """判定输入是否触发本反射的函数。"""
+    """Function that determines whether input triggers this reflex."""
 
     path: tuple[Organ, ...]
-    """神经信号流经的器官序列，至少 2 跳。用于 wiring 合法性校验。"""
+    """Organ sequence the neural signal travels through, at least 2 hops. Used for wiring legality validation."""
 
     stages: list[StageProtocol] = Field(default_factory=list)
-    """可选：具体 Pipeline Stage 列表。
+    """Optional: concrete Pipeline Stage list.
 
-    - 非空：``cat.perceive`` 用 Pipeline 驱动
-    - 空   ：``cat.perceive`` 按 path 逐跳发 ``nerve.signal`` 事件（让业务 handler 接）
+    - non-empty: ``cat.perceive`` drives via Pipeline
+    - empty   : ``cat.perceive`` emits ``nerve.signal`` events hop-by-hop along path (for business handlers)
     """
 
     priority: int = 0
-    """多个反射命中时的优先级，越大越先匹配。"""
+    """Priority when multiple reflexes match; higher matches first."""
 
     def hops(self) -> list[tuple[Organ, Organ]]:
-        """path 相邻跳序列：``[(p0,p1), (p1,p2), ...]``。"""
+        """Path adjacency hop sequence: ``[(p0,p1), (p1,p2), ...]``."""
         return list(zip(self.path[:-1], self.path[1:]))
 
 
 class ReflexRegistry:
-    """反射注册表。"""
+    """Reflex registry."""
 
     def __init__(self) -> None:
         self._items: list[Reflex] = []
 
-    # -- 写接口 ------------------------------------------------------
+    # -- Write API ------------------------------------------------------
 
     def register(self, reflex: Reflex) -> None:
-        """注册反射。按 priority 倒序插入以便 match 时线性扫描。"""
+        """Register a reflex. Inserts by priority descending for linear scan during match."""
         if len(reflex.path) < 2:
             raise ValueError(
                 f"Reflex '{reflex.name}' path must have at least 2 hops",
             )
-        # 名字唯一：已有同名则替换
+        # name is unique: replace if name already exists
         self._items = [r for r in self._items if r.name != reflex.name]
         self._items.append(reflex)
         self._items.sort(key=lambda r: r.priority, reverse=True)
 
     def unregister(self, name: str) -> bool:
-        """按名移除，不存在返回 False。"""
+        """Remove by name, returns False if not found."""
         before = len(self._items)
         self._items = [r for r in self._items if r.name != name]
         return len(self._items) != before
 
-    # -- 查询接口 ----------------------------------------------------
+    # -- Query API ----------------------------------------------------
 
     def get(self, name: str) -> Reflex | None:
-        """按名取回反射，不存在返回 None。"""
+        """Retrieve reflex by name, returns None if not found."""
         for r in self._items:
             if r.name == name:
                 return r
         return None
 
     def match(self, input: Any) -> Reflex | None:
-        """从高优先级到低，返回第一个 trigger 命中的反射，无则 None。"""
+        """From high to low priority, return first reflex whose trigger matches, or None."""
         for r in self._items:
             try:
                 if r.trigger(input):
                     return r
             except Exception:
-                # trigger 不该抛；抛了也当不匹配继续
+                # trigger should not raise; treat as non-match and continue
                 continue
         return None
 
     def all(self) -> list[Reflex]:
-        """返回所有已注册反射的快照。"""
+        """Return snapshot of all registered reflexes."""
         return list(self._items)
 
-    # -- 校验 --------------------------------------------------------
+    # -- Validation --------------------------------------------------------
 
     def validate(self, wiring: Wiring) -> None:
-        """校验每条反射的 path 相邻跳在 wiring 里合法。
+        """Validate each reflex's path adjacency hops are legal in wiring.
 
-        有任一不合法立即抛 :class:`ReflexPathInvalidError`。
+        Raises :class:`ReflexPathInvalidError` immediately on any illegal hop.
         """
         for reflex in self._items:
             for hop in reflex.hops():
@@ -129,15 +129,15 @@ class ReflexRegistry:
 
 
 class ReflexArc:
-    """反射弧子系统（v0.5.9）—— registry + perceive 入口 + path 校验。
+    """Reflex arc subsystem (v0.5.9) — registry + perceive entry + path validation.
 
-    依赖显式注入：
+    Dependencies explicitly injected:
 
-    - ``events``: :class:`EventBus`，必需，perceive 全程 emit 生命周期事件
-    - ``nervous``: :class:`Nervous` 可选，仅用于 ``validate_paths()`` 时读取
-      ``nervous.wiring`` 校验 reflex.path。``None`` 时跳过校验。
+    - ``events``: :class:`EventBus`, required, perceive emits lifecycle events throughout
+    - ``nervous``: :class:`Nervous` optional, only used for ``validate_paths()`` to read
+      ``nervous.wiring`` for reflex.path validation. Skipped when ``None``.
 
-    可独立实例化，不需 CatBase::
+    Can be instantiated independently, no CatBase needed::
 
         arc = ReflexArc(EventBus())
         arc.register(Reflex(name="x", trigger=..., path=(...)))
@@ -154,32 +154,32 @@ class ReflexArc:
         self.nervous = nervous
         self.registry = ReflexRegistry()
 
-    # -- 注册代理 ------------------------------------------------
+    # -- Registration proxy ------------------------------------------------
 
     def register(self, reflex: Reflex) -> None:
-        """注册一条反射弧。"""
+        """Register a reflex arc."""
         self.registry.register(reflex)
 
     def unregister(self, name: str) -> bool:
-        """按名移除反射。"""
+        """Remove reflex by name."""
         return self.registry.unregister(name)
 
     def match(self, input: Any) -> Reflex | None:
-        """返回第一个命中的反射。"""
+        """Return the first matching reflex."""
         return self.registry.match(input)
 
-    # -- 校验 --------------------------------------------------------
+    # -- Validation --------------------------------------------------------
 
     def validate_paths(self) -> None:
-        """校验已注册的所有 reflex.path 在 nervous.wiring 中合法。
+        """Validate all registered reflex.path are legal in nervous.wiring.
 
-        没有 ``nervous``（独立使用模式）直接跳过校验。
+        Skip validation if no ``nervous`` (standalone mode).
         """
         if self.nervous is None:
             return
         self.registry.validate(self.nervous.wiring)
 
-    # -- 感知入口 ------------------------------------------------
+    # -- Perception entry ------------------------------------------------
 
     async def perceive(
         self,
@@ -188,25 +188,25 @@ class ReflexArc:
         cat: Any = None,
         **extras: Any,
     ) -> AsyncIterator[Any]:
-        """反射弧入口：给个刺激，自动走对应神经链路。
+        """Reflex arc entry: give a stimulus, automatically follows the matching neural pathway.
 
-        流程：
+        Flow:
 
-        1. ``match(input)`` 找到第一个命中的反射；无命中抛
-           :class:`NoReflexMatchedError`
-        2. 构造 :class:`PerceptionContext`，emit ``lifecycle.perceive_start``
-        3. 若 ``reflex.stages`` 非空：用 :class:`Pipeline` 驱动并 yield 事件
-           否则：按 ``reflex.path`` 逐跳 emit ``nerve.signal``（让业务 handler 接）
+        1. ``match(input)`` finds first matching reflex; raises
+           :class:`NoReflexMatchedError` if none
+        2. Build :class:`PerceptionContext`, emit ``lifecycle.perceive_start``
+        3. If ``reflex.stages`` non-empty: drive via :class:`Pipeline` and yield events
+           Otherwise: emit ``nerve.signal`` hop-by-hop along ``reflex.path`` (for business handlers)
         4. emit ``lifecycle.perceive_end``
 
         Args:
-            input: 外部刺激（任意类型，trigger 自判断）
-            cat: 传入 :class:`PerceptionContext.cat`，供 Stage 访问整貓。
-                独立使用模式传 ``None`` 即可。
-            **extras: 进入 ``PerceptionContext.extras``
+            input: external stimulus (any type, trigger self-judges)
+            cat: passed to :class:`PerceptionContext.cat` for Stage access to the whole cat.
+                Pass ``None`` in standalone mode.
+            **extras: goes into ``PerceptionContext.extras``
 
         Yields:
-            Pipeline 或 reflex path 的中间事件
+            Intermediate events from Pipeline or reflex path
         """
         reflex = self.registry.match(input)
         if reflex is None:
@@ -230,7 +230,7 @@ class ReflexArc:
             async for ev in pipeline.execute(ctx):
                 yield ev
         else:
-            # 无 Stage：只沿 path 逐跳广播，让业务层 handler 接
+            # No Stages: only broadcast hop-by-hop along path for business handlers to pick up
             for frm, to in reflex.hops():
                 await self.events.emit(
                     NerveEvent.SIGNAL,

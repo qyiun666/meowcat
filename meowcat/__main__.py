@@ -1,6 +1,6 @@
-"""python -m meowcat new <name> — 猫项目脚手架。
+"""python -m meowcat new <name> -- cat project scaffolding.
 
-对标 Flask ``flask new`` / FastAPI ``fastapi new`` — 极简。
+Comparable to Flask ``flask new`` / FastAPI ``fastapi new`` -- minimal.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -11,12 +11,12 @@ import sys
 from pathlib import Path
 
 TEMPLATES: dict[str, str] = {
-    "cat.py": '''"""{{name}} — 你的定制猫。"""
+    "cat.py": '''"""{{name}} -- your custom cat."""
 from meowcat import CatBase, assemble_default_cat
 
 
 class {{name_class}}(CatBase):
-    """你的猫。挂自定义器官后调 assemble_default_cat。"""
+    """Your cat. Call assemble_default_cat after mounting custom organs."""
     pass
 
 
@@ -25,11 +25,11 @@ async def main() -> None:
     assemble_default_cat(cat)
     await cat.start()
     print(f"{{name}} is ready.")
-    result = await cat.run_loop("conversation", message="你好，介绍一下你自己")
+    result = await cat.run_loop("conversation", message="Hello, introduce yourself")
     print(result)
     await cat.shutdown()
 ''',
-    "main.py": '''"""{{name}} 入口。"""
+    "main.py": '''"""{{name}} entry point."""
 import asyncio
 from cat import main
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
 
 def new_project(name: str, target_dir: Path | None = None) -> Path:
-    """生成 meowcat 骨架项目。"""
+    """Generate meowcat skeleton project."""
     dir_ = (target_dir or Path.cwd()) / name
     dir_.mkdir(parents=True, exist_ok=True)
 
@@ -60,7 +60,7 @@ def new_project(name: str, target_dir: Path | None = None) -> Path:
 
 
 def main() -> None:
-    """python -m meowcat CLI 入口。"""
+    """python -m meowcat CLI entry point."""
     if len(sys.argv) < 3 or sys.argv[1] != "new":
         print("Usage: python -m meowcat new <project-name>")
         print("Example: python -m meowcat new my-cat")

@@ -1,9 +1,10 @@
-"""示例 06：自定义器官 —— 写一个满足 Protocol 的器官并挂载到猫上。
+"""Example 06: Custom organ — write an organ satisfying a Protocol and mount it.
 
-场景：用户想在猫身上加一个自定义器官（如特殊的听觉处理），
-只需满足对应 Protocol 即可通过 wiring 和信号系统参与协作。
+Scenario: The user wants to add a custom organ to a cat (e.g. special audio processing).
+Simply satisfy the corresponding Protocol to participate in collaboration
+via wiring and the signal system.
 
-运行：``python -m meowcat.examples.06_custom_organ``
+Run: ``python -m meowcat.examples.06_custom_organ``
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -16,7 +17,7 @@ from meowcat import CatBase, EarsProtocol, biology
 
 
 class SharpEars:
-    """自定义耳朵：自动提取关键词。满足 EarsProtocol。"""
+    """Custom ears: auto-extract keywords. Satisfies EarsProtocol."""
 
     name = "sharp-ears"
 
@@ -35,20 +36,20 @@ class SharpEars:
 
 
 async def main() -> None:
-    # 1. 创建猫
+    # 1. Create cat
     cat = CatBase("custom-organ-cat")
 
-    # 2. 挂载自定义器官 — 带 Protocol 校验
+    # 2. Mount custom organ — with Protocol validation
     cat.mount("sense", "sharp-ears", SharpEars(), protocol=EarsProtocol)
 
-    # 3. 装配默认 wiring 表
+    # 3. Assemble default wiring table
     biology.apply_default_wiring(cat._nervous.wiring)
 
-    # 4. 添加自定义器官到 wiring（让其可被其他器官访问）
+    # 4. Add custom organ to wiring (make it accessible to other organs)
     cat._nervous.wiring.connect(("sense", "sharp-ears"), ("brain", "thalamus"))
     cat._nervous.freeze()
 
-    # 5. 直接访问器官
+    # 5. Directly access organ
     ears = cat.organ("sense", "sharp-ears")
     print(f"mounted: {ears.name}")
     print(f"keywords: {ears.extract_keywords('hello world from meowcat')}")

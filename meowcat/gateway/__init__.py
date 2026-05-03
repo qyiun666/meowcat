@@ -1,11 +1,11 @@
-"""meowcat Gateway 子系统 — 猫的皮肤（外部 I/O 唯一入/出口）。
+"""meowcat Gateway subsystem — the cat's skin (sole external I/O entry/exit).
 
-Gateway 是猫与外部世界之间的唯一 I/O 抽象层。所有协议适配器
-（HTTP / WebSocket / Webhook / CLI / IPC）统一插在同一个 Gateway 上。
+Gateway is the only I/O abstraction layer between the cat and the outside world.
+All protocol adapters (HTTP / WebSocket / Webhook / CLI / IPC) plug into the same Gateway.
 
-**1 只猫 : 1 个 Gateway : N 个 Adapter。**
+**1 cat : 1 Gateway : N Adapters.**
 
-使用示例::
+Usage example::
 
     from meowcat import create_cat, Gateway
     from meowcat.gateway import HttpAdapter, CliAdapter
@@ -14,7 +14,7 @@ Gateway 是猫与外部世界之间的唯一 I/O 抽象层。所有协议适配�
     gw = Gateway(cat)
     gw.mount_adapter(HttpAdapter(port=8000))
     gw.mount_adapter(CliAdapter())
-    await gw.start()  # 阻塞，所有 Adapter 并行运行
+    await gw.start()  # blocking, all Adapters run in parallel
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -35,34 +35,34 @@ if TYPE_CHECKING:
 
 
 class Gateway:
-    """猫的皮肤 — 外部 I/O 的唯一入/出口。
+    """The cat's skin — sole external I/O entry/exit.
 
-    非器官（不挂载到 OrganHost），是独立子系统，与 CatBase 组合而非继承。
+    Not an organ (not mounted to OrganHost); an independent subsystem composing with CatBase, not inheriting.
     """
 
     def __init__(self, cat: CatBase) -> None:
         self.cat = cat
         self._adapters: Dict[str, IoAdapterProtocol] = {}
 
-    # -- 适配器管理 --------------------------------------------------
+    # -- Adapter management --------------------------------------------------
 
     def mount_adapter(self, adapter: IoAdapterProtocol) -> None:
-        """挂载一个协议适配器。同名覆盖。"""
+        """Mount a protocol adapter. Same name overwrites."""
         self._adapters[adapter.name] = adapter
 
     def unmount_adapter(self, name: str) -> None:
-        """卸载一个协议适配器。不存在则 no-op。"""
+        """Unmount a protocol adapter. No-op if not found."""
         self._adapters.pop(name, None)
 
     @property
     def adapter_names(self) -> list[str]:
-        """已挂载适配器名列表。"""
+        """List of mounted adapter names."""
         return list(self._adapters.keys())
 
-    # -- 生命周期 ----------------------------------------------------
+    # -- Lifecycle ----------------------------------------------------
 
     async def start(self) -> None:
-        """启动所有 Adapter 的 serve() 循环，并行运行。"""
+        """Start serve() loops of all Adapters, running in parallel."""
         if not self._adapters:
             return
         tasks = []
@@ -70,18 +70,18 @@ class Gateway:
             tasks.append(asyncio.create_task(
                 adapter.serve(self._on_message, self._on_stream),
             ))
-        # 所有 Adapter 并行运行，任一异常会传播
+        # all Adapters run in parallel, any exception propagates
         await asyncio.gather(*tasks)
 
     async def stop(self) -> None:
-        """停止所有 Adapter。"""
+        """Stop all Adapters."""
         for adapter in self._adapters.values():
             await adapter.stop()
 
-    # -- 内部回调（Adapter → 猫神经系统）-----------------------------
+    # -- Internal callbacks (Adapter → cat nervous system) -----------------------------
 
     async def _on_message(self, text: str, ctx: SignalContext) -> str | None:
-        """收到外部消息 → 注入猫 → 返回回复。"""
+        """Receive external message → inject into cat → return reply."""
         async for event in self.cat.perceive(text, context=ctx):
             if isinstance(event, dict) and "output" in event:
                 return event["output"]
@@ -90,10 +90,10 @@ class Gateway:
     async def _on_stream(
         self, text: str, ctx: SignalContext,
     ) -> AsyncIterator[str] | None:
-        """流式版本 — 逐 event 迭代。
+        """Streaming version — iterate event by event.
 
-        具体行为取决于 Purr.stream() / Mouth.speak() 在 Pipeline
-        Stage 中如何 yield。此处仅迭代 perceive() 结果。
+        Concrete behavior depends on how Purr.stream() / Mouth.speak() yield
+        in Pipeline Stages. This only iterates perceive() results.
         """
         async for event in self.cat.perceive(text, context=ctx):
             if isinstance(event, dict):
@@ -103,7 +103,7 @@ class Gateway:
                     yield event["output"]
 
 
-# -- 子模块 re-export ------------------------------------------------
+# -- Sub-module re-exports ------------------------------------------------
 
 from meowcat.gateway.http_adapter import HttpAdapter  # noqa: E402, F401
 from meowcat.gateway.ws_adapter import WsAdapter  # noqa: E402, F401

@@ -1,6 +1,6 @@
-"""meowcat 默认存储 — 纯内存实现，零外部依赖。
+"""meowcat default storage — pure in-memory implementation, zero external dependencies.
 
-用于快速原型和测试。生产环境请用 meowagent 的 SQLite/JSONL 实现。
+For rapid prototyping and testing. Use meowagent SQLite/JSONL implementations for production.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -12,7 +12,7 @@ from typing import Any
 
 
 class InMemoryGraphStore:
-    """默认纠缠图存储 — 纯 Python dict，进程重启即丢失。"""
+    """Default graph store — pure Python dict, lost on process restart."""
 
     def __init__(self) -> None:
         self._graphs: dict[str, dict[str, Any]] = {}
@@ -25,7 +25,7 @@ class InMemoryGraphStore:
 
 
 class InMemoryVectorStore:
-    """默认向量存储 — 纯 Python dict + 余弦相似度，进程重启即丢失。"""
+    """Default vector store — pure Python dict + cosine similarity, lost on process restart."""
 
     def __init__(self) -> None:
         import math
@@ -47,14 +47,14 @@ class InMemoryVectorStore:
         scored.sort(key=lambda x: x[0], reverse=True)
         return [eid for _, eid in scored[:top_k]]
 
-    # -- Protocol 兼容方法 ------------------------------------------
+    # -- Protocol compat methods ------------------------------------------
     async def add(self, text: str, metadata: dict[str, Any]) -> str:
         return ""
 
     async def delete(self, doc_id: str) -> bool:
         return self._store.pop(doc_id, None) is not None
 
-    # -- 内部 ------------------------------------------------------
+    # -- Internal ----------------------------------------------------
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         dot = sum(x * y for x, y in zip(a, b))
         norm_a = self._math.sqrt(sum(x * x for x in a))
@@ -65,9 +65,9 @@ class InMemoryVectorStore:
 
 
 class InMemorySharedStore:
-    """默认共享存储 — 纯 Python dict，进程重启即丢失。
+    """Default shared store — pure Python dict, lost on process restart.
 
-    Colony 共享记忆的默认实现，适合单进程原型。
+    Default implementation for Colony shared memory, suitable for single-process prototypes.
     """
 
     def __init__(self) -> None:
@@ -79,7 +79,7 @@ class InMemorySharedStore:
 
     async def set(self, key: str, value: Any) -> None:
         self._data[key] = value
-        # 通知 watchers
+        # Notify watchers
         self._notify_watchers(key, value)
 
     async def delete(self, key: str) -> None:
@@ -87,14 +87,14 @@ class InMemorySharedStore:
         self._notify_watchers(key, None)
 
     async def list_keys(self) -> list[str]:
-        """列出所有存储 key。"""
+        """List all stored keys."""
         return list(self._data.keys())
 
     async def watch(self, pattern: str) -> Any:
-        """监听匹配 pattern 的 key 变更。
+        """Watch key changes matching pattern.
 
-        返回 AsyncIterator，每次变更 yield (key, value) 元组。
-        pattern 支持前缀匹配：key.startswith(pattern)。
+        Returns an AsyncIterator that yields (key, value) tuples on each change.
+        Pattern supports prefix matching: key.startswith(pattern).
         """
         q: asyncio.Queue = asyncio.Queue()
         if pattern not in self._watchers:
@@ -110,7 +110,7 @@ class InMemorySharedStore:
                 watchers.remove(q)
 
     def _notify_watchers(self, key: str, value: Any) -> None:
-        """通知匹配的 watchers。"""
+        """Notify matching watchers."""
         for pattern, queues in list(self._watchers.items()):
             if key.startswith(pattern):
                 for q in queues:
@@ -119,7 +119,7 @@ class InMemorySharedStore:
                     except asyncio.QueFull:
                         pass
 
-    # -- Protocol 兼容方法 ------------------------------------------
+    # -- Protocol compat methods ------------------------------------------
     async def load(self) -> dict[str, Any]:
         return dict(self._data)
 
@@ -136,7 +136,7 @@ class InMemorySharedStore:
 
 
 class InMemoryL6Store:
-    """默认 L6 对话存储 — 纯 Python list，进程重启即丢失。"""
+    """Default L6 conversation store — pure Python list, lost on process restart."""
 
     def __init__(self) -> None:
         self._records: dict[str, list[dict[str, Any]]] = {}

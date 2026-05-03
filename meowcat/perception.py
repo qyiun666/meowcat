@@ -1,10 +1,11 @@
-"""meowcat 感知上下文与模态推断。
+"""meowcat perception context and modality inference.
 
-:class:`PerceptionContext` 是 ``cat.perceive(input)`` 执行过程中跨 Stage
-共享的状态容器；:func:`infer_modality` 根据输入形态做粗糙模态推断，
-业务层可直接在 Reflex.trigger 里自定义更精细的判断。
+:class:`PerceptionContext` is the cross-Stage shared state container during
+``cat.perceive(input)`` execution; :func:`infer_modality` does coarse modality
+inference based on input shape. App layer can customize finer judgments in
+Reflex.trigger directly.
 
-零 meowagent 依赖。
+Zero meowagent dependency.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -22,64 +23,65 @@ Modality = Literal["text", "image", "audio", "tool_result", "unknown"]
 
 
 class PerceptionContext(BaseModel):
-    """``cat.perceive`` 的执行上下文。
+    """Execution context for ``cat.perceive``.
 
-    供 Reflex.stages 共享状态使用，是 Pipeline 上的 ``ctx``。
+    Used by Reflex.stages for shared state; serves as ``ctx`` on the Pipeline.
     """
 
     model_config = {"arbitrary_types_allowed": True}
 
     input: Any
-    """原始输入——文字、字节流、dict、任意对象。"""
+    """Raw input — text, byte stream, dict, arbitrary object."""
 
     modality: Modality = "unknown"
-    """推断的输入模态。"""
+    """Inferred input modality."""
 
     reflex_name: str = ""
-    """命中的反射名。"""
+    """Matched reflex name."""
 
     cat: Any = None
-    """CatBase 实例的反向引用，便于 Stage 里 signal。"""
+    """Back-reference to CatBase instance, for signal in Stages."""
 
     short_circuited: bool = False
-    """任一 Stage 触发 short_circuit 后置 True。"""
+    """Set True after any Stage triggers short_circuit."""
 
     final_reply: str | None = None
-    """最终回复（给 CLI/TUI 取值用）。"""
+    """Final reply (for CLI/TUI consumption)."""
 
     extras: dict[str, Any] = Field(default_factory=dict)
-    """业务层自定义字段的兜底袋。"""
+    """Catch-all bag for app-layer custom fields."""
 
 
-# -- 模态推断 ---------------------------------------------------
+# -- Modality inference ---------------------------------------------------
 
 _IMAGE_MAGIC: tuple[bytes, ...] = (
     b"\x89PNG\r\n\x1a\n",    # PNG
     b"\xff\xd8\xff",           # JPEG
     b"GIF87a", b"GIF89a",       # GIF
-    b"RIFF",                    # WEBP 开头
+    b"RIFF",                    # WEBP header
     b"BM",                      # BMP
 )
 
 _AUDIO_MAGIC: tuple[bytes, ...] = (
-    b"RIFF",                    # WAV (RIFF....WAVE)；与 WEBP 首魔数冲突，按场景选其一
-    b"ID3",                     # MP3 带 ID3
-    b"\xff\xfb", b"\xff\xf3",   # MP3 帧头
+    # WAV (RIFF....WAVE); same magic as WEBP, choose by scenario
+    b"RIFF",
+    b"ID3",                     # MP3 with ID3 tags
+    b"\xff\xfb", b"\xff\xf3",   # MP3 frame header
     b"OggS",                    # OGG
     b"fLaC",                    # FLAC
 )
 
 
 def infer_modality(input: Any) -> Modality:
-    """粗略判断输入模态。
+    """Coarse input modality inference.
 
     - ``str`` → ``text``
-    - ``bytes`` 且匹配图像魔数 → ``image``
-    - ``bytes`` 且匹配音频魔数 → ``audio``
-    - ``dict`` 且含 ``tool_result`` 键 → ``tool_result``
-    - 其余 → ``unknown``
+    - ``bytes`` matching image magic → ``image``
+    - ``bytes`` matching audio magic → ``audio``
+    - ``dict`` with ``tool_result`` key → ``tool_result``
+    - otherwise → ``unknown``
 
-    业务层若需要更精细的判别，直接在 ``Reflex.trigger`` 里自写。
+    For finer-grained discrimination, write custom logic directly in ``Reflex.trigger``.
     """
     if isinstance(input, str):
         return "text"

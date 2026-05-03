@@ -1,7 +1,8 @@
-"""meowcat Gateway — WebhookAdapter（回调骨架适配器）。
+"""meowcat Gateway — WebhookAdapter (callback skeleton adapter).
 
-接收 HTTP POST 回调，支持签名验证接口（子类实现）。
-框架层只提供协议管道，飞书/微信等平台特定逻辑在应用层子类实现。
+Receives HTTP POST callbacks, supports signature verification interface (subclass implements).
+The framework layer only provides the protocol pipe; platform-specific logic
+(Feishu, WeChat, etc.) is implemented in application-layer subclasses.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -15,7 +16,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable
 
 from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
 
-# HTTP 状态码 → RFC 7230 理由短语
+# HTTP status code → RFC 7230 reason phrase
 _HTTP_REASONS: dict[int, str] = {
     200: "OK",
     400: "Bad Request",
@@ -28,19 +29,19 @@ _logger = logging.getLogger(__name__)
 
 
 class WebhookAdapter:
-    """Webhook 回调骨架 — HTTP POST 接收 + 可重写的验证/解析方法。
+    """Webhook callback skeleton — HTTP POST receiver + overridable verify/parse methods.
 
-    子类化示例（meowagent 应用层）::
+    Subclass example (meowagent application layer)::
 
         class FeishuAdapter(WebhookAdapter):
             name = "feishu"
 
             def verify_signature(self, headers, body):
-                # 飞书签名验证逻辑
+                # Feishu signature verification logic
                 ...
 
             def parse_message(self, body):
-                # 飞书消息格式解析
+                # Feishu message format parsing
                 ...
     """
 
@@ -54,24 +55,25 @@ class WebhookAdapter:
         self.path = path
         self._server: asyncio.AbstractServer | None = None
 
-    # -- 可被子类重写的钩子 ------------------------------------------
+    # -- Hooks overridable by subclasses ----------------------------------------
 
     def verify_signature(self, headers: dict[str, str], body: bytes) -> bool:
-        """验证回调签名。子类重写以添加平台特定验证（飞书/微信）。默认放行。"""
+        """Verify callback signature. Subclass overrides to add platform-specific
+        verification (Feishu/WeChat). Default: always pass."""
         return True
 
     def parse_message(self, body: dict[str, Any]) -> tuple[str, str]:
-        """从回调 body 提取 (消息文本, 用户ID)。子类重写。"""
+        """Extract (message text, user id) from callback body. Subclass overrides."""
         return body.get("message", ""), body.get("user_id", "unknown")
 
-    # -- Adapter 协议实现 --------------------------------------------
+    # -- Adapter protocol implementation --------------------------------------
 
     async def serve(
         self,
         on_message: Callable[[str, SignalContext], Awaitable[str | None]],
         on_stream: Callable[[str, SignalContext], Awaitable[AsyncIterator[str] | None]],
     ) -> None:
-        """启动 HTTP server，监听 POST {path}。"""
+        """Start HTTP server, listen on POST {path}."""
         self._on_message = on_message
         self._on_stream = on_stream
 
@@ -88,7 +90,7 @@ class WebhookAdapter:
     async def _handle_webhook(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
     ) -> None:
-        """处理单个 webhook POST 请求。"""
+        """Handle a single webhook POST request."""
         try:
             request_line = await asyncio.wait_for(reader.readline(), timeout=30)
             if not request_line:
@@ -101,7 +103,7 @@ class WebhookAdapter:
                 return
             method, path = parts[0], parts[1]
 
-            # 读 headers
+            # Read headers
             headers: dict[str, str] = {}
             while True:
                 line = await asyncio.wait_for(reader.readline(), timeout=10)
@@ -112,7 +114,7 @@ class WebhookAdapter:
                     key, val = line_str.split(":", 1)
                     headers[key.strip().lower()] = val.strip()
 
-            # 读 body
+            # Read body
             content_length = int(headers.get("content-length", "0"))
             body_raw = await asyncio.wait_for(
                 reader.readexactly(content_length), timeout=10,
@@ -122,7 +124,7 @@ class WebhookAdapter:
                 await self._respond(writer, 404)
                 return
 
-            # 签名验证
+            # Signature verification
             if not self.verify_signature(headers, body_raw):
                 await self._respond(writer, 403)
                 return
@@ -151,7 +153,7 @@ class WebhookAdapter:
 
     @staticmethod
     async def _respond(writer: asyncio.StreamWriter, status: int) -> None:
-        """发送简单 HTTP 响应。"""
+        """Send simple HTTP response."""
         body = b"OK" if status == 200 else b""
         reason = _HTTP_REASONS.get(status, "OK")
         writer.write(
@@ -163,20 +165,22 @@ class WebhookAdapter:
         await writer.drain()
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
-        """Webhook 模式下 send 为 no-op（响应由回调返回值处理）。"""
+        """send is a no-op in Webhook mode (response handled by callback return value)."""
         _logger.debug(
-            "WebhookAdapter.send() no-op: webhook 模式响应由 _on_message 返回值处理")
+            "WebhookAdapter.send() no-op: webhook response handled by _on_message return value")
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
-        """Webhook 模式下不支持流式。"""
-        _logger.debug("WebhookAdapter.stream_chunk() no-op: webhook 不支持流式")
+        """Streaming not supported in Webhook mode."""
+        _logger.debug(
+            "WebhookAdapter.stream_chunk() no-op: webhook does not support streaming")
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
-        """Webhook 模式下不支持流式。"""
-        _logger.debug("WebhookAdapter.stream_end() no-op: webhook 不支持流式")
+        """Streaming not supported in Webhook mode."""
+        _logger.debug(
+            "WebhookAdapter.stream_end() no-op: webhook does not support streaming")
 
     async def stop(self) -> None:
-        """关闭 webhook server。"""
+        """Shut down webhook server."""
         if self._server:
             self._server.close()
             self._server = None

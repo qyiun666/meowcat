@@ -1,9 +1,9 @@
-"""示例 03：只用 EventBus —— 纯异步发布订阅，零猫依赖。
+"""Example 03: EventBus only — pure async pub/sub, zero cat dependency.
 
-场景：用户只想要一个"订阅事件名 → 触发回调"的异步总线，不关心器官/通路/
-反射。
+Scenario: The user just wants an async bus for "subscribe event name → trigger callback",
+not concerned with organs / pathways / reflexes.
 
-运行：``python -m meowcat.examples.03_event_bus_only``
+Run: ``python -m meowcat.examples.03_event_bus_only``
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -30,11 +30,11 @@ async def main() -> None:
     for ev in received:
         print(f"  - {ev}")
 
-    # 取消订阅
+    # Unsubscribe
     bus.off("user.login", on_user)
     await bus.emit("user.login", {"uid": 100})
     assert len(received) == 2
-    print("EventBus 单飞 OK")
+    print("EventBus standalone OK")
 
 
 if __name__ == "__main__":

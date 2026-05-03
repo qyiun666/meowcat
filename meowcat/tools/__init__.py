@@ -1,9 +1,9 @@
-"""meowcat 工具系统 — 框架层工具/Skill/Paws 抽象。
+"""meowcat tool system — framework-layer Tool/Skill/Paws abstraction.
 
-每只猫都有爪子，爪子能执行工具。框架定义什么是工具、怎么注册、
-怎么执行。应用层负责提供具体工具实现。
+Every cat has paws, and paws can execute tools. The framework defines what a tool is,
+how to register, and how to execute. The application layer provides concrete tool implementations.
 
-``meowcat/tools/`` 零依赖 meowagent。
+``meowcat/tools/`` has zero meowagent dependency.
 """
 # (c) 2025-2026 Axonant. MIT License.
 

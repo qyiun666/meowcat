@@ -1,6 +1,6 @@
-"""meowcat 框架级异常。
+"""meowcat framework-level exceptions.
 
-仅定义框架自身的错误类型，不涉及业务异常。
+Only defines framework-internal error types, no business exceptions.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -11,11 +11,11 @@ from typing import Any
 
 
 class MeowCatError(Exception):
-    """meowcat 框架所有异常的基类。"""
+    """Base class for all meowcat framework exceptions."""
 
 
 class OrganNotMountedError(MeowCatError):
-    """尝试访问未挂载的器官时抛出。"""
+    """Raised when attempting to access an unmounted organ."""
 
     def __init__(self, category: str, name: str) -> None:
         self.category = category
@@ -24,7 +24,7 @@ class OrganNotMountedError(MeowCatError):
 
 
 class LoopFailedError(MeowCatError):
-    """闭环执行失败时抛出。"""
+    """Raised when a loop execution fails."""
 
     def __init__(self, loop_name: str, reason: str = "") -> None:
         self.loop_name = loop_name
@@ -36,7 +36,7 @@ class LoopFailedError(MeowCatError):
 
 
 class StageTimeoutError(MeowCatError):
-    """Pipeline Stage 执行超时时抛出。"""
+    """Raised when a Pipeline Stage execution times out."""
 
     def __init__(self, stage_name: str, timeout: float) -> None:
         self.stage_name = stage_name
@@ -46,13 +46,13 @@ class StageTimeoutError(MeowCatError):
         )
 
 
-# -- v0.5.1 新增：神经系统异常 ----------------------------------
+# -- v0.5.1 added: nervous system exceptions ----------------------------------
 
 
 class IllegalNeuralPathError(MeowCatError):
-    """通过 cat.signal() 调用了 wiring 图未允许（或明令禁止）的通路。
+    """Called via cat.signal() on a path not allowed (or explicitly forbidden) by the wiring graph.
 
-    生物学意义：违反"大脑不直连四肢"这类神经解剖学规律。
+    Biological meaning: violates neuroanatomical rules such as "brain does not directly connect to limbs".
     """
 
     def __init__(
@@ -71,9 +71,9 @@ class IllegalNeuralPathError(MeowCatError):
 
 
 class ReflexPathInvalidError(MeowCatError):
-    """反射弧 path 某一跳在 wiring 里不合法。
+    """A hop in a reflex arc path is illegal according to wiring.
 
-    在 ``cat.freeze_nervous_system()`` 时统一校验抛出。
+    Validated and raised during ``cat.freeze_nervous_system()``.
     """
 
     def __init__(
@@ -91,7 +91,7 @@ class ReflexPathInvalidError(MeowCatError):
 
 
 class NoReflexMatchedError(MeowCatError):
-    """``cat.perceive(input)`` 时没有任何已注册反射的 trigger 命中。"""
+    """No registered reflex trigger matched during ``cat.perceive(input)``."""
 
     def __init__(self, input_repr: str) -> None:
         self.input_repr = input_repr
@@ -99,7 +99,7 @@ class NoReflexMatchedError(MeowCatError):
 
 
 class OrganProtocolMismatchError(MeowCatError):
-    """``cat.mount(category, name, organ, protocol=P)`` 时 organ 不满足 P。"""
+    """Organ does not satisfy protocol P during ``cat.mount(category, name, organ, protocol=P)``."""
 
     def __init__(
         self,

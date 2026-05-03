@@ -1,9 +1,10 @@
-"""示例 02：只用 Wiring —— 纯数据结构，离线校验通路合法性。
+"""Example 02: Wiring only — pure data structure, offline pathway validation.
 
-场景：用户在业务代码里自定义了一组神经信号路径，想先离线校验路径合法
-（起点终点在同一张 wiring 图上、无重复、双向边自动对称），再上线。
+Scenario: The user defines a set of neural signal paths in business code
+and wants to offline-validate them first (source and target on same wiring
+graph, no duplicates, bidirectional edges auto-symmetrized), then go live.
 
-运行：``python -m meowcat.examples.02_wiring_validation``
+Run: ``python -m meowcat.examples.02_wiring_validation``
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -17,26 +18,26 @@ def main() -> None:
     wiring = Wiring()
     biology.apply_default_wiring(wiring)
 
-    print(f"默认 wiring 边数: {len(wiring.edges())}")
+    print(f"Default wiring edge count: {len(wiring.edges())}")
 
-    # 合法路径（默认听觉 → 丘脑）
+    # Valid path (default ears → thalamus)
     wiring.assert_allowed(("sense", "ears"), ("brain", "thalamus"))
     print("(sense,ears) → (brain,thalamus) ✓")
 
-    # 非法路径（默认表里大脑不直连四肢）
+    # Invalid path (default wiring: cerebrum not directly connected to paws)
     try:
         wiring.assert_allowed(("brain", "cerebrum"), ("sense", "paws"))
     except Exception as e:
-        print(f"(brain,cerebrum) → (sense,paws) 被拦截: {type(e).__name__}")
+        print(f"(brain,cerebrum) → (sense,paws) blocked: {type(e).__name__}")
 
-    # 冻结后不能再改
+    # After freeze, cannot modify
     wiring.freeze()
     try:
         wiring.add_edge(("brain", "cerebrum"), ("sense", "paws"))
     except Exception as e:
-        print(f"冻结后 add_edge 被拦截: {type(e).__name__}")
+        print(f"add_edge after freeze blocked: {type(e).__name__}")
 
-    print("Wiring 单飞 OK")
+    print("Wiring standalone OK")
 
 
 if __name__ == "__main__":

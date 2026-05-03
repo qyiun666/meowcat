@@ -1,9 +1,10 @@
-"""示例 01：只用 OrganHost —— 当作一个带 Protocol 校验的器官容器。
+"""Example 01: OrganHost only — use as an organ container with Protocol validation.
 
-场景：用户只想要一个"按 (category, name) 挂/取对象"的字典，并且希望在
-挂载时自动做 ``isinstance(obj, Protocol)`` 校验。不需要神经系统/反射/事件。
+Scenario: The user just wants a dict that "mounts/gets objects by (category, name)",
+and wants automatic ``isinstance(obj, Protocol)`` validation on mount.
+No need for nervous system / reflex / events.
 
-运行：``python -m meowcat.examples.01_organ_host_only``
+Run: ``python -m meowcat.examples.01_organ_host_only``
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -24,25 +25,25 @@ class Cerebrum:
 def main() -> None:
     host = OrganHost(cat_id="demo")
 
-    # 挂载 —— 带 Protocol 校验（isinstance 必须通过）
+    # Mount — with Protocol validation (isinstance must pass)
     host.mount("brain", "cerebrum", Cerebrum(), protocol=OrganProtocol)
     host.mount("sense", "ears", type("Ears", (), {"name": "ears"})())
 
-    # 取回
+    # Retrieve
     brain = host.organ("brain", "cerebrum")
     print(f"got {brain.name}")
 
-    # 查询
+    # Query
     assert host.has_organ("sense", "ears")
     print(f"brain organs: {list(host.organs('brain').keys())}")
 
-    # 校验必挂清单
+    # Validate required mount list
     host.assert_organs_mounted([("brain", "cerebrum"), ("sense", "ears")])
 
-    # 卸载
+    # Unmount
     host.unmount("sense", "ears")
     assert not host.has_organ("sense", "ears")
-    print("OrganHost 单飞 OK")
+    print("OrganHost standalone OK")
 
 
 if __name__ == "__main__":

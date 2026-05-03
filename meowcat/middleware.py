@@ -1,7 +1,7 @@
-"""meowcat 内置信号中间件 — 日志、追踪、限流、超时。
+"""meowcat built-in signal middleware — logging, tracing, rate limiting, timeout.
 
-所有中间件实现 :class:`SignalMiddleware` Protocol，可直接通过
-``cat.use_middleware(...)`` 注册使用。
+All middleware implements :class:`SignalMiddleware` Protocol, can be registered
+directly via ``cat.use_middleware(...)``.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -18,9 +18,9 @@ _logger = logging.getLogger("meowcat.signal")
 
 
 class SignalLogger:
-    """记录每次 signal(from, to, method, duration)。
+    """Log every signal(from, to, method, duration).
 
-    日志级别为 DEBUG，内容包含调用方、目标、方法名和耗时（毫秒）。
+    Log level is DEBUG, content includes caller, target, method name, and duration (milliseconds).
 
     Example:
 
@@ -45,17 +45,17 @@ class SignalLogger:
 
 
 class RateLimiter:
-    """限制特定 organ 方法的调用频率。
+    """Limit call frequency for specific organ methods.
 
-    基于滑动窗口：在 ``window_seconds`` 内最多 ``max_calls`` 次。
+    Sliding window based: at most ``max_calls`` within ``window_seconds``.
 
     Args:
-        max_calls: 窗口内最大调用次数
-        window_seconds: 时间窗口（秒）
+        max_calls: maximum calls within the window
+        window_seconds: time window (seconds)
 
     Example:
 
-        # 每个 organ.method 组合每秒最多 10 次
+        # at most 10 calls per second per organ.method pair
         cat.use_middleware(RateLimiter(max_calls=10, window_seconds=1.0))
     """
 
@@ -68,27 +68,27 @@ class RateLimiter:
         key = (ctx.to_organ, ctx.method)
         now = time.monotonic()
         bucket = self._buckets.setdefault(key, [])
-        # 清理过期记录
+        # purge expired entries
         cutoff = now - self._window
         bucket[:] = [t for t in bucket if t > cutoff]
         if len(bucket) >= self._max_calls:
-            return None  # 短路：超过限流
+            return None  # short-circuit: rate limit exceeded
         bucket.append(now)
         return ctx
 
 
 class TimeoutGuard:
-    """超时自动 abort。
+    """Auto-abort on timeout.
 
-    ``before`` 钩子在 signal 执行前检查当前时间是否已超过截止时间。
-    适用于为整个 signal 调用链设置截止时间。
+    The ``before`` hook checks whether the current time has exceeded the deadline
+    before signal execution. Suitable for setting a deadline for entire signal call chains.
 
     Args:
-        deadline: 截止时间（time.monotonic() 时间戳）
+        deadline: deadline time (time.monotonic() timestamp)
 
     Example:
 
-        # 2 秒后所有 signal 都会被阻止
+        # all signals blocked after 2 seconds
         cat.use_middleware(TimeoutGuard(deadline=time.monotonic() + 2.0))
     """
 
@@ -97,20 +97,20 @@ class TimeoutGuard:
 
     async def before(self, ctx: SignalCall) -> SignalCall | None:
         if time.monotonic() >= self._deadline:
-            return None  # 短路：超时
+            return None  # short-circuit: timeout
         return ctx
 
 
 class ContextInjector:
-    """自动将额外上下文注入每次 signal 的 kwargs。
+    """Auto-inject extra context into kwargs of every signal.
 
-    用于 Gateway 将 SignalContext 注入到 signal 调用中。
+    Used by Gateway to inject SignalContext into signal calls.
 
-    设计说明：此中间件只做注入，不关心 context 的内容结构。
-    注入的键值通过构造参数传入。
+    Design note: this middleware only does injection, not concerned with context content structure.
+    Injected key-values are passed via constructor arguments.
 
     Args:
-        inject: 要注入到 kwargs 的键值对
+        inject: key-value pairs to inject into kwargs
 
     Example:
 
@@ -122,7 +122,7 @@ class ContextInjector:
         self._inject = dict(inject)
 
     async def before(self, ctx: SignalCall) -> SignalCall | None:
-        # 将注入值合并到 kwargs（已有键不覆盖）
+        # merge injected values into kwargs (existing keys not overwritten)
         for key, value in self._inject.items():
             if key not in ctx.kwargs:
                 ctx.kwargs[key] = value

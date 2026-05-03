@@ -1,6 +1,6 @@
-"""meowcat 存储协议 — 持久化存储接口。
+"""meowcat storage protocols — persistence storage interfaces.
 
-全部 typing.Protocol（鸭子类型），零第三方依赖。
+All typing.Protocol (duck typing), zero third-party dependencies.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -18,13 +18,13 @@ __all__ = [
 
 @runtime_checkable
 class GraphStorageProtocol(Protocol):
-    """纠缠图持久化存储接口。
+    """Entanglement graph persistence storage interface.
 
-    **坐标**: 无（存储层，不占用器官坐标）
-    **入边**: 由 Hippocampus 直接持有，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（存储后端）
+    **Position**: none (storage layer, no organ coordinate)
+    **Inbound**: held directly by Hippocampus, not called via wiring
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: app layer (storage backend)
     """
 
     async def load(self, cat_id: str) -> dict[str, Any]: ...
@@ -33,13 +33,13 @@ class GraphStorageProtocol(Protocol):
 
 @runtime_checkable
 class L6StorageProtocol(Protocol):
-    """L6 原始对话持久化存储接口。
+    """L6 raw dialogue persistence storage interface.
 
-    **坐标**: 无（存储层，不占用器官坐标）
-    **入边**: 由 BrainStem 直接持有，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（存储后端）
+    **Position**: none (storage layer, no organ coordinate)
+    **Inbound**: held directly by BrainStem, not called via wiring
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: app layer (storage backend)
     """
 
     def append(self, cat_id: str, turn: int,
@@ -55,13 +55,13 @@ class L6StorageProtocol(Protocol):
 
 @runtime_checkable
 class VectorStorageProtocol(Protocol):
-    """向量检索存储接口（语义搜索）。
+    """Vector search storage interface (semantic search).
 
-    **坐标**: 无（存储层，不占用器官坐标）
-    **入边**: 由 Thalamus 可选持有，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（存储后端）
+    **Position**: none (storage layer, no organ coordinate)
+    **Inbound**: optionally held by Thalamus, not called via wiring
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: app layer (storage backend)
     """
 
     def add(self, text: str, metadata: dict[str, Any]) -> str: ...
@@ -71,13 +71,13 @@ class VectorStorageProtocol(Protocol):
 
 @runtime_checkable
 class SharedStorageProtocol(Protocol):
-    """Colony 共享记忆存储接口。
+    """Colony shared memory storage interface.
 
-    **坐标**: 无（存储层，不占用器官坐标）
-    **入边**: 由 ColonyManager 直接持有，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（存储后端）
+    **Position**: none (storage layer, no organ coordinate)
+    **Inbound**: held directly by ColonyManager, not called via wiring
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: app layer (storage backend)
     """
 
     def load(self) -> dict[str, Any]: ...
@@ -87,39 +87,39 @@ class SharedStorageProtocol(Protocol):
 
 @runtime_checkable
 class FederationTransport(Protocol):
-    """跨 Colony 通信传输层 — 让不同主机/进程的 Colony 互相感知、通信。
+    """Cross-Colony communication transport — enables Colonies on different hosts/processes to discover and communicate with each other.
 
-    **坐标**: 无（传输层，不占用器官坐标）
-    **入边**: 由 Colony.federate() 注入，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 框架层内置 TCPSocketTransport / RedisPubSubTransport，应用层可自定义
+    **Position**: none (transport layer, no organ coordinate)
+    **Inbound**: injected by Colony.federate(), not called via wiring
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: framework provides TCPSocketTransport / RedisPubSubTransport; app layer may customize
     """
 
     async def publish(self, topic: str, payload: dict) -> None:
-        """向指定 topic 发布消息。
+        """Publish a message to the specified topic.
 
         Args:
-            topic: 目标 colony_id。
-            payload: 消息负载（含 type/request_id/from_cat/to_cat 等）。
+            topic: target colony_id.
+            payload: message payload (includes type/request_id/from_cat/to_cat, etc.).
         """
         ...
 
     async def subscribe(self, topic: str) -> AsyncIterator[dict]:
-        """订阅指定 topic 的消息流。
+        """Subscribe to message stream for the specified topic.
 
         Args:
-            topic: 本 colony_id，接收发给本 colony 的消息。
+            topic: this colony_id, receives messages sent to this colony.
 
         Yields:
-            每条消息的 payload dict。
+            payload dict for each message.
         """
         ...
 
     async def start(self) -> None:
-        """启动传输层（如开始监听端口）。"""
+        """Start the transport layer (e.g. begin listening on port)."""
         ...
 
     async def stop(self) -> None:
-        """停止传输层（如关闭端口）。"""
+        """Stop the transport layer (e.g. close port)."""
         ...

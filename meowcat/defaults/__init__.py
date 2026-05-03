@@ -1,7 +1,7 @@
-"""meowcat 内置默认实现 — 开箱即用的参考实现。
+"""meowcat built-in default implementations — ready-to-use reference implementations.
 
-全部零外部依赖（纯 Python dict/list），用于快速原型和测试。
-生产环境请替换为 meowagent 或自定义的真实器官实现。
+All zero external dependencies (pure Python dict/list), for rapid prototyping and testing.
+For production, replace with meowagent or custom real organ implementations.
 """
 # (c) 2025-2026 Axonant. MIT License.
 

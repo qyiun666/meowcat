@@ -1,12 +1,12 @@
-"""meowcat 默认器官桩 — 满足 Protocol 的空操作实现。
+"""meowcat default organ stubs — no-op implementations satisfying Protocols.
 
-每个 Noop* 类均继承 Pluggable（v1.0.7），提供 mount_plug / unmount_plug /
-_run_plugs 插件能力。HOOKS 类变量声明可挂载的 hook 及其建议签名。
+Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
+_run_plugs plugin capability. HOOKS class variable declares mountable hooks and their suggested signatures.
 
-三种执行模式：
-- A 首命中覆盖：首个非默认值直接返回
-- B 合并增强：所有插件结果 merge 到默认值
-- C 完全替代：首个插件直接替代默认行为
+Three execution modes:
+- A First-hit override: first non-default value is returned directly
+- B Merge enhancement: all plugin results are merged into the default value
+- C Full replacement: first plugin completely replaces default behavior
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -21,14 +21,14 @@ from meowcat.pluggable import Pluggable
 
 
 # ===================================================================
-# 脑区
+# Brain Regions
 # ===================================================================
 
 
 class NoopAmygdala(Pluggable):
-    """默认杏仁核：永不拒绝，零安全风险。
+    """Default amygdala: never rejects, zero security risk.
 
-    模式 A — assess_safety / assess_tool_risk 首命中覆盖。
+    Mode A — assess_safety / assess_tool_risk first-hit override.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -72,9 +72,9 @@ class NoopAmygdala(Pluggable):
 
 
 class NoopFrontal(Pluggable):
-    """默认前额叶：不检测焦点转移，不保存焦点。
+    """Default frontal cortex: does not detect focus shifts, does not save focus.
 
-    模式 A — is_continue / detect_shift 首命中覆盖。
+    Mode A — is_continue / detect_shift first-hit override.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -113,9 +113,9 @@ class NoopFrontal(Pluggable):
 
 
 class NoopHypothalamus(Pluggable):
-    """默认下丘脑：不执行维护，不唤醒实体。
+    """Default hypothalamus: does not perform maintenance, does not wake entities.
 
-    模式 B — run_maintenance 合并增强。
+    Mode B — run_maintenance merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -143,9 +143,9 @@ class NoopHypothalamus(Pluggable):
 
 
 class NoopCortex(Pluggable):
-    """默认皮质：不摄入世界观，不记录弱点。
+    """Default cortex: does not ingest worldviews, does not record weaknesses.
 
-    模式 B — synthesize 合并增强。
+    Mode B — synthesize merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -175,9 +175,9 @@ class NoopCortex(Pluggable):
 
 
 class NoopBrainstem(Pluggable):
-    """默认脑干：不构建 system prompt，不取消当前任务。
+    """Default brainstem: does not build system prompt, does not cancel current task.
 
-    模式 B — build_system_prompt 合并增强。
+    Mode B — build_system_prompt merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -204,14 +204,14 @@ class NoopBrainstem(Pluggable):
 
 
 # ===================================================================
-# 感官
+# Senses
 # ===================================================================
 
 
 class NoopEars(Pluggable):
-    """默认耳朵：听不出关键词，语言固定 unknown。
+    """Default ears: cannot detect keywords, language fixed as unknown.
 
-    模式 B — hear / extract_keywords 合并增强。
+    Mode B — hear / extract_keywords merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -243,14 +243,14 @@ class NoopEars(Pluggable):
         return "unknown"
 
     def tag_emotion(self, episode: dict[str, Any]) -> dict[str, Any]:
-        """默认情绪标注：原样返回，不做修改。"""
+        """Default emotion tagging: return as-is, no modification."""
         return episode
 
 
 class NoopEyes(Pluggable):
-    """默认眼睛：看不见任何图像。
+    """Default eyes: cannot see any images.
 
-    模式 C — see 完全替代。
+    Mode C — see full replacement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -270,9 +270,9 @@ class NoopEyes(Pluggable):
 
 
 class NoopWhiskers(Pluggable):
-    """默认胡须：无输入感觉，无输出漂移检测。
+    """Default whiskers: no input sensation, no output drift detection.
 
-    模式 B — feel_input / feel_output / check_hallucination 合并增强。
+    Mode B — feel_input / feel_output / check_hallucination merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -316,14 +316,14 @@ class NoopWhiskers(Pluggable):
 
 
 # ===================================================================
-# 嗓音
+# Voice
 # ===================================================================
 
 
 class NoopMouth(Pluggable):
-    """默认嘴巴：不说话。
+    """Default mouth: does not speak.
 
-    模式 C — speak 完全替代。
+    Mode C — speak full replacement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -345,9 +345,9 @@ class NoopMouth(Pluggable):
 
 
 class NoopPurr(Pluggable):
-    """默认咕噜：不流式输出。
+    """Default purr: no streaming output.
 
-    模式 C — stream 完全替代。
+    Mode C — stream full replacement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -369,9 +369,9 @@ class NoopPurr(Pluggable):
 
 
 class NoopTail(Pluggable):
-    """默认尾巴：不渲染任何终端 UI。
+    """Default tail: does not render any terminal UI.
 
-    模式 C — render 完全替代。
+    Mode C — render full replacement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -393,14 +393,14 @@ class NoopTail(Pluggable):
 
 
 # ===================================================================
-# 效应器
+# Effectors
 # ===================================================================
 
 
 class NoopPaws(Pluggable):
-    """默认爪子：不执行任何工具/命令。
+    """Default paws: does not execute any tool/command.
 
-    模式 C — execute 完全替代。
+    Mode C — execute full replacement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -416,7 +416,7 @@ class NoopPaws(Pluggable):
         return {}
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]:
-        """统一工具执行入口（v1.0.7 新增）。"""
+        """Unified tool execution entrypoint (v1.0.7)."""
         for _name, r in self._run_plugs("execute", tool_name, params):
             if isinstance(r, dict):
                 return r
@@ -437,14 +437,14 @@ class NoopPaws(Pluggable):
 
 
 # ===================================================================
-# 新增 v1.0.7: NoopThalamus + NoopHippocampus
+# New in v1.0.7: NoopThalamus + NoopHippocampus
 # ===================================================================
 
 
 class NoopThalamus(Pluggable):
-    """默认丘脑：简单路由，不做记忆检索。
+    """Default thalamus: simple routing, no memory retrieval.
 
-    模式 B — locate 合并增强。
+    Mode B — locate merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -469,10 +469,10 @@ class NoopThalamus(Pluggable):
 
 
 class NoopHippocampus(Pluggable):
-    """默认海马体：纯内存图存储，进程重启即丢失。
+    """Default hippocampus: pure in-memory graph store, lost on process restart.
 
-    封装 InMemoryGraphStore，实现 HippocampusProtocol 全套方法。
-    模式 B — remember / recall 合并增强。
+    Wraps InMemoryGraphStore, implements full HippocampusProtocol methods.
+    Mode B — remember / recall merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -494,7 +494,7 @@ class NoopHippocampus(Pluggable):
         self.entities: dict[str, dict[str, Any]] = {}
         self.episodes: list[dict[str, Any]] = []
 
-    # -- 记忆存储 ---------------------------------------------------
+    # -- Memory storage -----------------------------------------------
 
     async def remember(
         self, user_msg: str, ai_reply: str, cat_id: str, model: str,
@@ -515,12 +515,12 @@ class NoopHippocampus(Pluggable):
             "entity_id", str(len(self.entities))))
         self.entities[eid] = entity
 
-    # -- 记忆检索 ---------------------------------------------------
+    # -- Memory retrieval --------------------------------------------
 
     def fts_search(
         self, cat_id: str, keywords: str, limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """全文搜索记忆（简单关键词匹配）。"""
+        """Full-text search memory (simple keyword matching)."""
         results: list[dict[str, Any]] = []
         kws = keywords.lower().split()
         for ep in self.episodes:
@@ -533,7 +533,7 @@ class NoopHippocampus(Pluggable):
         return results
 
     def recall(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
-        """语义召回记忆（简单实现：委托 fts_search）。"""
+        """Semantic recall memory (simple impl: delegates to fts_search)."""
         base = self.fts_search("", query, limit)
         for _name, r in self._run_plugs("recall", query, limit):
             if isinstance(r, list):
@@ -563,7 +563,7 @@ class NoopHippocampus(Pluggable):
                 related.append(self.entities[target_id])
         return related
 
-    # -- 连接操作 ---------------------------------------------------
+    # -- Connection operations ---------------------------------------
 
     def connect(
         self, from_id: str, to_id: str, relation: str, strength: float = 1.0,
@@ -600,7 +600,7 @@ class NoopHippocampus(Pluggable):
             entity["connections"] = kept
         return removed
 
-    # -- 维护 -------------------------------------------------------
+    # -- Maintenance ------------------------------------------------
 
     def decay(self, now: Any | None = None) -> int:
         if now is None:
@@ -628,7 +628,7 @@ class NoopHippocampus(Pluggable):
         self.entities = d.get("entities", {})
         self.episodes = d.get("episodes", [])
 
-    # -- v0.5.26 封装方法 -------------------------------------------
+    # -- v0.5.26 wrapper methods ------------------------------------
 
     def record_access(self, entity_id: str, delta: int = 1) -> None:
         if entity_id in self.entities:
@@ -659,12 +659,12 @@ class NoopHippocampus(Pluggable):
         if entity_id in self.entities:
             self.entities[entity_id]["last_seen"] = ts
 
-    # -- v1.0.15 长流程 workflow 查询 --------------------------------
+    # -- v1.0.15 long-workflow query --------------------------------
 
     def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]:
-        """列出所有未完成的 workflow 实体。
+        """List all incomplete workflow entities.
 
-        过滤 type="workflow" 且 status 为 active/awaiting_user 的实体。
+        Filters entities with type="workflow" and status active/awaiting_user.
         """
         results: list[dict[str, Any]] = []
         for eid, entity in self.entities.items():

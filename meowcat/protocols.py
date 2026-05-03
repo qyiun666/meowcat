@@ -1,8 +1,8 @@
-"""meowcat 协议层 — 猫的解剖结构蓝图。
+"""meowcat protocol layer — blueprint of cat anatomical structure.
 
-全部 typing.Protocol（鸭子类型），零第三方依赖。
+All typing.Protocol (duck typing), zero third-party dependencies.
 
-v1.0.5: 存储/脑区/感官协议拆分为独立子模块，本文件 re-export 保持兼容。
+v1.0.5: storage/brain/sense protocols split into sub-modules; this file re-exports for compatibility.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkable
 
-# v1.0.5: re-export 从子模块，保持 from meowcat import ... 完全兼容
+# v1.0.5: re-export from sub-modules, keep from meowcat import ... fully compatible
 from meowcat.protocols_brain import (
     AmygdalaProtocol,
     AnomalyGrowthProtocol,
@@ -87,67 +87,67 @@ __all__ = [
 
 @runtime_checkable
 class StageProtocol(Protocol):
-    """Pipeline Stage 协议 — 每个 Stage 是一个可插拔的处理步骤。
+    """Pipeline Stage protocol — each Stage is a pluggable processing step.
 
-    **坐标**: 无（Pipeline 层，每个 Stage 实例通过 name 标识，不占用器官坐标）
-    **入边**: 由 PipelineRunner 按序驱动，不经 wiring 调用
-    **出边**: 通过 yield StageEvent 向 PipelineRunner 输出
-    **反射弧**: 无直接反射弧；Stage 内部可通过 ctx 访问 cat 调用 signal()
-    **实现方**: 应用层（Pipeline Stage）
+    **Position**: none (Pipeline layer, each Stage identified by name, no organ coordinate)
+    **Inbound**: driven by PipelineRunner in sequence, not via wiring
+    **Outbound**: yields StageEvent to PipelineRunner
+    **Reflex Arc**: none direct; Stage can call signal() via ctx.cat internally
+    **Implemented by**: app layer (Pipeline Stage)
     """
     name: str
     async def run(self, ctx: Any) -> AsyncIterator[Any]: ...
 
-# -- 分身猫蓝图 ------------------------------------------------
+# -- Kitten blueprint ------------------------------------------------
 
 
 class KittenProtocol(Protocol):
-    """分身猫蓝图 — 纯文档 Protocol（v1.0.1 降级，不再 @runtime_checkable）。
+    """Kitten blueprint — doc-only Protocol (v1.0.1 downgraded, no longer @runtime_checkable).
 
-    分身猫 = CatBase(parent_id=..., allowed_organs={...}, forbidden_methods={...})。
-    权限由 CatBase 的 ``allowed_organs`` + ``forbidden_methods`` 控制。
+    Kitten = CatBase(parent_id=..., allowed_organs={...}, forbidden_methods={...}).
+    Permissions controlled by CatBase ``allowed_organs`` + ``forbidden_methods``.
 
-    见 ``docs/v0.5.0/design.md`` 十二节。此处保留为文档参考，说明分身猫的
-    推荐配置：
+    See ``docs/v0.5.0/design.md`` section 12. Preserved here as doc reference,
+    showing recommended kitten configuration:
 
-    **仅有的器官**: cerebellum, cerebrum, paws, whiskers, amygdala
-    **生命周期**: execute → propose_merge → dismiss
-    **隔离**: parent_id 只是字符串标识，不持有父猫对象引用
+    **Organs only**: cerebellum, cerebrum, paws, whiskers, amygdala
+    **Lifecycle**: execute → propose_merge → dismiss
+    **Isolation**: parent_id is a string identifier only, no parent cat object reference
 
-    **实现方**: 应用层（KittenAgent 实现）
+    **Implemented by**: app layer (KittenAgent implementation)
     """
 
-    parent_id: str                   # 父猫 cat_id，纯字符串标识
+    parent_id: str                   # parent cat_id, string identifier only
     task: SubTaskShape
     role: str
     workspace: Any
     capability: KittenCapability
-    memory_snapshot: dict[str, Any]  # spawn 时注入的只读记忆快照
+    memory_snapshot: dict[str, Any]  # read-only memory snapshot injected at spawn
 
-    # 仅有的器官
+    # organs only
     cerebellum: LLMBrainProtocol
     cerebrum: LLMBrainProtocol
     paws: PawsProtocol
     whiskers: WhiskersProtocol
     amygdala: AmygdalaProtocol
 
-    # 生命周期（execute 直接返 MergeProposal，强制回传唯一通道）
+    # lifecycle (execute returns MergeProposal directly, the only channel back)
     async def execute(self) -> MergeProposalShape: ...
     def propose_merge(self) -> MergeProposalShape: ...
     async def dismiss(self) -> None: ...
 
-# -- 猫本体 -------------------------------------------------------
+# -- Cat body -------------------------------------------------------
 
 
 @runtime_checkable
 class OrchestratorProtocol(Protocol):
-    """编排器接口 — 6 步编排循环 (plan→dispatch→execute→absorb→revise→fallback)。
+    """Orchestrator interface — 6-step orchestration loop (plan→dispatch→execute→absorb→revise→fallback).
 
-    **坐标**: 无（编排器由 Cat 直接持有，不经 wiring 调用）
-    **入边**: 由 BrainStem/RouteDecideStage 在判定需编排时触发
-    **出边**: 通过 spawn_kitten 创建分身猫，通过 absorb_merge 回收结果
-    **反射弧**: 无直接反射弧；编排内部通过 signal 调用 HIPPOCAMPUS 等器官
-    **实现方**: 应用层（编排器实现）
+    **Position**: none (held directly by Cat, not called via wiring)
+    **Inbound**: triggered by BrainStem/RouteDecideStage when orchestration needed
+    **Outbound**: creates kittens via spawn_kitten, absorbs results via absorb_merge
+    **Reflex Arc**: none direct; orchestration internally calls organs via signal (e.g. HIPPOCAMPUS)
+    **Implemented by**: app layer (orchestrator implementation)
     """
 
     async def orchestrate(self, msg: str) -> Any: ...
@@ -156,31 +156,31 @@ class OrchestratorProtocol(Protocol):
 
 @runtime_checkable
 class SettingsProtocol(Protocol):
-    """全局配置接口 — 只暴露 data_dir 给框架层。
+    """Settings interface — exposes only data_dir to framework layer.
 
-    **坐标**: 无（配置层，由 Cat 直接持有）
-    **入边**: 由所有器官通过 cat.settings 访问
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（配置实现）
+    **Position**: none (config layer, held directly by Cat)
+    **Inbound**: accessed by all organs via cat.settings
+    **Outbound**: none
+    **Reflex Arc**: none
+    **Implemented by**: app layer (settings implementation)
     """
     data_dir: Any
 
 
 @runtime_checkable
 class AdapterProtocol(Protocol):
-    """领域适配器 — 定义领域特定的检索权重和实体类型。
+    """Domain adapter — defines domain-specific retrieval weights and entity types.
 
-    只暴露框架层需要的最小合约：
-    - ``name``: 适配器唯一标识
-    - ``entity_types``: 该领域的实体类型列表
-    - ``locate_weights``: locate() 的检索权重配置
+    Exposes only the minimal contract the framework layer needs:
+    - ``name``: unique adapter identifier
+    - ``entity_types``: list of entity types for this domain
+    - ``locate_weights``: retrieval weight config for locate()
 
-    **坐标**: 无（领域配置，不占用器官坐标）
-    **入边**: 应用层初始化和运行时通过 cat.active_adapter 注入
-    **出边**: 被 Thalamus.locate() / BrainStem.build_system_prompt() 读取
-    **反射弧**: 间接参与 text_dialogue（通过 locate 权重影响路由）
-    **实现方**: 应用层（适配器配置）
+    **Position**: none (domain config, no organ coordinate)
+    **Inbound**: injected by app layer at init/runtime via cat.active_adapter
+    **Outbound**: read by Thalamus.locate() / BrainStem.build_system_prompt()
+    **Reflex Arc**: indirectly participates in text_dialogue (routing via locate weights)
+    **Implemented by**: app layer (adapter config)
     """
     name: str
     entity_types: Any
@@ -189,20 +189,20 @@ class AdapterProtocol(Protocol):
 
 @runtime_checkable
 class CatProtocol(Protocol):
-    """猫本体协议 — 一只完整猫的全部对外 API。组合所有脑区+感官+编排能力。
+    """Cat body protocol — full external API of a complete cat. Composes all brain regions + senses + orchestration.
 
-    **坐标**: 无（Cat 是总装类，不占用单一器官坐标；各器官通过 wiring 独立注册）
-    **入边**: 外部调用者（CLI、Server、多平台适配器）通过 process_message/perceive_stream 触发
-    **出边**: 通过内部器官协调产生回复和行为
-    **反射弧**: 持有应用层注册的所有反射弧
-    **生命周期**: start() → 事件循环 → shutdown()
-    **实现方**: 应用层（Cat 总装类）
+    **Position**: none (Cat is the assembly class, no single organ coordinate; organs registered independently via wiring)
+    **Inbound**: external callers (CLI, Server, multi-platform adapters) trigger via process_message/perceive_stream
+    **Outbound**: produces replies and actions coordinated by internal organs
+    **Reflex Arc**: holds all reflex arcs registered by app layer
+    **Lifecycle**: start() → event loop → shutdown()
+    **Implemented by**: app layer (Cat assembly class)
     """
     cat_id: str
     settings: Any
     data_dir: Any
     turn: int
-    # 脑区
+    # brain regions
     hippocampus: HippocampusProtocol
     thalamus: ThalamusProtocol
     amygdala: AmygdalaProtocol
@@ -211,22 +211,22 @@ class CatProtocol(Protocol):
     cerebellum: LLMBrainProtocol
     cerebrum: LLMBrainProtocol
     brainstem: BrainStemProtocol
-    # 感官
+    # senses
     ears: EarsProtocol
     eyes: EyesProtocol
     whiskers: WhiskersProtocol
     paws: PawsProtocol
-    # 编排 / 授权 / 适配器
+    # orchestration / approval / adapter
     orchestrator: OrchestratorProtocol
     approval: Any
     active_adapter: AdapterProtocol | None
 
-    # 神经系统（EventBus）
+    # nervous system (EventBus)
     async def emit(self, event: str, payload: Any = None) -> None: ...
     def on(self, event: str, handler: Any | None = None) -> Any: ...
     def off(self, event: str, handler: Any) -> bool: ...
 
-    # 对外 API
+    # external API
     async def process_message(self, msg: str) -> str: ...
     async def perceive_stream(
         self, msg: str) -> AsyncIterator[dict[str, str]]: ...
@@ -234,7 +234,7 @@ class CatProtocol(Protocol):
     async def start(self) -> None: ...
     async def shutdown(self) -> None: ...
 
-    # 派生能力（主猫专属，分身猫 Protocol 不包含→框架级防递归）
+    # derived capability (main cat only; not in KittenProtocol → framework-level recursion guard)
     async def spawn_kitten(
         self,
         task: SubTaskShape,

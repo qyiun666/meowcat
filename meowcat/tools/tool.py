@@ -1,7 +1,7 @@
-"""meowcat 工具基类 — 框架层 Tool 抽象。
+"""meowcat tool base — framework-layer Tool abstraction.
 
-每只猫都有爪子，爪子能执行工具。框架定义什么是工具、怎么注册、
-怎么执行。应用层负责提供具体工具实现。
+Every cat has paws, and paws can execute tools. The framework defines what a tool is,
+how to register, and how to execute. The application layer provides concrete tool implementations.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class RiskLevel(Enum):
-    """工具执行风险等级。"""
+    """Tool execution risk level."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -25,7 +25,7 @@ class RiskLevel(Enum):
 
 @dataclass
 class ToolSpec:
-    """工具描述 — 框架层通用格式。"""
+    """Tool spec — framework-layer common format."""
     name: str
     description: str
     parameters: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -34,12 +34,13 @@ class ToolSpec:
 
 
 class Tool:
-    """一个可执行工具。
+    """An executable tool.
 
-    应用层继承此类实现具体逻辑。框架提供通用内置工具在
-    :mod:`meowcat.tools.builtin` 中。
+    Application layer subclasses this to implement concrete logic.
+    The framework provides generic built-in tools in
+    :mod:`meowcat.tools.builtin`.
 
-    用法::
+    Usage::
 
         tool = Tool(ToolSpec(
             name="read_file",
@@ -60,7 +61,7 @@ class Tool:
         self._handler = handler
         self._enabled = True
 
-    # -- 便捷属性 ---------------------------------------------------
+    # -- Convenience properties ----------------------------------------
 
     @property
     def name(self) -> str:
@@ -84,10 +85,10 @@ class Tool:
     def disable(self) -> None:
         self._enabled = False
 
-    # -- Schema 生成 ------------------------------------------------
+    # -- Schema generation -------------------------------------------
 
     def to_openai_schema(self) -> dict:
-        """生成 OpenAI function call 格式的 schema。"""
+        """Generate OpenAI function call format schema."""
         props: dict[str, dict] = {}
         required: list[str] = []
         for pname, pdef in self.spec.parameters.items():
@@ -95,7 +96,7 @@ class Tool:
                 "type": pdef.get("type", "string"),
                 "description": pdef.get("description", ""),
             }
-            # 支持 array 类型的 items
+            # Support array-type items
             if prop["type"] == "array" and "items" in pdef:
                 prop["items"] = pdef["items"]
             props[pname] = prop
@@ -113,10 +114,10 @@ class Tool:
             },
         }
 
-    # -- 执行 -------------------------------------------------------
+    # -- Execute ------------------------------------------------------
 
     async def execute(self, **kwargs: Any) -> str:
-        """执行工具，返回结果字符串。"""
+        """Execute the tool, return result string."""
         if self._handler is None:
             raise RuntimeError(f"Tool '{self.name}' has no handler")
         try:
@@ -130,13 +131,13 @@ class Tool:
 
 
 class ToolRegistry:
-    """工具注册中心 — 全局唯一，挂载在 cat 实例上。
+    """Tool registry — globally unique, mounted on cat instance.
 
-    用法::
+    Usage::
 
         registry = ToolRegistry()
         registry.register(tool)
-        schemas = registry.to_openai_schemas()  # 直接喂给 LLM
+        schemas = registry.to_openai_schemas()  # feed directly to LLM
     """
 
     def __init__(self) -> None:
@@ -144,7 +145,7 @@ class ToolRegistry:
         self._by_category: dict[str, list[str]] = {}
 
     def register(self, tool: Tool) -> None:
-        """注册一个工具。同名工具会被覆盖。"""
+        """Register a tool. Same-named tool will be overwritten."""
         if tool.name in self._tools:
             logger.warning(
                 "Tool '%s' already registered, overwriting", tool.name)
@@ -153,7 +154,7 @@ class ToolRegistry:
         self._by_category.setdefault(cat, []).append(tool.name)
 
     def unregister(self, name: str) -> bool:
-        """注销一个工具。返回是否成功。"""
+        """Unregister a tool. Returns whether successful."""
         tool = self._tools.pop(name, None)
         if tool is None:
             return False
@@ -164,30 +165,30 @@ class ToolRegistry:
         return True
 
     def get(self, name: str) -> Tool | None:
-        """按名称获取工具。"""
+        """Get tool by name."""
         return self._tools.get(name)
 
     def list_all(self, enabled_only: bool = True) -> list[Tool]:
-        """列出所有工具。"""
+        """List all tools."""
         if enabled_only:
             return [t for t in self._tools.values() if t.enabled]
         return list(self._tools.values())
 
     def list_by_category(self, category: str) -> list[Tool]:
-        """按分类列出工具。"""
+        """List tools by category."""
         names = self._by_category.get(category, [])
         return [self._tools[n] for n in names if n in self._tools]
 
     def to_openai_schemas(self) -> list[dict]:
-        """生成所有已注册工具的 OpenAI function call schemas。"""
+        """Generate OpenAI function call schemas for all registered tools."""
         return [t.to_openai_schema() for t in self.list_all()]
 
     def count(self) -> int:
-        """已注册工具数量。"""
+        """Count of registered tools."""
         return len(self._tools)
 
     def enable(self, name: str) -> bool:
-        """启用一个工具。返回是否成功。"""
+        """Enable a tool. Returns whether successful."""
         tool = self._tools.get(name)
         if tool:
             tool.enable()
@@ -195,7 +196,7 @@ class ToolRegistry:
         return False
 
     def disable(self, name: str) -> bool:
-        """禁用一个工具。返回是否成功。"""
+        """Disable a tool. Returns whether successful."""
         tool = self._tools.get(name)
         if tool:
             tool.disable()

@@ -1,20 +1,20 @@
-"""meowcat 闭环 — Loop dataclass + LoopRegistry + 5 个默认闭环。
+"""meowcat loops — Loop dataclass + LoopRegistry + 5 default loops.
 
-闭环 = Chain + 触发事件 + 退出事件。Loop 组合已有 Chain，通过事件挂载到
-猫的生命周期中，形成自动化执行回路。
+Loop = Chain + trigger event + exit event. Loop composes existing Chains, mounting them
+into the cat's lifecycle via events to form automated execution cycles.
 
-对外部开发者的体验::
+Developer experience::
 
     from meowcat.loops import Loop, BUILTIN_LOOPS, CONVERSATION_LOOP
 
-    # 查看内置闭环
+    # inspect built-in loops
     for lp in BUILTIN_LOOPS:
         print(f"{lp.name}: trigger={lp.trigger}, chain={lp.chain.name}")
 
-    # 通过 cat 执行
-    result = await cat.run_loop("conversation", message="你好")
+    # execute via cat
+    result = await cat.run_loop("conversation", message="hello")
 
-本文件零第三方依赖，零 meowagent import。
+This file has zero third-party dependencies, zero meowagent imports.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -28,7 +28,7 @@ from meowcat.chain import BUILTIN_CHAINS, Chain
 from meowcat.loop import Lifecycle
 
 
-# -- 从 BUILTIN_CHAINS 查找复用 Chain ---------------------------------
+# -- Lookup reusable Chains from BUILTIN_CHAINS -------------------------
 
 _MAINTENANCE_CHAIN: Chain = next(
     (c for c in BUILTIN_CHAINS if c.name == "maintenance"),
@@ -42,17 +42,17 @@ _DIAGNOSTIC_CHAIN: Chain = next(
 
 @dataclass(frozen=True)
 class Loop:
-    """一组命名的闭环：Chain + 触发/退出事件。
+    """A named loop: Chain + trigger/exit events.
 
-    闭环封装了一条 :class:`Chain` 的执行加上生命周期事件的触发。
-    触发事件在 chain 执行前发出，退出事件在 chain 执行后发出。
+    A Loop encapsulates a :class:`Chain` execution plus lifecycle event triggers.
+    Trigger event is emitted before chain execution, exit event after.
 
     Attributes:
-        name: 闭环唯一名称，如 ``"conversation"``
-        description: 人类可读描述
-        chain: 关联的链路
-        trigger: 触发事件名（None 表示手动触发）
-        exit_event: 退出事件名（None 表示不发出退出事件）
+        name: Unique loop name, e.g. ``"conversation"``
+        description: Human-readable description
+        chain: Associated chain
+        trigger: Trigger event name (None means manual trigger)
+        exit_event: Exit event name (None means no exit event)
     """
 
     name: str
@@ -62,53 +62,53 @@ class Loop:
     exit_event: str | None = None
 
 
-# -- 5 个默认闭环 ---------------------------------------------------
+# -- 5 default loops -------------------------------------------------
 
 CONVERSATION_LOOP: Loop = Loop(
     "conversation",
-    "常规对话闭环 — 听→路由→找→推理→说→记",
+    "Standard conversation loop — hear→route→find→reason→speak→remember",
     chain=Chain(
         "conversation_chain",
         ("hear", "decide_route", "locate", "deep_reason", "speak", "remember"),
-        "对话链",
+        "Conversation chain",
     ),
     trigger=Lifecycle.PERCEIVE_START,
 )
 
 TOOL_EXECUTION_LOOP: Loop = Loop(
     "tool_execution",
-    "工具执行闭环 — 听→路由→执行→说→记",
+    "Tool execution loop — hear→route→execute→speak→remember",
     chain=Chain(
         "tool_loop_chain",
         ("hear", "decide_route", "execute_tool", "speak", "remember"),
-        "工具链",
+        "Tool chain",
     ),
     trigger="orchestrate.start",
 )
 
 DANGER_RESPONSE_LOOP: Loop = Loop(
     "danger_response",
-    "危险响应闭环 — 安全评估",
+    "Danger response loop — safety assessment",
     chain=Chain(
         "danger_chain",
         ("assess_safety",),
-        "危险链",
+        "Danger chain",
     ),
     trigger="amygdala.alert",
 )
 
 MAINTENANCE_LOOP: Loop = Loop(
     "maintenance",
-    "自维护闭环 — 衰减+清理",
+    "Self-maintenance loop — decay+cleanup",
     chain=_MAINTENANCE_CHAIN,
     trigger="heartbeat.tick",
 )
 
 DIAGNOSTIC_LOOP: Loop = Loop(
     "diagnostic",
-    "诊断闭环 — 走 Stethoscope 体检",
+    "Diagnostic loop — run Stethoscope checkup",
     chain=_DIAGNOSTIC_CHAIN,
-    trigger=None,  # 手动触发
+    trigger=None,  # manual trigger
 )
 
 BUILTIN_LOOPS: tuple[Loop, ...] = (
@@ -124,15 +124,15 @@ def register_default_loops(
     loop_registry: "LoopRegistry",
     chain_registry: Any,
 ) -> None:
-    """将 5 个默认闭环及其关联 Chain 注册到注册中心。
+    """Register the 5 default loops and their associated Chains into the registries.
 
-    对每条内置闭环：
-    1. 如果其 Chain 尚未注册，则先注册 Chain
-    2. 注册 Loop
+    For each built-in loop:
+    1. If its Chain is not yet registered, register the Chain first
+    2. Register the Loop
 
     Args:
-        loop_registry: 闭环注册中心实例
-        chain_registry: 链路注册中心实例（需支持 register/get）
+        loop_registry: Loop registry instance
+        chain_registry: Chain registry instance (must support register/get)
     """
     for lp in BUILTIN_LOOPS:
         if chain_registry.get(lp.chain.name) is None:
@@ -144,32 +144,32 @@ def register_default_loops(
 
 @dataclass
 class LoopRegistry:
-    """闭环注册中心 — 管理 Loop 的注册、查询和执行。
+    """Loop registry — manages Loop registration, lookup, and execution.
 
-    用法::
+    Usage::
 
         registry = LoopRegistry()
         register_default_loops(registry, cat.chain_registry)
 
-        # 查询
+        # Lookup
         loop = registry.get("conversation")
         all_loops = registry.list_all()
 
-        # 执行
-        result = await registry.run(cat, "conversation", message="你好")
+        # Execute
+        result = await registry.run(cat, "conversation", message="hello")
     """
 
     _loops: dict[str, Loop] = field(default_factory=dict, init=False)
     _loops_list: list[Loop] = field(default_factory=list, init=False)
 
     def register(self, loop: Loop) -> None:
-        """注册一条闭环。同名闭环覆盖旧值。
+        """Register a loop. Same name overwrites old value.
 
         Args:
-            loop: Loop 实例
+            loop: Loop instance
 
         Raises:
-            TypeError: loop 不是 Loop 实例
+            TypeError: loop is not a Loop instance
         """
         if not isinstance(loop, Loop):
             raise TypeError(
@@ -181,48 +181,48 @@ class LoopRegistry:
         self._loops_list.append(loop)
 
     def get(self, name: str) -> Loop | None:
-        """按名查找闭环。
+        """Look up a loop by name.
 
         Args:
-            name: 闭环名称
+            name: Loop name
 
         Returns:
-            Loop 对象，不存在返回 None
+            Loop object, None if not found
         """
         return self._loops.get(name)
 
     def list_all(self) -> list[Loop]:
-        """返回所有已注册闭环列表（注册顺序）。"""
+        """Return list of all registered loops (registration order)."""
         return list(self._loops_list)
 
     async def run(self, cat: Any, name: str, **initial_input: Any) -> dict[str, Any]:
-        """执行一个闭环：触发事件 → 跑 chain → 退出事件。
+        """Execute a loop: trigger event → run chain → exit event.
 
         Args:
-            cat: CatBase 实例（需支持 emit/chain_registry.run）
-            name: 闭环名称
-            **initial_input: 初始输入
+            cat: CatBase instance (must support emit/chain_registry.run)
+            name: Loop name
+            **initial_input: Initial input
 
         Returns:
-            chain 执行结果（dict）
+            Chain execution result (dict)
 
         Raises:
-            KeyError: 闭环不存在，或 chain 不存在
+            KeyError: Loop not found, or chain not found
         """
         loop = self.get(name)
         if loop is None:
             raise KeyError(f"Loop '{name}' not found in registry")
 
-        # 触发事件
+        # Trigger event
         if loop.trigger:
             await cat.emit(loop.trigger, initial_input)
 
-        # 执行链
+        # Execute chain
         result = await cat.chain_registry.run(
             cat, loop.chain.name, **initial_input,
         )
 
-        # 退出事件
+        # Exit event
         if loop.exit_event:
             await cat.emit(loop.exit_event, result)
 
@@ -233,22 +233,25 @@ class LoopRegistry:
 
 @dataclass(frozen=True)
 class LoopSequence:
-    """元闭环 — 多个 Loop 的顺序/事件驱动组合。
+    """Meta-loop — sequential/event-driven composition of multiple Loops.
 
-    组合模型第五层::
+    Composition model layer 5::
 
         Path → Chain → Loop → LoopSequence
 
-    LoopSequence 将多个已注册的闭环组装为一个更大的执行单元。
+    LoopSequence assembles multiple registered loops into a larger execution unit.
 
     Attributes:
-        name: 元闭环唯一名称
-        description: 人类可读描述
-        loops: 已注册的 ``Loop`` 名称序列
-        mode: ``"sequential"`` — 顺序执行，前一步结果传给下一步；
-              ``"event_driven"`` — 并发执行，各自监听触发事件
-        stop_on_error: ``True`` — 任何 Loop 失败立刻抛异常停止后续；
-                       ``False`` — 跳过失败的 Loop 继续执行
+        name: Unique meta-loop name
+        description: Human-readable description
+        loops: Sequence of registered ``Loop`` names
+        mode: ``"sequential"`` — execute sequentially, previous result
+              passed to next step;
+              ``"event_driven"`` — execute concurrently, each
+              listens for its own trigger event
+        stop_on_error: ``True`` — any Loop failure immediately raises
+                       exception, stopping subsequent loops;
+                       ``False`` — skip failed Loop and continue
     """
 
     name: str
@@ -265,11 +268,11 @@ class LoopSequence:
             )
 
 
-# -- 内置 LoopSequence -----------------------------------------------
+# -- Built-in LoopSequence -----------------------------------------------
 
 DAILY_MAINTENANCE_SEQ: LoopSequence = LoopSequence(
     "daily_maintenance",
-    "日常维护 — 自维护后体检",
+    "Daily maintenance — self-maintenance then checkup",
     loops=("maintenance", "diagnostic"),
     mode="sequential",
 )
@@ -283,14 +286,14 @@ BUILTIN_LOOPSEQS: tuple[LoopSequence, ...] = (
 
 @dataclass
 class LoopSequenceRegistry:
-    """元闭环注册中心 — 管理 LoopSequence 的注册、查询和执行。
+    """Meta-loop registry — manages LoopSequence registration, lookup, and execution.
 
-    用法::
+    Usage::
 
         registry = LoopSequenceRegistry()
         registry.register(DAILY_MAINTENANCE_SEQ)
 
-        # 执行
+        # Execute
         result = await registry.run(cat, "daily_maintenance")
     """
 
@@ -298,13 +301,13 @@ class LoopSequenceRegistry:
     _seqs_list: list[LoopSequence] = field(default_factory=list, init=False)
 
     def register(self, seq: LoopSequence) -> None:
-        """注册一条元闭环。同名覆盖旧值。
+        """Register a meta-loop. Same name overwrites old value.
 
         Args:
-            seq: LoopSequence 实例
+            seq: LoopSequence instance
 
         Raises:
-            TypeError: seq 不是 LoopSequence 实例
+            TypeError: seq is not a LoopSequence instance
         """
         if not isinstance(seq, LoopSequence):
             raise TypeError(
@@ -316,43 +319,43 @@ class LoopSequenceRegistry:
         self._seqs_list.append(seq)
 
     def get(self, name: str) -> LoopSequence | None:
-        """按名查找元闭环。
+        """Look up a meta-loop by name.
 
         Args:
-            name: 元闭环名称
+            name: Meta-loop name
 
         Returns:
-            LoopSequence 对象，不存在返回 None
+            LoopSequence object, None if not found
         """
         return self._seqs.get(name)
 
     def list_all(self) -> list[LoopSequence]:
-        """返回所有已注册元闭环列表（注册顺序）。"""
+        """Return list of all registered meta-loops (registration order)."""
         return list(self._seqs_list)
 
     async def run(
         self, cat: Any, name: str, **initial_input: Any,
     ) -> dict[str, Any]:
-        """执行一条元闭环。
+        """Execute a meta-loop.
 
-        **sequential 模式**：按 ``loops`` 顺序执行，前一步返回值作为下一步
-        的 kwargs，最后一步结果返回。
+        **sequential mode**: Execute in ``loops`` order, previous step result
+        becomes next step kwargs, last result is returned.
 
-        **event_driven 模式**：所有 Loop 并发执行，各自获得相同的
-        ``initial_input``。结果按 Loop 名为 key 收集。
+        **event_driven mode**: All Loops execute concurrently, each receives
+        the same ``initial_input``. Results collected by Loop name as key.
 
         Args:
-            cat: CatBase 实例（需支持 ``cat.loop_registry.run(cat, name, **kw)``）
-            name: 元闭环名称
-            **initial_input: 初始输入
+            cat: CatBase instance (must support ``cat.loop_registry.run(cat, name, **kw)``)
+            name: Meta-loop name
+            **initial_input: Initial input
 
         Returns:
-            最后一步结果（sequential）或 ``{loop_name: result, ...}``
-            （event_driven）
+            Last step result (sequential) or ``{loop_name: result, ...}``
+            (event_driven)
 
         Raises:
-            KeyError: 元闭环不存在，或引用的 Loop 不存在
-            Exception: 某 Loop 失败且 ``stop_on_error=True``
+            KeyError: Meta-loop not found, or referenced Loop not found
+            Exception: A Loop failed and ``stop_on_error=True``
         """
         import asyncio
 
@@ -374,7 +377,7 @@ class LoopSequenceRegistry:
     async def _run_sequential(
         self, cat: Any, seq: LoopSequence, **initial_input: Any,
     ) -> dict[str, Any]:
-        """顺序执行 loops，前一步结果传给下一步。"""
+        """Execute loops sequentially, passing previous result to next step."""
         current_input: dict[str, Any] = dict(initial_input)
         last_result: Any = current_input
 
@@ -390,7 +393,7 @@ class LoopSequenceRegistry:
             except Exception:
                 if seq.stop_on_error:
                     raise
-                # stop_on_error=False → 跳过失败继续
+                # stop_on_error=False → skip failure, continue
                 current_input = dict(initial_input)
 
         if isinstance(last_result, dict):
@@ -400,7 +403,7 @@ class LoopSequenceRegistry:
     async def _run_event_driven(
         self, cat: Any, seq: LoopSequence, **initial_input: Any,
     ) -> dict[str, Any]:
-        """并发执行 loops，各自获得相同的 initial_input。"""
+        """Execute loops concurrently, each receives the same initial_input."""
         import asyncio
 
         async def _run_one(loop_name: str) -> tuple[str, Any]:
@@ -418,18 +421,18 @@ class LoopSequenceRegistry:
         results: dict[str, Any] = {}
 
         if seq.stop_on_error:
-            # gather 模式：任一失败即传播异常，其余 task 被取消
+            # gather mode: any failure propagates exception, remaining tasks cancelled
             gathered = await asyncio.gather(*tasks)
             for loop_name, result in gathered:
                 results[loop_name] = result
         else:
-            # 容忍错误：逐个等待，收集全部结果
+            # tolerate errors: wait one by one, collect all results
             for t in asyncio.as_completed(tasks):
                 try:
                     loop_name, result = await t
                     results[loop_name] = result
                 except Exception as e:
-                    # 找到失败的那个 task
+                    # find the failed task
                     for i, task in enumerate(tasks):
                         if task.done() and task.exception():
                             results[seq.loops[i]] = {

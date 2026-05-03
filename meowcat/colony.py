@@ -1,14 +1,14 @@
-"""meowcat Colony — 猫群容器（v1.0.2）+ 联邦（v1.0.12）。
+"""meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12).
 
-Colony 管理多只猫的对等协作 + 共享存储。猫在 colony 中创建时
-自动注册并共享存储。
+Colony manages peer-to-peer collaboration + shared storage for multiple cats.
+Cats created in a colony are automatically registered and share storage.
 
-v1.0.12: 联邦能力 — 跨主机 Colony 互相感知、通信（federate + signal_remote）。
+v1.0.12: Federation — cross-host Colony mutual awareness, communication (federate + signal_remote).
 
-与 Kitten（主从模式）正交：
-- Kitten: 主猫 spawn 分身旁 → 结果回传 (parent → child)
-- Colony: 多只独立猫对等协作 (peer ↔ peer)，通过 SharedStorage 共享状态
-- Colony 联邦: 跨主机 Colony 对等通信 (colony ↔ colony)，通过 FederationTransport
+Orthogonal to Kitten (master/slave mode):
+- Kitten: master cat spawns kitten → result delivered back (parent → child)
+- Colony: multiple independent cats collaborate equally (peer ↔ peer), sharing state via SharedStorage
+- Colony Federation: cross-host Colony peer-to-peer communication (colony ↔ colony), via FederationTransport
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -29,39 +29,39 @@ logger = logging.getLogger("meowcat.colony")
 
 
 class Colony:
-    """猫群容器 — 管理多只猫的对等协作 + 共享存储。
+    """Cat container — manages peer-to-peer collaboration + shared storage.
 
-    典型用法::
+    Typical usage::
 
         from meowcat import Colony, CatBase
         from meowcat.defaults import InMemorySharedStore
 
         colony = Colony("my-colony", storage=InMemorySharedStore())
 
-        # 创建猫（自动注册 + 共享存储）
+        # Create cats (auto-register + shared storage)
         cat_a = colony.create_cat("a")
         cat_b = colony.create_cat("b", parent_id="a")
 
-        # 猫间通信
+        # Inter-cat communication
         result = await colony.signal_between(
             "a", "b", "brain", "hippocampus", "locate",
             query="hello",
         )
 
-        # 结果回传
+        # Result delivery
         await colony.deliver_result("a", "b", {"done": True})
 
-        # 广播
-        results = await colony.broadcast("健康检查")
+        # Broadcast
+        results = await colony.broadcast("health_check")
 
-    **跨猫 wiring 校验**:
-    Colony 维护可选的 ``cross_wiring``（跨猫 wiring 表）。
-    设置后 ``signal_between()`` 会校验跨猫边是否被允许。
-    不设置则跨猫 signal 不做 wiring 校验（直接放行）。
+    **Cross-cat wiring validation**:
+    Colony maintains optional ``cross_wiring`` (cross-cat wiring table).
+    When set, ``signal_between()`` validates whether the cross-cat edge is allowed.
+    When not set, cross-cat signal skips wiring validation (pass through).
     """
 
-    # -- 跨猫 wiring 边类型 -------------------------------------------
-    # (from_cat_id, to_cat_id) 白名单/黑名单
+    # -- Cross-cat wiring edge type ------------------------------------
+    # (from_cat_id, to_cat_id) allowlist/blocklist
     _CrossEdge = tuple[str, str]
 
     def __init__(
@@ -72,13 +72,13 @@ class Colony:
         cross_wiring_allowed: set[_CrossEdge] | None = None,
         cross_wiring_forbidden: set[_CrossEdge] | None = None,
     ) -> None:
-        """构造猫群容器。
+        """Construct a cat container.
 
         Args:
-            colony_id: 猫群唯一标识。
-            storage: 共享存储实例（满足 SharedStorageProtocol）。
-            cross_wiring_allowed: 跨猫白名单边。None=不校验（默认全部允许）。
-            cross_wiring_forbidden: 跨猫黑名单边（优先级高于白名单）。
+            colony_id: Unique identifier for the colony.
+            storage: Shared storage instance (satisfying SharedStorageProtocol).
+            cross_wiring_allowed: Cross-cat allowlist edges. None = no validation (allow all by default).
+            cross_wiring_forbidden: Cross-cat blocklist edges (higher priority than allowlist).
         """
         self.colony_id = colony_id
         self._storage = storage
@@ -90,32 +90,32 @@ class Colony:
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
-        # -- 联邦 (v1.0.12) -----------------------------------------------
+        # -- Federation (v1.0.12) ------------------------------------------
         self._transport: FederationTransport | None = None
         self._federation_task: asyncio.Task | None = None
         self._pending_remote: dict[str, asyncio.Future] = {}
         self._federated = False
 
-    # -- 跨猫 wiring -------------------------------------------------
+    # -- Cross-cat wiring ---------------------------------------------
 
     def allow_cross(self, from_cat: str, to_cat: str) -> None:
-        """声明一条跨猫白名单边（from_cat → to_cat 允许 signal）。"""
+        """Declare a cross-cat allowlist edge (from_cat → to_cat allows signal)."""
         self._cross_allowed.add((from_cat, to_cat))
         self._has_cross_wiring = True
 
     def forbid_cross(self, from_cat: str, to_cat: str) -> None:
-        """声明一条跨猫黑名单边（from_cat → to_cat 禁止 signal）。"""
+        """Declare a cross-cat blocklist edge (from_cat → to_cat forbids signal)."""
         self._cross_forbidden.add((from_cat, to_cat))
         self._has_cross_wiring = True
 
     def _assert_cross_allowed(self, from_id: str, to_id: str) -> None:
-        """校验跨猫边是否允许。
+        """Validate whether cross-cat edge is allowed.
 
         Raises:
-            IllegalNeuralPathError: 跨猫边不被允许。
+            IllegalNeuralPathError: Cross-cat edge is not allowed.
         """
         if not self._has_cross_wiring:
-            return  # 未设置 cross_wiring → 全部放行
+            return  # No cross_wiring set → pass through
 
         if (from_id, to_id) in self._cross_forbidden:
             raise IllegalNeuralPathError(
@@ -129,7 +129,7 @@ class Colony:
                 reason=f"cross-cat signal not allowed: {from_id} → {to_id}",
             )
 
-    # -- 创建 --------------------------------------------------------
+    # -- Create -------------------------------------------------------
 
     def create_cat(
         self,
@@ -140,17 +140,17 @@ class Colony:
         memory_snapshot: dict | None = None,
         **cat_kwargs: Any,
     ) -> CatBase:
-        """在 colony 中创建一只猫并自动注册。
+        """Create a cat in the colony and auto-register it.
 
         Args:
-            cat_id: 猫唯一标识。
-            parent_id: 父猫标识（字符串，无对象引用）。
-            allowed_organs: 器官访问白名单，None=全部允许。
-            memory_snapshot: 父猫分配的上下文切片（写入共享存储）。
-            **cat_kwargs: 传递给 CatBase 的额外参数。
+            cat_id: Unique identifier for the cat.
+            parent_id: Parent cat identifier (string, no object reference).
+            allowed_organs: Organ access allowlist, None = allow all.
+            memory_snapshot: Context slice assigned by parent cat (written to shared storage).
+            **cat_kwargs: Additional arguments passed to CatBase.
 
         Returns:
-            已注册的 CatBase 实例。
+            Registered CatBase instance.
         """
         cat = CatBase(
             cat_id,
@@ -158,10 +158,10 @@ class Colony:
             allowed_organs=allowed_organs,
             **cat_kwargs,
         )
-        # 注入共享存储引用
+        # Inject shared storage reference
         cat._colony_storage = self._storage  # type: ignore[attr-defined]
 
-        # 注入 memory_snapshot（上下文切片）
+        # Inject memory_snapshot (context slice)
         if memory_snapshot:
             # type: ignore[attr-defined]
             cat._memory_snapshot = memory_snapshot
@@ -169,94 +169,94 @@ class Colony:
         self.register(cat)
         return cat
 
-    # -- 注册 / 移除 -------------------------------------------------
+    # -- Register / Remove --------------------------------------------
 
     def register(self, cat: CatBase) -> None:
-        """注册一只猫到猫群（已存在则覆盖）。
+        """Register a cat into the colony (overwrites if already exists).
 
         Args:
-            cat: CatBase 实例。
+            cat: CatBase instance.
         """
         cat._colony_storage = self._storage  # type: ignore[attr-defined]
         self._cats[cat.cat_id] = cat
 
     def unregister(self, cat_id: str) -> None:
-        """从猫群中移除一只猫。
+        """Remove a cat from the colony.
 
         Args:
-            cat_id: 猫唯一标识。
+            cat_id: Unique identifier for the cat.
 
         Raises:
-            KeyError: 猫不存在。
+            KeyError: Cat does not exist.
         """
         del self._cats[cat_id]
 
     def get_cat(self, cat_id: str) -> CatBase:
-        """按 ID 获取猫。
+        """Get a cat by ID.
 
         Args:
-            cat_id: 猫唯一标识。
+            cat_id: Unique identifier for the cat.
 
         Returns:
-            CatBase 实例。
+            CatBase instance.
 
         Raises:
-            KeyError: 猫不存在。
+            KeyError: Cat does not exist.
         """
         return self._cats[cat_id]
 
     def list_cats(self) -> list[str]:
-        """列出猫群中所有猫的 ID。
+        """List all cat IDs in the colony.
 
         Returns:
-            cat_id 列表。
+            List of cat_id strings.
         """
         return list(self._cats.keys())
 
-    # -- 别名方法 (v1.0.9) -------------------------------------------
+    # -- Alias methods (v1.0.9) ---------------------------------------
 
     def adopt(self, cat: CatBase) -> None:
-        """收养一只猫（register 的语义别名）。
+        """Adopt a cat (semantic alias for register).
 
         Args:
-            cat: CatBase 实例。
+            cat: CatBase instance.
         """
         self.register(cat)
 
     def release(self, cat_id: str) -> None:
-        """释放一只猫（unregister 的语义别名）。
+        """Release a cat (semantic alias for unregister).
 
         Args:
-            cat_id: 猫唯一标识。
+            cat_id: Unique identifier for the cat.
 
         Raises:
-            KeyError: 猫不存在。
+            KeyError: Cat does not exist.
         """
         self.unregister(cat_id)
 
-    # -- 共享存储（命名空间隔离）--------------------------------------
+    # -- Shared storage (namespace isolation) -------------------------
 
     def _ns_key(self, cat_id: str, key: str) -> str:
-        """构造命名空间隔离的存储 key。
+        """Construct a namespace-isolated storage key.
 
-        cat_id 前缀自动隔离：``cat-a/memories/xxx`` vs ``cat-b/memories/xxx``。
+        cat_id prefix provides automatic isolation: ``cat-a/memories/xxx`` vs ``cat-b/memories/xxx``.
         """
         return f"{cat_id}/{key}"
 
     async def storage_get(self, cat_id: str, key: str) -> Any:
-        """猫读取共享存储（自动 cat_id 前缀隔离）。"""
+        """Cat reads from shared storage (auto cat_id prefix isolation)."""
         return await self._storage.get(self._ns_key(cat_id, key))
 
     async def storage_set(self, cat_id: str, key: str, value: Any) -> None:
-        """猫写入共享存储（自动 cat_id 前缀隔离）。"""
+        """Cat writes to shared storage (auto cat_id prefix isolation)."""
         await self._storage.set(self._ns_key(cat_id, key), value)
 
     async def storage_delete(self, cat_id: str, key: str) -> None:
-        """猫删除共享存储条目。"""
+        """Cat deletes a shared storage entry."""
         await self._storage.delete(self._ns_key(cat_id, key))
 
     async def storage_list_keys(self, cat_id: str) -> list[str]:
-        """列出猫的所有共享存储 key（去名前缀）。"""
+        """List all shared storage keys for a cat (prefix stripped)."""
         prefix = f"{cat_id}/"
         all_keys = await self._storage.list_keys()
         return [
@@ -266,45 +266,45 @@ class Colony:
     async def storage_watch(
         self, cat_id: str, pattern: str,
     ) -> Any:
-        """监听共享存储中匹配 pattern 的 key 变更。
+        """Watch shared storage key changes matching pattern.
 
-        委托给底层 storage.watch()。返回 AsyncIterator。
+        Delegates to the underlying storage.watch(). Returns AsyncIterator.
         """
         ns_pattern = f"{cat_id}/{pattern}"
         # type: ignore[attr-defined]
         async for item in self._storage.watch(ns_pattern):
             yield item
 
-    # -- 结果回传 ----------------------------------------------------
+    # -- Result delivery ---------------------------------------------
 
     async def deliver_result(
         self, parent_id: str, from_kitten: str, result: Any,
     ) -> None:
-        """分身旁回传结果给父猫。
+        """Kitten delivers result back to parent cat.
 
-        写入共享存储 ``{parent_id}/kitten:{from_kitten}/result``。
+        Writes to shared storage ``{parent_id}/kitten:{from_kitten}/result``.
 
         Args:
-            parent_id: 父猫 ID。
-            from_kitten: 分身旁 ID。
-            result: 回传的任意结果。
+            parent_id: Parent cat ID.
+            from_kitten: Kitten ID.
+            result: Arbitrary result to deliver.
         """
         key = f"kitten:{from_kitten}/result"
         await self.storage_set(parent_id, key, result)
 
-    # -- 广播 --------------------------------------------------------
+    # -- Broadcast ----------------------------------------------------
 
     async def broadcast(self, event: str, **data: Any) -> list[Any]:
-        """向猫群中所有猫广播事件。
+        """Broadcast an event to all cats in the colony.
 
-        对每只猫 emit 同名事件，收集所有 handler 返回值。
+        Emits the same event to every cat, collecting all handler return values.
 
         Args:
-            event: 事件名。
-            **data: 事件数据。
+            event: Event name.
+            **data: Event data.
 
         Returns:
-            所有猫的 handler 返回值列表。
+            List of return values from all cat handlers.
         """
         results: list[Any] = []
         for cat in self._cats.values():
@@ -312,7 +312,7 @@ class Colony:
         return results
 
     async def health_check_all(self) -> dict[str, dict]:
-        """对所有猫执行全身体检。
+        """Run health check on all cats.
 
         Returns:
             ``{cat_id: {...diagnose...}, ...}``
@@ -325,7 +325,7 @@ class Colony:
                 results[cat_id] = {"error": str(exc)}
         return results
 
-    # -- 猫间通信 ----------------------------------------------------
+    # -- Inter-cat communication --------------------------------------
 
     async def signal_between(
         self,
@@ -337,41 +337,41 @@ class Colony:
         *args: Any,
         **kw: Any,
     ) -> Any:
-        """猫间 signal 通信。
+        """Inter-cat signal communication.
 
-        一只猫通过 colony 向另一只猫的器官发送 signal。
+        One cat sends a signal to another cat's organ via the colony.
 
-        流程：
-        1. 校验跨猫 wiring（如已设置 cross_wiring）
-        2. 从目标猫取出目标器官
-        3. 直接调用目标器官上的方法
+        Flow:
+        1. Validate cross-cat wiring (if cross_wiring is set)
+        2. Retrieve target organ from target cat
+        3. Directly invoke method on target organ
 
         Args:
-            from_id: 发送方猫 ID。
-            to_id: 接收方猫 ID。
-            to_category: 目标器官类别（如 "brain"）。
-            to_name: 目标器官名（如 "hippocampus"）。
-            method: 目标方法名。
-            *args, **kw: 转发给目标方法。
+            from_id: Sender cat ID.
+            to_id: Receiver cat ID.
+            to_category: Target organ category (e.g. "brain").
+            to_name: Target organ name (e.g. "hippocampus").
+            method: Target method name.
+            *args, **kw: Forwarded to target method.
 
         Returns:
-            目标方法的返回值。
+            Return value of target method.
 
         Raises:
-            KeyError: 发送方或接收方猫不存在。
-            IllegalNeuralPathError: 跨猫边不被允许。
-            OrganNotMountedError: 目标器官不存在。
+            KeyError: Sender or receiver cat does not exist.
+            IllegalNeuralPathError: Cross-cat edge is not allowed.
+            OrganNotMountedError: Target organ does not exist.
         """
-        # 1. 跨猫 wiring 校验
+        # 1. Cross-cat wiring validation
         self._assert_cross_allowed(from_id, to_id)
 
-        # 2. 获取目标猫
+        # 2. Get target cat
         target_cat = self._cats[to_id]
 
-        # 3. 取出目标器官
+        # 3. Retrieve target organ
         target_organ = target_cat.organ(to_category, to_name)
 
-        # 4. 调用方法
+        # 4. Invoke method
         fn = getattr(target_organ, method)
         import inspect as _inspect
         result = fn(*args, **kw)
@@ -379,32 +379,32 @@ class Colony:
             result = await result
         return result
 
-    # -- 方便方法 ----------------------------------------------------
+    # -- Convenience methods ------------------------------------------
 
     @property
     def cat_count(self) -> int:
-        """猫群中的猫数量。"""
+        """Number of cats in the colony."""
         return len(self._cats)
 
-    # -- 联邦 (v1.0.12) -----------------------------------------------
+    # -- Federation (v1.0.12) -----------------------------------------
 
     @property
     def is_federated(self) -> bool:
-        """是否已启用联邦。"""
+        """Whether federation is enabled."""
         return self._federated
 
     async def federate(self, transport: FederationTransport) -> None:
-        """启用联邦能力，接入跨主机 Colony 网络。
+        """Enable federation, join the cross-host Colony network.
 
-        启动传输层并开始监听来自其他 Colony 的入站消息。
-        与 Colony.federate() 配对使用后，可调用 signal_remote()
-        向远端 Colony 中的猫发送信号。
+        Starts the transport layer and begins listening for inbound messages
+        from other Colonies. After pairing with federate(), you can call
+        signal_remote() to send signals to cats in remote Colonies.
 
         Args:
-            transport: 联邦传输实例（如 TCPSocketTransport 或 RedisPubSubTransport）。
+            transport: Federation transport instance (e.g. TCPSocketTransport or RedisPubSubTransport).
 
         Raises:
-            RuntimeError: 已启用联邦。
+            RuntimeError: Already federated.
         """
         if self._federated:
             raise RuntimeError(
@@ -420,7 +420,7 @@ class Colony:
         logger.info("Colony '%s' federated", self.colony_id)
 
     async def unfederate(self) -> None:
-        """停用联邦，断开跨主机连接。"""
+        """Disable federation, disconnect cross-host connections."""
         if not self._federated:
             return
 
@@ -436,7 +436,7 @@ class Colony:
             await self._transport.stop()
             self._transport = None
 
-        # 取消所有未完成的远程请求
+        # Cancel all pending remote requests
         for fut in self._pending_remote.values():
             if not fut.done():
                 fut.cancel()
@@ -455,28 +455,28 @@ class Colony:
         *args: Any,
         **kw: Any,
     ) -> Any:
-        """向远端 Colony 中的猫发送信号并等待响应。
+        """Send a signal to a cat in a remote Colony and wait for response.
 
-        要求本 Colony 已调用 federate() 启用联邦。
-        远端 Colony 的 wiring 仍然生效 — 远端猫自身的 wiring 会校验
-        目标器官和方法是否可访问。
+        Requires this Colony to have called federate() to enable federation.
+        The remote Colony wiring still applies — the remote cat's own wiring
+        validates whether the target organ and method are accessible.
 
         Args:
-            target_colony: 远端 colony_id。
-            cat_id: 远端猫 ID。
-            to_category: 目标器官类别。
-            to_name: 目标器官名。
-            method: 目标方法名。
-            *args, **kw: 转发给目标方法的参数。
+            target_colony: Remote colony_id.
+            cat_id: Remote cat ID.
+            to_category: Target organ category.
+            to_name: Target organ name.
+            method: Target method name.
+            *args, **kw: Forwarded to target method.
 
         Returns:
-            远端方法的返回值（必须是 JSON 可序列化的）。
+            Return value of the remote method (must be JSON-serializable).
 
         Raises:
-            RuntimeError: 本 Colony 未启用联邦。
-            ConnectionError: 无法到达远端。
-            TimeoutError: 等待远端响应超时。
-            IllegalNeuralPathError: 远端 wiring 拒绝该通路。
+            RuntimeError: This Colony is not federated.
+            ConnectionError: Cannot reach the remote.
+            TimeoutError: Timed out waiting for remote response.
+            IllegalNeuralPathError: Remote wiring rejected the pathway.
         """
         if not self._federated or self._transport is None:
             raise RuntimeError(
@@ -513,7 +513,7 @@ class Colony:
             self._pending_remote.pop(request_id, None)
 
     async def _federation_loop(self) -> None:
-        """联邦后台循环：接收入站消息并分发处理。"""
+        """Federation background loop: receive inbound messages and dispatch."""
         if self._transport is None:
             return
 
@@ -527,7 +527,7 @@ class Colony:
                 "Federation loop error in colony '%s'", self.colony_id)
 
     async def _handle_federation_message(self, msg: dict) -> None:
-        """处理一条入站联邦消息。"""
+        """Handle an inbound federation message."""
         msg_type = msg.get("type")
 
         if msg_type == "signal_request":
@@ -538,7 +538,7 @@ class Colony:
             logger.warning("Unknown federation message type: %s", msg_type)
 
     async def _handle_signal_request(self, msg: dict) -> None:
-        """处理远端发来的 signal 请求。"""
+        """Handle a signal request from a remote."""
         request_id = msg["request_id"]
         from_colony = msg.get("from_colony", "unknown")
         cat_id = msg["to_cat"]
@@ -554,12 +554,12 @@ class Colony:
             "from_colony": self.colony_id,
         }
 
-        # 校验目标猫存在
+        # Verify target cat exists
         if cat_id not in self._cats:
             response["error"] = f"Cat '{cat_id}' not found in colony '{self.colony_id}'"
         else:
             try:
-                # 获取目标猫和器官
+                # Get target cat and organ
                 target_cat = self._cats[cat_id]
                 target_organ = target_cat.organ(to_category, to_name)
                 fn = getattr(target_organ, method)
@@ -573,7 +573,7 @@ class Colony:
             except Exception as exc:
                 response["error"] = str(exc)
 
-        # 发回响应
+        # Send response back
         if self._transport:
             try:
                 await self._transport.publish(from_colony, response)
@@ -583,7 +583,7 @@ class Colony:
                 )
 
     def _handle_signal_response(self, msg: dict) -> None:
-        """处理远端发来的 signal 响应。"""
+        """Handle a signal response from a remote."""
         request_id = msg["request_id"]
         fut = self._pending_remote.get(request_id)
         if fut and not fut.done():

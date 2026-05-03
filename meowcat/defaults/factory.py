@@ -1,7 +1,7 @@
-"""meowcat create_cat() 工厂 — 一行代码创建完整猫。
+"""meowcat create_cat() factory — create a complete cat with one line of code.
 
-自动装配：mount 器官 → wiring → reflex → freeze。
-未提供的器官自动使用 Noop* / InMemory* 默认实现。
+Auto-assembly: mount organs → wiring → reflex → freeze.
+Unprovided organs automatically use Noop* / InMemory* default implementations.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -55,7 +55,7 @@ from meowcat.protocols import (
 from meowcat.reflex import Reflex
 from meowcat.wiring import Wiring
 
-# -- 器官类别常量 (与 biology.py 保持一致) -----------------------------------
+# -- Organ category constants (consistent with biology.py) --------------------------
 
 BRAIN = "brain"
 SENSE = "sense"
@@ -65,10 +65,10 @@ VOICE = "voice"
 def create_cat(
     cat_id: str,
     *,
-    # ━━ 必选: LLM 器官（无默认，必须提供）━━
+    # ━━ Required: LLM organs (no default, must provide) ━━
     cerebrum: LLMBrainProtocol,
     cerebellum: LLMBrainProtocol | None = None,
-    # ━━ 可选: 脑区 ━━
+    # ━━ Optional: brain regions ━━
     hippocampus: HippocampusProtocol | None = None,
     thalamus: ThalamusProtocol | None = None,
     amygdala: AmygdalaProtocol | None = None,
@@ -76,35 +76,35 @@ def create_cat(
     hypothalamus: HypothalamusProtocol | None = None,
     cortex: CortexProtocol | None = None,
     brainstem: BrainStemProtocol | None = None,
-    # ━━ 可选: 感官 ━━
+    # ━━ Optional: senses ━━
     ears: EarsProtocol | None = None,
     eyes: EyesProtocol | None = None,
     whiskers: WhiskersProtocol | None = None,
     paws: PawsProtocol | None = None,
-    # ━━ 可选: 输出 ━━
+    # ━━ Optional: outputs ━━
     mouth: Any = None,
     purr: Any = None,
     tail: Any = None,
-    # ━━ 存储 ━━
+    # ━━ Storage ━━
     graph_store: GraphStorageProtocol | None = None,
     l6_store: L6StorageProtocol | None = None,
     vector_store: VectorStorageProtocol | None = None,
     shared_store: SharedStorageProtocol | None = None,
-    # ━━ 反射弧 ━━
+    # ━━ Reflex arcs ━━
     reflexes: list[Reflex] | None = None,
 ) -> CatBase:
-    """一行代码创建完整装配的猫。
+    """Create a fully assembled cat with one line of code.
 
     Args:
-        cat_id: 猫的唯一 ID。
-        cerebrum: **必选** A 脑实例（满足 LLMBrainProtocol）。
-        cerebellum: B 脑实例，默认使用 cerebrum 同实例。
-        brainstem: 脑干总调度，None 时不挂载（minimal 猫不需要）。
-        reflexes: 反射弧列表，None 时不注册任何 reflex（调用方自行注入）。
-        其余器官: 可选，未提供则使用 Noop* / InMemory* 默认。
+        cat_id: Unique ID of the cat.
+        cerebrum: **Required** A-brain instance (satisfying LLMBrainProtocol).
+        cerebellum: B-brain instance, defaults to same instance as cerebrum.
+        brainstem: Brainstem dispatcher, not mounted when None (minimal cat doesn't need it).
+        reflexes: Reflex arc list, no reflex registered when None (caller injects manually).
+        Other organs: Optional, defaults to Noop* / InMemory* if not provided.
 
     Returns:
-        已完成 mount + wiring + reflex + freeze 的 CatBase 实例。
+        A CatBase instance with mount + wiring + reflex + freeze completed.
 
     Example::
 
@@ -113,12 +113,12 @@ def create_cat(
 
         cat = create_cat("my-bot", cerebrum=MyCerebrum(model="gpt-4"))
         await cat.start()
-        reply = await cat.perceive("你好")
+        reply = await cat.perceive("hello")
     """
 
     cat = CatBase(cat_id)
 
-    # -- 脑区 ----------------------------------------------------------
+    # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]
     cat.hippocampus = hippocampus or NoopHippocampus()
     cat.thalamus = thalamus or NoopThalamus()  # type: ignore[attr-defined]
@@ -131,18 +131,18 @@ def create_cat(
     cat.cortex = cortex or NoopCortex()  # type: ignore[attr-defined]
     cat.brainstem = brainstem  # type: ignore[attr-defined]
 
-    # -- 感官 ----------------------------------------------------------
+    # -- Senses ----------------------------------------------------------
     cat.ears = ears or NoopEars()  # type: ignore[attr-defined]
     cat.eyes = eyes or NoopEyes()  # type: ignore[attr-defined]
     cat.whiskers = whiskers or NoopWhiskers()  # type: ignore[attr-defined]
     cat.paws = paws or NoopPaws()  # type: ignore[attr-defined]
 
-    # -- 输出 ----------------------------------------------------------
+    # -- Outputs ---------------------------------------------------------
     cat.mouth = mouth or NoopMouth()  # type: ignore[attr-defined]
     cat.purr = purr or NoopPurr()  # type: ignore[attr-defined]
     cat.tail = tail or NoopTail()  # type: ignore[attr-defined]
 
-    # -- 存储 ----------------------------------------------------------
+    # -- Storage ---------------------------------------------------------
     # type: ignore[attr-defined]
     cat._graph_store = graph_store or InMemoryGraphStore()
     cat._l6_store = l6_store or InMemoryL6Store()  # type: ignore[attr-defined]
@@ -151,19 +151,19 @@ def create_cat(
     # type: ignore[attr-defined]
     cat._shared_store = shared_store or InMemorySharedStore()
 
-    # -- 自动装配 ------------------------------------------------------
-    # mount 所有已设属性（共用 assembly.mount_known_organs）
+    # -- Auto-assembly ---------------------------------------------------
+    # mount all set attributes (shared assembly.mount_known_organs)
     mount_known_organs(cat)
 
-    # 神经系统
+    # Nervous system
     cat.wire_default_nervous_system()
 
-    # 反射弧（调用方注入）
+    # Reflex arcs (caller injects)
     if reflexes:
         for ref in reflexes:
             cat.register_reflex(ref)
 
-    # 冻结
+    # Freeze
     cat.freeze_nervous_system()
 
     return cat

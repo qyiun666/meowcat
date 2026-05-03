@@ -1,9 +1,9 @@
-"""meowcat 听诊器 — 全身体检工具。
+"""meowcat stethoscope — full-body checkup tool.
 
-遍历所有已 mount 器官，调用 ``diagnose()`` 汇总快照。
-只依赖 :class:`OrganHost` + :class:`Diagnosable` 协议，零 meowagent import。
+Iterates all mounted organs, calls ``diagnose()`` to aggregate snapshots.
+Only depends on :class:`OrganHost` + :class:`Diagnosable` protocol, zero meowagent imports.
 
-用法::
+Usage::
 
     from meowcat.diagnose import Stethoscope
 
@@ -28,21 +28,21 @@ def render_wiring(
     *,
     organs: frozenset[Organ] | None = None,
 ) -> str:
-    """生成 wiring 图的可视化表示。
+    """Generate a visual representation of the wiring graph.
 
     Args:
-        wiring: Wiring 实例
-        format: 输出格式，``"mermaid"`` 或 ``"dot"``
-        organs: 已知器官集合，用于标出孤立节点（可选）
+        wiring: Wiring instance
+        format: Output format, ``"mermaid"`` or ``"dot"``
+        organs: Known organ set, used to mark isolated nodes (optional)
 
     Returns:
-        mermaid 或 dot 格式的图描述字符串。
-        - 允许边: 实线箭头
-        - 禁止边: 红色虚线
-        - 孤立节点（若提供 organs）: 灰色
+        Graph description string in mermaid or dot format.
+        - Allowed edges: solid arrows
+        - Forbidden edges: red dashed
+        - Isolated nodes (if organs provided): gray
 
     Raises:
-        ValueError: format 不是 ``"mermaid"`` 或 ``"dot"``
+        ValueError: format is not ``"mermaid"`` or ``"dot"``
 
     Examples:
 
@@ -57,22 +57,22 @@ def render_wiring(
     allowed = wiring.edges()
     forbidden = wiring.forbids()
 
-    # 从边中收集所有节点
+    # collect all nodes from edges
     nodes: set[Organ] = set()
     for frm, to in allowed | forbidden:
         nodes.add(frm)
         nodes.add(to)
 
-    # 若有 organs 参数，加入孤立节点
+    # if organs provided, add isolated nodes
     if organs is not None:
         nodes |= organs
 
-    # 节点 → 短 ID 映射（mermaid / dot 需要合法标识符）
+    # node → short ID mapping (mermaid/dot need valid identifiers)
     node_ids: dict[Organ, str] = {}
     for i, organ in enumerate(sorted(nodes)):
         node_ids[organ] = f"n{i}"
 
-    # 孤立节点 = organs 中有但不在任何边中的节点
+    # isolated nodes = nodes in organs but not in any edge
     connected: set[Organ] = set()
     for frm, to in allowed | forbidden:
         connected.add(frm)
@@ -92,20 +92,20 @@ def _render_mermaid(
 ) -> str:
     lines = ["graph LR"]
 
-    # 节点声明
+    # node declarations
     for organ, nid in sorted(node_ids.items(), key=lambda x: x[1]):
         label = f"{organ[0]}:{organ[1]}"
         lines.append(f"    {nid}(\"{label}\")")
 
-    # 允许边
+    # allowed edges
     for i, (frm, to) in enumerate(sorted(allowed)):
         lines.append(f"    {node_ids[frm]} --> {node_ids[to]}")
 
-    # 禁止边
+    # forbidden edges
     for i, (frm, to) in enumerate(sorted(forbidden)):
         lines.append(f"    {node_ids[frm]} -.->|✗| {node_ids[to]}")
 
-    # 孤立节点样式
+    # isolated node styles
     for organ in sorted(isolated):
         lines.append(f"    style {node_ids[organ]} fill:#ddd,stroke:#999")
 
@@ -120,10 +120,10 @@ def _render_dot(
 ) -> str:
     lines = ["digraph Wiring {", "    rankdir=LR;"]
 
-    # 节点声明
+    # node declarations
     for organ, nid in sorted(node_ids.items(), key=lambda x: x[1]):
         label = f"{organ[0]}:{organ[1]}"
-        # 孤立节点灰色
+        # isolated nodes gray
         if organ in isolated:
             lines.append(
                 f'    {nid} [label="{label}", style=filled, fillcolor="#ddd"];'
@@ -131,11 +131,11 @@ def _render_dot(
         else:
             lines.append(f'    {nid} [label="{label}"];')
 
-    # 允许边
+    # allowed edges
     for frm, to in sorted(allowed):
         lines.append(f"    {node_ids[frm]} -> {node_ids[to]};")
 
-    # 禁止边
+    # forbidden edges
     for frm, to in sorted(forbidden):
         lines.append(
             f'    {node_ids[frm]} -> {node_ids[to]} '
@@ -147,18 +147,18 @@ def _render_dot(
 
 
 class Stethoscope:
-    """全身体检工具 — 遍历所有已 mount 器官，调用 diagnose() 汇总。"""
+    """Full-body checkup tool -- iterates all mounted organs, calls diagnose() to aggregate."""
 
     @staticmethod
     async def probe_all(cat) -> dict[str, dict[str, Any]]:
-        """遍历所有已 mount 器官，返回 ``{organ_key: diagnose_snapshot}``。
+        """Iterate all mounted organs, returns ``{organ_key: diagnose_snapshot}``.
 
         Args:
-            cat: ``CatBase`` 或拥有 ``_host`` 属性的实例
+            cat: ``CatBase`` or instance with ``_host`` attribute
 
         Returns:
             ``{"brain:hippocampus": {...}, "sense:ears": {...}, ...}``
-            诊断失败的器官对应 ``{"error": str(exc)}``
+            organs that fail diagnosis get ``{"error": str(exc)}``
         """
         host: OrganHost = cat._host
         result: dict[str, dict[str, Any]] = {}
@@ -172,19 +172,19 @@ class Stethoscope:
 
     @staticmethod
     async def probe_category(cat, category: str) -> dict[str, dict[str, Any]]:
-        """按分类听诊：只查 ``brain`` / ``sense`` / ``voice`` / ``growth``。
+        """Probe by category: only ``brain`` / ``sense`` / ``voice`` / ``growth``.
 
         Args:
-            cat: ``CatBase`` 实例
-            category: 器官分类名
+            cat: ``CatBase`` instance
+            category: organ category name
 
         Returns:
-            ``{"hippocampus": {...}, "cerebrum": {...}}``（省略分类前缀）
+            ``{"hippocampus": {...}, "cerebrum": {...}}`` (category prefix omitted)
         """
         host: OrganHost = cat._host
         result: dict[str, dict[str, Any]] = {}
         for cat_name, instance in host.organs(category).items():
-            key = cat_name  # 省略分类前缀
+            key = cat_name  # omit category prefix
             try:
                 result[key] = await cat.probe((category, cat_name))
             except Exception as e:
@@ -193,15 +193,15 @@ class Stethoscope:
 
     @staticmethod
     async def probe_organ(cat, category: str, name: str) -> dict[str, Any]:
-        """听诊单个器官。
+        """Probe a single organ.
 
         Args:
-            cat: ``CatBase`` 实例
-            category: 器官分类名
-            name: 器官名
+            cat: ``CatBase`` instance
+            category: organ category name
+            name: organ name
 
         Returns:
-            单个器官的 ``diagnose()`` dict 快照
+            single organ ``diagnose()`` dict snapshot
         """
         return await cat.probe((category, name))
 

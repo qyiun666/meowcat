@@ -1,7 +1,7 @@
-"""meowcat Gateway 协议层 — 猫与外部世界的 I/O 抽象。
+"""meowcat Gateway protocol layer — I/O abstraction between cat and outside world.
 
-Gateway = 猫的皮肤，所有协议适配器统一插在同一个 Gateway 上。
-1 只猫 : 1 个 Gateway : N 个 Adapter。
+Gateway = the cat's skin, all protocol adapters plug into the same Gateway.
+1 cat : 1 Gateway : N Adapters.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -15,84 +15,84 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Protocol, runtime_ch
 
 @dataclass(frozen=True)
 class SignalContext:
-    """随每次外部消息注入猫的上下文。所有 signal 隐式携带。
+    """Context injected into the cat with each external message. Carried implicitly by all signals.
 
-    核心设计: 同一只猫，同一个 Hippocampus，不同 session_id 对应不同平台。
+    Core design: same cat, same Hippocampus, different session_id for different platforms.
     """
 
     session_id: str
-    """会话标识。如 ``"cli-20260503"`` / ``"feishu-group-abc"`` / ``"desktop-zt"``。"""
+    """Session identifier. e.g. ``"cli-20260503"`` / ``"feishu-group-abc"`` / ``"desktop-zt"``."""
 
     platform: str
-    """平台标识。如 ``"cli"`` / ``"http"`` / ``"ws"`` / ``"feishu"`` / ``"wechat"`` / ``"desktop"``。"""
+    """Platform identifier. e.g. ``"cli"`` / ``"http"`` / ``"ws"`` / ``"feishu"`` / ``"wechat"`` / ``"desktop"``."""
 
     user_id: str = "unknown"
-    """外部用户标识。"""
+    """External user identifier."""
 
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    """ISO 8601 时间戳。构造时自动生成。"""
+    """ISO 8601 timestamp. Auto-generated at construction."""
 
 
 @runtime_checkable
 class IoAdapterProtocol(Protocol):
-    """I/O 适配器协议 — Gateway 的插件，负责一种协议/管道的收发。
+    """I/O adapter protocol — Gateway plugin, handles send/receive for one protocol/pipe.
 
-    每个 Adapter 实例独立管理自己的连接/监听。Gateway 不关心
-    Adapter 内部如何收发，只要求它通过回调桥接到猫的神经系统。
+    Each Adapter instance independently manages its own connections/listeners. Gateway does not care
+    how Adapter internally sends/receives, only requires it to bridge to cat's nervous system via callbacks.
     """
 
     name: str
-    """适配器唯一标识。同名挂载会覆盖。"""
+    """Adapter unique identifier. Same name on mount overwrites."""
 
     async def serve(
         self,
         on_message: Callable[[str, SignalContext], Awaitable[str | None]],
         on_stream: Callable[[str, SignalContext], Awaitable[AsyncIterator[str] | None]],
     ) -> None:
-        """启动监听循环。收到外部消息时回调，阻塞直到 stop()。
+        """Start listen loop. Calls back on receiving external messages, blocks until stop().
 
         Args:
-            on_message: 收到完整消息时回调，返回猫的回复文本
-            on_stream:  收到流式消息时回调，返回异步迭代器
+            on_message: called on complete message, returns cat's reply text
+            on_stream:  called on streaming message, returns async iterator
         """
         ...
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
-        """发送完整回复。"""
+        """Send complete reply."""
         ...
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
-        """发送流式块。"""
+        """Send streaming chunk."""
         ...
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
-        """流式结束标记。"""
+        """Streaming end marker."""
         ...
 
     async def stop(self) -> None:
-        """停止监听。"""
+        """Stop listening."""
         ...
 
 
 @runtime_checkable
 class GatewayProtocol(Protocol):
-    """网关协议 — 唯一外部 I/O 入口。1:1 绑定一只猫。"""
+    """Gateway protocol — sole external I/O entry. 1:1 bound to one cat."""
 
     async def start(self) -> None:
-        """启动网关，开始接收所有 Adapter 的消息。"""
+        """Start gateway, begin receiving messages from all Adapters."""
         ...
 
     async def stop(self) -> None:
-        """关闭网关，停止所有 Adapter。"""
+        """Shut down gateway, stop all Adapters."""
         ...
 
     def mount_adapter(self, adapter: IoAdapterProtocol) -> None:
-        """挂载一个协议适配器。同名覆盖。"""
+        """Mount a protocol adapter. Same name overwrites."""
         ...
 
     def unmount_adapter(self, name: str) -> None:
-        """卸载一个协议适配器。不存在则 no-op。"""
+        """Unmount a protocol adapter. No-op if not found."""
         ...
 
 

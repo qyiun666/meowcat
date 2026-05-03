@@ -1,12 +1,12 @@
-"""meowcat Paws 执行引擎 — match → security → execute → audit。
+"""meowcat Paws execution engine — match → security → execute → audit.
 
-每只猫的爪子执行工具的标准流程：
-1. match — 根据名称/intent 匹配工具
-2. security — 安全审查（风险等级、确认需求）
-3. execute — 执行工具
-4. audit — 记录执行日志
+Standard tool execution flow for every cat's paws:
+1. match — match tools by name/intent
+2. security — security review (risk level, confirmation requirement)
+3. execute — execute the tool
+4. audit — record execution log
 
-框架层定义这个流程，应用层可通过子类化定制各阶段行为。
+The framework layer defines this flow; the application layer can customize each stage via subclassing.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -23,18 +23,18 @@ logger = logging.getLogger(__name__)
 
 
 class PawsEngine:
-    """爪子执行引擎 — 框架层工具执行标准流程。
+    """Paws execution engine — framework-layer standard tool execution flow.
 
-    执行流程::
+    Execution flow::
 
         engine = PawsEngine(cat.tool_registry)
         result = await engine.execute("read_file", path="/tmp/hello.txt")
         # result = {"success": True, "output": "...", "tool": "read_file", ...}
 
     Args:
-        tool_registry: 工具注册中心
-        require_confirm: 是否要求高风险工具确认（默认 True）
-        timeout_s: 工具执行超时秒数（默认 30）
+        tool_registry: Tool registry
+        require_confirm: Whether to require confirmation for high-risk tools (default True)
+        timeout_s: Tool execution timeout in seconds (default 30)
     """
 
     def __init__(
@@ -49,21 +49,21 @@ class PawsEngine:
         self.timeout_s = timeout_s
         self._audit_log: list[dict[str, Any]] = []
 
-    # -- 主入口 -------------------------------------------------------
+    # -- Main entry point -----------------------------------------------
 
     async def execute(
         self,
         name: str,
         **params: Any,
     ) -> dict[str, Any]:
-        """执行一个工具：查找 → 安全审查 → 执行 → 记录日志。
+        """Execute a tool: find → security review → execute → log.
 
         Returns:
             ``{"success": True/False, "output": str, "tool": name, ...}``
         """
         start = time.time()
 
-        # 1. match: 按名称查找工具
+        # 1. match: find tool by name
         tool = self.tool_registry.get(name)
         if tool is None:
             elapsed = (time.time() - start) * 1000
@@ -74,7 +74,7 @@ class PawsEngine:
                 "elapsed_ms": elapsed,
             }
 
-        # 2. security: 风险审查
+        # 2. security: risk review
         if not tool.enabled:
             elapsed = (time.time() - start) * 1000
             return {
@@ -84,7 +84,7 @@ class PawsEngine:
                 "elapsed_ms": elapsed,
             }
 
-        # 高风险工具 + require_confirm → 标记需要确认
+        # High-risk tool + require_confirm → mark as needs confirmation
         needs_confirm = (
             self.require_confirm
             and tool.spec.risk in (RiskLevel.HIGH, RiskLevel.MEDIUM)
@@ -122,17 +122,17 @@ class PawsEngine:
                 "elapsed_ms": elapsed,
             }
 
-        # 4. audit: 记录日志
+        # 4. audit: log
         self._log(tool, params, result)
         return result
 
-    # -- 匹配 ---------------------------------------------------------
+    # -- Match --------------------------------------------------------
 
     def match(self, intent: str) -> list[Tool]:
-        """根据意图关键词匹配工具。
+        """Match tools by intent keywords.
 
-        简单实现：按 name + description 做子串匹配。
-        应用层可子类化实现更智能的匹配（LLM/embedding）。
+        Simple implementation: substring match on name + description.
+        Application layer can subclass for smarter matching (LLM/embedding).
         """
         q = intent.lower()
         results: list[Tool] = []
@@ -147,17 +147,17 @@ class PawsEngine:
         results.sort(key=lambda x: -x[0])
         return [r[1] for r in results]
 
-    # -- 审计 ---------------------------------------------------------
+    # -- Audit --------------------------------------------------------
 
     @property
     def audit_log(self) -> list[dict[str, Any]]:
-        """获取执行审计日志（只读副本）。"""
+        """Get execution audit log (read-only copy)."""
         return self._audit_log.copy()
 
     def _log(
         self, tool: Tool, params: dict[str, Any], result: dict[str, Any],
     ) -> None:
-        """记录执行审计日志。"""
+        """Record execution audit log."""
         entry = {
             "timestamp": time.time(),
             "tool": tool.name,

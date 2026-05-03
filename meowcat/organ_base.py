@@ -1,24 +1,25 @@
-"""meowcat 器官便捷基类 — OrganMixin（v0.5.11 新增）。
+"""meowcat organ convenience base — OrganMixin (added in v0.5.11).
 
-**定位**：可选继承的 mixin，给器官提供零栈帧开销的 signal/probe 快捷方法。
+**Positioning**: optional mixin providing zero-stack-frame-overhead signal/probe shortcuts for organs.
 
-**背景**：v0.5.0~v0.5.10 以来，跨器官调用必须走
-``await self.cat.signal(FROM_ORGAN, TO_ORGAN, method, ...)``，写法长且每次
-都要显式传 from_organ，容易手滑写错（如 ``BRAINSTEM`` 写成 ``CEREBRUM``）。
+**Background**: since v0.5.0~v0.5.10, cross-organ calls required
+``await self.cat.signal(FROM_ORGAN, TO_ORGAN, method, ...)``, which is verbose
+and requires explicitly passing from_organ each time, prone to typos (e.g. ``BRAINSTEM`` written as ``CEREBRUM``).
 
-v0.5.11 通过 ``OrganMixin`` 让器官在构造时一次性绑定 ``self._self_coord``
-和 ``cat`` 弱引用，之后写 ``await self._signal_to(TO, method, ...)`` 即可，
-框架自动补上 from_organ——从调用点消除人工拼错空间。
+v0.5.11 uses ``OrganMixin`` to let organs bind ``self._self_coord`` and ``cat``
+weak reference once at construction, then write ``await self._signal_to(TO, method, ...)`` —
+the framework auto-fills from_organ, eliminating manual typo risk at the call site.
 
-**与 cat.ask() 方案的对比**：原 plan 提过 ``cat.ask(to, method)`` 用
-``inspect`` 栈帧推断 from_organ，但 inspect 开销通常 2-5μs，与 signal 热路径
-``<5μs`` 目标冲突。``OrganMixin`` 用构造时绑 ``_self_coord`` 的方式彻底回避
-栈帧反射，保持 signal 热路径原速。
+**Comparison with cat.ask()**: the original plan proposed ``cat.ask(to, method)``
+using ``inspect`` stack frames to infer from_organ, but inspect overhead is typically
+2-5μs, conflicting with the signal hot-path ``<5μs`` target. ``OrganMixin``
+uses constructor-time ``_self_coord`` binding to completely avoid stack frame reflection,
+keeping the signal hot path at native speed.
 
-**向后兼容**：完全可选。现有器官不继承 ``OrganMixin`` 继续显式写
-``self.cat.signal(...)`` 也正常工作。
+**Backward compatibility**: fully optional. Existing organs not inheriting ``OrganMixin``
+can continue explicitly writing ``self.cat.signal(...)`` with no issues.
 
-**典型用法**::
+**Typical usage**::
 
     from meowcat import OrganMixin
     from meowcat.biology import BRAINSTEM, CORTEX
@@ -29,11 +30,11 @@ v0.5.11 通过 ``OrganMixin`` 让器官在构造时一次性绑定 ``self._self_
 
         def __init__(self, cat: CatProtocol) -> None:
             OrganMixin.__init__(self, cat, BRAINSTEM)
-            # 业务构造...
+            # business init...
 
         async def some_flow(self) -> None:
-            # 旧写法：await self.cat.signal(BRAINSTEM, CORTEX, "synthesize", max_tokens=200)
-            # 新写法：
+            # old: await self.cat.signal(BRAINSTEM, CORTEX, "synthesize", max_tokens=200)
+            # new:
             wv = await self._signal_to(CORTEX, "synthesize", max_tokens=200)
 """
 # (c) 2025-2026 Axonant. MIT License.
@@ -49,25 +50,25 @@ if TYPE_CHECKING:
 
 
 class OrganMixin:
-    """器官便捷基类：构造时绑定 ``(cat, self_coord)``，提供零栈帧开销的
-    ``_signal_to`` / ``_probe`` 快捷方法。
+    """Organ convenience base: binds ``(cat, self_coord)`` at construction, provides
+    ``_signal_to`` / ``_probe`` shortcuts with zero stack-frame overhead.
 
-    **本类不持有业务状态**，只持有 ``_cat_ref`` 和 ``_self_coord``——两个指针。
-    具体器官业务逻辑由子类负责。
+    **This class holds no business state**, only ``_cat_ref`` and ``_self_coord`` — two pointers.
+    Concrete organ business logic is the subclass's responsibility.
 
-    ``__slots__`` 声明避免每个器官实例为这两个字段额外分配 ``__dict__``
-    条目；若子类已使用 ``__dict__``（无 ``__slots__``），mixin 的 slots
-    叠加仍然有效，只是不产生内存节省。
+    ``__slots__`` declaration avoids allocating extra ``__dict__`` entries
+    for these two fields per organ instance; if the subclass already uses
+    ``__dict__`` (no ``__slots__``), mixin slots still work but produce no memory savings.
     """
 
     __slots__ = ("_cat_ref", "_self_coord")
 
     def __init__(self, cat: CatProtocol, self_coord: Organ) -> None:
-        """绑定器官坐标与 cat 弱引用。
+        """Bind organ coordinate and cat weak reference.
 
         Args:
-            cat: 所属猫实例（弱引用语义：器官不应改 cat 本体状态）
-            self_coord: 本器官在 wiring 里的坐标 ``(category, name)``
+            cat: the cat instance this organ belongs to (weak reference semantics: organs should not mutate cat state)
+            self_coord: this organ's coordinate in wiring ``(category, name)``
         """
         self._cat_ref = cat
         self._self_coord = self_coord
@@ -79,29 +80,29 @@ class OrganMixin:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """向目标器官发 signal（自动补 from_organ = ``self._self_coord``）。
+        """Send signal to target organ (auto-fills from_organ = ``self._self_coord``).
 
-        等价于 ``await self._cat_ref.signal(self._self_coord, to, method, ...)``
-        但更短、不易拼错 from_organ。
+        Equivalent to ``await self._cat_ref.signal(self._self_coord, to, method, ...)``
+        but shorter and less error-prone for from_organ.
 
         Raises:
-            IllegalNeuralPathError: wiring 禁止该边、方法黑名单、或目标
-                Protocol 未声明该方法（v0.5.11 新增契约校验）。
-            OrganNotMountedError: 目标器官未挂载。
+            IllegalNeuralPathError: wiring forbids this edge, method blocklisted, or target
+                Protocol does not declare this method (v0.5.11 contract check).
+            OrganNotMountedError: target organ not mounted.
         """
         return await self._cat_ref.signal(
             self._self_coord, to, method, *args, **kwargs,
         )
 
     async def _probe(self, to: Organ) -> dict[str, Any]:
-        """向目标器官发只读诊断探针（转发 ``cat.probe``）。
+        """Send read-only diagnostic probe to target organ (forwards ``cat.probe``).
 
-        probe 不是器官间通信（不走 wiring 边校验），任何已 wire 的器官
-        都可以被 probe。
+        probe is not inter-organ communication (bypasses wiring edge check); any wired organ
+        can be probed.
 
         Raises:
-            IllegalNeuralPathError: 目标器官未在 wiring 中。
-            TypeError: 目标未实现 Diagnosable 或 diagnose() 返回非 dict。
+            IllegalNeuralPathError: target organ not in wiring.
+            TypeError: target does not implement Diagnosable or diagnose() returns non-dict.
         """
         return await self._cat_ref.probe(to)
 

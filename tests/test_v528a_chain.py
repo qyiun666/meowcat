@@ -220,7 +220,7 @@ class TestChainRegistryRun:
 
     def test_run_multi_step_chain(self):
         """Multi-step chain: manual full_reasoning = ('deep_reason', 'say').
-        
+
         Previous step's return value flows as kwargs to the next step:
         generate returns {"text":...} -> say receives text=...
         (key name must align with downstream parameter name).

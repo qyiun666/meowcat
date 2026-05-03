@@ -1,14 +1,14 @@
-"""meowcat 注射器 — 绕过 wiring 校验，直接操作任何器官。
+"""meowcat injection needle — bypass wiring validation, directly operate any organ.
 
-与 :meth:`signal` 和 :meth:`probe` 同为框架层的第三种通信方式。
-只用于调试/管理/测试场景，生产环境可通过环境变量禁用。
+The third communication mode alongside :meth:`signal` and :meth:`probe`.
+For debug/admin/test scenarios only; can be disabled in production via environment variable.
 
-安全设计：
-- 不挂在 ``CatBase`` 上，必须显式 ``import`` + 构造
-- 构造时打 ``warning`` 日志
-- 生产环境可通过 ``MEOWCAT_DISABLE_NEEDLE=1`` 禁用
+Safety design:
+- Not attached to ``CatBase``, must be explicitly ``import``ed + constructed
+- Emits ``warning`` log at construction
+- Production can disable via ``MEOWCAT_DISABLE_NEEDLE=1``
 
-用法::
+Usage::
 
     from meowcat.inject import Needle
 
@@ -31,26 +31,26 @@ logger = logging.getLogger("meowcat.needle")
 
 
 class NeedleDisabledError(RuntimeError):
-    """``MEOWCAT_DISABLE_NEEDLE=1`` 时构造 Needle 抛出。"""
+    """Raised when constructing Needle with ``MEOWCAT_DISABLE_NEEDLE=1``."""
 
 
 class Needle:
-    """注射器 — 绕过 wiring 校验，直接操作任何器官。
+    """Injector — bypass wiring validation, directly operate any organ.
 
-    安全设计：
-    - 不挂在 CatBase 上，必须显式 import + 构造
-    - 构造时报 warning 日志
-    - 生产环境可通过 ``MEOWCAT_DISABLE_NEEDLE=1`` 禁用
+    Safety design:
+    - Not attached to CatBase, must explicitly import + construct
+    - Emits warning log at construction
+    - Production can disable via ``MEOWCAT_DISABLE_NEEDLE=1``
     """
 
     def __init__(self, cat) -> None:
-        """构造注射器。
+        """Construct the injector.
 
         Args:
-            cat: ``CatBase`` 或拥有 ``_host`` 属性的实例
+            cat: ``CatBase`` or instance with ``_host`` attribute
 
         Raises:
-            NeedleDisabledError: ``MEOWCAT_DISABLE_NEEDLE=1`` 时
+            NeedleDisabledError: when ``MEOWCAT_DISABLE_NEEDLE=1``
         """
         if os.environ.get("MEOWCAT_DISABLE_NEEDLE") == "1":
             raise NeedleDisabledError(
@@ -63,19 +63,19 @@ class Needle:
         )
 
     async def poke(self, to_organ: Organ, method: str, **kwargs: Any) -> Any:
-        """直接调用目标器官的方法，不校验 wiring。
+        """Directly call a method on the target organ, without wiring validation.
 
         Args:
-            to_organ: 目标器官坐标，如 ``("brain", "hippocampus")``
-            method: 方法名
-            **kwargs: 方法参数
+            to_organ: Target organ coordinate, e.g. ``("brain", "hippocampus")``
+            method: Method name
+            **kwargs: Method parameters
 
         Returns:
-            方法返回值
+            Method return value
 
         Raises:
-            ValueError: 器官未 mount
-            AttributeError: 方法不存在
+            ValueError: Organ not mounted
+            AttributeError: Method does not exist
         """
         import inspect
 
@@ -93,32 +93,32 @@ class Needle:
         return result
 
     async def poke_memory(self, **entity_data: Any) -> Any:
-        """快捷方法：直接写入海马体。
+        """Shortcut: directly write to hippocampus.
 
         Args:
-            **entity_data: 传递给 ``add_entity()`` 的实体数据
+            **entity_data: Entity data passed to ``add_entity()``
         """
         return await self.poke(
             ("brain", "hippocampus"), "add_entity", **entity_data,
         )
 
     async def poke_focus(self, topic: str) -> Any:
-        """快捷方法：直接更新额叶焦点。
+        """Shortcut: directly update frontal focus.
 
         Args:
-            topic: 焦点主题
+            topic: Focus topic
         """
         return await self.poke(
             ("brain", "frontal"), "update_focus", result=topic,
         )
 
     async def poke_worldview(self, layer: str, key: str, value: Any) -> Any:
-        """快捷方法：直接写入皮层世界观。
+        """Shortcut: directly write to cortex worldview.
 
         Args:
-            layer: 世界观层名（axioms/others/values/self）
-            key: 键
-            value: 值
+            layer: Worldview layer name (axioms/others/values/self)
+            key: Key
+            value: Value
         """
         return await self.poke(
             ("brain", "cortex"), "ingest",

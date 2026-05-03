@@ -92,7 +92,7 @@ class SubTaskShape(BaseModel):
 
 
 class TaskResultShape(BaseModel):
-    """子任务执行结果。"""
+    """Sub-task execution result."""
     task_id: str
     role: str
     success: bool
@@ -103,7 +103,7 @@ class TaskResultShape(BaseModel):
 
 
 class OrchestratorReportShape(BaseModel):
-    """编排器完整报告。"""
+    """Orchestrator complete report."""
     subtasks: list[SubTaskShape] = Field(default_factory=list)
     results: list[TaskResultShape] = Field(default_factory=list)
     synthesis: str = ""
@@ -114,11 +114,11 @@ class OrchestratorReportShape(BaseModel):
     orchestration_id: str | None = None
     status: str = "completed"
 
-# -- 维护 / 定位 --------------------------------------------------
+# -- Maintenance / Locate --------------------------------------------------
 
 
 class MaintenanceReportShape(BaseModel):
-    """稳态维护报告。"""
+    """Steady-state maintenance report."""
     decayed: int = 0
     orphans_cleaned: int = 0
     woke: int = 0
@@ -126,27 +126,27 @@ class MaintenanceReportShape(BaseModel):
 
 
 class CandidateShape(BaseModel):
-    """检索候选结果。entity 具体类型在 meowagent。"""
+    """Retrieval candidate result. Concrete entity type lives in meowagent."""
     entity: EntityShape
     weight: float
     match_type: str
 
 
 class LocateResultShape(BaseModel):
-    """检索定位结果（原 AlgorithmOutput，纯数据）。"""
+    """Locate result (formerly AlgorithmOutput, pure data)."""
     candidates: list[CandidateShape] = Field(default_factory=list)
     confidence: float = 0.0
     match_type: str = "none"
     is_ambiguous: bool = False
 
-# -- Pipeline / 事件 ----------------------------------------------
+# -- Pipeline / Events ----------------------------------------------
 
 
 _EventKind = Literal["thinking", "output", "short_circuit"]
 
 
 class StageEvent(BaseModel):
-    """Stage 产出的统一事件。"""
+    """Unified event produced by a Stage."""
     kind: _EventKind
     content: str = ""
     reply: str | None = None
@@ -163,11 +163,11 @@ class StageEvent(BaseModel):
     def short_circuit(cls, reply: str) -> StageEvent:
         return cls(kind="short_circuit", content="", reply=reply)
 
-# -- 伴生 BaseModel -----------------------------------------------
+# -- Companion BaseModel -----------------------------------------------
 
 
 class PipelineContext(BaseModel):
-    """跨 Stage 共享状态。"""
+    """Cross-Stage shared state."""
     model_config = {"arbitrary_types_allowed": True}
 
     msg: str
@@ -185,22 +185,24 @@ class PipelineContext(BaseModel):
 
 
 class LoopEvent(BaseModel):
-    """EventBus 载荷。"""
+    """EventBus payload."""
     event: str
     payload: dict[str, Any] = Field(default_factory=dict)
     timestamp: str = ""
 
-# -- 分身猫 ---------------------------------------------------------
+# -- Kitten ---------------------------------------------------------
 
 
 class MergeProposalShape(BaseModel):
-    """分身猫回传主猫的唯一通道。
+    """Sole channel for kitten to report back to parent.
 
-    分身猫不做决策，只上报；主猫拿到 MergeProposal 后决断
-    是否写海马体/纽缠图/触发生长/结晶/角色涌现。见 design.md 十二节 12.6。
+    Kittens don't make decisions, only report; the parent decides
+    whether to write hippocampus/entanglement graph/trigger growth/crystallize/role emergence.
+    See design.md section 12.6.
     """
     kitten_id: str
-    parent_id: str                      # 主猫 cat_id，absorb_merge 时校验防假冒
+    # parent cat_id, validated at absorb_merge to prevent spoofing
+    parent_id: str
     task_id: str
     status: str = "completed"  # completed / stuck / partial
     result: str = ""
@@ -213,10 +215,10 @@ class MergeProposalShape(BaseModel):
 
 
 class WorkflowShape(BaseModel):
-    """长流程工作流实体 — 跨会话持久化的任务编排状态。
+    """Long-running workflow entity — task orchestration state persisted across sessions.
 
-    框架保证：状态不丢、重启可续、内存不炸。
-    框架不做：步骤拆解（LLM）、kitten 执行逻辑、触发策略。
+    Framework guarantees: state is never lost, restartable, memory-safe.
+    Framework does NOT handle: step decomposition (LLM), kitten execution logic, trigger strategies.
     """
     entity_id: str
     cat_id: str
@@ -231,29 +233,29 @@ class WorkflowShape(BaseModel):
 
 
 class KittenCapability(BaseModel):
-    """分身猫能力配置。用户可自定义各器官开关 + 记忆继承范围。
+    """Kitten capability configuration. Users can customize organ toggles + memory inheritance scope.
 
-    **铁律**（不可触碰，强制打回）：
+    **Iron rules** (untouchable, enforced rejection):
 
-    1. ``can_spawn = False``——分身猫不能再建猫
-    2. ``can_promote = False``——分身猫不能当主猫
-    3. ``has_paws = True``——分身猫就是“手”，没 paws 不是分身猫
-    4. 实例必由主猫 spawn_kitten 创建（parent 引用在 Protocol 层强制）
+    1. ``can_spawn = False`` — kittens cannot spawn more cats
+    2. ``can_promote = False`` — kittens cannot become a main cat
+    3. ``has_paws = True`` — kittens are the "hands"; without paws, it's not a kitten
+    4. Instances must be created by main cat spawn_kitten (parent reference enforced at Protocol layer)
 
-    **最低保障**：``has_cerebrum`` 和 ``has_cerebellum`` 至少一个为 True，
-    否则构造时 raise ValueError（无脑的猫不能干活，不能静默修正）。
+    **Minimum guarantee**: at least one of ``has_cerebrum`` and ``has_cerebellum`` must be True,
+    otherwise raises ValueError at construction (a brainless cat cannot work, cannot silently correct).
 
-    **继承语义**：继承的是主猫的 **记忆/状态快照**，不是器官实例。
-    主猫专属的管理能力（spawn/absorb/orchestrate）不可继承。
+    **Inheritance semantics**: what is inherited is the main cat's **memory/state snapshot**, not organ instances.
+    Main-cat-exclusive management capabilities (spawn/absorb/orchestrate) are not inheritable.
 
-    见 design.md 十二节 12.10。
+    See design.md section 12.10.
     """
 
-    # ━━ 铁律（不可触碰）━━
+    # ━━ Iron rules (untouchable) ━━
     can_spawn: bool = False
     can_promote: bool = False
 
-    # ━━ 脑区（用户可配，至少一个）━━
+    # ━━ Brain regions (user-configurable, at least one) ━━
     has_cerebrum: bool = True
     has_cerebellum: bool = True
     has_hippocampus: bool = False
@@ -263,33 +265,34 @@ class KittenCapability(BaseModel):
     has_cortex: bool = False
     has_hypothalamus: bool = False
 
-    # ━━ 感官（用户可配）━━
+    # ━━ Senses (user-configurable) ━━
     has_ears: bool = False
     has_eyes: bool = False
     has_whiskers: bool = True
-    has_paws: bool = True            # 铁律：强制打回 True
+    has_paws: bool = True            # Iron rule: enforced True
 
-    # ━━ 输出（用户可配）━━
+    # ━━ Outputs (user-configurable) ━━
     has_mouth: bool = False
     has_purr: bool = False
     has_tail: bool = False
 
-    # ━━ 编排（用户可配）━━
+    # ━━ Orchestration (user-configurable) ━━
     can_remember: bool = False
     can_grow: bool = False
 
-    # ━━ 记忆继承（从主猫继承状态，可全可半）━━
+    # ━━ Memory inheritance (inherit state from main cat, full or partial) ━━
     inherit_memory: Literal["none", "partial", "full"] = "none"
-    inherit_entity_ids: list[str] = Field(default_factory=list)  # partial 时指定
-    inherit_l6_recent: int = 0       # 继承最近 N 条 L6 历史
-    inherit_focus: bool = False      # 是否继承主猫当前焦点
+    inherit_entity_ids: list[str] = Field(
+        default_factory=list)  # specify for partial inheritance
+    inherit_l6_recent: int = 0       # inherit most recent N L6 history entries
+    inherit_focus: bool = False      # whether to inherit main cat current focus
 
     def model_post_init(self, __context: Any) -> None:
-        """铁律静默强制 + 最低保障硬报错。"""
+        """Iron rules silently enforced + minimum guarantee hard error."""
         object.__setattr__(self, "can_spawn", False)
         object.__setattr__(self, "can_promote", False)
         object.__setattr__(self, "has_paws", True)
         if not (self.has_cerebrum or self.has_cerebellum):
             raise ValueError(
-                "KittenCapability: 至少需一个脑（cerebrum 或 cerebellum），分身猫不能无脑"
+                "KittenCapability: at least one brain required (cerebrum or cerebellum), kitten cannot be brainless"
             )

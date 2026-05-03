@@ -1,14 +1,14 @@
-"""meowcat 三大闭环事件名常量表。
+"""meowcat three-loop event name constant table.
 
-对应 ``docs/架构/00-meowcat-框架架构.md`` 定义的三大闭环：
+Corresponds to the three loops defined in ``docs/architecture/00-meowcat-framework.md``:
 
-- **闭环 A（记→找→给 核心回路）**：每轮对话的定位/路由/记忆/压缩钩子
-- **闭环 B（编排）**：TaskOrchestrator 的开始/结束钩子
-- **闭环 C（生长结晶）**：异常/校正/结晶/角色涌现钩子
+- **Loop A (remember→find→deliver core cycle)**: locate/route/memory/compress hooks per dialogue turn
+- **Loop B (orchestration)**: TaskOrchestrator start/end hooks
+- **Loop C (growth/crystallization)**: anomaly/correction/crystallize/role-emergence hooks
 
-另外附带 :class:`Lifecycle` 记录 Cat 本身的开合机事件。
+Also includes :class:`Lifecycle` for Cat start/stop events.
 
-**纪律**：本文件只定义字符串常量，不含业务实现，零第三方依赖。
+**Discipline**: this file only defines string constants, no business logic, zero third-party dependencies.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -18,23 +18,23 @@ from __future__ import annotations
 from typing import Final
 
 
-# -- 闭环 A：记→找→给 核心回路 ----------------------------------
+# -- Loop A: remember→find→deliver core cycle ----------------------------------
 
 class LocateEvent:
-    """丘脑检索（找）相关钩子。"""
+    """Thalamus locate (find) related hooks."""
 
     PRE: Final[str] = "locate.pre"
-    """在 Thalamus.locate() 执行前触发，载荷 ``{msg, session_id}``。"""
+    """Fired before Thalamus.locate() executes, payload ``{msg, session_id}``."""
 
     POST: Final[str] = "locate.post"
-    """Thalamus.locate() 返回后触发，载荷 ``{msg, result}``。"""
+    """Fired after Thalamus.locate() returns, payload ``{msg, result}``."""
 
     ROUTE_DECIDED: Final[str] = "route.decided"
-    """路由判定完成触发，载荷 ``{route, confidence}``。"""
+    """Fired when route decision is complete, payload ``{route, confidence}``."""
 
 
 class RememberEvent:
-    """海马体写入（记）+ 下丘脑压缩相关钩子。"""
+    """Hippocampus write (remember) + hypothalamus compression related hooks."""
 
     PRE: Final[str] = "remember.pre"
     POST: Final[str] = "remember.post"
@@ -43,22 +43,22 @@ class RememberEvent:
     COMPRESS_POST: Final[str] = "compress.post"
 
 
-# -- 闭环 B：编排 -----------------------------------------------
+# -- Loop B: Orchestration ----------------------------------------------
 
 class OrchestrateEvent:
-    """TaskOrchestrator 相关钩子。"""
+    """TaskOrchestrator related hooks."""
 
     START: Final[str] = "orchestrate.start"
-    """载荷 ``{orchestration_id, plan}``。"""
+    """Payload ``{orchestration_id, plan}``."""
 
     END: Final[str] = "orchestrate.end"
-    """载荷 ``{orchestration_id, report}``。"""
+    """Payload ``{orchestration_id, report}``."""
 
 
-# -- 闭环 C：生长结晶 -------------------------------------------
+# -- Loop C: Growth/Crystallization --------------------------------------
 
 class GrowthEvent:
-    """异常/校正/结晶/角色涌现钩子。"""
+    """Anomaly/correction/crystallize/role emergence hooks."""
 
     ANOMALY: Final[str] = "growth.anomaly"
     CORRECTION: Final[str] = "growth.correction"
@@ -66,75 +66,75 @@ class GrowthEvent:
     ROLE_EMERGE: Final[str] = "role.emerge"
 
 
-# -- 生命周期 ---------------------------------------------------
+# -- Lifecycle ---------------------------------------------------
 
 class Lifecycle:
-    """Cat 本体的开合机事件。"""
+    """Cat lifecycle start/shutdown events."""
 
     START: Final[str] = "lifecycle.start"
     SHUTDOWN: Final[str] = "lifecycle.shutdown"
 
-    # v0.5.1 感知入口生命周期
+    # v0.5.1 Perception entry lifecycle
     PERCEIVE_START: Final[str] = "lifecycle.perceive_start"
-    """``cat.perceive(input)`` 开始，载荷 ``{input, reflex_name}``。"""
+    """Fired at ``cat.perceive(input)`` start, payload ``{input, reflex_name}``."""
 
     PERCEIVE_END: Final[str] = "lifecycle.perceive_end"
-    """``cat.perceive(input)`` 结束，载荷 ``{reflex_name, reply}``。"""
+    """Fired at ``cat.perceive(input)`` end, payload ``{reflex_name, reply}``."""
 
 
-# -- 神经突触 ---------------------------------------------------
+# -- Nerve synapse ---------------------------------------------------
 
 class NerveEvent:
-    """``cat.signal()`` 调度时触发的神经电位事件。"""
+    """Neural potential event triggered during ``cat.signal()`` dispatch."""
 
     SIGNAL: Final[str] = "nerve.signal"
-    """每次合法 signal 调用都广播，载荷 ``{from, to, method}``。
+    """Broadcast on every legal signal call, payload ``{from, to, method}``.
 
-    违法调用直接抛 :class:`IllegalNeuralPathError`，不发此事件。"""
+    Illegal calls raise :class:`IllegalNeuralPathError` directly, this event is not emitted."""
 
 
-# -- 分身猫生命周期 -----------------------------------------
+# -- Kitten lifecycle -----------------------------------------
 
 class KittenEvent:
-    """分身猫派生/执行/回收钩子。见 design.md 十二节 12.9。"""
+    """Kitten spawn/execute/reclaim hooks. See design.md §12.9."""
 
     SPAWNED: Final[str] = "kitten.spawned"
-    """分身猫被派生，载荷 ``{kitten_id, parent_id, task, role}``。"""
+    """Kitten spawned, payload ``{kitten_id, parent_id, task, role}``."""
 
     EXECUTING: Final[str] = "kitten.executing"
-    """分身猫开始执行，载荷 ``{kitten_id, task_id}``。"""
+    """Kitten starts executing, payload ``{kitten_id, task_id}``."""
 
     COMPLETED: Final[str] = "kitten.completed"
-    """分身猫完成任务，载荷 ``{kitten_id, result}``。"""
+    """Kitten completed task, payload ``{kitten_id, result}``."""
 
     STUCK: Final[str] = "kitten.stuck"
-    """分身猫卡住，载荷 ``{kitten_id, error_detail}``。"""
+    """Kitten stuck, payload ``{kitten_id, error_detail}``."""
 
     DISMISSED: Final[str] = "kitten.dismissed"
-    """分身猫被回收，载荷 ``{kitten_id}``。"""
+    """Kitten dismissed, payload ``{kitten_id}``."""
 
     MERGE_ABSORBED: Final[str] = "kitten.merge_absorbed"
-    """主猫吸收了 MergeProposal，载荷 ``{kitten_id, proposal}``。"""
+    """Main cat absorbed MergeProposal, payload ``{kitten_id, proposal}``."""
 
 
-# -- 汇总（便于 CI / 文档自动生成） --------------------------
+# -- Summary (for CI / doc auto-generation) --------------------------
 
 ALL_EVENTS: Final[tuple[str, ...]] = (
-    # 闭环 A
+    # Loop A
     LocateEvent.PRE, LocateEvent.POST, LocateEvent.ROUTE_DECIDED,
     RememberEvent.PRE, RememberEvent.POST,
     RememberEvent.COMPRESS_PRE, RememberEvent.COMPRESS_POST,
-    # 闭环 B
+    # Loop B
     OrchestrateEvent.START, OrchestrateEvent.END,
-    # 闭环 C
+    # Loop C
     GrowthEvent.ANOMALY, GrowthEvent.CORRECTION,
     GrowthEvent.CRYSTALLIZE, GrowthEvent.ROLE_EMERGE,
     # Lifecycle
     Lifecycle.START, Lifecycle.SHUTDOWN,
     Lifecycle.PERCEIVE_START, Lifecycle.PERCEIVE_END,
-    # 神经突触
+    # Nerve synapse
     NerveEvent.SIGNAL,
-    # 分身猫
+    # Kitten
     KittenEvent.SPAWNED, KittenEvent.EXECUTING, KittenEvent.COMPLETED,
     KittenEvent.STUCK, KittenEvent.DISMISSED, KittenEvent.MERGE_ABSORBED,
 )

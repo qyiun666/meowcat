@@ -1,7 +1,7 @@
-"""meowcat Gateway — IpcAdapter（Unix socket 进程间通信适配器）。
+"""meowcat Gateway — IpcAdapter (Unix socket inter-process communication adapter).
 
-供桌面 App 进程间通信。框架层只提供 Unix socket 管道，
-macOS 沙盒、Windows named pipe 等由桌面层实现。
+For desktop app IPC. The framework layer only provides Unix socket pipes;
+macOS sandbox, Windows named pipes, etc. are implemented by the desktop layer.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -17,9 +17,9 @@ from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
 
 
 class IpcAdapter:
-    """IPC 协议适配器 — Unix socket JSON 行协议。
+    """IPC protocol adapter — Unix socket JSON-line protocol.
 
-    纯 asyncio，零外部依赖。
+    Pure asyncio, zero external dependencies.
     """
 
     name = "ipc"
@@ -34,11 +34,11 @@ class IpcAdapter:
         on_message: Callable[[str, SignalContext], Awaitable[str | None]],
         on_stream: Callable[[str, SignalContext], Awaitable[AsyncIterator[str] | None]],
     ) -> None:
-        """启动 Unix socket server。"""
+        """Start Unix socket server."""
         self._on_message = on_message
         self._on_stream = on_stream
 
-        # 清理旧的 socket 文件
+        # Clean up old socket file
         try:
             os.unlink(self.socket_path)
         except OSError:
@@ -57,7 +57,7 @@ class IpcAdapter:
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
     ) -> None:
-        """处理单个 IPC 连接 — JSON 行协议。"""
+        """Handle a single IPC connection — JSON-line protocol."""
         session_id = f"ipc-{id(writer)}"
         self._connections[session_id] = writer
 
@@ -99,7 +99,7 @@ class IpcAdapter:
                 pass
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
-        """发送 JSON 响应。"""
+        """Send JSON response."""
         writer = self._connections.get(session_id)
         if writer:
             payload = json.dumps({"reply": output}) + "\n"
@@ -107,7 +107,7 @@ class IpcAdapter:
             await writer.drain()
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
-        """发送流式文本行。"""
+        """Send streaming text line."""
         writer = self._connections.get(session_id)
         if writer:
             payload = json.dumps({"chunk": chunk}) + "\n"
@@ -115,14 +115,14 @@ class IpcAdapter:
             await writer.drain()
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
-        """发送流式结束标记。"""
+        """Send stream end marker."""
         writer = self._connections.get(session_id)
         if writer:
             writer.write(b'{"end": true}\n')
             await writer.drain()
 
     async def stop(self) -> None:
-        """关闭 IPC server 及所有连接。"""
+        """Shut down IPC server and all connections."""
         for writer in list(self._connections.values()):
             try:
                 writer.close()
@@ -132,7 +132,7 @@ class IpcAdapter:
         if self._server:
             self._server.close()
             self._server = None
-        # 清理 socket 文件
+        # Clean up socket file
         try:
             os.unlink(self.socket_path)
         except OSError:

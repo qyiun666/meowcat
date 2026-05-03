@@ -1,6 +1,6 @@
-"""meowcat 感官协议 — 耳朵/眼睛/胡须/爪子等感觉器官接口。
+"""meowcat sense protocols — ears/eyes/whiskers/paws sensory organ interfaces.
 
-全部 typing.Protocol（鸭子类型），零第三方依赖。
+All typing.Protocol (duck typing), zero third-party dependencies.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -16,13 +16,13 @@ __all__ = [
 
 @runtime_checkable
 class EarsProtocol(Protocol):
-    """耳朵 — 文本与音频输入接收中枢。所有外部文本/语音经此进入神经系统。
+    """Ears — text and audio input reception hub. All external text/voice enters the nervous system here.
 
-    **坐标**: ``("sense", "ears")``
-    **入边**: 无（纯输入端，仅接受外部调用）
-    **出边**: THALAMUS
-    **反射弧**: text_dialogue, danger, action_order
-    **实现方**: 应用层（感官器官）
+    **Position**: ``("sense", "ears")``
+    **Inbound**: none (pure input, only receives external calls)
+    **Outbound**: THALAMUS
+    **Reflex Arc**: text_dialogue, danger, action_order
+    **Implemented by**: app layer (sensory organ)
     """
     name: str
     async def hear(self, raw_input: str | bytes) -> dict[str, Any]: ...
@@ -33,16 +33,16 @@ class EarsProtocol(Protocol):
 
 @runtime_checkable
 class EyesProtocol(Protocol):
-    """眼睛 — 图像/视频视觉输入。
+    """Eyes — image/video visual input.
 
-    v1.0.8: scan_screen / describe 已移除（属于应用层特定功能），
-    只保留通用 see 方法。
+    v1.0.8: scan_screen / describe removed (app-layer specific),
+    keeping only the generic see method.
 
-    **坐标**: ``("sense", "eyes")``
-    **入边**: 无（纯输入端，仅接受外部调用）
-    **出边**: THALAMUS
-    **反射弧**: visual (EYES→THALAMUS→CEREBRUM→CEREBELLUM→MOUTH)
-    **实现方**: 应用层（感官器官）
+    **Position**: ``("sense", "eyes")``
+    **Inbound**: none (pure input, only receives external calls)
+    **Outbound**: THALAMUS
+    **Reflex Arc**: visual (EYES→THALAMUS→CEREBRUM→CEREBELLUM→MOUTH)
+    **Implemented by**: app layer (sensory organ)
     """
     name: str
 
@@ -52,13 +52,13 @@ class EyesProtocol(Protocol):
 
 @runtime_checkable
 class WhiskersProtocol(Protocol):
-    """胡须 — 环境感知与安全检测。输入/输出感觉、漂移检测、幻觉检测。
+    """Whiskers — environment perception and safety detection. Input/output sensing, drift detection, hallucination check.
 
-    **坐标**: ``("sense", "whiskers")``
-    **入边**: 无（纯输入端，仅接受外部调用）
-    **出边**: THALAMUS
-    **反射弧**: 无直接反射弧，通过 feel_input/feel_output 在 Pipeline 中被调用
-    **实现方**: 应用层（感官器官）
+    **Position**: ``("sense", "whiskers")``
+    **Inbound**: none (pure input, only receives external calls)
+    **Outbound**: THALAMUS
+    **Reflex Arc**: none direct; called via feel_input/feel_output in Pipeline
+    **Implemented by**: app layer (sensory organ)
     """
     name: str
     async def feel_input(self, text: str) -> dict[str, Any]: ...
@@ -72,20 +72,20 @@ class WhiskersProtocol(Protocol):
 
 @runtime_checkable
 class PawsProtocol(Protocol):
-    """爪子 — 工具执行与文件操作。Skills + MCP 工具调用的效应器。
+    """Paws — tool execution and file operations. Effector for Skills + MCP tool calls.
 
-    **坐标**: ``("sense", "paws")``
-    **入边**: CEREBELLUM（唯一入边，大脑不直连四肢）
-    **出边**: 无（终端效应器，只接受命令不主动调用）
-    **反射弧**: action_order (EARS→THALAMUS→AMYGDALA→CEREBELLUM→PAWS)
-    **实现方**: 应用层（感官器官）
+    **Position**: ``("sense", "paws")``
+    **Inbound**: CEREBELLUM (only inbound; brain does not directly connect to limbs)
+    **Outbound**: none (terminal effector, only accepts commands, never initiates calls)
+    **Reflex Arc**: action_order (EARS→THALAMUS→AMYGDALA→CEREBELLUM→PAWS)
+    **Implemented by**: app layer (sensory organ)
     """
     name: str
 
     async def execute(self, tool_name: str,
                       params: dict[str, Any]) -> dict[str, Any]: ...
 
-    # -- deprecated（v1.0.8，内部 delegate 到 execute）-----------
+    # -- deprecated (v1.0.8, internally delegates to execute) -----------
     async def touch_file(self, path: str, content: str |
                          None = None) -> dict[str, Any]: ...
 

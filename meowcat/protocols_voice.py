@@ -1,7 +1,7 @@
-"""meowcat 嗓音协议 — 嘴巴/咕噜/尾巴三个输出器官接口。
+"""meowcat voice protocols — mouth/purr/tail output organ interfaces.
 
-v1.0.7: 为 Mouth/Purr/Tail 补齐 Protocol 定义，
-替换 biology.py 中 ``protocol=None`` 的弱约束。
+v1.0.7: completed Protocol definitions for Mouth/Purr/Tail,
+replacing the weak ``protocol=None`` constraint in biology.py.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -13,13 +13,13 @@ from typing import Any, Protocol, runtime_checkable
 
 @runtime_checkable
 class MouthProtocol(Protocol):
-    """嘴巴 — 文本输出中枢。负责最终回复的格式化与输出。
+    """Mouth — text output hub. Handles final reply formatting and output.
 
-    **坐标**: ``("voice", "mouth")``
-    **入边**: CEREBELLUM, AMYGDALA, BRAINSTEM
-    **出边**: 无（终端输出器官）
-    **反射弧**: text_dialogue, danger
-    **实现方**: 应用层（输出器官）
+    **Position**: ``("voice", "mouth")``
+    **Inbound**: CEREBELLUM, AMYGDALA, BRAINSTEM
+    **Outbound**: none (terminal output organ)
+    **Reflex Arc**: text_dialogue, danger
+    **Implemented by**: app layer (output organ)
     """
 
     name: str
@@ -31,13 +31,13 @@ class MouthProtocol(Protocol):
 
 @runtime_checkable
 class PurrProtocol(Protocol):
-    """咕噜 — 流式输出中枢。负责逐 token 推送回复。
+    """Purr — streaming output hub. Pushes reply token-by-token.
 
-    **坐标**: ``("voice", "purr")``
-    **入边**: CEREBELLUM, BRAINSTEM
-    **出边**: 无（终端输出器官）
-    **反射弧**: text_dialogue (stream 路径)
-    **实现方**: 应用层（输出器官）
+    **Position**: ``("voice", "purr")``
+    **Inbound**: CEREBELLUM, BRAINSTEM
+    **Outbound**: none (terminal output organ)
+    **Reflex Arc**: text_dialogue (stream path)
+    **Implemented by**: app layer (output organ)
     """
 
     name: str
@@ -49,13 +49,13 @@ class PurrProtocol(Protocol):
 
 @runtime_checkable
 class TailProtocol(Protocol):
-    """尾巴 — 状态栏渲染中枢。负责终端 UI / 进度条渲染。
+    """Tail — status bar rendering hub. Handles terminal UI / progress bar rendering.
 
-    **坐标**: ``("voice", "tail")``
-    **入边**: CEREBELLUM, BRAINSTEM
-    **出边**: 无（终端输出器官）
-    **反射弧**: 无直接反射弧
-    **实现方**: 应用层（输出器官）
+    **Position**: ``("voice", "tail")``
+    **Inbound**: CEREBELLUM, BRAINSTEM
+    **Outbound**: none (terminal output organ)
+    **Reflex Arc**: none direct
+    **Implemented by**: app layer (output organ)
     """
 
     name: str

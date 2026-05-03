@@ -1,10 +1,10 @@
-"""meowcat Skill 系统 — 框架层可复用技能抽象。
+"""meowcat Skill system — framework-layer reusable skill abstraction.
 
-与 Tool 的区别：
-- Tool: 原子操作（"读文件"、"发请求"）
-- Skill: 组合能力（"生成 CRUD 代码"、"审查安全性"）
+Difference from Tool:
+- Tool: atomic operation ("read file", "send request")
+- Skill: composite capability ("generate CRUD code", "review security")
 
-Skill 是比 Tool 更粗粒度的能力单元，一个 Skill 内部可能调用多个 Tool。
+A Skill is a coarser-grained capability unit than a Tool; a Skill may internally call multiple Tools.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SkillSpec:
-    """Skill 描述 — 比 ToolSpec 更粗粒度的能力单元。"""
+    """Skill spec — coarser-grained capability unit than ToolSpec."""
     name: str
     description: str
     version: str = "0.1.0"
@@ -31,9 +31,9 @@ class SkillSpec:
 
 
 class Skill:
-    """一个可复用技能。
+    """A reusable skill.
 
-    用法::
+    Usage::
 
         skill = Skill(SkillSpec(
             name="code_review",
@@ -54,7 +54,7 @@ class Skill:
         self._handler = handler
         self._enabled = True
 
-    # -- 便捷属性 ---------------------------------------------------
+    # -- Convenience properties ----------------------------------------
 
     @property
     def name(self) -> str:
@@ -82,10 +82,10 @@ class Skill:
     def disable(self) -> None:
         self._enabled = False
 
-    # -- 执行 -------------------------------------------------------
+    # -- Execute ------------------------------------------------------
 
     async def execute(self, **kwargs: Any) -> str:
-        """执行技能，返回结果字符串。"""
+        """Execute the skill, return result string."""
         if self._handler is None:
             raise RuntimeError(f"Skill '{self.name}' has no handler")
         try:
@@ -100,9 +100,9 @@ class Skill:
 
 
 class SkillRegistry:
-    """技能注册中心。按 name 索引。
+    """Skill registry. Indexed by name.
 
-    用法::
+    Usage::
 
         registry = SkillRegistry()
         registry.register(skill)
@@ -113,34 +113,34 @@ class SkillRegistry:
         self._skills: dict[str, Skill] = {}
 
     def register(self, skill: Skill) -> None:
-        """注册一个 Skill。同名会被覆盖。"""
+        """Register a Skill. Same name will be overwritten."""
         if skill.name in self._skills:
             logger.warning(
                 "Skill '%s' already registered, overwriting", skill.name)
         self._skills[skill.name] = skill
 
     def get(self, name: str) -> Skill | None:
-        """按名称获取 Skill。"""
+        """Get Skill by name."""
         return self._skills.get(name)
 
     def list_all(self, enabled_only: bool = True) -> list[Skill]:
-        """列出全部 Skill。"""
+        """List all Skills."""
         if enabled_only:
             return [s for s in self._skills.values() if s.enabled]
         return list(self._skills.values())
 
     def list_by_source(self, source: str, enabled_only: bool = True) -> list[Skill]:
-        """按 source 筛选。"""
+        """Filter by source."""
         return [s for s in self._skills.values()
                 if s.spec.source == source and (not enabled_only or s.enabled)]
 
     def list_by_category(self, category: str, enabled_only: bool = True) -> list[Skill]:
-        """按 category 筛选。"""
+        """Filter by category."""
         return [s for s in self._skills.values()
                 if s.spec.category == category and (not enabled_only or s.enabled)]
 
     def enable(self, name: str) -> bool:
-        """启用一个 Skill。"""
+        """Enable a Skill."""
         skill = self._skills.get(name)
         if skill:
             skill.enable()
@@ -148,7 +148,7 @@ class SkillRegistry:
         return False
 
     def disable(self, name: str) -> bool:
-        """禁用一个 Skill。"""
+        """Disable a Skill."""
         skill = self._skills.get(name)
         if skill:
             skill.disable()
@@ -156,11 +156,11 @@ class SkillRegistry:
         return False
 
     def count(self) -> int:
-        """已注册 Skill 数量。"""
+        """Count of registered Skills."""
         return len(self._skills)
 
     def search(self, query: str) -> list[Skill]:
-        """模糊搜索（name + description + tags）。"""
+        """Fuzzy search (name + description + tags)."""
         q = query.lower()
         results: list[Skill] = []
         for skill in self._skills.values():

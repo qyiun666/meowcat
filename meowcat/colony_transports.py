@@ -1,10 +1,10 @@
-"""meowcat Colony 联邦传输层内置实现（v1.0.12）。
+"""meowcat Colony federation transport layer built-in implementations (v1.0.12).
 
-提供两种内置传输：
-- TCPSocketTransport: 标准库 asyncio TCP，同网络内两台主机
-- RedisPubSubTransport: Redis pub/sub，生产部署（可选依赖 redis）
+Provides two built-in transports:
+- TCPSocketTransport: stdlib asyncio TCP, for two hosts on the same network
+- RedisPubSubTransport: Redis pub/sub, for production deployment (optional redis dependency)
 
-全部实现 FederationTransport 协议。
+All implement the FederationTransport protocol.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -22,11 +22,11 @@ from meowcat.protocols_storage import FederationTransport
 logger = logging.getLogger("meowcat.colony.federation")
 
 # ---------------------------------------------------------------------------
-# 线协议常量
+# Wire protocol constants
 # ---------------------------------------------------------------------------
 
 _MSG_DELIMITER = b"\n"
-_REQUEST_TIMEOUT = 30.0  # 秒
+_REQUEST_TIMEOUT = 30.0  # seconds
 
 
 # ---------------------------------------------------------------------------
@@ -34,13 +34,14 @@ _REQUEST_TIMEOUT = 30.0  # 秒
 # ---------------------------------------------------------------------------
 
 class TCPSocketTransport:
-    """基于 TCP socket 的 Colony 联邦传输。
+    """TCP socket-based Colony federation transport.
 
-    每端启动一个 TCP server 接收消息，publish 时作为 TCP client 连接远端发送。
+    Each end starts a TCP server to receive messages; on publish it connects
+    as a TCP client to the remote to send.
 
-    线程安全：单事件循环内使用。
+    Thread safety: use within a single event loop.
 
-    典型用法::
+    Typical usage::
 
         # Colony A (host-a, port 9000)
         t_a = TCPSocketTransport(host="0.0.0.0", port=9000)
@@ -62,26 +63,27 @@ class TCPSocketTransport:
         self._incoming: asyncio.Queue[dict] = asyncio.Queue()
         self._pending_requests: dict[str, asyncio.Future] = {}
 
-    # -- 对端注册 -------------------------------------------------------
+    # -- Peer registration ----------------------------------------------
 
     def register_peer(self, colony_id: str, host: str, port: int) -> None:
-        """注册远端 colony 的地址。publish 时根据 colony_id 查找连接目标。
+        """Register the address of a remote colony. Used during publish to
+        look up the connection target by colony_id.
 
         Args:
-            colony_id: 远端 colony 标识。
-            host: 远端主机地址。
-            port: 远端 TCP 端口。
+            colony_id: Remote colony identifier.
+            host: Remote host address.
+            port: Remote TCP port.
         """
         self._peers[colony_id] = (host, port)
 
     def unregister_peer(self, colony_id: str) -> None:
-        """移除远端 colony 地址。"""
+        """Remove remote colony address."""
         self._peers.pop(colony_id, None)
 
-    # -- 生命周期 -------------------------------------------------------
+    # -- Lifecycle ------------------------------------------------------
 
     async def start(self) -> None:
-        """启动 TCP server 监听。"""
+        """Start TCP server listening."""
         self._server = await asyncio.start_server(
             self._handle_connection, self._host, self._port,
         )
@@ -89,32 +91,32 @@ class TCPSocketTransport:
                     self._host, self._port)
 
     async def stop(self) -> None:
-        """停止 TCP server。"""
+        """Stop TCP server."""
         if self._server:
             self._server.close()
             await self._server.wait_closed()
             self._server = None
 
-        # 取消所有未完成的请求
+        # Cancel all pending requests
         for fut in self._pending_requests.values():
             if not fut.done():
                 fut.cancel()
         self._pending_requests.clear()
 
-    # -- publish --------------------------------------------------------
+    # -- Publish --------------------------------------------------------
 
     async def publish(self, topic: str, payload: dict) -> None:
-        """向指定 colony 发送消息（fire-and-forget）。
+        """Send a message to a specified colony (fire-and-forget).
 
-        连接远端 TCP server，发送 JSON 行后关闭连接。
+        Connects to the remote TCP server, sends a JSON line, then closes.
 
         Args:
-            topic: 目标 colony_id。
-            payload: 消息负载。
+            topic: Target colony_id.
+            payload: Message payload.
 
         Raises:
-            ValueError: colony_id 未注册。
-            ConnectionError: 无法连接远端。
+            ValueError: colony_id not registered.
+            ConnectionError: Cannot connect to remote.
         """
         if topic not in self._peers:
             raise ValueError(f"Unknown peer colony: {topic}")
@@ -137,21 +139,22 @@ class TCPSocketTransport:
             raise ConnectionError(f"Failed to publish to {topic}") from None
 
     async def request(self, topic: str, payload: dict) -> dict:
-        """向指定 colony 发送请求并等待响应。
+        """Send a request to a specified colony and wait for response.
 
-        在 payload 中自动注入 request_id，等待远端回传同 request_id 的响应。
+        Automatically injects request_id into payload, waits for the remote
+        to respond with the same request_id.
 
         Args:
-            topic: 目标 colony_id。
-            payload: 请求负载（不含 request_id）。
+            topic: Target colony_id.
+            payload: Request payload (without request_id).
 
         Returns:
-            远端回传的响应 dict。
+            Response dict from the remote.
 
         Raises:
-            ValueError: colony_id 未注册。
-            ConnectionError: 无法连接远端。
-            TimeoutError: 等待响应超时。
+            ValueError: colony_id not registered.
+            ConnectionError: Cannot connect to remote.
+            TimeoutError: Timed out waiting for response.
         """
         request_id = uuid.uuid4().hex
         payload["request_id"] = request_id
@@ -165,30 +168,31 @@ class TCPSocketTransport:
         finally:
             self._pending_requests.pop(request_id, None)
 
-    # -- subscribe ------------------------------------------------------
+    # -- Subscribe ------------------------------------------------------
 
     async def subscribe(self, topic: str) -> AsyncIterator[dict]:
-        """订阅本 colony 的入站消息流。
+        """Subscribe to this colony's inbound message stream.
 
-        持续从 TCP 入站队列中读取消息并 yield。
-        不按 topic 过滤（TCP 是无连接的，所有入站消息由 subscribe 消费）。
+        Continuously reads from the TCP inbound queue and yields messages.
+        Does not filter by topic (TCP is connectionless; all inbound messages
+        are consumed by subscribe).
 
         Args:
-            topic: 本 colony_id（用于日志）。
+            topic: This colony_id (for logging).
 
         Yields:
-            每条入站消息的 payload dict。
+            Payload dict of each inbound message.
         """
         while True:
             msg = await self._incoming.get()
             yield msg
 
-    # -- 内部 -----------------------------------------------------------
+    # -- Internal -------------------------------------------------------
 
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
     ) -> None:
-        """处理一条 TCP 入站连接。"""
+        """Handle an inbound TCP connection."""
         try:
             data = await asyncio.wait_for(
                 reader.readline(), timeout=_REQUEST_TIMEOUT,
@@ -198,18 +202,18 @@ class TCPSocketTransport:
 
             payload = json.loads(data.decode())
 
-            # 如果是响应（含 request_id），唤醒等待方
+            # If it's a response (has request_id), wake the waiter
             req_id = payload.get("request_id")
             if req_id and req_id in self._pending_requests:
                 fut = self._pending_requests[req_id]
                 if not fut.done():
                     fut.set_result(payload)
             else:
-                # 否则是入站请求，放入队列
+                # Otherwise it's an inbound request, put in queue
                 await self._incoming.put(payload)
 
-                # 如果是请求（带 reply_to），不需要在此处理
-                # 由 Colony 层的联邦调度器处理后再 publish 响应
+                # If it's a request (with reply_to), no need to handle here
+                # Colony layer federation dispatcher handles it and publishes response
         except asyncio.TimeoutError:
             pass
         except json.JSONDecodeError:
@@ -226,11 +230,12 @@ class TCPSocketTransport:
 # ---------------------------------------------------------------------------
 
 class RedisPubSubTransport:
-    """基于 Redis pub/sub 的 Colony 联邦传输。
+    """Redis pub/sub-based Colony federation transport.
 
-    依赖 ``redis`` 包（``pip install redis``）。框架层不强制依赖。
+    Depends on the ``redis`` package (``pip install redis``). Not a hard
+    dependency at the framework level.
 
-    典型用法::
+    Typical usage::
 
         import redis.asyncio as redis
 
@@ -240,11 +245,11 @@ class RedisPubSubTransport:
     """
 
     def __init__(self, client: Any, *, colony_id: str) -> None:
-        """构造 Redis 传输。
+        """Construct Redis transport.
 
         Args:
-            client: ``redis.asyncio.Redis`` 实例。
-            colony_id: 本 colony 标识（用作 channel 前缀）。
+            client: ``redis.asyncio.Redis`` instance.
+            colony_id: This colony identifier (used as channel prefix).
         """
         self._client = client
         self._colony_id = colony_id
@@ -254,17 +259,17 @@ class RedisPubSubTransport:
 
     @property
     def _channel(self) -> str:
-        """本 colony 的入站 channel 名。"""
+        """This colony's inbound channel name."""
         return f"meowcat:federation:{self._colony_id}"
 
     async def start(self) -> None:
-        """启动 Redis pub/sub 监听。"""
+        """Start Redis pub/sub listener."""
         self._pubsub = self._client.pubsub()
         await self._pubsub.subscribe(self._channel)
         self._listener_task = asyncio.create_task(self._listen())
 
     async def stop(self) -> None:
-        """停止 Redis pub/sub 监听。"""
+        """Stop Redis pub/sub listener."""
         if self._listener_task:
             self._listener_task.cancel()
             self._listener_task = None
@@ -273,31 +278,31 @@ class RedisPubSubTransport:
             self._pubsub = None
 
     async def publish(self, topic: str, payload: dict) -> None:
-        """向指定 colony 发布消息。
+        """Publish a message to a specified colony.
 
         Args:
-            topic: 目标 colony_id。
-            payload: 消息负载。
+            topic: Target colony_id.
+            payload: Message payload.
         """
         channel = f"meowcat:federation:{topic}"
         line = json.dumps(payload, ensure_ascii=False)
         await self._client.publish(channel, line)
 
     async def subscribe(self, topic: str) -> AsyncIterator[dict]:
-        """订阅本 colony 的入站消息流。
+        """Subscribe to this colony's inbound message stream.
 
         Args:
-            topic: 本 colony_id（用于日志）。
+            topic: This colony_id (for logging).
 
         Yields:
-            每条入站消息的 payload dict。
+            Payload dict of each inbound message.
         """
         while True:
             msg = await self._incoming.get()
             yield msg
 
     async def _listen(self) -> None:
-        """后台监听 Redis pub/sub 消息。"""
+        """Background listener for Redis pub/sub messages."""
         try:
             async for message in self._pubsub.listen():
                 if message["type"] != "message":

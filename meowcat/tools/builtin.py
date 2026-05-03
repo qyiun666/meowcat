@@ -1,13 +1,13 @@
-"""meowcat 通用内置工具 — 所有猫都需要的原子操作。
+"""meowcat universal built-in tools — atomic operations every cat needs.
 
-这些不依赖 meowagent，纯框架层。任何 ``pip install meowcat`` 的用户
-都能获得这些开箱即用的基础工具。
+These have no meowagent dependency, pure framework layer. Any ``pip install meowcat`` user
+gets these out-of-the-box basic tools.
 
-内置工具集:
-- read_file: 读取文件内容
-- write_file: 写入文件
-- run_command: 执行 Shell 命令
-- http_get: HTTP GET 请求
+Built-in tool set:
+- read_file: Read file contents
+- write_file: Write file
+- run_command: Execute shell command
+- http_get: HTTP GET request
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -21,20 +21,20 @@ from typing import Any
 
 from meowcat.tools.tool import RiskLevel, Tool, ToolSpec
 
-# -- 工作目录 -------------------------------------------------------
+# -- Working directory ------------------------------------------------
 
 _DEFAULT_WORKSPACE = Path.home() / ".meowcat" / "workspace"
 
 
 def _resolve_path(path: str, workspace: Path | None = None) -> Path:
-    """解析路径，限制在 workspace 内。"""
+    """Resolve path, constrain within workspace."""
     ws = workspace or _DEFAULT_WORKSPACE
     p = Path(path).expanduser()
     if not p.is_absolute():
         p = (ws / p).resolve()
     else:
         p = p.resolve()
-    # 安全检查：确保在 workspace 内
+    # Security check: ensure within workspace
     try:
         p.relative_to(ws.resolve())
     except ValueError:
@@ -42,11 +42,11 @@ def _resolve_path(path: str, workspace: Path | None = None) -> Path:
     return p
 
 
-# -- 文件操作 handlers ----------------------------------------------
+# -- File operation handlers ----------------------------------------
 
 
 async def _read_file(path: str, **_: Any) -> str:
-    """读取文件内容。"""
+    """Read file contents."""
     if not path.strip():
         return "Error: empty file path"
     p = _resolve_path(path)
@@ -61,7 +61,7 @@ async def _read_file(path: str, **_: Any) -> str:
 
 
 async def _write_file(path: str, content: str, **_: Any) -> str:
-    """写入文件内容。"""
+    """Write file contents."""
     p = _resolve_path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -71,11 +71,11 @@ async def _write_file(path: str, content: str, **_: Any) -> str:
         return f"Write error: {e}"
 
 
-# -- 命令执行 -------------------------------------------------------
+# -- Command execution -----------------------------------------------
 
 
 async def _run_command(command: str, **_: Any) -> str:
-    """执行 Shell 命令。"""
+    """Execute shell command."""
     if not command.strip():
         return "Error: empty command"
     try:
@@ -96,11 +96,11 @@ async def _run_command(command: str, **_: Any) -> str:
         return f"Command error: {e}"
 
 
-# -- HTTP 请求 ------------------------------------------------------
+# -- HTTP requests ---------------------------------------------------
 
 
 async def _http_get(url: str, **_: Any) -> str:
-    """HTTP GET 请求。"""
+    """HTTP GET request."""
     try:
         import httpx
     except ImportError:
@@ -116,7 +116,7 @@ async def _http_get(url: str, **_: Any) -> str:
         return f"HTTP error: {e}"
 
 
-# -- 内置工具定义 ---------------------------------------------------
+# -- Built-in tool definitions ---------------------------------------
 
 
 builtin_read_file = Tool(
@@ -168,7 +168,7 @@ builtin_http_get = Tool(
 )
 
 
-# -- 通用工具集 -----------------------------------------------------
+# -- General tool set ------------------------------------------------
 
 BUILTIN_TOOLS: list[Tool] = [
     builtin_read_file,

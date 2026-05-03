@@ -1,17 +1,17 @@
-"""meowcat 神经通路图（Wiring）—— 猫的神经解剖约束。
+"""meowcat neural pathway graph (Wiring) — cat's neuroanatomical constraints.
 
-Wiring 是一张 **有向图 + 黑名单**，声明哪些器官间的调用是合法的。
-``CatBase.signal(from, to, method, ...)`` 在调度前查此图，
-非法调用抛 :class:`IllegalNeuralPathError`。
+Wiring is a **directed graph + blocklist** declaring which inter-organ calls are legal.
+``CatBase.signal(from, to, method, ...)`` consults this graph before dispatching;
+illegal calls raise :class:`IllegalNeuralPathError`.
 
-设计要点：
+Design points:
 
-- **节点** = ``(category, name)`` 二元组，如 ``("brain", "cerebellum")``
-- **边** = 允许 A 调用 B（方向敏感；双向互通需注册两条边）
-- **黑名单** 优先级高于白名单：即使有 connect，forbid 一旦命中立即否决
-- **冻结** freeze 后任何写操作抛 :class:`MeowCatError`，防止业务代码运行期篡改约束
+- **Node** = ``(category, name)`` pair, e.g. ``("brain", "cerebellum")``
+- **Edge** = allows A to call B (direction-sensitive; bidirectional needs two edges)
+- **Blocklist** takes priority over allowlist: even with connect, a forbid hit immediately denies
+- **Freeze** after freeze, any write raises :class:`MeowCatError`, preventing runtime tampering
 
-本文件零第三方依赖，纯 stdlib。
+This file has zero third-party dependencies, pure stdlib.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -22,15 +22,15 @@ from typing import Iterable
 
 from meowcat.errors import IllegalNeuralPathError, MeowCatError
 
-# (category, name) 例：("brain","cerebellum")、("sense","paws")
+# (category, name) e.g. ("brain","cerebellum"), ("sense","paws")
 Organ = tuple[str, str]
 Edge = tuple[Organ, Organ]
 
 
 class Wiring:
-    """神经通路有向图（含黑名单）。
+    """Neural pathway directed graph (with blocklist).
 
-    典型用法::
+    Typical usage::
 
         w = Wiring()
         w.connect(("brain", "cerebellum"), ("sense", "paws"))
@@ -38,7 +38,7 @@ class Wiring:
         w.freeze()
         assert w.is_allowed(("brain", "cerebellum"), ("sense", "paws"))
         w.assert_allowed(("brain", "cerebrum"), ("sense", "paws"))
-        # 抛 IllegalNeuralPathError
+        # raises IllegalNeuralPathError
     """
 
     def __init__(self) -> None:
@@ -46,13 +46,14 @@ class Wiring:
         self._forbidden: set[Edge] = set()
         self._frozen: bool = False
 
-    # -- 写接口 ------------------------------------------------------
+    # -- Write API ------------------------------------------------------
 
     def connect(self, from_organ: Organ, to_organ: Organ) -> None:
-        """声明一条"允许 from→to 调用"的通路。
+        """Declare an "allow from→to" pathway.
 
-        重复 connect 幂等。若该边已在黑名单中，当前实现 **不报错**，
-        仅记录白名单；查询时以黑名单为准（总是禁止）。
+        Repeated connect is idempotent. If the edge is already blocklisted, the current
+        implementation does **not error** — it only records the allowlist entry;
+        queries always honor the blocklist (permanently denied).
         """
         self._ensure_mutable()
         _validate_organ(from_organ, "from_organ")
@@ -60,20 +61,20 @@ class Wiring:
         self._allowed.add((from_organ, to_organ))
 
     def forbid(self, from_organ: Organ, to_organ: Organ) -> None:
-        """声明一条"禁止 from→to 调用"的通路。优先级高于 connect。"""
+        """Declare a "forbid from→to" pathway. Takes priority over connect."""
         self._ensure_mutable()
         _validate_organ(from_organ, "from_organ")
         _validate_organ(to_organ, "to_organ")
         self._forbidden.add((from_organ, to_organ))
 
     def freeze(self) -> None:
-        """冻结图。之后 connect / forbid 都抛 :class:`MeowCatError`。"""
+        """Freeze the graph. Subsequent connect / forbid raise :class:`MeowCatError`."""
         self._frozen = True
 
-    # -- 查询接口 ----------------------------------------------------
+    # -- Query API ----------------------------------------------------
 
     def is_allowed(self, from_organ: Organ, to_organ: Organ) -> bool:
-        """A 能否调用 B？黑名单 > 白名单。"""
+        """Can A call B? Blocklist > allowlist."""
         edge: Edge = (from_organ, to_organ)
         if edge in self._forbidden:
             return False
@@ -82,7 +83,7 @@ class Wiring:
     def assert_allowed(
         self, from_organ: Organ, to_organ: Organ,
     ) -> None:
-        """非法则抛 :class:`IllegalNeuralPathError`。"""
+        """Raise :class:`IllegalNeuralPathError` if not allowed."""
         edge: Edge = (from_organ, to_organ)
         if edge in self._forbidden:
             raise IllegalNeuralPathError(
@@ -95,21 +96,21 @@ class Wiring:
 
     @property
     def frozen(self) -> bool:
-        """wiring 是否已冻结。"""
+        """Whether wiring is frozen."""
         return self._frozen
 
-    # -- 内省（只读） -----------------------------------------------
+    # -- Introspection (read-only) -----------------------------------------------
 
     def edges(self) -> frozenset[Edge]:
-        """当前所有允许边的不可变快照。"""
+        """Immutable snapshot of all currently allowed edges."""
         return frozenset(self._allowed)
 
     def forbids(self) -> frozenset[Edge]:
-        """当前所有禁止边的不可变快照。"""
+        """Immutable snapshot of all currently forbidden edges."""
         return frozenset(self._forbidden)
 
     def is_organ_wired(self, organ: Organ) -> bool:
-        """器官是否出现在任意允许边中（作为源或目标）。"""
+        """Whether the organ appears in any allowed edge (as source or target)."""
         for frm, to in self._allowed:
             if organ in (frm, to):
                 if (frm, to) not in self._forbidden:
@@ -117,25 +118,25 @@ class Wiring:
         return False
 
     def snapshot(self) -> "WiringSnapshot":
-        """返回当前图的不可变视图，便于反射执行时冻结读取。"""
+        """Return an immutable view of the current graph, for frozen reads during reflex execution."""
         return WiringSnapshot(
             allowed=frozenset(self._allowed),
             forbidden=frozenset(self._forbidden),
         )
 
-    # -- 便利方法 ----------------------------------------------------
+    # -- Convenience methods ----------------------------------------------------
 
     def connect_many(self, edges: Iterable[Edge]) -> None:
-        """批量注册允许边。"""
+        """Batch register allowed edges."""
         for frm, to in edges:
             self.connect(frm, to)
 
     def forbid_many(self, edges: Iterable[Edge]) -> None:
-        """批量注册禁止边。"""
+        """Batch register forbidden edges."""
         for frm, to in edges:
             self.forbid(frm, to)
 
-    # -- 内部 --------------------------------------------------------
+    # -- Internal --------------------------------------------------------
 
     def _ensure_mutable(self) -> None:
         if self._frozen:
@@ -145,7 +146,7 @@ class Wiring:
 
 
 class WiringSnapshot:
-    """Wiring 的不可变快照（只读视图）。"""
+    """Immutable snapshot of Wiring (read-only view)."""
 
     __slots__ = ("_allowed", "_forbidden")
 
@@ -173,7 +174,7 @@ class WiringSnapshot:
 
 
 def _validate_organ(organ: Organ, label: str) -> None:
-    """断言 organ 是 ``(str, str)`` 二元组。"""
+    """Assert organ is a ``(str, str)`` pair."""
     if (
         not isinstance(organ, tuple)
         or len(organ) != 2

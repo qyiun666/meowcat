@@ -183,13 +183,13 @@ class ChainRegistry:
                 last_result = await cat.path_registry.run(
                     cat, path_name, **current_input,
                 )
-                # 上一步返回值作为下一步的 kwargs
+                # previous step return value becomes next step kwargs
                 if isinstance(last_result, dict):
                     current_input = last_result
                 else:
                     current_input = {"_result": last_result}
         except Exception:
-            # 逆序执行回滚路径，回滚异常不掩盖原始异常
+            # execute rollback paths in reverse; rollback exceptions do not mask the original
             for rollback_name in reversed(chain.rollback_paths):
                 try:
                     await cat.path_registry.run(
@@ -199,7 +199,7 @@ class ChainRegistry:
                     pass
             raise
 
-        # 返回最后一步的结果（保持 dict 类型）
+        # return the last step result (preserving dict type)
         if isinstance(last_result, dict):
             return last_result
         return {"_result": last_result}

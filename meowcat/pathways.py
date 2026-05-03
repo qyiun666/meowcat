@@ -1,15 +1,15 @@
-"""meowcat 预设通路 — 框架级的标准器官协作序列（v0.5.27 已废弃，保留向后兼容）。
+"""meowcat preset pathways — framework-level standard organ collaboration sequences (deprecated v0.5.27, kept for backward compatibility).
 
-v0.5.27 起所有静态方法内部委托给 ``cat.path_registry.run()``，
-新代码请直接使用::
+Since v0.5.27, all static methods internally delegate to ``cat.path_registry.run()``.
+New code should directly use::
 
     from meowcat.path import Path
     result = await cat.path_registry.run("locate", query="hello")
 
-本模块保持原有 API 签名不变，确保向后兼容。
+This module preserves original API signatures for backward compatibility.
 
 .. deprecated:: v0.5.27
-    请使用 :class:`meowcat.path.PathRegistry` 替代。
+    Use :class:`meowcat.path.PathRegistry` instead.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -19,8 +19,8 @@ from __future__ import annotations
 import warnings
 from typing import Any, Callable
 
-# ⚠️ 以下 import 仅用于 build_conversation_pipeline 的类型参考
-# 所有单步通路已迁移到 meowcat.path.BUILTIN_PATHS
+# ⚠️ the following imports are only for build_conversation_pipeline type reference
+# all single-step pathways have migrated to meowcat.path.BUILTIN_PATHS
 
 
 _warned: bool = False
@@ -38,24 +38,24 @@ def _deprecated() -> None:
 
 
 class Pathways:
-    """[deprecated] 预设通路的命名空间。
+    """[deprecated] Preset pathway namespace.
 
-    v0.5.27 起所有方法委托给 ``cat.path_registry.run()``。
-    建议新代码直接使用 :class:`meowcat.path.PathRegistry`。
+    Since v0.5.27 all methods delegate to ``cat.path_registry.run()``.
+    New code should directly use :class:`meowcat.path.PathRegistry`.
     """
 
-    # ── 记忆回路 ──
+    # ── Memory circuit ──
 
     @staticmethod
     async def remember(cat, entity_data: dict[str, Any]) -> Any:
-        """[deprecated] 记忆：存一条实体到海马体。
+        """[deprecated] Remember: store an entity into hippocampus.
 
-        委托给 ``cat.path_registry.run("remember", entity_data=entity_data)``。
-        v0.5.26 起 from_organ 由 THALAMUS 修正为 BRAINSTEM（写权限约束）。
+        Delegates to ``cat.path_registry.run("remember", entity_data=entity_data)``.
+        Since v0.5.26, from_organ corrected from THALAMUS to BRAINSTEM (write permission constraint).
 
         Args:
-            cat: ``CatBase`` 实例
-            entity_data: 实体数据字典
+            cat: ``CatBase`` instance
+            entity_data: Entity data dictionary
         """
         _deprecated()
         return await cat.path_registry.run(
@@ -64,32 +64,32 @@ class Pathways:
 
     @staticmethod
     async def locate(cat, query: str) -> Any:
-        """[deprecated] 检索：从海马体查记忆。
+        """[deprecated] Locate: query memories from hippocampus.
 
-        委托给 ``cat.path_registry.run("locate", query=query)``。
+        Delegates to ``cat.path_registry.run("locate", query=query)``.
 
         Args:
-            cat: ``CatBase`` 实例
-            query: 检索查询
+            cat: ``CatBase`` instance
+            query: Search query
         """
         _deprecated()
         return await cat.path_registry.run(cat, "locate", query=query)
 
-    # ── 推理回路 ──
+    # ── Reasoning circuit ──
 
     @staticmethod
     async def deep_reason(cat, prompt: str, context: str = "") -> str:
-        """[deprecated] 深度推理：大脑 cerebrum 生成。
+        """[deprecated] Deep reasoning: cerebrum generation.
 
-        委托给 ``cat.path_registry.run("deep_reason", prompt=prompt, context=context)``。
+        Delegates to ``cat.path_registry.run("deep_reason", prompt=prompt, context=context)``.
 
         Args:
-            cat: ``CatBase`` 实例
-            prompt: 推理提示词
-            context: 上下文（如检索到的记忆）
+            cat: ``CatBase`` instance
+            prompt: Reasoning prompt
+            context: Context (e.g. retrieved memories)
 
         Returns:
-            推理生成的文本
+            Generated reasoning text
         """
         _deprecated()
         return await cat.path_registry.run(
@@ -98,63 +98,64 @@ class Pathways:
 
     @staticmethod
     async def fast_respond(cat, pattern: str) -> str:
-        """[deprecated] 快速响应：小脑模式匹配。
+        """[deprecated] Fast response: cerebellum pattern matching.
 
-        委托给 ``cat.path_registry.run("fast_match", pattern=pattern)``。
-        v0.5.27 起 from_organ 由 THALAMUS 修正为 BRAINSTEM（布线约束）。
+        Delegates to ``cat.path_registry.run("fast_match", pattern=pattern)``.
+        Since v0.5.27, from_organ corrected from THALAMUS to BRAINSTEM (wiring constraint).
 
         Args:
-            cat: ``CatBase`` 实例
-            pattern: 匹配模式
+            cat: ``CatBase`` instance
+            pattern: Match pattern
 
         Returns:
-            匹配到的响应文本
+            Matched response text
         """
         _deprecated()
         return await cat.path_registry.run(cat, "fast_match", pattern=pattern)
 
-    # ── 输出回路 ──
+    # ── Output circuit ──
 
     @staticmethod
     async def say(cat, text: str) -> Any:
-        """[deprecated] 发言：经小脑协调后发声。
+        """[deprecated] Speak: vocalize after cerebellum coordination.
 
-        委托给 ``cat.path_registry.run("say", text=text)``。
+        Delegates to ``cat.path_registry.run("say", text=text)``.
 
         Args:
-            cat: ``CatBase`` 实例
-            text: 要说的文本
+            cat: ``CatBase`` instance
+            text: Text to speak
         """
         _deprecated()
         return await cat.path_registry.run(cat, "say", text=text)
 
-    # ── 完整对话流水线（闭包） ──
+    # ── Full conversation pipeline (closure) ──
 
     @staticmethod
     def build_conversation_pipeline(
         cat,
     ) -> Callable[[str], Any]:
-        """返回闭包：输入文本 → 检索记忆 → 推理 → 输出。
+        """Return a closure: input text → locate memory → reason → output.
 
-        这是最常用的合成通路。每个步骤都走 wiring 校验。
+        This is the most commonly used composite pathway. Every step goes
+        through wiring validation.
 
         Args:
-            cat: ``CatBase`` 实例
+            cat: ``CatBase`` instance
 
         Returns:
-            ``async def pipeline(user_input: str) -> str`` 闭包
+            ``async def pipeline(user_input: str) -> str`` closure
         """
         _deprecated()
 
         async def pipeline(user_input: str) -> str:
-            # 1. 检索记忆
+            # 1. Locate memory
             memory = await Pathways.locate(cat, user_input)
             context = str(memory) if memory else ""
 
-            # 2. 推理
+            # 2. Reason
             reply = await Pathways.deep_reason(cat, user_input, context=context)
 
-            # 3. 输出
+            # 3. Output
             await Pathways.say(cat, reply)
 
             return reply

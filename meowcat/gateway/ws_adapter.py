@@ -1,7 +1,7 @@
-"""meowcat Gateway — WsAdapter（WebSocket 双向流式对话适配器）。
+"""meowcat Gateway — WsAdapter (WebSocket bidirectional streaming dialogue adapter).
 
-纯 asyncio 实现 WebSocket 协议（RFC 6455 最小子集），零外部依赖。
-支持文本帧收发 + 流式推送。
+Pure asyncio WebSocket protocol implementation (RFC 6455 minimal subset), zero external dependencies.
+Supports text frame send/receive + streaming push.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -17,22 +17,22 @@ from typing import Any, AsyncIterator, Awaitable, Callable
 
 from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
 
-# WebSocket 帧操作码
+# WebSocket frame opcodes
 _OP_TEXT = 0x1
 _OP_CLOSE = 0x8
 
-# WebSocket GUID（RFC 6455 §4.2.2）
+# WebSocket GUID (RFC 6455 §4.2.2)
 _WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 
 def _compute_accept(key: str) -> str:
-    """计算 Sec-WebSocket-Accept 值。"""
+    """Compute Sec-WebSocket-Accept value."""
     digest = hashlib.sha1((key + _WS_GUID).encode()).digest()
     return base64.b64encode(digest).decode()
 
 
 def _encode_frame(payload: bytes, opcode: int = _OP_TEXT) -> bytes:
-    """编码 WebSocket 文本帧（服务端→客户端不 mask）。"""
+    """Encode WebSocket text frame (server→client, no mask)."""
     frame = bytearray()
     frame.append(0x80 | opcode)  # FIN + opcode
 
@@ -51,9 +51,9 @@ def _encode_frame(payload: bytes, opcode: int = _OP_TEXT) -> bytes:
 
 
 def _decode_frame(data: bytes) -> tuple[int, bytes, bool]:
-    """解码 WebSocket 帧。返回 (opcode, payload, fin)。
+    """Decode WebSocket frame. Returns (opcode, payload, fin).
 
-    客户端→服务端帧必须 mask。
+    Client→server frames MUST be masked.
     """
     if len(data) < 2:
         raise ValueError("frame too short")
@@ -84,9 +84,9 @@ def _decode_frame(data: bytes) -> tuple[int, bytes, bool]:
 
 
 class WsAdapter:
-    """WebSocket 协议适配器 — 双向流式对话。
+    """WebSocket protocol adapter — bidirectional streaming dialogue.
 
-    纯 asyncio，零外部依赖。
+    Pure asyncio, zero external dependencies.
     """
 
     name = "ws"
@@ -102,7 +102,7 @@ class WsAdapter:
         on_message: Callable[[str, SignalContext], Awaitable[str | None]],
         on_stream: Callable[[str, SignalContext], Awaitable[AsyncIterator[str] | None]],
     ) -> None:
-        """启动 asyncio WebSocket server。"""
+        """Start asyncio WebSocket server."""
         self._on_message = on_message
         self._on_stream = on_stream
 
@@ -119,7 +119,7 @@ class WsAdapter:
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
     ) -> None:
-        """处理 WebSocket 连接：handshake → 消息循环。"""
+        """Handle WebSocket connection: handshake → message loop."""
         session_id = f"ws-{id(writer)}"
 
         try:
@@ -151,7 +151,7 @@ class WsAdapter:
                 user_id=headers.get("x-user-id", "unknown"),
             )
 
-            # 消息循环
+            # Message loop
             buf = bytearray()
             while True:
                 chunk = await asyncio.wait_for(reader.read(4096), timeout=300)
@@ -163,7 +163,7 @@ class WsAdapter:
                     try:
                         opcode, payload, fin = _decode_frame(bytes(buf))
                     except (ValueError, struct.error):
-                        # 帧不完整，等更多数据
+                        # Frame incomplete, wait for more data
                         break
 
                     frame_size = self._frame_size(bytes(buf))
@@ -179,7 +179,7 @@ class WsAdapter:
 
                     if opcode == _OP_TEXT:
                         text = payload.decode("utf-8")
-                        # 流式处理
+                        # Streaming processing
                         result = await self._on_stream(text, ctx)
                         if result is not None:
                             async for chunk_text in result:
@@ -200,7 +200,7 @@ class WsAdapter:
 
     @staticmethod
     def _parse_http_headers(request_text: str) -> dict[str, str]:
-        """解析 HTTP 请求头为小写键字典。"""
+        """Parse HTTP request headers into lowercase-keyed dict."""
         headers: dict[str, str] = {}
         for line in request_text.split("\r\n")[1:]:
             if ":" in line:
@@ -210,7 +210,7 @@ class WsAdapter:
 
     @staticmethod
     def _frame_size(data: bytes) -> int:
-        """计算完整帧的总字节数。"""
+        """Calculate total byte size of a complete frame."""
         if len(data) < 2:
             return 0
         masked = bool(data[1] & 0x80)
@@ -226,13 +226,13 @@ class WsAdapter:
                 return 0
             length = struct.unpack(">Q", data[2:10])[0]
             offset = 10
-        # 检查 mask 位而非假定
+        # Check mask bit rather than assume
         if masked:
             offset += 4
         return offset + length
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
-        """发送完整消息帧。"""
+        """Send complete message frame."""
         writer = self._connections.get(session_id)
         if writer:
             writer.write(_encode_frame(
@@ -241,21 +241,21 @@ class WsAdapter:
             await writer.drain()
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
-        """发送流式文本帧。"""
+        """Send streaming text frame."""
         writer = self._connections.get(session_id)
         if writer:
             writer.write(_encode_frame(chunk.encode("utf-8")))
             await writer.drain()
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
-        """发送流式结束标记。"""
+        """Send stream end marker."""
         writer = self._connections.get(session_id)
         if writer:
             writer.write(_encode_frame(b"[DONE]"))
             await writer.drain()
 
     async def stop(self) -> None:
-        """关闭 WebSocket server 及所有连接。"""
+        """Shut down WebSocket server and all connections."""
         for writer in list(self._connections.values()):
             try:
                 writer.write(_encode_frame(b"", _OP_CLOSE))

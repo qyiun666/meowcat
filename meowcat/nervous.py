@@ -1,17 +1,17 @@
-"""meowcat 神经系统 — Nervous 子系统（v0.5.9 抽离）。
+"""meowcat nervous system — Nervous subsystem (extracted in v0.5.9).
 
-通信约定（v0.5.20+）：
-- signal(): 走 wiring 校验的正式通道
-- probe(): 只读诊断，不校验 wiring 边
-- inject(): Needle 对象的绕过校验写入（仅调试/admin）
-- 直接调用: 允许。只要 wiring 表中有对应的边，
-  不强制所有调用走 signal()。直接调用是性能优化。
+Communication conventions (v0.5.20+):
+- signal(): formal channel with wiring validation
+- probe(): read-only diagnostic, no wiring edge check
+- inject(): bypass-validation writes via Needle (debug/admin only)
+- direct call: allowed. As long as wiring has the corresponding edge,
+  not all calls are forced through signal(). Direct calls are a performance optimization.
 
-真正要防止的是 wiring 表中不存在的 FORBIDDEN 路径。
+What truly needs to be prevented are FORBIDDEN paths absent from the wiring table.
 
-职责：持有 :class:`Wiring`，通过 ``signal()`` 裁决器官互访、通过 ``probe()``
-只读诊断器官。依赖显式注入的 :class:`OrganHost` + :class:`EventBus`，可独立
-实例化给"只要信号系统、不要反射弧"的场景使用::
+Responsibility: holds :class:`Wiring`, adjudicates inter-organ access via ``signal()``,
+read-only diagnostic via ``probe()``. Depends on explicitly injected :class:`OrganHost` +
+:class:`EventBus`, can be instantiated independently for "signals only, no reflex arcs" scenarios::
 
     host = OrganHost("toy")
     events = EventBus()
@@ -25,7 +25,7 @@
         "remember", msg="hi",
     )
 
-分身猫场景：构造时传入 ``forbidden_methods`` 禁用特定方法名::
+Kitten scenario: pass ``forbidden_methods`` at construction to disable specific method names::
 
     nervous = Nervous(
         host, events,
@@ -51,11 +51,11 @@ from meowcat.loop import NerveEvent
 from meowcat.wiring import Organ, Wiring
 
 
-# -- 信号中间件类型 --------------------------------------------------
+# -- Signal middleware types --------------------------------------------------
 
 @dataclass(frozen=True)
 class SignalCall:
-    """单次 signal() 调用的不可变上下文。"""
+    """Immutable context for a single signal() call."""
     from_organ: Organ
     to_organ: Organ
     method: str
@@ -65,49 +65,51 @@ class SignalCall:
 
 
 class SignalMiddleware(Protocol):
-    """信号中间件 — 每次 signal() 调用前后执行。
+    """Signal middleware — executes before/after each signal() call.
 
-    所有方法均为可选实现：只实现需要的钩子即可。
+    All methods are optional: implement only the hooks you need.
     """
 
     async def before(self, ctx: SignalCall) -> SignalCall | None:
-        """signal 执行前调用。返回 None 则短路（阻止执行）。
+        """Called before signal execution. Return None to short-circuit (block execution).
 
-        返回 SignalCall 实例表示继续执行（可修改 ctx 但框架忽略修改值，
-        当前版本仅支持 None 短路语义）。
+        Returning a SignalCall instance means continue (ctx can be modified but framework
+        ignores modifications; current version only supports None short-circuit semantics).
         """
         ...
 
     async def after(self, ctx: SignalCall, result: Any) -> Any:
-        """signal 执行成功后调用。可修改/包装返回值。"""
+        """Called after successful signal execution. Can modify/wrap return value."""
         ...
 
     async def on_error(self, ctx: SignalCall, error: Exception) -> None:
-        """signal 抛出异常时调用。仅通知，异常继续向上传播。"""
+        """Called when signal raises an exception. Notification only; exception propagates."""
         ...
 
 
 @lru_cache(maxsize=None)
 def _build_organ_spec_index() -> dict[Organ, "OrganSpec"]:  # noqa: F821
-    """构建 ORGAN_SPECS 的坐标→规范 索引（缓存）。"""
+    """Build ORGAN_SPECS coordinate→spec index (cached)."""
     from meowcat.biology import ORGAN_SPECS  # noqa: PLC0415
     return {s.coord: s for s in ORGAN_SPECS}
 
 
 def _get_organ_spec(organ: Organ) -> "OrganSpec | None":  # noqa: F821
-    """根据器官坐标查找 ORGAN_SPECS 中的规范。"""
+    """Look up spec in ORGAN_SPECS by organ coordinate."""
     return _build_organ_spec_index().get(organ)
 
 
 @lru_cache(maxsize=None)
 def _protocol_public_members(proto: type) -> frozenset[str]:
-    """返回 Protocol 上声明的公开成员名集合（缓存）。
+    """Return the set of public member names declared on a Protocol (cached).
 
-    用于 signal 契约校验：验证 `method` 是否在目标器官 Protocol 上声明。
-    排除以 ``_`` 开头的 dunder/私有属性，仅保留业务 API 方法/字段。
+    Used for signal contract validation: verify that `method` is declared
+    on the target organ's Protocol. Excludes dunder/private attributes
+    starting with ``_``, keeping only business API methods/fields.
 
-    缓存使每 Protocol 类第一次校验后 ‘member set’ 常驻，
-    后续 signal 热路径只做一次 dict 查找 + 一次 set in 查找。
+    The cache keeps the 'member set' resident after the first validation
+    per Protocol class; subsequent signal hot paths do only one dict lookup
+    + one set membership check.
     """
     return frozenset(
         name for name in dir(proto) if not name.startswith("_")
@@ -115,7 +117,7 @@ def _protocol_public_members(proto: type) -> frozenset[str]:
 
 
 class Nervous:
-    """神经系统：signal 调度 + probe 诊断 + wiring 生命周期。"""
+    """Nervous system: signal dispatch + probe diagnostics + wiring lifecycle."""
 
     def __init__(
         self,
@@ -124,14 +126,14 @@ class Nervous:
         *,
         forbidden_methods: frozenset[str] = frozenset(),
     ) -> None:
-        """构造神经系统。
+        """Construct nervous system.
 
         Args:
-            host: 器官容器（用于解析目标器官实例）
-            events: 事件总线（用于 emit ``nerve.signal`` 便于调试埋点）
-            forbidden_methods: 方法级黑名单。调 ``signal(..., method=X)``
-                时 ``X in forbidden_methods`` 则抛 :class:`IllegalNeuralPathError`。
-                分身猫用此机制禁用 ``spawn_kitten`` / ``absorb_merge`` 等主猫专属方法。
+            host: organ container (for resolving target organ instances)
+            events: event bus (for emitting ``nerve.signal`` for debugging instrumentation)
+            forbidden_methods: method-level blocklist. ``signal(..., method=X)`` raises
+                :class:`IllegalNeuralPathError` when ``X in forbidden_methods``.
+                Kittens use this to disable main-cat-only methods like ``spawn_kitten`` / ``absorb_merge``.
         """
         self.host = host
         self.events = events
@@ -139,7 +141,7 @@ class Nervous:
         self.forbidden_methods = forbidden_methods
         self._middleware: list[SignalMiddleware] = []
 
-    # -- 神经突触 ------------------------------------------------------
+    # -- Synapse ------------------------------------------------------
 
     async def signal(
         self,
@@ -149,27 +151,26 @@ class Nervous:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """器官互访的唯一合法通道。
+        """The only legal channel for inter-organ calls.
 
-        流程：
+        Flow:
 
-        1. **方法黑名单**：``method in forbidden_methods`` 抛
+        1. **Method blocklist**: ``method in forbidden_methods`` raises
            :class:`IllegalNeuralPathError`
-        2. **通路校验**：``wiring.assert_allowed(from, to)`` 非法抛
-           :class:`IllegalNeuralPathError`
-        3. emit ``nerve.signal`` 事件（便于调试/埋点）
-        4. 从 ``host.organ(*to_organ)`` 取出目标器官
-        5. ``getattr(target, method)(*args, **kwargs)``，若返回 awaitable
-           自动 await
+        2. **Pathway validation**: ``wiring.assert_allowed(from, to)`` raises
+           :class:`IllegalNeuralPathError` if illegal
+        3. emit ``nerve.signal`` event (for debugging/instrumentation)
+        4. Retrieve target organ from ``host.organ(*to_organ)``
+        5. ``getattr(target, method)(*args, **kwargs)``, auto-awaits if awaitable
 
         Args:
-            from_organ: 调用方器官坐标 ``(category, name)``
-            to_organ: 目标器官坐标 ``(category, name)``
-            method: 目标上要调用的方法名
-            *args, **kwargs: 转发给目标方法
+            from_organ: caller organ coordinate ``(category, name)``
+            to_organ: target organ coordinate ``(category, name)``
+            method: method name to call on target
+            *args, **kwargs: forwarded to target method
 
         Returns:
-            目标方法的返回值（已 unwrap 过 awaitable）
+            target method's return value (already unwrapped if awaitable)
         """
         if method in self.forbidden_methods:
             raise IllegalNeuralPathError(
@@ -179,8 +180,8 @@ class Nervous:
 
         self.wiring.assert_allowed(from_organ, to_organ)
 
-        # v0.5.11 Protocol 契约校验：目标坐标有 Protocol 映射时，
-        # 校验 method 在该 Protocol 上已声明。无映射时略过（保留自由度）。
+        # v0.5.11 Protocol contract validation: if target coordinate has a Protocol mapping,
+        # verify method is declared on that Protocol. Skip if no mapping (preserving flexibility).
         from meowcat.biology import ORGAN_PROTOCOLS  # noqa: PLC0415
         protocol = ORGAN_PROTOCOLS.get(to_organ)
         if protocol is not None and method not in _protocol_public_members(protocol):
@@ -192,7 +193,7 @@ class Nervous:
                 ),
             )
 
-        # v0.5.26 方法级写权限：非 write_callers 调 write_method → 抛异常
+        # v0.5.26 method-level write permission: non-write_callers calling write_method → raise
         spec = _get_organ_spec(to_organ)
         if spec and method in spec.write_methods and from_organ not in spec.write_callers:
             raise IllegalNeuralPathError(
@@ -203,7 +204,7 @@ class Nervous:
                 ),
             )
 
-        # 构造信号上下文
+        # build signal context
         ctx = SignalCall(
             from_organ=from_organ,
             to_organ=to_organ,
@@ -212,7 +213,7 @@ class Nervous:
             kwargs=kwargs,
         )
 
-        # before 链：任一返回 None 则短路
+        # before chain: any returns None → short-circuit
         for mw in self._middleware:
             if hasattr(mw, "before"):
                 before_result = mw.before(ctx)
@@ -244,7 +245,7 @@ class Nervous:
                         await on_err
             raise
 
-        # after 链：可修改/包装返回值
+        # after chain: can modify/wrap return value
         for mw in self._middleware:
             if hasattr(mw, "after"):
                 after_result = mw.after(ctx, result)
@@ -255,28 +256,28 @@ class Nervous:
 
         return result
 
-    # -- 听诊器 probe ------------------------------------------------
+    # -- Stethoscope probe ------------------------------------------------
 
     async def probe(self, to_organ: Organ) -> dict[str, Any]:
-        """只读诊断通路。
+        """Read-only diagnostic pathway.
 
-        CLI 作为听诊器，通过此方法监听已 wire 的器官状态。与 ``signal()`` 不同：
+        CLI, as a stethoscope, monitors wired organ state via this method. Unlike ``signal()``:
 
-        - probe 没有 from_organ（CLI 不是器官），只校验 to_organ 已 wire
-        - 仅允许调 ``diagnose()`` 方法（:class:`meowcat.protocols.Diagnosable`）
-        - 不 emit 事件（诊断不算神经信号）
-        - 返回值必须是 dict
+        - probe has no from_organ (CLI is not an organ), only checks to_organ is wired
+        - only allows calling ``diagnose()`` (:class:`meowcat.protocols.Diagnosable`)
+        - does not emit events (diagnostics are not neural signals)
+        - return value must be dict
 
         Args:
-            to_organ: 目标器官坐标 ``(category, name)``
+            to_organ: target organ coordinate ``(category, name)``
 
         Returns:
-            器官 ``diagnose()`` 的 dict 快照
+            dict snapshot from organ's ``diagnose()``
 
         Raises:
-            OrganNotMountedError: 器官未挂载
-            IllegalNeuralPathError: 器官未在 wiring 中
-            TypeError: 器官未实现 Diagnosable 协议或 diagnose() 返回非 dict
+            OrganNotMountedError: organ not mounted
+            IllegalNeuralPathError: organ not in wiring
+            TypeError: organ does not implement Diagnosable protocol or diagnose() returns non-dict
         """
         from meowcat.protocols import Diagnosable  # noqa: PLC0415
 
@@ -306,23 +307,23 @@ class Nervous:
 
         return result
 
-    # -- wiring 生命周期 ----------------------------------------------
+    # -- Wiring lifecycle ----------------------------------------------
 
     def wire_default(self) -> None:
-        """一键装配生物学默认神经通路表。
+        """One-click assembly of the biological default neural pathway table.
 
-        等价于 ``meowcat.biology.apply_default_wiring(self.wiring)``。
-        可在任何时刻调用，可多次叠加（wiring 是 set，去重）。
+        Equivalent to ``meowcat.biology.apply_default_wiring(self.wiring)``.
+        Can be called at any time, can be called multiple times (wiring is a set, deduplicates).
         """
         from meowcat import biology  # noqa: PLC0415
         biology.apply_default_wiring(self.wiring)
 
     def freeze(self) -> None:
-        """冻结 wiring。之后 ``wiring.connect/forbid`` 都会抛 :class:`MeowCatError`。
+        """Freeze wiring. Subsequent ``wiring.connect/forbid`` raise :class:`MeowCatError`.
 
-        注意：本方法**不校验 reflex**。reflex 与 wiring 的一致性校验由
-        :class:`meowcat.reflex.ReflexArc.validate_paths` 负责。组合协调通常由
-        :meth:`CatBase.freeze_nervous_system` 完成。
+        Note: this method does **not validate reflexes**. Reflex-wiring consistency
+        validation is handled by :class:`meowcat.reflex.ReflexArc.validate_paths`.
+        Coordination is typically done by :meth:`CatBase.freeze_nervous_system`.
         """
         self.wiring.freeze()
 

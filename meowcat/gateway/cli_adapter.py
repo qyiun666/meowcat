@@ -1,6 +1,6 @@
-"""meowcat Gateway — CliAdapter（stdin/stdout 对话适配器）。
+"""meowcat Gateway — CliAdapter (stdin/stdout dialogue adapter).
 
-替代应用层内嵌的 CLI 循环。纯标准库，零外部依赖。
+Replaces app-layer embedded CLI loop. Pure stdlib, zero external dependencies.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -16,9 +16,9 @@ from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
 
 
 class CliAdapter:
-    """CLI 协议适配器 — stdin/stdout 对话。
+    """CLI protocol adapter — stdin/stdout dialogue.
 
-    纯标准库 stdin.readline() + print()。
+    Pure stdlib stdin.readline() + print().
     """
 
     name = "cli"
@@ -31,7 +31,7 @@ class CliAdapter:
         on_message: Callable[[str, SignalContext], Awaitable[str | None]],
         on_stream: Callable[[str, SignalContext], Awaitable[AsyncIterator[str] | None]],
     ) -> None:
-        """启动 stdin.readline 循环。"""
+        """Start stdin.readline loop."""
         self._on_message = on_message
         self._on_stream = on_stream
         self._running = True
@@ -62,19 +62,19 @@ class CliAdapter:
                 await self.send(reply, ctx.session_id)
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
-        """输出到 stdout。"""
+        """Output to stdout."""
         print(output, flush=True)
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
-        """流式块输出到 stdout（不换行）。"""
+        """Stream chunk output to stdout (no newline)."""
         print(chunk, end="", flush=True)
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
-        """流式结束，补一个换行。"""
+        """Stream end, append a newline."""
         print(flush=True)
 
     async def stop(self) -> None:
-        """停止 stdin 读取循环。"""
+        """Stop stdin read loop."""
         self._running = False
 
 

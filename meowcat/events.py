@@ -1,11 +1,11 @@
-"""meowcat 事件总线 — 猫的神经信号系统。
+"""meowcat event bus — cat's neural signal system.
 
-零业务语义：
-- 事件名是字符串（推荐用 ``meowcat.loop`` 里的常量）
-- handler 可以是同步或异步函数，``emit`` 会自动 await awaitable 返回值
-- 失败的 handler 不吞，抛出由调用方处理（框架不替业务决定）
+Zero business semantics:
+- Event names are strings (prefer constants from ``meowcat.loop``)
+- handlers can be sync or async; ``emit`` auto-awaits awaitable return values
+- Failed handlers are not swallowed; exceptions propagate to caller (framework does not decide for business logic)
 
-P-02 哲学：最少代码量。EventBus 只做"事件名 → 回调列表"的转发。
+P-02 philosophy: minimal code. EventBus only does "event name → callback list" dispatch.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -23,17 +23,17 @@ __all__ = ["EventBus", "Handler"]
 
 
 class EventBus:
-    """猫神经系统：事件名 ↔ handler 列表。"""
+    """Cat nervous system: event name ↔ handler list."""
 
     def __init__(self) -> None:
         self._handlers: dict[str, list[Handler]] = defaultdict(list)
 
-    # -- 注册 --------------------------------------------------------
+    # -- Registration --------------------------------------------------------
 
     def on(self, event: str, handler: Handler | None = None) -> Any:
-        """注册 handler。
+        """Register a handler.
 
-        两种用法：
+        Two usages:
 
             bus.on("locate.pre", my_handler)
 
@@ -49,7 +49,7 @@ class EventBus:
         return handler
 
     def off(self, event: str, handler: Handler) -> bool:
-        """注销 handler。handler 不存在返回 False，不抛。"""
+        """Unregister a handler. Returns False if not found, never raises."""
         lst = self._handlers.get(event)
         if not lst or handler not in lst:
             return False
@@ -57,20 +57,20 @@ class EventBus:
         return True
 
     def clear(self, event: str | None = None) -> None:
-        """清空指定事件或全部事件的 handler。"""
+        """Clear handlers for a specific event or all events."""
         if event is None:
             self._handlers.clear()
         else:
             self._handlers.pop(event, None)
 
-    # -- 触发 --------------------------------------------------------
+    # -- Trigger --------------------------------------------------------
 
     async def emit(self, event: str, payload: Any = None) -> None:
-        """按注册顺序同步触发；awaitable 返回值自动 await。
+        """Trigger handlers in registration order; auto-awaits awaitable return values.
 
-        handler 接受 0 或 1 个参数均可：
-        - ``def h(): ...``         → 被调用时不传参
-        - ``def h(payload): ...``  → 传入 payload
+        Handlers accept 0 or 1 parameter:
+        - ``def h(): ...``         → called with no argument
+        - ``def h(payload): ...``  → called with payload
         """
         for handler in list(self._handlers.get(event, [])):
             result = self._invoke(handler, payload)
@@ -79,7 +79,7 @@ class EventBus:
 
     @staticmethod
     def _invoke(handler: Handler, payload: Any) -> Any:
-        """根据 handler 形参个数决定是否传 payload。"""
+        """Decide whether to pass payload based on handler parameter count."""
         try:
             sig = inspect.signature(handler)
         except (TypeError, ValueError):
@@ -88,12 +88,12 @@ class EventBus:
             return handler()
         return handler(payload)
 
-    # -- 内省 --------------------------------------------------------
+    # -- Introspection --------------------------------------------------------
 
     def handlers(self, event: str) -> list[Handler]:
-        """返回已注册的 handler 快照（方便测试/调试）。"""
+        """Return a snapshot of registered handlers (for testing/debugging)."""
         return list(self._handlers.get(event, []))
 
     def events(self) -> list[str]:
-        """返回所有有 handler 的事件名。"""
+        """Return names of all events that have handlers."""
         return [e for e, hs in self._handlers.items() if hs]
