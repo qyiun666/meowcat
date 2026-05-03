@@ -2,6 +2,8 @@
 
 用于快速原型和测试。生产环境请用 meowagent 的 SQLite/JSONL 实现。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

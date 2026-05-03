@@ -2,14 +2,17 @@
 
 全部 typing.Protocol（鸭子类型），零第三方依赖。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, AsyncIterator, Protocol, runtime_checkable
 
 __all__ = [
     "GraphStorageProtocol", "L6StorageProtocol",
     "VectorStorageProtocol", "SharedStorageProtocol",
+    "FederationTransport",
 ]
 
 
@@ -80,3 +83,43 @@ class SharedStorageProtocol(Protocol):
     def load(self) -> dict[str, Any]: ...
     def save(self, data: dict[str, Any]) -> None: ...
     def merge(self, delta: dict[str, Any]) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class FederationTransport(Protocol):
+    """跨 Colony 通信传输层 — 让不同主机/进程的 Colony 互相感知、通信。
+
+    **坐标**: 无（传输层，不占用器官坐标）
+    **入边**: 由 Colony.federate() 注入，不经 wiring 调用
+    **出边**: 无
+    **反射弧**: 无
+    **实现方**: 框架层内置 TCPSocketTransport / RedisPubSubTransport，应用层可自定义
+    """
+
+    async def publish(self, topic: str, payload: dict) -> None:
+        """向指定 topic 发布消息。
+
+        Args:
+            topic: 目标 colony_id。
+            payload: 消息负载（含 type/request_id/from_cat/to_cat 等）。
+        """
+        ...
+
+    async def subscribe(self, topic: str) -> AsyncIterator[dict]:
+        """订阅指定 topic 的消息流。
+
+        Args:
+            topic: 本 colony_id，接收发给本 colony 的消息。
+
+        Yields:
+            每条消息的 payload dict。
+        """
+        ...
+
+    async def start(self) -> None:
+        """启动传输层（如开始监听端口）。"""
+        ...
+
+    async def stop(self) -> None:
+        """停止传输层（如关闭端口）。"""
+        ...

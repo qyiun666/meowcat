@@ -3,6 +3,8 @@
 全部零外部依赖（纯 Python dict/list），用于快速原型和测试。
 生产环境请替换为 meowagent 或自定义的真实器官实现。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from meowcat.defaults.factory import create_cat
 from meowcat.defaults.organs import (

@@ -8,6 +8,8 @@
 
 框架层定义这个流程，应用层可通过子类化定制各阶段行为。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

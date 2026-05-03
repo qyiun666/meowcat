@@ -33,18 +33,58 @@
     )
     await nervous.signal(..., "spawn_kitten")  # -> IllegalNeuralPathError
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
 import inspect
+import time
+from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any
+from typing import Any, Protocol
 
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.events import EventBus
 from meowcat.host import OrganHost
 from meowcat.loop import NerveEvent
 from meowcat.wiring import Organ, Wiring
+
+
+# -- 信号中间件类型 --------------------------------------------------
+
+@dataclass(frozen=True)
+class SignalCall:
+    """单次 signal() 调用的不可变上下文。"""
+    from_organ: Organ
+    to_organ: Organ
+    method: str
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    timestamp: float = field(default_factory=time.monotonic)
+
+
+class SignalMiddleware(Protocol):
+    """信号中间件 — 每次 signal() 调用前后执行。
+
+    所有方法均为可选实现：只实现需要的钩子即可。
+    """
+
+    async def before(self, ctx: SignalCall) -> SignalCall | None:
+        """signal 执行前调用。返回 None 则短路（阻止执行）。
+
+        返回 SignalCall 实例表示继续执行（可修改 ctx 但框架忽略修改值，
+        当前版本仅支持 None 短路语义）。
+        """
+        ...
+
+    async def after(self, ctx: SignalCall, result: Any) -> Any:
+        """signal 执行成功后调用。可修改/包装返回值。"""
+        ...
+
+    async def on_error(self, ctx: SignalCall, error: Exception) -> None:
+        """signal 抛出异常时调用。仅通知，异常继续向上传播。"""
+        ...
 
 
 @lru_cache(maxsize=None)
@@ -97,6 +137,7 @@ class Nervous:
         self.events = events
         self.wiring = Wiring()
         self.forbidden_methods = forbidden_methods
+        self._middleware: list[SignalMiddleware] = []
 
     # -- 神经突触 ------------------------------------------------------
 
@@ -162,6 +203,24 @@ class Nervous:
                 ),
             )
 
+        # 构造信号上下文
+        ctx = SignalCall(
+            from_organ=from_organ,
+            to_organ=to_organ,
+            method=method,
+            args=args,
+            kwargs=kwargs,
+        )
+
+        # before 链：任一返回 None 则短路
+        for mw in self._middleware:
+            if hasattr(mw, "before"):
+                before_result = mw.before(ctx)
+                if inspect.isawaitable(before_result):
+                    before_result = await before_result
+                if before_result is None:
+                    return None
+
         await self.events.emit(
             NerveEvent.SIGNAL,
             {
@@ -173,9 +232,27 @@ class Nervous:
 
         target = self.host.organ(*to_organ)
         fn = getattr(target, method)
-        result = fn(*args, **kwargs)
-        if inspect.isawaitable(result):
-            result = await result
+        try:
+            result = fn(*args, **kwargs)
+            if inspect.isawaitable(result):
+                result = await result
+        except Exception as exc:
+            for mw in self._middleware:
+                if hasattr(mw, "on_error"):
+                    on_err = mw.on_error(ctx, exc)
+                    if inspect.isawaitable(on_err):
+                        await on_err
+            raise
+
+        # after 链：可修改/包装返回值
+        for mw in self._middleware:
+            if hasattr(mw, "after"):
+                after_result = mw.after(ctx, result)
+                if inspect.isawaitable(after_result):
+                    result = await after_result
+                else:
+                    result = after_result
+
         return result
 
     # -- 听诊器 probe ------------------------------------------------
@@ -250,4 +327,4 @@ class Nervous:
         self.wiring.freeze()
 
 
-__all__ = ["Nervous"]
+__all__ = ["Nervous", "SignalCall", "SignalMiddleware"]

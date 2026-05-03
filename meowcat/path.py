@@ -1,21 +1,24 @@
-"""meowcat 原子路径 — Path dataclass + PathRegistry + 内置路径表。
+"""meowcat atomic paths — Path dataclass + PathRegistry + built-in path table.
 
-路径是一段不可变的神经信号配方：从哪个器官、到哪个器官、调哪个方法。
-PathRegistry 管理所有已注册路径，提供按名查询和执行能力。
+A Path is an immutable neural signal recipe: from which organ, to which organ,
+call which method. PathRegistry manages all registered paths, providing
+name-based lookup and execution.
 
-对外部开发者的体验::
+For external developers::
 
     from meowcat.path import Path, BUILTIN_PATHS
 
-    # 查看内置路径
+    # View built-in paths
     for p in BUILTIN_PATHS:
         print(f"{p.name}: {p.from_organ} -> {p.to_organ}.{p.method} [{p.mode}]")
 
-    # 通过 cat 执行
+    # Execute via cat
     result = await cat.path_registry.run("locate", query="hello")
 
-本文件零第三方依赖，零 meowagent import。
+This file has zero third-party dependencies and zero meowagent imports.
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -28,6 +31,7 @@ from meowcat.anatomy import (
     BRAINSTEM,
     CEREBELLUM,
     CEREBRUM,
+    CORTEX,
     EARS,
     FRONTAL,
     HIPPOCAMPUS,
@@ -41,18 +45,19 @@ from meowcat.wiring import Organ
 
 @dataclass(frozen=True)
 class Path:
-    """一段不可变的原子神经信号配方。
+    """An immutable atomic neural signal recipe.
 
-    每条 Path 描述一次 ``cat.signal(from_organ, to_organ, method, **kwargs)``
-    调用。Path 对象不可变，可被组合进 :class:`Loop`（v0.5.28）中形成闭环。
+    Each Path describes one ``cat.signal(from_organ, to_organ, method,
+    **kwargs)`` call. Path objects are immutable and can be composed into
+    :class:`Loop` (v0.5.28) to form closed loops.
 
     Attributes:
-        name: 路径唯一名称，如 ``"locate"``
-        from_organ: 信号发起方器官坐标
-        to_organ: 信号接收方器官坐标
-        method: 目标器官上调用的方法名
-        mode: ``"read"`` 或 ``"write"``，标记读写语义
-        description: 人类可读描述
+        name: Unique path name, e.g. ``"locate"``
+        from_organ: Signal source organ coordinate
+        to_organ: Signal target organ coordinate
+        method: Method name to call on the target organ
+        mode: ``"read"`` or ``"write"``, marking read/write semantics
+        description: Human-readable description
     """
 
     name: str
@@ -68,67 +73,77 @@ class Path:
                 f"mode must be 'read' or 'write', got {self.mode!r}")
 
 
-# -- 内置路径表 ----------------------------------------------------
+# -- Builtin path table ------------------------------------------------------
 
 BUILTIN_PATHS: tuple[Path, ...] = (
-    # ── 记忆域 ──
+    # -- Memory domain --
     Path("locate",             THALAMUS,    THALAMUS,
-         "locate",             "read",  "检索记忆（丘脑自环）"),
+         "locate",             "read",  "Retrieve memories (thalamus self-loop)"),
     Path("remember",           BRAINSTEM,   HIPPOCAMPUS,
-         "remember",           "write", "存储记忆"),
+         "remember",           "write", "Store memory"),
     Path("get_entity",         THALAMUS,    HIPPOCAMPUS,
-         "get_entity",         "read",  "读取单条实体"),
+         "get_entity",         "read",  "Read single entity"),
     Path("get_all",            THALAMUS,    HIPPOCAMPUS,
-         "get_all",            "read",  "读取全部实体"),
+         "get_all",            "read",  "Read all entities"),
     Path("fts_search",         THALAMUS,    HIPPOCAMPUS,
-         "fts_search",         "read",  "全文检索"),
+         "fts_search",         "read",  "Full-text search"),
     Path("add_entity",         BRAINSTEM,   HIPPOCAMPUS,
-         "add_entity",         "write", "新增实体"),
+         "add_entity",         "write", "Add entity"),
     Path("add_episode",        BRAINSTEM,   HIPPOCAMPUS,
-         "add_episode",        "write", "新增情景"),
+         "add_episode",        "write", "Add episode"),
     Path("connect",            BRAINSTEM,   HIPPOCAMPUS,
-         "connect",            "write", "连接实体"),
+         "connect",            "write", "Connect entities"),
     Path("record_access",      BRAINSTEM,   HIPPOCAMPUS,
-         "record_access",      "write", "记录访问"),
+         "record_access",      "write", "Record access"),
     Path("set_dormant",        BRAINSTEM,   HIPPOCAMPUS,
-         "set_dormant",        "write", "设置休眠"),
+         "set_dormant",        "write", "Set dormant"),
     Path("append_content",     BRAINSTEM,   HIPPOCAMPUS,
-         "append_content",     "write", "追加内容"),
+         "append_content",     "write", "Append content"),
     Path("update_importance",  BRAINSTEM,   HIPPOCAMPUS,
-         "update_importance",  "write", "更新重要性"),
+         "update_importance",  "write", "Update importance"),
     Path("set_last_seen",      BRAINSTEM,   HIPPOCAMPUS,
-         "set_last_seen",      "write", "设置最近活跃"),
-    # ── 推理域 ──
+         "set_last_seen",      "write", "Set last seen"),
+    # -- Reasoning domain --
     Path("deep_reason",        THALAMUS,    CEREBRUM,
-         "generate",           "read",  "深度推理"),
-    # ── 输出域 ──
+         "generate",           "read",  "Deep reason"),
+    # -- Output domain --
     Path("speak",              CEREBELLUM,  MOUTH,
-         "speak",              "write", "输出回复"),
+         "speak",              "write", "Output reply"),
     Path("hear",               EARS,        THALAMUS,
-         "hear",               "read",  "接收输入"),
-    # ── 维护域 ──
+         "hear",               "read",  "Receive input"),
+    # -- Maintenance domain --
     Path("decay",              HYPOTHALAMUS, HIPPOCAMPUS,
-         "decay",             "write", "衰减记忆"),
+         "decay",             "write", "Decay memory"),
     Path("weaken_connections", HYPOTHALAMUS, HIPPOCAMPUS,
-         "weaken_connections", "write", "弱化连接"),
+         "weaken_connections", "write", "Weaken connections"),
     Path("cleanup_orphans",    HYPOTHALAMUS, HIPPOCAMPUS,
-         "cleanup_orphan_connections", "write", "清理孤立连接"),
-    # ── 工具执行域 ──
+         "cleanup_orphan_connections", "write", "Cleanup orphan connections"),
+    # -- Tool execution domain --
     Path("execute_tool",       CEREBELLUM,  PAWS,
-         "interact_with_tool",  "write", "执行工具"),
-    # ── 自环路（v0.5.28b 新增，from == to，不走 wiring）──
+         "interact_with_tool",  "write", "Execute tool"),
+    # -- Self-loop paths (v0.5.28b added, from == to, bypass wiring) --
     Path("decide_route",       THALAMUS,    THALAMUS,
-         "decide_route",        "read",  "路由决策"),
+         "decide_route",        "read",  "Routing decision"),
     Path("assess_safety",      AMYGDALA,    AMYGDALA,
-         "assess_safety",       "read",  "安全评估"),
+         "assess_safety",       "read",  "Safety assessment"),
+    # -- Synthesis domain --
+    Path("synthesize",         BRAINSTEM,   CORTEX,
+         "synthesize",          "read",  "Worldview synthesis"),
+    # -- Orchestration domain (v1.0.15) --
+    Path("workflow_create",     BRAINSTEM,   HIPPOCAMPUS,
+         "add_entity",          "write", "Create workflow"),
+    Path("workflow_checkpoint", BRAINSTEM,   HIPPOCAMPUS,
+         "append_content",      "write", "Write checkpoint"),
+    Path("workflow_resume",     BRAINSTEM,   HIPPOCAMPUS,
+         "get_entity",          "read",  "Resume workflow"),
 )
 
 
 def register_builtin_paths(registry: "PathRegistry") -> None:
-    """将内置路径注册到 PathRegistry。
+    """Register builtin paths into a PathRegistry.
 
     Args:
-        registry: 路径注册中心实例
+        registry: PathRegistry instance
     """
     for p in BUILTIN_PATHS:
         registry.register(p)
@@ -138,18 +153,18 @@ def register_builtin_paths(registry: "PathRegistry") -> None:
 
 @dataclass
 class PathRegistry:
-    """路径注册中心 — 管理 Path 的注册、查询和执行。
+    """Path registry — manages Path registration, lookup, and execution.
 
-    用法::
+    Usage::
 
         registry = PathRegistry()
         register_builtin_paths(registry)
 
-        # 查询
+        # Lookup
         path = registry.get("locate")
         all_paths = registry.list_all()
 
-        # 执行
+        # Execute
         result = await registry.run(cat, "locate", query="hello")
     """
 
@@ -157,63 +172,65 @@ class PathRegistry:
     _paths_list: list[Path] = field(default_factory=list, init=False)
 
     def register(self, path: Path) -> None:
-        """注册一条路径。同名路径覆盖旧值。
+        """Register a path. Same-named paths overwrite old values.
 
         Args:
-            path: Path 实例
+            path: Path instance
 
         Raises:
-            TypeError: path 不是 Path 实例
+            TypeError: path is not a Path instance
         """
         if not isinstance(path, Path):
             raise TypeError(
                 f"Expected Path instance, got {type(path).__name__}"
             )
-        # 覆盖旧值（同名路径后注册覆盖前注册）
+        # Overwrite old value (same-named path: later registration wins)
         if path.name in self._paths:
             self._paths_list.remove(self._paths[path.name])
         self._paths[path.name] = path
         self._paths_list.append(path)
 
     def get(self, name: str) -> Path | None:
-        """按名查找路径。
+        """Lookup path by name.
 
         Args:
-            name: 路径名称
+            name: Path name
 
         Returns:
-            Path 对象，不存在返回 None
+            Path object, None if not found
         """
         return self._paths.get(name)
 
     def list_all(self) -> list[Path]:
-        """返回所有已注册路径列表（注册顺序）。"""
+        """Return all registered paths in registration order."""
         return list(self._paths_list)
 
     async def run(self, cat: Any, name: str, **kwargs: Any) -> Any:
-        """执行一条路径。
+        """Execute a path.
 
-        等价于::
+        Equivalent to::
 
             path = registry.get(name)
             cat.signal(path.from_organ, path.to_organ, path.method, **kwargs)
 
         Args:
-            cat: CatBase 实例（需支持 ``cat.signal(from, to, method, **kwargs)``）
-            name: 路径名称
-            **kwargs: 转发给目标方法的参数
+            cat: CatBase instance (must support
+                ``cat.signal(from, to, method, **kwargs)``)
+            name: Path name
+            **kwargs: Arguments forwarded to the target method
 
         Returns:
-            目标方法的返回值
+            Target method return value
 
         Raises:
-            KeyError: 路径不存在
+            KeyError: Path not found
         """
         path = self.get(name)
         if path is None:
             raise KeyError(f"Path '{name}' not found in registry")
 
-        # 自环：from == to，直接调本地方法（不走 wiring 校验，wiring 无自环边）
+        # Self-loop: from == to, call local method directly
+        # (bypass wiring validation; wiring has no self-loop edges)
         if path.from_organ == path.to_organ:
             organ = cat.organ(*path.to_organ)
             method = getattr(organ, path.method)

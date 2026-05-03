@@ -5,6 +5,8 @@
 
 ``meowcat/tools/`` 零依赖 meowagent。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

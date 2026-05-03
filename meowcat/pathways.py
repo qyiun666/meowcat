@@ -11,6 +11,8 @@ v0.5.27 起所有静态方法内部委托给 ``cat.path_registry.run()``，
 .. deprecated:: v0.5.27
     请使用 :class:`meowcat.path.PathRegistry` 替代。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

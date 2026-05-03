@@ -2,6 +2,8 @@
 
 全部 typing.Protocol（鸭子类型），零第三方依赖。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

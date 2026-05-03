@@ -6,6 +6,8 @@
 
 零 meowagent 依赖。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

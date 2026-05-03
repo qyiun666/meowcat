@@ -7,6 +7,8 @@
 
 P-02 哲学：最少代码量。EventBus 只做"事件名 → 回调列表"的转发。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

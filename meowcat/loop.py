@@ -10,6 +10,8 @@
 
 **纪律**：本文件只定义字符串常量，不含业务实现，零第三方依赖。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

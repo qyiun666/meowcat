@@ -5,6 +5,8 @@
 
 运行：``python -m meowcat.examples.06_custom_organ``
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

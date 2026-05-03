@@ -3,6 +3,8 @@
 自动装配：mount 器官 → wiring → reflex → freeze。
 未提供的器官自动使用 Noop* / InMemory* 默认实现。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

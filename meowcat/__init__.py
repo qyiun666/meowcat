@@ -1,4 +1,6 @@
-"""meowcat — An agent framework built on the biological blueprint of a cat. 依赖 pydantic>=2.0 + anyio>=4.0，零 meowagent import。"""
+"""meowcat — An agent framework built on the biological blueprint of a cat. Depends on pydantic>=2.0 + anyio>=4.0, zero meowagent imports."""
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from meowcat.defaults import (
     InMemoryGraphStore,
@@ -24,7 +26,13 @@ from meowcat.defaults import (
 from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
 from meowcat.reflex import Reflex, ReflexArc, ReflexRegistry, Trigger
 from meowcat.host import OrganHost
-from meowcat.nervous import Nervous
+from meowcat.nervous import Nervous, SignalCall, SignalMiddleware
+from meowcat.middleware import (
+    ContextInjector,
+    RateLimiter,
+    SignalLogger,
+    TimeoutGuard,
+)
 from meowcat.pluggable import Pluggable
 from meowcat.organ_base import OrganMixin
 from meowcat.protocols import (
@@ -39,6 +47,7 @@ from meowcat.protocols import (
     Diagnosable,
     EarsProtocol,
     EyesProtocol,
+    FederationTransport,
     FrontalCortexProtocol,
     GraphStorageProtocol,
     GrowthProtocol,
@@ -80,6 +89,7 @@ from meowcat.models import (
     StageEvent,
     SubTaskShape,
     TaskResultShape,
+    WorkflowShape,
 )
 from meowcat.loop import (
     ALL_EVENTS,
@@ -102,8 +112,9 @@ from meowcat.errors import (
     ReflexPathInvalidError,
     StageTimeoutError,
 )
-from meowcat.assembly import CatBase, assemble_default_cat, mount_known_organs
+from meowcat.assembly import CatBase, CatHook, assemble_default_cat, mount_known_organs
 from meowcat.colony import Colony
+from meowcat.colony_transports import TCPSocketTransport, RedisPubSubTransport
 from meowcat.diagnose import Stethoscope, render_wiring
 from meowcat.inject import Needle, NeedleDisabledError
 from meowcat.path import Path, PathRegistry, BUILTIN_PATHS, register_builtin_paths
@@ -117,6 +128,7 @@ from meowcat.chain import (
     TOOL_EXEC_CHAIN,
     MAINTENANCE_CHAIN,
     DIAGNOSTIC_CHAIN,
+    WORKFLOW_CHAIN,
 )
 from meowcat.loops import (
     Loop,
@@ -143,6 +155,15 @@ from meowcat.tools import (
     ToolRegistry,
     ToolSpec,
 )
+from meowcat.gateway import (
+    CliAdapter,
+    Gateway,
+    HttpAdapter,
+    IpcAdapter,
+    WebhookAdapter,
+    WsAdapter,
+)
+from meowcat.gateway.protocol import SignalContext, IoAdapterProtocol, GatewayProtocol
 from meowcat import anatomy as anatomy
 from meowcat import biology as biology
 from meowcat import organ_roles as organ_roles
@@ -163,7 +184,7 @@ _match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']',
 __version__ = _match.group(1) if _match else "0.0.0"
 
 
-# -- 内置默认实现 ----------------------------------------------------------
+# -- Builtin Defaults ----------------------------------------------------------
 
 __all__ = [
     # Protocols
@@ -183,22 +204,22 @@ __all__ = [
     "SubTaskShape", "TaskResultShape", "OrchestratorReportShape",
     "CandidateShape", "LocateResultShape", "MaintenanceReportShape",
     "StageEvent", "PipelineContext", "LoopEvent",
-    "MergeProposalShape", "KittenCapability",
+    "MergeProposalShape", "KittenCapability", "WorkflowShape",
     # Errors
     "MeowCatError", "OrganNotMountedError", "LoopFailedError",
     "StageTimeoutError",
     "IllegalNeuralPathError", "ReflexPathInvalidError",
     "NoReflexMatchedError", "OrganProtocolMismatchError",
-    # 骨架
-    "CatBase", "Colony", "EventBus", "Pipeline",
-    # v0.5.9 子系统（组合 + 门面）
+    # Skeleton
+    "CatBase", "CatHook", "Colony", "EventBus", "Pipeline",
+    # v0.5.9 Subsystems (composite + facade)
     "OrganHost", "Nervous", "ReflexArc", "assemble_default_cat",
-    # v0.5.20 共享挂载
+    # v0.5.20 Shared mount
     "mount_known_organs",
-    # 闭环事件名
+    # Loop event names
     "LocateEvent", "RememberEvent", "OrchestrateEvent", "GrowthEvent",
     "Lifecycle", "KittenEvent", "NerveEvent", "ALL_EVENTS",
-    # v0.5.1 神经系统
+    # v0.5.1 Nervous system
     "Wiring", "WiringSnapshot", "Organ", "Edge",
     "Reflex", "ReflexRegistry", "Trigger",
     "PerceptionContext", "Modality", "infer_modality",
@@ -206,29 +227,30 @@ __all__ = [
     "ANOMALY_GROWTH", "CORRECTION_GROWTH",
     "CRYSTALLIZER", "ROLE_EMERGENCE",
     "organ_roles", "ORGAN_ROLES",
-    # v0.5.11 器官基类
+    # v0.5.11 Organ base class
     "OrganMixin",
-    # v0.5.22 新增原语
+    # v0.5.22 New primitives
     "Stethoscope", "Needle", "NeedleDisabledError",
-    # v1.0.3 wiring 可视化
+    # v1.0.3 Wiring visualization
     "render_wiring",
-    # v0.5.27 原子路径
+    # v0.5.27 Atomic paths
     "Path", "PathRegistry", "BUILTIN_PATHS", "register_builtin_paths",
-    # v0.5.28a 链路
+    # v0.5.28a Chains
     "Chain", "ChainRegistry", "BUILTIN_CHAINS", "register_builtin_chains",
     "MEMORY_SEARCH_CHAIN", "FULL_REASONING_CHAIN",
     "TOOL_EXEC_CHAIN", "MAINTENANCE_CHAIN", "DIAGNOSTIC_CHAIN",
-    # v0.5.28b 闭环
+    "WORKFLOW_CHAIN",
+    # v0.5.28b Loops
     "Loop", "LoopRegistry", "BUILTIN_LOOPS", "register_default_loops",
     "CONVERSATION_LOOP", "TOOL_EXECUTION_LOOP",
     "DANGER_RESPONSE_LOOP", "MAINTENANCE_LOOP", "DIAGNOSTIC_LOOP",
-    # v1.0.4 元闭环
+    # v1.0.4 Loop sequences
     "LoopSequence", "LoopSequenceRegistry", "DAILY_MAINTENANCE_SEQ",
-    # v0.5.23 工具系统
+    # v0.5.23 Tools system
     "Tool", "ToolSpec", "RiskLevel", "ToolRegistry",
     "Skill", "SkillSpec", "SkillRegistry",
     "BUILTIN_TOOLS", "PawsEngine",
-    # 内置默认实现
+    # Builtin defaults
     "create_cat",
     "NoopAmygdala", "NoopBrainstem", "NoopFrontal", "NoopHypothalamus", "NoopCortex",
     "NoopEars", "NoopEyes", "NoopWhiskers",
@@ -238,4 +260,13 @@ __all__ = [
     "InMemoryVectorStore", "InMemorySharedStore",
     # v1.0.7 Pluggable
     "Pluggable",
+    # v1.0.12 Colony federation
+    "FederationTransport", "TCPSocketTransport", "RedisPubSubTransport",
+    # v1.0.10 Gateway
+    "Gateway", "SignalContext",
+    "IoAdapterProtocol", "GatewayProtocol",
+    "HttpAdapter", "WsAdapter", "WebhookAdapter", "CliAdapter", "IpcAdapter",
+    # v1.0.13 Signal Middleware
+    "SignalCall", "SignalMiddleware",
+    "SignalLogger", "RateLimiter", "TimeoutGuard", "ContextInjector",
 ]

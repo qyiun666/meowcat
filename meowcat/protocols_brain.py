@@ -1,7 +1,10 @@
-"""meowcat 脑区协议 — 大脑/小脑/脑干/海马体等神经器官接口。
+"""meowcat brain-area protocols — neural organ interfaces for cerebrum,
+cerebellum, brainstem, hippocampus, etc.
 
-全部 typing.Protocol（鸭子类型），零第三方依赖。
+All typing.Protocol (duck typing), zero third-party dependencies.
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -20,20 +23,22 @@ __all__ = [
     "CrystallizerProtocol", "RoleEmergenceProtocol",
 ]
 
-# -- 基础 ---------------------------------------------------------
+# -- Basic --------------------------------------------------------
 
 
 @runtime_checkable
 class Diagnosable(Protocol):
-    """器官诊断接口 — 只读快照，返回值必须是纯 dict。
+    """Organ diagnostic interface — read-only snapshot, return value MUST be
+    a plain dict.
 
-    框架层 probe() 只允许调用此方法；任何写入/副作用操作都不允许。
+    Framework-level ``probe()`` is only allowed to call this method;
+    any write/side-effect operations are forbidden.
 
-    **坐标**: 无（基础协议，不占用器官坐标）
-    **入边**: 任何已 wire 器官的 probe() 调用均可抵达
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 所有器官实现类（需实现 diagnose()）
+    **Coordinate**: None (base protocol, occupies no organ coordinate)
+    **Inbound**: ``probe()`` calls from any wired organ can reach this
+    **Outbound**: None
+    **Reflex**: None
+    **Implementor**: All organ implementations (must implement diagnose())
     """
 
     def diagnose(self) -> dict[str, Any]: ...
@@ -41,15 +46,16 @@ class Diagnosable(Protocol):
 
 @runtime_checkable
 class OrganProtocol(Diagnosable, Protocol):
-    """器官基础协议 — 所有器官必须实现 name + diagnose()。
+    """Organ base protocol — all organs must implement name + diagnose().
 
-    v0.5.14: OrganProtocol 继承 Diagnosable，强制所有器官可被 probe。
+    v0.5.14: OrganProtocol inherits Diagnosable, enforcing all organs
+    are probe-able.
 
-    **坐标**: 无（基础协议，器官通过 wiring 注册时指定坐标）
-    **入边**: 通过 wiring 装配的允许边决定
-    **出边**: 通过 wiring 装配的允许边决定
-    **反射弧**: 取决于应用层定义的反射弧 path
-    **实现方**: meowcat/defaults/ 中的 Noop* 类 (默认空实现)
+    **Coordinate**: None (base protocol, organ coords assigned via wiring)
+    **Inbound**: Determined by wiring-assembled allowed edges
+    **Outbound**: Determined by wiring-assembled allowed edges
+    **Reflex**: Depends on app-layer reflex arc paths
+    **Implementor**: Noop* classes in meowcat/defaults/ (default stubs)
     """
 
     name: str
@@ -59,13 +65,13 @@ class OrganProtocol(Diagnosable, Protocol):
 
 @runtime_checkable
 class LLMProviderProtocol(Protocol):
-    """LLM 统一调用接口（LiteLLM 封装）。
+    """LLM unified calling interface (LiteLLM wrapper).
 
-    **坐标**: 无（模型层，不占用器官坐标）
-    **入边**: 由 Cerebrum/Cerebellum 直接持有，不经 wiring 调用
-    **出边**: 无
-    **反射弧**: 无
-    **实现方**: 应用层（LLM Provider）
+    **Coordinate**: None (model layer, occupies no organ coordinate)
+    **Inbound**: Held directly by Cerebrum/Cerebellum, not called via wiring
+    **Outbound**: None
+    **Reflex**: None
+    **Implementor**: Application layer (LLM Provider)
     """
 
     async def completion(self, messages: list[dict[str, str]], temperature: float | None = None, max_tokens: int |
@@ -73,23 +79,24 @@ class LLMProviderProtocol(Protocol):
     async def stream_completion(self, messages: list[dict[str, str]], temperature: float |
                                 None = None, max_tokens: int | None = None) -> AsyncIterator[str]: ...
 
-# -- 脑区 ---------------------------------------------------------
+# -- Brain Areas ----------------------------------------------------
 
 
 @runtime_checkable
 class BrainStemProtocol(Protocol):
-    """脑干 — 总调度中枢，连接所有脑区和感官。
+    """Brainstem — master dispatch hub, connects all brain areas and sensors.
 
-    v0.5.12: process/process_stream 已删除。
-    BrainStem 退化为 Pipeline Stage 的辅助方法提供方，
-    不再作为主循环入口。保留 build_system_prompt 和 cancel_current
-    作为对外最小合约。
+    v0.5.12: process/process_stream removed.
+    BrainStem degrades to a helper method provider for Pipeline Stages,
+    no longer serving as the main loop entry point. Retains
+    build_system_prompt and cancel_current as the minimal external contract.
 
-    **坐标**: ``("brain", "brainstem")``
-    **入边**: THALAMUS
-    **出边**: THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM, AMYGDALA, FRONTAL, HYPOTHALAMUS, CORTEX + 全 SENSORS + 全 VOICES
-    **反射弧**: text_dialogue (EARS→THALAMUS→BRAINSTEM→CEREBRUM→...)
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "brainstem")``
+    **Inbound**: THALAMUS
+    **Outbound**: THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM, AMYGDALA,
+    FRONTAL, HYPOTHALAMUS, CORTEX + all SENSORS + all VOICES
+    **Reflex**: text_dialogue (EARS->THALAMUS->BRAINSTEM->CEREBRUM->...)
+    **Implementor**: Application layer (brain-area organ)
     """
 
     async def build_system_prompt(self, route: str) -> str: ...
@@ -98,13 +105,14 @@ class BrainStemProtocol(Protocol):
 
 @runtime_checkable
 class HippocampusProtocol(Protocol):
-    """海马体 — 纠缠图记忆编码与检索。
+    """Hippocampus — entanglement graph memory encoding and retrieval.
 
-    **坐标**: ``("brain", "hippocampus")``
-    **入边**: CEREBRUM, FRONTAL, HYPOTHALAMUS, BRAINSTEM
-    **出边**: CEREBRUM, CORTEX
-    **反射弧**: 无直接反射弧，通过 BRAINSTEM 间接参与 text_dialogue
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "hippocampus")``
+    **Inbound**: CEREBRUM, FRONTAL, HYPOTHALAMUS, BRAINSTEM
+    **Outbound**: CEREBRUM, CORTEX
+    **Reflex**: No direct reflex arc; indirectly participates in text_dialogue
+    via BRAINSTEM
+    **Implementor**: Application layer (brain-area organ)
     """
     entities: dict[str, Any]  # EntityShape
     episodes: list[Any]  # EpisodeShape
@@ -132,7 +140,7 @@ class HippocampusProtocol(Protocol):
     def to_dict(self) -> dict[str, Any]: ...
     def from_dict(self, d: dict[str, Any]) -> None: ...
 
-    # v0.5.26 封装方法（替代裸字段访问）
+    # v0.5.26 Wrapper methods (replace bare field access)
     def record_access(self, entity_id: str, delta: int = 1) -> None: ...
     def set_dormant(self, entity_id: str, dormant: bool) -> None: ...
     def append_content(self, entity_id: str, text: str,
@@ -141,16 +149,20 @@ class HippocampusProtocol(Protocol):
     def update_importance(self, entity_id: str, importance: float) -> None: ...
     def set_last_seen(self, entity_id: str, ts: str) -> None: ...
 
+    # v1.0.15: Long-running workflow queries
+    def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]: ...
+
 
 @runtime_checkable
 class ThalamusProtocol(Protocol):
-    """丘脑 — 感觉中继与路由决策。所有感官输入经此过滤分发到大脑/脑干/杏仁核。
+    """Thalamus — sensory relay and routing decision.
+    All sensory input is filtered and dispatched to cerebrum/brainstem/amygdala.
 
-    **坐标**: ``("brain", "thalamus")``
-    **入边**: EARS, EYES, WHISKERS (全 SENSORS)
-    **出边**: CEREBRUM, BRAINSTEM, AMYGDALA
-    **反射弧**: text_dialogue, visual, danger, action_order
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "thalamus")``
+    **Inbound**: EARS, EYES, WHISKERS (all SENSORS)
+    **Outbound**: CEREBRUM, BRAINSTEM, AMYGDALA
+    **Reflex**: text_dialogue, visual, danger, action_order
+    **Implementor**: Application layer (brain-area organ)
     """
 
     async def locate(self, msg: str, session_id: str) -> LocateResultShape: ...  # type: ignore[name-defined]  # noqa: F821
@@ -160,12 +172,15 @@ class ThalamusProtocol(Protocol):
 
 @runtime_checkable
 class LLMBrainProtocol(Protocol):
-    """大小脑共用 LLM 协议。Cerebrum/Cerebellum 差异仅在构造参数（模型型号、温度）。
+    """Shared LLM protocol for cerebrum and cerebellum.
+    Cerebrum/Cerebellum differ only in constructor params (model, temperature).
 
-    **坐标** (CEREBRUM): ``("brain", "cerebrum")`` — 入边: THALAMUS, HIPPOCAMPUS, FRONTAL, BRAINSTEM; 出边: HIPPOCAMPUS, CEREBELLUM, FRONTAL
-    **坐标** (CEREBELLUM): ``("brain", "cerebellum")`` — 入边: CEREBRUM, AMYGDALA, BRAINSTEM; 出边: EFFECTORS (PAWS, MOUTH, PURR, TAIL)
-    **反射弧**: text_dialogue, visual, action_order
-    **实现方**: 应用层（脑区器官）
+    **Coordinate** (CEREBRUM): ``("brain", "cerebrum")`` — Inbound: THALAMUS,
+    HIPPOCAMPUS, FRONTAL, BRAINSTEM; Outbound: HIPPOCAMPUS, CEREBELLUM, FRONTAL
+    **Coordinate** (CEREBELLUM): ``("brain", "cerebellum")`` — Inbound:
+    CEREBRUM, AMYGDALA, BRAINSTEM; Outbound: EFFECTORS (PAWS, MOUTH, PURR, TAIL)
+    **Reflex**: text_dialogue, visual, action_order
+    **Implementor**: Application layer (brain-area organ)
     """
     name: str
 
@@ -179,13 +194,14 @@ class LLMBrainProtocol(Protocol):
 
 @runtime_checkable
 class AmygdalaProtocol(Protocol):
-    """杏仁核 — 否定修正与安全兜底。可绕过大脑直接触发效应器（应激反射）。
+    """Amygdala — rejection correction and safety fallback.
+    Can bypass the cerebrum to directly trigger effectors (stress reflex).
 
-    **坐标**: ``("brain", "amygdala")``
-    **入边**: THALAMUS, BRAINSTEM
-    **出边**: CEREBELLUM, MOUTH
-    **反射弧**: danger (EARS→THALAMUS→AMYGDALA→MOUTH), action_order
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "amygdala")``
+    **Inbound**: THALAMUS, BRAINSTEM
+    **Outbound**: CEREBELLUM, MOUTH
+    **Reflex**: danger (EARS->THALAMUS->AMYGDALA->MOUTH), action_order
+    **Implementor**: Application layer (brain-area organ)
     """
 
     def is_rejection(self, msg: str) -> bool: ...
@@ -206,13 +222,14 @@ class AmygdalaProtocol(Protocol):
 
 @runtime_checkable
 class FrontalCortexProtocol(Protocol):
-    """额叶 — 焦点系统（工作记忆）。话题切换检测、焦点归档与更新。
+    """Frontal lobe — focus system (working memory).
+    Topic shift detection, focus archiving and updates.
 
-    **坐标**: ``("brain", "frontal")``
-    **入边**: CEREBRUM, BRAINSTEM
-    **出边**: CEREBRUM, HIPPOCAMPUS
-    **反射弧**: 无直接反射弧
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "frontal")``
+    **Inbound**: CEREBRUM, BRAINSTEM
+    **Outbound**: CEREBRUM, HIPPOCAMPUS
+    **Reflex**: No direct reflex arc
+    **Implementor**: Application layer (brain-area organ)
     """
 
     def detect_shift(self, msg: str) -> bool: ...
@@ -225,13 +242,15 @@ class FrontalCortexProtocol(Protocol):
 
 @runtime_checkable
 class HypothalamusProtocol(Protocol):
-    """下丘脑 — 稳态维护。负责记忆衰减、孤岛清理等后台自维护。
+    """Hypothalamus — homeostasis maintenance.
+    Responsible for memory decay, orphan cleanup, and other background
+    self-maintenance.
 
-    **坐标**: ``("brain", "hypothalamus")``
-    **入边**: BRAINSTEM
-    **出边**: HYPOTHALAMUS (自环), HIPPOCAMPUS, CORTEX
-    **反射弧**: 无直接反射弧
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "hypothalamus")``
+    **Inbound**: BRAINSTEM
+    **Outbound**: HYPOTHALAMUS (self-loop), HIPPOCAMPUS, CORTEX
+    **Reflex**: No direct reflex arc
+    **Implementor**: Application layer (brain-area organ)
     """
 
     async def run_maintenance(
@@ -243,13 +262,13 @@ class HypothalamusProtocol(Protocol):
 
 @runtime_checkable
 class CortexProtocol(Protocol):
-    """大脑皮层 — 四层世界观（axioms/others/values/self）。
+    """Cerebral cortex — four-layer worldview (axioms/others/values/self).
 
-    **坐标**: ``("brain", "cortex")``
-    **入边**: HIPPOCAMPUS, HYPOTHALAMUS, BRAINSTEM
-    **出边**: 无（终端器官，只被读取不主动调用）
-    **反射弧**: 无
-    **实现方**: 应用层（脑区器官）
+    **Coordinate**: ``("brain", "cortex")``
+    **Inbound**: HIPPOCAMPUS, HYPOTHALAMUS, BRAINSTEM
+    **Outbound**: None (terminal organ, only read, never actively calls)
+    **Reflex**: None
+    **Implementor**: Application layer (brain-area organ)
     """
 
     def ingest(self, source: str, layer: str,
@@ -259,18 +278,18 @@ class CortexProtocol(Protocol):
     def weaknesses(self) -> list[dict[str, Any]]: ...
     def synthesize(self, max_tokens: int = 400) -> str: ...
 
-# -- 生长器官 (Growth) — v1.0.8 具名化 ---------------------------
+# -- Growth Organs — v1.0.8 named ---------------------------------
 
 
 @runtime_checkable
 class AnomalyGrowthProtocol(OrganProtocol, Protocol):
-    """异常生长 — 记录异常模式，驱动演化学习。
+    """Anomaly growth — records anomaly patterns, drives evolutionary learning.
 
-    **坐标**: ``("growth", "anomaly_growth")``
-    **入边**: BRAINSTEM, AMYGDALA, WHISKERS (v1.0.8 新增安全直连)
-    **出边**: HIPPOCAMPUS, CORTEX
-    **反射弧**: 无直接反射弧；通过 BRAINSTEM 触发
-    **实现方**: 应用层（生长器官）
+    **Coordinate**: ``("growth", "anomaly_growth")``
+    **Inbound**: BRAINSTEM, AMYGDALA, WHISKERS (v1.0.8 added secure direct)
+    **Outbound**: HIPPOCAMPUS, CORTEX
+    **Reflex**: No direct reflex arc; triggered via BRAINSTEM
+    **Implementor**: Application layer (growth organ)
     """
     name: str
 
@@ -282,13 +301,13 @@ class AnomalyGrowthProtocol(OrganProtocol, Protocol):
 
 @runtime_checkable
 class CorrectionGrowthProtocol(OrganProtocol, Protocol):
-    """纠正生长 — 记录用户纠正，固化经验。
+    """Correction growth — records user corrections, crystallizes experience.
 
-    **坐标**: ``("growth", "correction_growth")``
-    **入边**: BRAINSTEM, AMYGDALA (v1.0.8 新增安全直连)
-    **出边**: HIPPOCAMPUS, CORTEX
-    **反射弧**: 无直接反射弧；通过 BRAINSTEM 触发
-    **实现方**: 应用层（生长器官）
+    **Coordinate**: ``("growth", "correction_growth")``
+    **Inbound**: BRAINSTEM, AMYGDALA (v1.0.8 added secure direct)
+    **Outbound**: HIPPOCAMPUS, CORTEX
+    **Reflex**: No direct reflex arc; triggered via BRAINSTEM
+    **Implementor**: Application layer (growth organ)
     """
     name: str
 
@@ -300,13 +319,13 @@ class CorrectionGrowthProtocol(OrganProtocol, Protocol):
 
 @runtime_checkable
 class CrystallizerProtocol(OrganProtocol, Protocol):
-    """结晶器 — 将高频操作固化为 Skill/Tool。
+    """Crystallizer — solidifies high-frequency operations into Skills/Tools.
 
-    **坐标**: ``("growth", "crystallizer")``
-    **入边**: BRAINSTEM
-    **出边**: 无（终端器官）
-    **反射弧**: 无直接反射弧
-    **实现方**: 应用层（生长器官）
+    **Coordinate**: ``("growth", "crystallizer")``
+    **Inbound**: BRAINSTEM
+    **Outbound**: None (terminal organ)
+    **Reflex**: No direct reflex arc
+    **Implementor**: Application layer (growth organ)
     """
     name: str
 
@@ -319,13 +338,13 @@ class CrystallizerProtocol(OrganProtocol, Protocol):
 
 @runtime_checkable
 class RoleEmergenceProtocol(OrganProtocol, Protocol):
-    """角色涌现 — 从行为模式中提取隐式角色。
+    """Role emergence — extracts implicit roles from behavior patterns.
 
-    **坐标**: ``("growth", "role_emergence")``
-    **入边**: BRAINSTEM
-    **出边**: 无（终端器官）
-    **反射弧**: 无直接反射弧
-    **实现方**: 应用层（生长器官）
+    **Coordinate**: ``("growth", "role_emergence")``
+    **Inbound**: BRAINSTEM
+    **Outbound**: None (terminal organ)
+    **Reflex**: No direct reflex arc
+    **Implementor**: Application layer (growth organ)
     """
     name: str
 
@@ -335,12 +354,15 @@ class RoleEmergenceProtocol(OrganProtocol, Protocol):
 
 @runtime_checkable
 class GrowthProtocol(OrganProtocol, Protocol):
-    """生长器官协议 — deprecated（v1.0.8）。
+    """Growth organ protocol — deprecated (v1.0.8).
 
-    已拆分为四个具名协议：AnomalyGrowthProtocol / CorrectionGrowthProtocol /
-    CrystallizerProtocol / RoleEmergenceProtocol。
-    保留本协议作为旧代码兼容别名，新代码请使用具名协议。
+    Split into four named protocols: AnomalyGrowthProtocol /
+    CorrectionGrowthProtocol / CrystallizerProtocol /
+    RoleEmergenceProtocol.
+    Retained as a legacy compat alias; new code should use named protocols.
     """
 
-    # record() 是四个生长器官的共同方法，签名因器官而异
-    # 框架层不约束参数，只在 wiring 层面校验通路
+    # record() is the common method across four growth organs;
+    # signatures vary per organ.
+    # The framework layer does not constrain parameters;
+    # only validates pathways at the wiring level.

@@ -9,6 +9,8 @@
 - run_command: 执行 Shell 命令
 - http_get: HTTP GET 请求
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

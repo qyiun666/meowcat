@@ -1,21 +1,24 @@
-"""meowcat 链路 — Chain dataclass + ChainRegistry + 内置链路表。
+"""meowcat chain — Chain dataclass + ChainRegistry + built-in chain table.
 
-链路是一组有名字的 Path 序列，可以是不要求闭环的多步操作组合。
-ChainRegistry 管理所有已注册链路，提供按名查询和顺序执行能力。
+A Chain is a named Path sequence for multi-step operations that don't require
+a closed loop. ChainRegistry manages all registered chains, providing
+name-based lookup and sequential execution.
 
-对外部开发者的体验::
+For external developers::
 
     from meowcat.chain import Chain, BUILTIN_CHAINS
 
-    # 查看内置链路
+    # View built-in chains
     for c in BUILTIN_CHAINS:
         print(f"{c.name}: {' → '.join(c.path_names)}")
 
-    # 通过 cat 执行
-    result = await cat.chain_registry.run("full_reasoning", prompt="你好")
+    # Execute via cat
+    result = await cat.chain_registry.run("full_reasoning", prompt="hello")
 
-本文件零第三方依赖，零 meowagent import。
+This file has zero third-party dependencies and zero meowagent imports.
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -25,16 +28,17 @@ from typing import Any
 
 @dataclass(frozen=True)
 class Chain:
-    """一组命名的 Path 序列，描述多步协作的复合操作。
+    """A named Path sequence describing a multi-step composite operation.
 
-    每条 Chain 是一组 Path 名称的有序列表。Path 必须已注册在
-    ``cat.path_registry`` 中，执行时按序调用。
+    Each Chain is an ordered list of Path names. Paths must be registered
+    in ``cat.path_registry`` and are called in sequence during execution.
 
     Attributes:
-        name: 链路唯一名称，如 ``"full_reasoning"``
-        path_names: Path 名称序列（可为空，如 diagnostic 链路）
-        description: 人类可读描述
-        rollback_paths: 失败时逆序执行的回滚 Path 名称序列（v1.0.3）
+        name: Unique chain name, e.g. ``"full_reasoning"``
+        path_names: Path name sequence (may be empty, e.g. diagnostic chain)
+        description: Human-readable description
+        rollback_paths: Rollback Path names executed in reverse on failure
+            (v1.0.3)
     """
 
     name: str
@@ -43,28 +47,33 @@ class Chain:
     rollback_paths: tuple[str, ...] = ()
 
 
-# -- 内置链路表 ----------------------------------------------------
+# -- Builtin chain table -----------------------------------------------------
 
-# 具名常量（v0.5.29 公开导出）
+# Named constants (v0.5.29 publicly exported)
 MEMORY_SEARCH_CHAIN: Chain = Chain(
     "memory_search", ("locate",),
-    "记忆检索 — 从海马体搜索相关记忆",
+    "Memory search — search hippocampus for relevant memories",
 )
 FULL_REASONING_CHAIN: Chain = Chain(
     "full_reasoning", ("deep_reason", "speak"),
-    "推理+输出 — 深度推理后发言",
+    "Reasoning + output — deep reason then speak",
 )
 TOOL_EXEC_CHAIN: Chain = Chain(
     "tool_exec", ("execute_tool",),
-    "工具执行 — 调用爪子交互工具",
+    "Tool execution — call paws interactive tools",
 )
 MAINTENANCE_CHAIN: Chain = Chain(
     "maintenance", ("decay", "cleanup_orphans"),
-    "自维护 — 衰减记忆 + 清理孤立连接",
+    "Self-maintenance — decay memories + cleanup orphan connections",
 )
 DIAGNOSTIC_CHAIN: Chain = Chain(
     "diagnostic", (),
-    "诊断 — 空链路，走 Stethoscope 体检",
+    "Diagnostic — empty chain, routes through Stethoscope checkup",
+)
+WORKFLOW_CHAIN: Chain = Chain(
+    "workflow_chain", ("workflow_create", "execute_tool",
+                       "workflow_checkpoint"),
+    "Workflow single-step — create → execute → archive",
 )
 
 BUILTIN_CHAINS: tuple[Chain, ...] = (
@@ -73,14 +82,15 @@ BUILTIN_CHAINS: tuple[Chain, ...] = (
     TOOL_EXEC_CHAIN,
     MAINTENANCE_CHAIN,
     DIAGNOSTIC_CHAIN,
+    WORKFLOW_CHAIN,
 )
 
 
 def register_builtin_chains(registry: "ChainRegistry") -> None:
-    """将内置链路注册到 ChainRegistry。
+    """Register builtin chains into a ChainRegistry.
 
     Args:
-        registry: 链路注册中心实例
+        registry: ChainRegistry instance
     """
     for c in BUILTIN_CHAINS:
         registry.register(c)
@@ -90,32 +100,32 @@ def register_builtin_chains(registry: "ChainRegistry") -> None:
 
 @dataclass
 class ChainRegistry:
-    """链路注册中心 — 管理 Chain 的注册、查询和执行。
+    """Chain registry — manages Chain registration, lookup, and execution.
 
-    用法::
+    Usage::
 
         registry = ChainRegistry()
         register_builtin_chains(registry)
 
-        # 查询
+        # Lookup
         chain = registry.get("full_reasoning")
         all_chains = registry.list_all()
 
-        # 执行
-        result = await registry.run(cat, "full_reasoning", prompt="你好")
+        # Execute
+        result = await registry.run(cat, "full_reasoning", prompt="hello")
     """
 
     _chains: dict[str, Chain] = field(default_factory=dict, init=False)
     _chains_list: list[Chain] = field(default_factory=list, init=False)
 
     def register(self, chain: Chain) -> None:
-        """注册一条链路。同名链路覆盖旧值。
+        """Register a chain. Same-named chains overwrite old values.
 
         Args:
-            chain: Chain 实例
+            chain: Chain instance
 
         Raises:
-            TypeError: chain 不是 Chain 实例
+            TypeError: chain is not a Chain instance
         """
         if not isinstance(chain, Chain):
             raise TypeError(
@@ -127,35 +137,39 @@ class ChainRegistry:
         self._chains_list.append(chain)
 
     def get(self, name: str) -> Chain | None:
-        """按名查找链路。
+        """Lookup chain by name.
 
         Args:
-            name: 链路名称
+            name: Chain name
 
         Returns:
-            Chain 对象，不存在返回 None
+            Chain object, None if not found
         """
         return self._chains.get(name)
 
     def list_all(self) -> list[Chain]:
-        """返回所有已注册链路列表（注册顺序）。"""
+        """Return all registered chains in registration order."""
         return list(self._chains_list)
 
     async def run(self, cat: Any, name: str, **initial_input: Any) -> dict[str, Any]:
-        """执行一条链路：按序跑 path_names，前一步返回值作为下一步的 **kwargs。
+        """Execute a chain: sequentially run path_names, passing previous
+        step's return value as ``**kwargs`` to the next step.
 
-        v1.0.3: 失败时逆序执行 ``rollback_paths``，回滚异常不掩盖原始异常。
+        v1.0.3: On failure, executes ``rollback_paths`` in reverse order;
+        rollback exceptions do not mask the original exception.
 
         Args:
-            cat: CatBase 实例（需支持 ``cat.path_registry.run(cat, name, **kw)``）
-            name: 链路名称
-            **initial_input: 初始输入，作为第一条 path 的 kwargs
+            cat: CatBase instance (must support
+                ``cat.path_registry.run(cat, name, **kw)``)
+            name: Chain name
+            **initial_input: Initial input, passed as kwargs to the first path
 
         Returns:
-            最后一步的返回值（包装为 dict），空链路返回 ``dict(initial_input)``
+            Last step's return value (wrapped as dict); empty chain returns
+            ``dict(initial_input)``
 
         Raises:
-            KeyError: 链路不存在，或链路中引用的 path 不存在
+            KeyError: Chain not found, or path referenced in chain not found
         """
         chain = self.get(name)
         if chain is None:
@@ -195,5 +209,6 @@ __all__ = [
     "Chain", "ChainRegistry",
     "MEMORY_SEARCH_CHAIN", "FULL_REASONING_CHAIN",
     "TOOL_EXEC_CHAIN", "MAINTENANCE_CHAIN", "DIAGNOSTIC_CHAIN",
+    "WORKFLOW_CHAIN",
     "BUILTIN_CHAINS", "register_builtin_chains",
 ]

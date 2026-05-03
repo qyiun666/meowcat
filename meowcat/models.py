@@ -1,7 +1,9 @@
-"""meowcat 数据模型 — pydantic BaseModel 形状。
+"""meowcat data models — pydantic BaseModel shapes.
 
-零 ORM、零业务逻辑。具体实现类留在 meowagent。
+Zero ORM, zero business logic. Concrete implementations live in meowagent.
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -17,13 +19,14 @@ __all__ = [
     "MaintenanceReportShape", "CandidateShape", "LocateResultShape",
     "StageEvent", "PipelineContext", "LoopEvent",
     "MergeProposalShape", "KittenCapability",
+    "WorkflowShape",
 ]
 
-# -- 脑区形状 -----------------------------------------------------
+# -- Brain-area shapes ------------------------------------------------------
 
 
 class EntityShape(BaseModel):
-    """纠缠图实体。"""
+    """Entanglement graph entity."""
     id: str
     session_id: str
     name: str
@@ -42,7 +45,7 @@ class EntityShape(BaseModel):
 
 
 class ConnectionShape(BaseModel):
-    """纠缠图连接。"""
+    """Entanglement graph connection."""
     id: str
     from_id: str
     to_id: str
@@ -55,7 +58,7 @@ class ConnectionShape(BaseModel):
 
 
 class EpisodeShape(BaseModel):
-    """纠缠图事件。"""
+    """Entanglement graph episode."""
     id: str
     session_id: str = ""
     time: str = ""
@@ -67,7 +70,7 @@ class EpisodeShape(BaseModel):
 
 
 class FocusShape(BaseModel):
-    """工作记忆焦点。"""
+    """Working memory focus."""
     entity_id: str | None = None
     topic_ids: list[str] = Field(default_factory=list)
     turn_count: int = 0
@@ -75,11 +78,11 @@ class FocusShape(BaseModel):
     summary: str = ""
     context_snapshot: str = ""
 
-# -- Worker / 编排 ------------------------------------------------
+# -- Worker / Orchestration -------------------------------------------------
 
 
 class SubTaskShape(BaseModel):
-    """子任务定义。"""
+    """Sub-task definition."""
     task_id: str
     role: str
     prompt: str
@@ -207,6 +210,24 @@ class MergeProposalShape(BaseModel):
     anomaly_hits: list[str] = Field(default_factory=list)
     observations: list[str] = Field(default_factory=list)
     error_detail: str = ""
+
+
+class WorkflowShape(BaseModel):
+    """长流程工作流实体 — 跨会话持久化的任务编排状态。
+
+    框架保证：状态不丢、重启可续、内存不炸。
+    框架不做：步骤拆解（LLM）、kitten 执行逻辑、触发策略。
+    """
+    entity_id: str
+    cat_id: str
+    session_id: str
+    status: str = "active"  # "active" | "awaiting_user" | "completed" | "failed"
+    plan: list[str] = Field(default_factory=list)
+    current_step: int = 0
+    checkpoint: dict[str, Any] = Field(default_factory=dict)
+    kittens_spawned: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
 
 
 class KittenCapability(BaseModel):

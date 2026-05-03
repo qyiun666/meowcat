@@ -11,6 +11,8 @@
     brain = await Stethoscope.probe_category(cat, "brain")
     hippo = await Stethoscope.probe_organ(cat, "brain", "hippocampus")
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

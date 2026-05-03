@@ -3,6 +3,8 @@
 v1.0.7: 为 Mouth/Purr/Tail 补齐 Protocol 定义，
 替换 biology.py 中 ``protocol=None`` 的弱约束。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

@@ -6,6 +6,8 @@ StageEvent / PipelineContext 的数据形状见 :mod:`meowcat.models`。
 本模块只提供 :class:`Pipeline` 执行器：按顺序驱动 Stage、遇到 ``short_circuit``
 事件即停止。不负责 Stage 具体实现。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

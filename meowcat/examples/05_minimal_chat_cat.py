@@ -5,6 +5,8 @@
 
 运行：``python -m meowcat.examples.05_minimal_chat_cat``
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

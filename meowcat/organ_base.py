@@ -36,6 +36,8 @@ v0.5.11 通过 ``OrganMixin`` 让器官在构造时一次性绑定 ``self._self_
             # 新写法：
             wv = await self._signal_to(CORTEX, "synthesize", max_tokens=200)
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

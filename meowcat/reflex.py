@@ -13,6 +13,8 @@
 启动时 ``cat.freeze_nervous_system()`` 会 ``validate(wiring)`` 校验每条 Reflex
 的 path 相邻跳在 wiring 里合法，不合法抛 :class:`ReflexPathInvalidError`。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

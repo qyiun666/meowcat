@@ -16,6 +16,8 @@
     await needle.poke(("brain", "hippocampus"), "add_entity", name="Python")
     await needle.poke_memory({"name": "fix", "content": "corrected"})
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

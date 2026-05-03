@@ -3,6 +3,8 @@
 每只猫都有爪子，爪子能执行工具。框架定义什么是工具、怎么注册、
 怎么执行。应用层负责提供具体工具实现。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

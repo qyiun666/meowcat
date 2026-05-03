@@ -2,6 +2,8 @@
 
 仅定义框架自身的错误类型，不涉及业务异常。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

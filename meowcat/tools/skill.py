@@ -6,6 +6,8 @@
 
 Skill 是比 Tool 更粗粒度的能力单元，一个 Skill 内部可能调用多个 Tool。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

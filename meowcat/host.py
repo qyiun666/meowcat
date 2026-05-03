@@ -13,6 +13,8 @@ Nervous / CatBase 都通过显式依赖注入持有 OrganHost 实例，
 P-02 哲学：最少代码量。OrganHost 不做事件、不做 wiring、不做 protocol
 查找——那些是 Nervous / assembly 的职责。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

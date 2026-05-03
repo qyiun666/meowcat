@@ -6,6 +6,8 @@ import 坐标常量，打破 biology ↔ protocols 的循环依赖。
 
 本文件零第三方依赖，零 meowagent import。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

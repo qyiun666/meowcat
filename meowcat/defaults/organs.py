@@ -8,6 +8,8 @@ _run_plugs 插件能力。HOOKS 类变量声明可挂载的 hook 及其建议签
 - B 合并增强：所有插件结果 merge 到默认值
 - C 完全替代：首个插件直接替代默认行为
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -656,3 +658,21 @@ class NoopHippocampus(Pluggable):
     def set_last_seen(self, entity_id: str, ts: str) -> None:
         if entity_id in self.entities:
             self.entities[entity_id]["last_seen"] = ts
+
+    # -- v1.0.15 长流程 workflow 查询 --------------------------------
+
+    def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]:
+        """列出所有未完成的 workflow 实体。
+
+        过滤 type="workflow" 且 status 为 active/awaiting_user 的实体。
+        """
+        results: list[dict[str, Any]] = []
+        for eid, entity in self.entities.items():
+            if entity.get("type") != "workflow":
+                continue
+            if entity.get("status") not in ("active", "awaiting_user"):
+                continue
+            if entity.get("cat_id") != cat_id:
+                continue
+            results.append({"entity_id": eid, **entity})
+        return results

@@ -4,6 +4,8 @@
 
 v1.0.5: 存储/脑区/感官协议拆分为独立子模块，本文件 re-export 保持兼容。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 
@@ -40,6 +42,7 @@ from meowcat.protocols_voice import (
     TailProtocol,
 )
 from meowcat.protocols_storage import (
+    FederationTransport,
     GraphStorageProtocol,
     L6StorageProtocol,
     SharedStorageProtocol,
@@ -62,6 +65,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Diagnosable", "OrganProtocol",
+    "FederationTransport",
     "GraphStorageProtocol", "L6StorageProtocol",
     "VectorStorageProtocol", "SharedStorageProtocol",
     "LLMProviderProtocol",

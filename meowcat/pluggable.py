@@ -8,6 +8,8 @@ v1.0.7: 15 个 Noop 器官全部获得 mount_plug / unmount_plug / _run_plugs，
 - B 合并增强：所有插件结果 merge 到默认值
 - C 完全替代：首个插件直接替代默认行为
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

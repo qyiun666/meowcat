@@ -13,6 +13,8 @@ Wiring 是一张 **有向图 + 黑名单**，声明哪些器官间的调用是�
 
 本文件零第三方依赖，纯 stdlib。
 """
+# (c) 2025-2026 Axonant. MIT License.
+
 
 from __future__ import annotations
 

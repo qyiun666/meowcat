@@ -1,0 +1,26 @@
+[
+  {
+    "title": "MeowAgent 当前版本 v0.5.4",
+    "category": "project_environment_configuration",
+    "keywords": "v0.5.4,版本号,meowcat,meowagent",
+    "content": "项目当前版本: meowagent 0.5.4, meowcat 0.1.3. v0.5.4 完成分身猫 wiring 裁剪 + Worker 整合。"
+  },
+  {
+    "title": "StatusBar方法名为set_model而非set_models",
+    "category": "common_pitfalls_experience",
+    "keywords": "StatusBar,set_model,方法名,AttributeError",
+    "content": "StatusBar组件只提供set_model（单数）方法用于设置模型信息，不支持set_models（复数）方法调用。调用时必须使用正确的方法名。"
+  },
+  {
+    "title": "版本审计需区分真实版本与历史引用",
+    "category": "common_pitfalls_experience",
+    "keywords": "版本审计,pyproject.toml,历史引用,grep_code",
+    "content": "项目中存在历史版本号引用（如CHANGELOG.md、README.md、theme.py中的v0.3.x），仅用于记录里程碑或配色起源，不代表当前实际版本；真实版本应以pyproject.toml的version字段和核心模块中的VERSION常量为准。"
+  },
+  {
+    "title": "Textual自定义Widget参数透传规范",
+    "category": "development_practice_specification",
+    "keywords": "Textual,Widget,参数透传,id",
+    "content": "所有自定义Textual Widget（如StatusBar、CatProfile、ThinkingPanel、MemoryPanel）的__init__方法必须接收*args和**kwargs，并将其传递给父类Static的__init__，以支持id、classes、styles等Textual标准参数。"
+  }
+]
