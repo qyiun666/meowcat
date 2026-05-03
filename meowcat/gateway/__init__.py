@@ -83,8 +83,10 @@ class Gateway:
     async def _on_message(self, text: str, ctx: SignalContext) -> str | None:
         """Receive external message → inject into cat → return reply."""
         async for event in self.cat.perceive(text, context=ctx):
-            if isinstance(event, dict) and "output" in event:
-                return event["output"]
+            if event.kind == "output":
+                return event.content
+            if event.kind == "short_circuit" and event.reply:
+                return event.reply
         return None
 
     async def _on_stream(
@@ -96,11 +98,10 @@ class Gateway:
         in Pipeline Stages. This only iterates perceive() results.
         """
         async for event in self.cat.perceive(text, context=ctx):
-            if isinstance(event, dict):
-                if "chunk" in event:
-                    yield event["chunk"]
-                elif "output" in event:
-                    yield event["output"]
+            if event.kind == "output":
+                yield event.content
+            elif event.kind == "thinking":
+                yield event.content
 
 
 # -- Sub-module re-exports ------------------------------------------------
