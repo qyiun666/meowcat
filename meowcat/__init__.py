@@ -119,6 +119,7 @@ from meowcat.models import (
     EpisodeShape,
     FocusShape,
     KittenCapability,
+    LLMConfig,
     LocateResultShape,
     LoopEvent,
     MaintenanceReportShape,
@@ -153,7 +154,7 @@ from meowcat.errors import (
     StandaloneCatError,
 )
 from meowcat.assembly import CatBase, CatHook, assemble_default_cat, mount_known_organs
-from meowcat.colony import Colony
+from meowcat.colony import Colony, ColonyConfig, ColonyOwner, ColonyRules
 from meowcat.colony_transports import TCPSocketTransport, RedisPubSubTransport
 from meowcat.diagnose import Stethoscope, render_wiring
 from meowcat.inject import Needle, NeedleDisabledError
@@ -204,6 +205,7 @@ from meowcat.gateway import (
     WsAdapter,
 )
 from meowcat.gateway.protocol import SignalContext, IoAdapterProtocol, GatewayProtocol
+from meowcat.cli import Command, CommandContext, CommandRouter, I18n, register_system_commands, is_debug
 from meowcat import anatomy as anatomy
 from meowcat import biology as biology
 from meowcat import organ_roles as organ_roles
@@ -245,14 +247,14 @@ __all__ = [
     "SubTaskShape", "TaskResultShape", "OrchestratorReportShape",
     "CandidateShape", "LocateResultShape", "MaintenanceReportShape",
     "StageEvent", "PipelineContext", "LoopEvent",
-    "MergeProposalShape", "KittenCapability", "WorkflowShape",
+    "MergeProposalShape", "KittenCapability", "WorkflowShape", "LLMConfig",
     # Errors
     "MeowCatError", "OrganNotMountedError", "LoopFailedError",
     "StageTimeoutError",
     "IllegalNeuralPathError", "ReflexPathInvalidError",
     "NoReflexMatchedError", "OrganProtocolMismatchError", "StandaloneCatError",
     # Skeleton
-    "CatBase", "CatHook", "Colony", "EventBus", "Pipeline",
+    "CatBase", "CatHook", "Colony", "ColonyConfig", "ColonyOwner", "ColonyRules", "EventBus", "Pipeline",
     # v0.5.9 Subsystems (composite + facade)
     "OrganHost", "Nervous", "ReflexArc", "assemble_default_cat",
     # v0.5.20 Shared mount
@@ -319,4 +321,10 @@ __all__ = [
     # v1.0.13 Signal Middleware
     "SignalCall", "SignalMiddleware",
     "SignalLogger", "RateLimiter", "TimeoutGuard", "ContextInjector",
+    # v1.1.9 I18n
+    "I18n",
+    # v1.1.10 CommandRouter
+    "Command", "CommandContext", "CommandRouter",
+    # v1.1.11 System commands
+    "register_system_commands", "is_debug",
 ]
