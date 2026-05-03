@@ -40,7 +40,7 @@ from meowcat.defaults.stages import (
     build_default_pipeline,
 )
 from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
-from meowcat.reflex import Reflex, ReflexArc, ReflexRegistry, Trigger
+from meowcat.reflex import BUILTIN_REFLEX_PATHS, Reflex, ReflexArc, ReflexRegistry, Trigger
 from meowcat.host import OrganHost
 from meowcat.nervous import Nervous, SignalCall, SignalMiddleware
 from meowcat.middleware import (
@@ -79,6 +79,7 @@ from meowcat.protocols import (
     PawsProtocol,
     PurrProtocol,
     RoleEmergenceProtocol,
+    SecurityPolicyProtocol,
     SettingsProtocol,
     SharedStorageProtocol,
     StageProtocol,
@@ -212,6 +213,7 @@ __all__ = [
     "GrowthProtocol", "MouthProtocol", "PurrProtocol", "TailProtocol",
     "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
     "CrystallizerProtocol", "RoleEmergenceProtocol",
+    "SecurityPolicyProtocol",
     "PawsProtocol", "GraphStorageProtocol", "L6StorageProtocol",
     "VectorStorageProtocol", "SharedStorageProtocol", "StageProtocol",
     "LLMProviderProtocol", "Diagnosable",
@@ -237,7 +239,8 @@ __all__ = [
     "Lifecycle", "KittenEvent", "NerveEvent", "ALL_EVENTS",
     # v0.5.1 Nervous system
     "Wiring", "WiringSnapshot", "Organ", "Edge",
-    "Reflex", "ReflexRegistry", "Trigger",
+    "Reflex", "ReflexArc", "ReflexRegistry", "Trigger",
+    "BUILTIN_REFLEX_PATHS",
     "PerceptionContext", "Modality", "infer_modality",
     "anatomy", "biology", "OrganSpec",
     "ANOMALY_GROWTH", "CORRECTION_GROWTH",

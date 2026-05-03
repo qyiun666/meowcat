@@ -30,6 +30,11 @@ from meowcat.pipeline import Pipeline
 from meowcat.protocols import StageProtocol
 from meowcat.wiring import Organ, Wiring
 
+# v1.0.18: built-in reflex path structures
+from meowcat.anatomy import (
+    AMYGDALA, BRAINSTEM, CEREBELLUM, CEREBRUM, EARS, MOUTH, THALAMUS,
+)
+
 if TYPE_CHECKING:
     from meowcat.nervous import Nervous
 
@@ -243,4 +248,15 @@ class ReflexArc:
         )
 
 
-__all__ = ["Reflex", "ReflexRegistry", "ReflexArc", "Trigger"]
+# -- Built-in reflex path structures (v1.0.18) -------------------------
+
+BUILTIN_REFLEX_PATHS: dict[str, tuple[Organ, ...]] = {
+    "text_dialogue": (EARS, THALAMUS, BRAINSTEM, CEREBRUM, CEREBELLUM, MOUTH),
+    "danger":        (EARS, THALAMUS, AMYGDALA, MOUTH),
+}
+"""Predefined reflex path structures. Applications use these as ``path=``
+arguments when registering ``Reflex`` instances. The ``trigger`` callable
+is always supplied by the application layer."""
+
+
+__all__ = ["Reflex", "ReflexRegistry", "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]

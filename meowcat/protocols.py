@@ -79,7 +79,7 @@ __all__ = [
     "MouthProtocol", "PurrProtocol", "TailProtocol",
     "StageProtocol", "KittenProtocol",
     "OrchestratorProtocol", "SettingsProtocol", "CatProtocol",
-    "AdapterProtocol",
+    "AdapterProtocol", "SecurityPolicyProtocol",
 ]
 
 # -- Pipeline -----------------------------------------------------
@@ -97,6 +97,22 @@ class StageProtocol(Protocol):
     """
     name: str
     async def run(self, ctx: Any) -> AsyncIterator[Any]: ...
+
+
+# -- Security (v1.0.18) -----------------------------------------------
+
+
+@runtime_checkable
+class SecurityPolicyProtocol(Protocol):
+    """Security policy interface — each cat can mount a different policy.
+
+    Framework provides no default danger patterns;
+    an empty cat defaults to ``is_danger → False``.
+    """
+
+    def is_danger(self, input: str) -> bool: ...
+    def assess_tool_risk(self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
+
 
 # -- Kitten blueprint ------------------------------------------------
 
