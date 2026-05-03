@@ -90,6 +90,7 @@ VOICE = "voice"
 def create_cat(
     cat_id: str,
     *,
+    container: "Colony",  # Colony instance (mandatory since v1.1.3)
     # ━━ Required: LLM organs ━━
     cerebrum: LLMBrainProtocol,
     cerebellum: LLMBrainProtocol | None = _UNSET,  # type: ignore[assignment]
@@ -190,7 +191,7 @@ def create_cat(
         else:
             return reno_cls(**reno_kw) if organ_name in _reno else bare_cls()
 
-    cat = CatBase(cat_id)
+    cat = CatBase(cat_id, container=container)
 
     # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]

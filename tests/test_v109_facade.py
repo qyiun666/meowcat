@@ -19,6 +19,7 @@ from meowcat.anatomy import (
     EARS, EYES, HIPPOCAMPUS, THALAMUS, WHISKERS,
 )
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.colony import Colony
 from meowcat.defaults.organs import (
     NoopAmygdala, NoopBrainstem, NoopEars, NoopEyes,
@@ -48,7 +49,7 @@ class _MockGrowth:
 
 def _make_wired_cat(cat_id: str = "wired-cat") -> CatBase:
     """创建装配了关键 Noop 器官的猫。"""
-    cat = CatBase(cat_id)
+    cat = make_cat(cat_id)
     cat.mount("brain", "thalamus", NoopThalamus())
     cat.mount("brain", "hippocampus", NoopHippocampus())
     cat.mount("brain", "amygdala", NoopAmygdala())
@@ -84,7 +85,7 @@ class _MaintenanceMockHippocampus:
 
 def _make_maintenance_cat(cat_id: str = "maint-cat") -> CatBase:
     """创建维护专用猫 — 挂载维护链需要的 hypothalamus + brainstem + hippocampus。"""
-    cat = CatBase(cat_id)
+    cat = make_cat(cat_id)
     cat.mount("brain", "hippocampus", _MaintenanceMockHippocampus())
     cat.mount("brain", "hypothalamus", NoopHypothalamus())
     cat.mount("brain", "brainstem", NoopBrainstem())
@@ -200,7 +201,7 @@ class TestColonyAliases:
     def test_adopt_registers_cat(self) -> None:
         """adopt(cat) 等价于 register(cat)。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        cat = CatBase("cat-1")
+        cat = make_cat("cat-1")
         colony.adopt(cat)
         assert colony.list_cats() == ["cat-1"]
         assert colony.get_cat("cat-1") is cat
@@ -208,7 +209,7 @@ class TestColonyAliases:
     def test_release_removes_cat(self) -> None:
         """release(cat_id) 等价于 unregister(cat_id)。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        cat = CatBase("cat-1")
+        cat = make_cat("cat-1")
         colony.register(cat)
         assert colony.list_cats() == ["cat-1"]
 
@@ -224,8 +225,8 @@ class TestColonyAliases:
     def test_adopt_multiple_cats(self) -> None:
         """收养多只猫。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        cat_a = CatBase("a")
-        cat_b = CatBase("b")
+        cat_a = make_cat("a")
+        cat_b = make_cat("b")
         colony.adopt(cat_a)
         colony.adopt(cat_b)
         assert sorted(colony.list_cats()) == ["a", "b"]
@@ -233,7 +234,7 @@ class TestColonyAliases:
     def test_adopt_and_release_workflow(self) -> None:
         """收养→释放完整流程。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        cat = CatBase("whiskers")
+        cat = make_cat("whiskers")
         colony.adopt(cat)
         assert colony.cat_count == 1
 
@@ -244,7 +245,7 @@ class TestColonyAliases:
         """adopt 注入共享存储引用。"""
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
-        cat = CatBase("cat-1")
+        cat = make_cat("cat-1")
         colony.adopt(cat)
 
         assert hasattr(cat, "_colony_storage")

@@ -13,6 +13,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.anatomy import BRAINSTEM, CORTEX
 from meowcat.path import BUILTIN_PATHS, Path, PathRegistry, register_builtin_paths
@@ -76,7 +77,7 @@ class TestSynthesizePathRun:
 
     def test_run_synthesize_via_registry(self):
         """Execute synthesize path via registry."""
-        cat = CatBase("test-synth")
+        cat = make_cat("test-synth")
 
         # Use unmapped coords to avoid Protocol validation
         BS = ("brain", "_brainstem")
@@ -109,7 +110,7 @@ class TestSynthesizePathRun:
 
     def test_run_synthesize_default_max_tokens(self):
         """synthesize 默认 max_tokens=400 被正确传递。"""
-        cat = CatBase("test-synth-default")
+        cat = make_cat("test-synth-default")
 
         BS = ("brain", "_brainstem")
         CX = ("brain", "_cortex")

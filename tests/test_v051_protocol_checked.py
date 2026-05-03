@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import (
     CatBase,
     OrganProtocol,
@@ -56,12 +57,12 @@ class TestMountProtocol:
     """mount 带 protocol 校验通过/拒绝。"""
 
     def test_mount_with_matching_protocol_passes(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "region", _ValidOrgan(), protocol=OrganProtocol)
         assert cat.has_organ("brain", "region")
 
     def test_mount_with_mismatching_protocol_raises(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         with pytest.raises(OrganProtocolMismatchError) as exc:
             cat.mount("brain", "region", _InvalidOrgan(),
                       protocol=OrganProtocol)
@@ -69,12 +70,12 @@ class TestMountProtocol:
         assert exc.value.name == "region"
 
     def test_mount_without_protocol_always_passes(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("void", "any", _InvalidOrgan())
         assert cat.has_organ("void", "any")
 
     def test_mount_with_stage_protocol(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("pipeline", "s1", _ValidStage(), protocol=StageProtocol)
         assert cat.has_organ("pipeline", "s1")
 

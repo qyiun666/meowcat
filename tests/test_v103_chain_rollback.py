@@ -17,6 +17,7 @@ import pytest
 from meowcat.chain import Chain, ChainRegistry
 from meowcat.path import Path, PathRegistry, register_builtin_paths
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 
 
 # -- 辅助 ---------------------------------------------------------
@@ -62,7 +63,7 @@ def _setup_cat_and_registry(fail_on: str | None = None) -> tuple[CatBase, _MockO
     注册路径: step_a, step_b, rollback_a, rollback_b, rollback_fail
     """
     organ = _MockOrgan(fail_on=fail_on)
-    cat = CatBase("test-cat")
+    cat = make_cat("test-cat")
     cat.mount("brain", "hippocampus", organ)
 
     # 注册自定义路径（自环路径：from == to，直接调本地方法）

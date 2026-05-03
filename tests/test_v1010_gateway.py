@@ -27,6 +27,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.gateway import (
     CliAdapter,
     Gateway,
@@ -86,7 +87,7 @@ class TestProtocols:
 
     def test_gateway_is_gateway_protocol(self) -> None:
         """Gateway 实例满足 GatewayProtocol。"""
-        cat = CatBase("test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         assert isinstance(gw, GatewayProtocol)
 
@@ -118,14 +119,14 @@ class TestGatewayMount:
 
     def test_mount_adapter(self) -> None:
         """挂载适配器后出现在 adapter_names 中。"""
-        cat = CatBase("test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         gw.mount_adapter(HttpAdapter())
         assert "http" in gw.adapter_names
 
     def test_unmount_adapter(self) -> None:
         """卸载后 adapter_names 中移除。"""
-        cat = CatBase("test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         gw.mount_adapter(HttpAdapter())
         gw.unmount_adapter("http")
@@ -133,13 +134,13 @@ class TestGatewayMount:
 
     def test_unmount_nonexistent_noop(self) -> None:
         """卸载不存在的 adapter 不抛异常。"""
-        cat = CatBase("test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         gw.unmount_adapter("nonexistent")  # no-op
 
     def test_same_name_overwrite(self) -> None:
         """同名挂载覆盖旧 adapter。"""
-        cat = CatBase("test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         a1 = HttpAdapter(port=8000)
         a2 = HttpAdapter(port=9000)
@@ -929,7 +930,7 @@ class TestMultiAdapter:
 
     def test_two_adapters_coexist(self) -> None:
         """两个不同 Adapter 可同时挂载到 Gateway。"""
-        cat = CatBase("multi", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("multi", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         gw.mount_adapter(HttpAdapter(port=8000))
         gw.mount_adapter(CliAdapter())
@@ -965,7 +966,7 @@ class TestSignalContextInjection:
 
     def test_signalcontext_in_perceive_extras(self) -> None:
         """perceive() 的 **extras 包含 context。"""
-        cat = CatBase("inject-test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("inject-test", enable_wiring=False, enable_reflex=False)
         ctx = SignalContext(session_id="s1", platform="test")
 
         # 验证 extras 字典中包含 SignalContext
@@ -976,7 +977,7 @@ class TestSignalContextInjection:
 
     def test_gateway_on_message_uses_perceive(self) -> None:
         """Gateway._on_message 调用 cat.perceive(text, context=ctx)。"""
-        cat = CatBase("gw-test", enable_wiring=False, enable_reflex=False)
+        cat = make_cat("gw-test", enable_wiring=False, enable_reflex=False)
         gw = Gateway(cat)
         ctx = SignalContext(session_id="gw-s1", platform="test")
 

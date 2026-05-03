@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import anyio
 
+from meowcat.testing import make_cat
 from meowcat import CatBase, assemble_default_cat
 
 
@@ -27,13 +28,13 @@ class _Cerebrum:
 
 def test_catbase_legacy_single_arg_ctor() -> None:
     """v0.5.0 风格：只传 cat_id 即可。"""
-    cat = CatBase("legacy")
+    cat = make_cat("legacy")
     assert cat.cat_id == "legacy"
 
 
 def test_catbase_exposes_wiring_and_reflexes_property() -> None:
     """v0.5.x 旧代码会读 ``cat.wiring`` / ``cat.reflexes``。"""
-    cat = CatBase("x")
+    cat = make_cat("x")
     assert cat.wiring is not None
     assert cat.reflexes is not None
 
@@ -43,7 +44,7 @@ def test_catbase_assemble_still_works() -> None:
 
     v0.5.20: assemble 不再自动注册 reflex，调用方需显式传入 reflexes。
     """
-    cat = CatBase("x")
+    cat = make_cat("x")
     cat.cerebrum = _Cerebrum()  # type: ignore[attr-defined]
     cat._assemble()
     assert cat.has_organ("brain", "cerebrum")
@@ -55,7 +56,7 @@ def test_assemble_default_cat_top_level() -> None:
 
     v0.5.21: assemble_default_cat() 不再 freeze，由调用方负责。
     """
-    cat = CatBase("x")
+    cat = make_cat("x")
     cat.cerebrum = _Cerebrum()  # type: ignore[attr-defined]
     assemble_default_cat(cat)
     cat.freeze_nervous_system()
@@ -68,7 +69,7 @@ def test_catbase_parent_id_and_forbidden_methods():
     import pytest
     from meowcat.errors import IllegalNeuralPathError
 
-    cat = CatBase(
+    cat = make_cat(
         "k1",
         parent_id="main",
         forbidden_methods=frozenset({"spawn_kitten", "absorb_merge"}),
@@ -88,7 +89,7 @@ def test_catbase_allowed_organs_blocks_access():
     import pytest
     from meowcat.errors import IllegalNeuralPathError
 
-    cat = CatBase(
+    cat = make_cat(
         "k1",
         allowed_organs=frozenset({"cerebellum", "cerebrum"}),
     )

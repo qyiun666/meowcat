@@ -10,6 +10,7 @@ Validates:
 """
 
 from __future__ import annotations
+from meowcat.testing import make_cat
 from meowcat.loop import Lifecycle
 
 import anyio
@@ -175,12 +176,12 @@ class TestCatBaseWorkflowTracking:
 
     def test_active_workflows_starts_empty(self):
         """_active_workflows starts empty."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         assert cat._active_workflows == {}
 
     def test_register_workflow(self):
         """register_workflow correctly adds to tracking list."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         wf = {
             "entity_id": "wf-1", "cat_id": "test",
             "status": "active", "plan": ["s1", "s2"],
@@ -191,7 +192,7 @@ class TestCatBaseWorkflowTracking:
 
     def test_register_workflow_with_id_key(self):
         """register_workflow compatible with "id" key (legacy compat)."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         wf = {
             "id": "wf-old", "cat_id": "test",
             "status": "active",
@@ -201,13 +202,13 @@ class TestCatBaseWorkflowTracking:
 
     def test_register_workflow_no_id(self):
         """Silently skipped when no entity_id/id key."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.register_workflow({"status": "active"})
         assert cat._active_workflows == {}
 
     def test_active_workflows_filters_by_status(self):
         """active_workflows() only returns active/awaiting_user ones."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.register_workflow({
             "entity_id": "w1", "status": "active",
         })
@@ -236,7 +237,7 @@ class TestCatBaseWorkflowLifecycle:
 
     def _setup_cat_with_hippo(self, cat_id="test"):
         """Create CatBase with NoopHippocampus and wiring."""
-        cat = CatBase(cat_id)
+        cat = make_cat(cat_id)
         hippo = NoopHippocampus()
         cat.mount("brain", "hippocampus", hippo)
         # need brainstem for signal support
@@ -248,7 +249,7 @@ class TestCatBaseWorkflowLifecycle:
 
     def test_start_without_hippocampus_does_not_fail(self):
         """start() does not crash without Hippocampus (silent skip)."""
-        cat = CatBase("no-hippo")
+        cat = make_cat("no-hippo")
 
         async def _run():
             await cat.start()
@@ -481,7 +482,7 @@ class TestGracefulDegradation:
 
     def test_shutdown_without_nervous(self):
         """shutdown() does not crash with enable_wiring=False."""
-        cat = CatBase("no-wiring", enable_wiring=False)
+        cat = make_cat("no-wiring", enable_wiring=False)
 
         async def _run():
             await cat.shutdown()
@@ -490,7 +491,7 @@ class TestGracefulDegradation:
 
     def test_start_shutdown_no_organs_at_all(self):
         """Bare CatBase (no organs) start/shutdown works."""
-        cat = CatBase("bare")
+        cat = make_cat("bare")
 
         async def _run():
             await cat.start()
@@ -500,7 +501,7 @@ class TestGracefulDegradation:
 
     def test_multiple_start_shutdown_cycles(self):
         """Multiple start/shutdown cycles do not accumulate errors."""
-        cat, hippo = CatBase("cycle"), NoopHippocampus()
+        cat, hippo = make_cat("cycle"), NoopHippocampus()
         cat.mount("brain", "hippocampus", hippo)
         from meowcat.defaults.organs import NoopBrainstem
         cat.mount("brain", "brainstem", NoopBrainstem())

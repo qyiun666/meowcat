@@ -150,6 +150,7 @@ from meowcat.errors import (
     OrganProtocolMismatchError,
     ReflexPathInvalidError,
     StageTimeoutError,
+    StandaloneCatError,
 )
 from meowcat.assembly import CatBase, CatHook, assemble_default_cat, mount_known_organs
 from meowcat.colony import Colony
@@ -249,7 +250,7 @@ __all__ = [
     "MeowCatError", "OrganNotMountedError", "LoopFailedError",
     "StageTimeoutError",
     "IllegalNeuralPathError", "ReflexPathInvalidError",
-    "NoReflexMatchedError", "OrganProtocolMismatchError",
+    "NoReflexMatchedError", "OrganProtocolMismatchError", "StandaloneCatError",
     # Skeleton
     "CatBase", "CatHook", "Colony", "EventBus", "Pipeline",
     # v0.5.9 Subsystems (composite + facade)

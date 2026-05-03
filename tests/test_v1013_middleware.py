@@ -20,6 +20,7 @@ from typing import Any
 
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import (
     CatBase,
     ContextInjector,
@@ -54,7 +55,7 @@ class _DummyOrgan:
 
 def _new_cat() -> CatBase:
     """准备好 wiring 的猫：a→b 连通。"""
-    cat = CatBase("test")
+    cat = make_cat("test")
     cat.wiring.connect(("brain", "a"), ("brain", "b"))
     return cat
 
@@ -551,7 +552,7 @@ class TestEdgeCases:
     """边界条件测试。"""
 
     def test_use_middleware_with_wiring_disabled(self) -> None:
-        cat = CatBase("test", enable_wiring=False)
+        cat = make_cat("test", enable_wiring=False)
         with pytest.raises(RuntimeError, match="middleware unavailable"):
             cat.use_middleware(SignalLogger())
 
@@ -559,7 +560,7 @@ class TestEdgeCases:
         """中间件不绕过 wiring 校验。"""
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "b", _DummyOrgan())
         cat.use_middleware(SignalLogger())
 

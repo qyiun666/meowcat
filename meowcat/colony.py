@@ -154,6 +154,7 @@ class Colony:
         """
         cat = CatBase(
             cat_id,
+            container=self,
             parent_id=parent_id,
             allowed_organs=allowed_organs,
             **cat_kwargs,

@@ -98,6 +98,17 @@ class NoReflexMatchedError(MeowCatError):
         super().__init__(f"No reflex matched input: {input_repr[:80]}")
 
 
+class StandaloneCatError(MeowCatError):
+    """Raised when a cat is created without a container (Colony is mandatory since v1.1.3)."""
+
+    def __init__(self, cat_id: str) -> None:
+        self.cat_id = cat_id
+        super().__init__(
+            f"Cat '{cat_id}' must belong to a Colony — "
+            f"pass container=colony to CatBase()"
+        )
+
+
 class OrganProtocolMismatchError(MeowCatError):
     """Organ does not satisfy protocol P during ``cat.mount(category, name, organ, protocol=P)``."""
 
@@ -127,5 +138,6 @@ __all__ = [
     "IllegalNeuralPathError",
     "ReflexPathInvalidError",
     "NoReflexMatchedError",
+    "StandaloneCatError",
     "OrganProtocolMismatchError",
 ]

@@ -14,6 +14,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.chain import BUILTIN_CHAINS, Chain, ChainRegistry, register_builtin_chains
 from meowcat.path import Path
@@ -156,7 +157,7 @@ class TestChainRegistryRun:
 
     def _setup_cat(self):
         """Create CatBase with fake organs."""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         TH = ("brain", "_thalamus")
         HC = ("brain", "_hippocampus")
@@ -283,7 +284,7 @@ class TestChainRegistryRun:
 
     def test_run_result_pass_through(self):
         """Non-dict return value wrapped as {"_result": ...}."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         TH = ("brain", "_thalamus")
         HC = ("brain", "_hippocampus")
 
@@ -314,7 +315,7 @@ class TestCatBaseChainIntegration:
     """CatBase auto-registers 6 built-in chains."""
 
     def test_cat_has_chain_registry(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         assert hasattr(cat, "chain_registry")
         chains = cat.chain_registry.list_all()
         # v0.5.28b: +3 inline chains from register_default_loops (conversation_chain,
@@ -322,7 +323,7 @@ class TestCatBaseChainIntegration:
         assert len(chains) == 9
 
     def test_cat_has_builtin_chains(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         for name in ("memory_search", "full_reasoning", "tool_exec",
                      "maintenance", "diagnostic"):
             chain = cat.chain_registry.get(name)

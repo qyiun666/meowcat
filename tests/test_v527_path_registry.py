@@ -12,6 +12,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.path import BUILTIN_PATHS, Path, PathRegistry, register_builtin_paths
 
@@ -153,7 +154,7 @@ class TestPathRegistryRun:
 
     def test_run_basic(self):
         """基本路径执行：注册路径 → run → 验证调用。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         # 使用未映射坐标避免 v0.5.11 Protocol 契约校验
         HC = ("brain", "_hippocampus")
@@ -186,7 +187,7 @@ class TestPathRegistryRun:
 
     def test_run_missing_path(self):
         """不存在的路径 → KeyError。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         async def _run():
             with pytest.raises(KeyError, match="not found"):
@@ -196,7 +197,7 @@ class TestPathRegistryRun:
 
     def test_run_with_args(self):
         """带多个 kwargs 的路径执行。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         CB = ("brain", "_cerebrum")
         called: dict = {}
@@ -229,7 +230,7 @@ class TestPathRegistryRun:
 
     def test_builtin_locate_via_registry(self):
         """内置 locate 路径通过 registry.run 执行（用未映射坐标避 Protocol 校验）。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         TH = ("brain", "_thalamus")
         HC = ("brain", "_hippocampus")

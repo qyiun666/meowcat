@@ -21,6 +21,7 @@ import json
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.colony import Colony
 from meowcat.colony_transports import TCPSocketTransport, RedisPubSubTransport
 from meowcat.defaults.stores import InMemorySharedStore
@@ -59,7 +60,7 @@ class _MockCerebrum:
 
 def _make_cat(cat_id: str) -> CatBase:
     """创建一个带海马体和大脑的测试猫。"""
-    cat = CatBase(cat_id)
+    cat = make_cat(cat_id)
     cat.mount("brain", "hippocampus", _MockHippocampus())
     cat.mount("brain", "cerebrum", _MockCerebrum())
     return cat

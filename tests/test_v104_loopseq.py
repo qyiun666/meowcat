@@ -20,6 +20,7 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.chain import Chain
 from meowcat.path import Path
 from meowcat.loops import (
@@ -79,7 +80,7 @@ def _setup_cat_with_loops(
     每个 loop 有对应 path: brain:hippocampus → brain:hippocampus.xxx
     """
     organ = _MockOrgan(fail_on=fail_on)
-    cat = CatBase("test-cat")
+    cat = make_cat("test-cat")
     cat.mount("brain", "hippocampus", organ)
 
     # 注册路径

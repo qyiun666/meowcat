@@ -14,6 +14,7 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.biology import CEREBRUM, HIPPOCAMPUS, THALAMUS
 from meowcat.errors import IllegalNeuralPathError
 
@@ -24,11 +25,11 @@ class TestParentId:
     """parent_id 不持有父猫对象引用。"""
 
     def test_parent_id_none_by_default(self) -> None:
-        cat = CatBase("cat1")
+        cat = make_cat("cat1")
         assert cat.parent_id is None
 
     def test_parent_id_is_string(self) -> None:
-        cat = CatBase("cat1", parent_id="main-cat")
+        cat = make_cat("cat1", parent_id="main-cat")
         assert cat.parent_id == "main-cat"
         # parent_id 只是字符串，不是对象引用
         assert isinstance(cat.parent_id, str)
@@ -41,7 +42,7 @@ class TestAllowedOrgans:
 
     def test_none_allows_all(self) -> None:
         """allowed_organs=None（默认）全部放行。"""
-        cat = CatBase("cat1")
+        cat = make_cat("cat1")
         # 非器官属性正常访问
         assert cat.cat_id == "cat1"
         # 不存在的属性抛普通 AttributeError
@@ -50,7 +51,7 @@ class TestAllowedOrgans:
 
     def test_allowed_organs_blocks_forbidden(self) -> None:
         """allowed_organs 有值时拦截禁止器官名。"""
-        cat = CatBase(
+        cat = make_cat(
             "cat1",
             allowed_organs=frozenset({"cerebellum", "cerebrum", "paws"}),
         )
@@ -59,7 +60,7 @@ class TestAllowedOrgans:
 
     def test_allowed_organs_passes_allowed(self) -> None:
         """allowed_organs 集合内的属性不抛 IllegalNeuralPathError。"""
-        cat = CatBase(
+        cat = make_cat(
             "cat1",
             allowed_organs=frozenset({"cerebrum"}),
         )
@@ -73,7 +74,7 @@ class TestAllowedOrgans:
 
     def test_underscore_prefix_skips_check(self) -> None:
         """_ 前缀私有属性零开销跳过 allowed_organs 检查。"""
-        cat = CatBase(
+        cat = make_cat(
             "cat1",
             allowed_organs=frozenset({"cerebrum"}),
         )
@@ -83,7 +84,7 @@ class TestAllowedOrgans:
 
     def test_cat_id_always_accessible(self) -> None:
         """cat_id（property）不受 allowed_organs 影响。"""
-        cat = CatBase(
+        cat = make_cat(
             "cat1",
             allowed_organs=frozenset({"cerebrum"}),
         )
@@ -111,7 +112,7 @@ class TestForbiddenMethods:
 
     @pytest.fixture
     def cat(self) -> CatBase:
-        c = CatBase(
+        c = make_cat(
             "k1",
             forbidden_methods=frozenset({"spawn_kitten", "absorb_merge"}),
         )
@@ -149,12 +150,12 @@ class TestDefaultCatBase:
     """默认 CatBase（无参数）行为与 v1.0.0 一致。"""
 
     def test_default_parent_id_is_none(self) -> None:
-        cat = CatBase("cat1")
+        cat = make_cat("cat1")
         assert cat.parent_id is None
 
     def test_default_no_forbidden_methods(self) -> None:
         """不传 forbidden_methods 时方法调用不受限。"""
-        cat = CatBase("cat1")
+        cat = make_cat("cat1")
         cat.wire_default_nervous_system()
         cat.mount("brain", "test", _DummyOrgan())
         cat.wiring.connect(THALAMUS, ("brain", "test"))
@@ -164,7 +165,7 @@ class TestDefaultCatBase:
 
     def test_default_allowed_organs_is_none(self) -> None:
         """不传 allowed_organs 时所有属性均可访问。"""
-        cat = CatBase("cat1")
+        cat = make_cat("cat1")
         # 不存在的属性抛 AttributeError，非 IllegalNeuralPathError
         try:
             _ = cat.hippocampus

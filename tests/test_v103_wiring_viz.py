@@ -12,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.diagnose import render_wiring
 from meowcat.wiring import Wiring
 
@@ -20,7 +21,7 @@ from meowcat.wiring import Wiring
 
 def _make_wired_cat() -> CatBase:
     """创建一个带简单 wiring 的猫。"""
-    cat = CatBase("test-cat")
+    cat = make_cat("test-cat")
     cat.wire_default_nervous_system()
     return cat
 
@@ -128,7 +129,7 @@ class TestWiringDiagram:
 
     def test_default_format(self) -> None:
         """默认返回 mermaid 格式。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "hippocampus", object())
         cat.wire_default_nervous_system()
         result = cat.wiring_diagram()
@@ -137,7 +138,7 @@ class TestWiringDiagram:
 
     def test_dot_format(self) -> None:
         """format='dot' 返回 dot 格式。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "hippocampus", object())
         cat.wire_default_nervous_system()
         result = cat.wiring_diagram(format="dot")
@@ -146,6 +147,6 @@ class TestWiringDiagram:
 
     def test_wiring_disabled_raises(self) -> None:
         """wiring 禁用时抛 AttributeError。"""
-        cat = CatBase("test", enable_wiring=False)
+        cat = make_cat("test", enable_wiring=False)
         with pytest.raises(AttributeError, match="wiring disabled"):
             cat.wiring_diagram()

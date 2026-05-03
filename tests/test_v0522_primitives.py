@@ -15,6 +15,7 @@ from unittest.mock import patch
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.diagnose import Stethoscope
 from meowcat.errors import OrganNotMountedError
@@ -59,7 +60,7 @@ class TestStethoscope:
     @pytest.fixture
     def cat_with_organs(self):
         """构造一只挂了两个脑区和一只耳朵的猫（已 wiring）。"""
-        cat = CatBase("test_cat")
+        cat = make_cat("test_cat")
         cat.mount("brain", "hippocampus", FakeDiagnosableOrgan("hippo", "ok"))
         cat.mount("brain", "cerebrum", FakeDiagnosableOrgan("cerebrum", "ok"))
         cat.mount("sense", "ears", FakeDiagnosableOrgan("ears", "ok"))
@@ -102,7 +103,7 @@ class TestStethoscope:
 
     def test_probe_all_with_broken_organ(self):
         """有器官不实现 Diagnosable 时 probe 失败，应捕获为 error。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "good", FakeDiagnosableOrgan("good", "ok"))
         cat.mount("brain", "broken", FakeBrokenOrgan())
 
@@ -114,7 +115,7 @@ class TestStethoscope:
 
     def test_probe_all_with_async_organ(self):
         """diagnose() 返回 awaitable 的器官（需 wiring）。"""
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "async", FakeAsyncOrgan())
         cat.wiring.connect(("_probe", "_probe"), ("brain", "async"))
 
@@ -126,7 +127,7 @@ class TestStethoscope:
 
     def test_probe_all_empty_cat(self):
         """空猫的 health_check 返回空 dict。"""
-        cat = CatBase("empty")
+        cat = make_cat("empty")
 
         async def _run():
             result = await Stethoscope.probe_all(cat)
@@ -141,7 +142,7 @@ class TestCatBaseHealthCheck:
     """CatBase 上的诊断快捷方法。"""
 
     def test_health_check(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "hippocampus", FakeDiagnosableOrgan("hippo", "ok"))
         cat.mount("sense", "ears", FakeDiagnosableOrgan("ears", "ok"))
         cat.wiring.connect(("_probe", "_probe"), ("brain", "hippocampus"))
@@ -156,7 +157,7 @@ class TestCatBaseHealthCheck:
         anyio.run(_run)
 
     def test_brain_check(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "hippocampus", FakeDiagnosableOrgan("hippo", "ok"))
         cat.mount("brain", "cerebrum", FakeDiagnosableOrgan("cerebrum", "ok"))
         cat.mount("sense", "ears", FakeDiagnosableOrgan("ears", "ok"))
@@ -181,7 +182,7 @@ class TestNeedle:
     """Needle 绕过 wiring 注入。"""
 
     def test_poke_basic(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class Target:
             def greet(self, name: str) -> str:
@@ -197,7 +198,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_async_method(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class AsyncTarget:
             async def fetch(self, key: str) -> str:
@@ -213,7 +214,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_organ_not_mounted(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         needle = Needle(cat)
 
         async def _run():
@@ -223,7 +224,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_method_not_found(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "target", object())
         needle = Needle(cat)
 
@@ -234,7 +235,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_memory(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         called: dict = {}
 
         class FakeHippocampus:
@@ -256,7 +257,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_focus(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         called: dict = {}
 
         class FakeFrontal:
@@ -277,7 +278,7 @@ class TestNeedle:
         anyio.run(_run)
 
     def test_poke_worldview(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         called: dict = {}
 
         class FakeCortex:
@@ -305,7 +306,7 @@ class TestNeedle:
 
     def test_needle_disabled_by_env(self):
         with patch.dict(os.environ, {"MEOWCAT_DISABLE_NEEDLE": "1"}):
-            cat = CatBase("test")
+            cat = make_cat("test")
             with pytest.raises(NeedleDisabledError):
                 Needle(cat)
 

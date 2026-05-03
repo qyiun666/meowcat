@@ -11,6 +11,7 @@ v1.0.1 — CatBase 分身猫隔离（替代 KittenBase + _KittenParentProxy）
 from __future__ import annotations
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.errors import IllegalNeuralPathError
 
 
@@ -21,27 +22,27 @@ class TestNoParentObjectRef:
 
     def test_kitten_parent_id_no_object_ref(self) -> None:
         """创建分身猫：parent_id 只是字符串，不会存储父猫对象。"""
-        main_cat = CatBase("main")
-        kitten = CatBase("kit", parent_id=main_cat.cat_id)
+        main_cat = make_cat("main")
+        kitten = make_cat("kit", parent_id=main_cat.cat_id)
         assert kitten.parent_id == "main"
         # parent_id 不是父猫对象
         assert not isinstance(kitten.parent_id, CatBase)
 
     def test_kitten_parent_id_is_string(self) -> None:
         """parent_id 类型就是 str。"""
-        kitten = CatBase("kit", parent_id="main")
+        kitten = make_cat("kit", parent_id="main")
         assert isinstance(kitten.parent_id, str)
         assert kitten.parent_id == "main"
 
     def test_default_cat_parent_id_none(self) -> None:
         """默认 CatBase（非分身猫）parent_id 为 None。"""
-        cat = CatBase("main")
+        cat = make_cat("main")
         assert cat.parent_id is None
 
     def test_kitten_does_not_hold_parent_object(self) -> None:
         """分身猫无法通过任何属性访问父猫对象。"""
-        main_cat = CatBase("main")
-        kitten = CatBase("kit", parent_id=main_cat.cat_id)
+        main_cat = make_cat("main")
+        kitten = make_cat("kit", parent_id=main_cat.cat_id)
         # 确认没有 parent 对象引用
         assert not hasattr(type(kitten), "parent")
         # parent_id 只是字符串标识
@@ -55,7 +56,7 @@ class TestAllowedOrgansIsolation:
 
     def test_kitten_allowed_organs_blocks_brain_organs(self) -> None:
         """分身猫禁止访问 hippocampus 等脑区器官。"""
-        kitten = CatBase(
+        kitten = make_cat(
             "kit", parent_id="main",
             allowed_organs=frozenset({
                 "cerebellum", "cerebrum", "paws", "whiskers", "amygdala",
@@ -72,7 +73,7 @@ class TestAllowedOrgansIsolation:
 
     def test_kitten_allowed_organs_passes_permitted(self) -> None:
         """分身猫允许的器官名不抛 IllegalNeuralPathError。"""
-        kitten = CatBase(
+        kitten = make_cat(
             "kit", parent_id="main",
             allowed_organs=frozenset({
                 "cerebellum", "cerebrum", "paws", "whiskers", "amygdala",
@@ -88,7 +89,7 @@ class TestAllowedOrgansIsolation:
 
     def test_kitten_can_access_own_properties(self) -> None:
         """分身猫可访问自身属性（cat_id、parent_id 等）。"""
-        kitten = CatBase(
+        kitten = make_cat(
             "kit", parent_id="main",
             allowed_organs=frozenset({"cerebrum"}),
         )
@@ -97,7 +98,7 @@ class TestAllowedOrgansIsolation:
 
     def test_kitten_private_attrs_accessible(self) -> None:
         """_ 前缀属性不受 allowed_organs 限制。"""
-        kitten = CatBase(
+        kitten = make_cat(
             "kit", parent_id="main",
             allowed_organs=frozenset({"cerebrum"}),
         )
@@ -113,12 +114,12 @@ class TestNoParentProxy:
 
     def test_catbase_has_no_parent_property(self) -> None:
         """CatBase 不存在 parent property（替代 KittenBase.parent）。"""
-        cat = CatBase("main")
+        cat = make_cat("main")
         assert not hasattr(type(cat), "parent")
 
     def test_kitten_has_no_parent_proxy(self) -> None:
         """分身猫没有 parent proxy，parent_id 只是字符串。"""
-        kitten = CatBase("kit", parent_id="main")
+        kitten = make_cat("kit", parent_id="main")
         assert not hasattr(type(kitten), "parent")
         assert kitten.parent_id == "main"
 

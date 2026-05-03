@@ -49,7 +49,7 @@ import time as _time
 from collections.abc import Awaitable, Callable
 from typing import Any, AsyncIterator
 
-from meowcat.errors import IllegalNeuralPathError
+from meowcat.errors import IllegalNeuralPathError, StandaloneCatError
 from meowcat.events import EventBus, Handler
 from meowcat.host import OrganHost
 from meowcat.loop import Lifecycle
@@ -75,6 +75,7 @@ class CatBase:
         self,
         cat_id: str,
         *,
+        container: "Colony | None" = None,
         parent_id: str | None = None,
         allowed_organs: frozenset[str] | None = None,
         forbidden_methods: frozenset[str] = frozenset(),
@@ -85,6 +86,7 @@ class CatBase:
 
         Args:
             cat_id: Unique cat identifier.
+            container: The Colony this cat belongs to (mandatory since v1.1.3).
             parent_id: Parent cat identifier (plain string, no object reference).
                 Used for tracking and result routing back to parent.
             allowed_organs: Set of allowed organ attribute names.
@@ -102,6 +104,10 @@ class CatBase:
                 ``perceive/register_reflex`` calls raise RuntimeError.
                 Suitable for "signal-only, no-reflex" scenarios.
         """
+        if container is None:
+            raise StandaloneCatError(cat_id)
+        self._container = container
+        self._address = f"{container.colony_id}/{cat_id}"
         self._parent_id = parent_id
         # v1.0.1: Set _allowed_organs=None first to avoid __init__ internal
         # self.xxx assignments being intercepted by __getattribute__;
@@ -146,6 +152,21 @@ class CatBase:
         self._allowed_organs = allowed_organs
 
     # -- Read-only facade properties -----------------------------------------
+
+    @property
+    def container(self) -> "Colony":
+        """The Colony container this cat belongs to (mandatory since v1.1.3)."""
+        return self._container
+
+    @property
+    def cat_address(self) -> str:
+        """Global address: ``colony_id/cat_id`` (uid will be appended in v1.1.4)."""
+        return self._address
+
+    @property
+    def cat_uid(self) -> str:
+        """Cat unique identifier within the colony (placeholder, will be generated in v1.1.4)."""
+        return self.cat_id
 
     @property
     def parent_id(self) -> str | None:
@@ -258,7 +279,7 @@ class CatBase:
         return super().__getattribute__(name)
 
     _ALWAYS_ALLOWED: frozenset[str] = frozenset({
-        "cat_id", "parent_id",
+        "cat_id", "cat_uid", "cat_address", "container", "parent_id",
         "tool_registry", "skill_registry",
         "path_registry", "chain_registry", "loop_registry",
         "loopseq_registry",

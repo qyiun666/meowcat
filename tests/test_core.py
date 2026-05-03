@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import (
     CatBase,
     EventBus,
@@ -75,7 +76,7 @@ class TestCatBase:
     """CatBase mount/signal 基础流程。"""
 
     def test_mount_and_organ(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         obj = object()
         cat.mount("brain", "hippocampus", obj)
         assert cat.organ("brain", "hippocampus") is obj
@@ -83,7 +84,7 @@ class TestCatBase:
             cat.organ("brain", "nonexistent")
 
     def test_signal_blocked_by_wiring(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         a = object()
         b = object()
         cat.mount("brain", "cerebrum", a)
@@ -97,6 +98,11 @@ class TestCatBase:
 
 class TestCreateCat:
     """create_cat 一行建猫。"""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        from meowcat.testing import make_test_colony
+        self.colony = make_test_colony()
 
     class MockCerebrum:
         name = "mock"
@@ -114,7 +120,7 @@ class TestCreateCat:
             pass
 
     def test_create_minimal_cat(self) -> None:
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum())
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum())
         assert cat.cat_id == "test-cat"
         assert cat.organs("brain")
         assert cat.organs("sense")
@@ -123,7 +129,7 @@ class TestCreateCat:
 
     def test_create_cat_with_custom_organs(self) -> None:
         custom_ears = NoopEars()
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          ears=custom_ears)
         assert cat.ears is custom_ears
         # amygdalla 未提供，应为 Noop
@@ -138,7 +144,7 @@ class TestCreateCat:
             hook_called.append(True)
             wiring_frozen_at_hook.append(cat.wiring._frozen)
 
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          on_before_freeze=hook)
         assert len(hook_called) == 1
         # 钩子执行时 wiring 还未冻结
@@ -155,7 +161,7 @@ class TestCreateCat:
             hook_called.append(True)
             wiring_frozen_at_hook.append(cat.wiring._frozen)
 
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          on_assembled=hook)
         assert len(hook_called) == 1
         # on_assembled 执行时 wiring 已经冻结
@@ -173,7 +179,7 @@ class TestCreateCat:
             order.append("after")
             assert cat.wiring._frozen is True
 
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          on_before_freeze=before_hook,
                          on_assembled=after_hook)
         assert order == ["before", "after"]
@@ -184,7 +190,7 @@ class TestCreateCat:
             cat.mount("brain", "custom_organ", NoopAmygdala())
             cat.wiring.connect(("brain", "custom_organ"), ("brain", "thalamus"))
 
-        cat = create_cat("test-cat", cerebrum=self.MockCerebrum(),
+        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          on_before_freeze=hook)
         # 钩子中注入的器官可见
         assert cat.has_organ("brain", "custom_organ")

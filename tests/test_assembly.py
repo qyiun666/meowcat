@@ -13,15 +13,36 @@ from __future__ import annotations
 
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.errors import (
     IllegalNeuralPathError,
     NoReflexMatchedError,
     OrganNotMountedError,
     OrganProtocolMismatchError,
+    StandaloneCatError,
 )
 from meowcat.protocols import AmygdalaProtocol, OrganProtocol
 from meowcat.reflex import Reflex
+
+
+# -- v1.1.3: CatBase 强制归属 ------------------------------------------
+
+def test_catbase_without_container_raises():
+    """CatBase 未传 container → StandaloneCatError"""
+    with pytest.raises(StandaloneCatError):
+        CatBase("orphan")
+
+
+def test_catbase_with_container_ok():
+    """CatBase 传 container → 正常创建"""
+    from meowcat.colony import Colony
+    from meowcat.defaults import InMemorySharedStore
+    colony = Colony("test", storage=InMemorySharedStore())
+    cat = CatBase("test", container=colony)
+    assert cat.cat_id == "test"
+    assert cat.container is colony
+    assert cat.cat_address == "test/test"
 
 
 # -- CatBase 器官管理 -----------------------------------------------
@@ -31,33 +52,33 @@ class TestCatBaseOrgans:
     """CatBase mount / organ / unmount / has_organ / organs 契约。"""
 
     def test_mount_and_organ(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         sentinel = object()
         cat.mount("brain", "hippocampus", sentinel)
         assert cat.organ("brain", "hippocampus") is sentinel
 
     def test_organ_not_mounted_raises(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         with pytest.raises(OrganNotMountedError) as exc:
             cat.organ("brain", "nonexistent")
         assert exc.value.category == "brain"
         assert exc.value.name == "nonexistent"
 
     def test_has_organ(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("sense", "ears", object())
         assert cat.has_organ("sense", "ears") is True
         assert cat.has_organ("sense", "eyes") is False
 
     def test_unmount(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("sense", "ears", object())
         assert cat.unmount("sense", "ears") is True
         assert cat.has_organ("sense", "ears") is False
         assert cat.unmount("sense", "ears") is False  # 再次卸载
 
     def test_organs_snapshot_is_copy(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         a, b = object(), object()
         cat.mount("brain", "a", a)
         cat.mount("brain", "b", b)
@@ -68,12 +89,12 @@ class TestCatBaseOrgans:
         assert cat.has_organ("brain", "evil") is False
 
     def test_assert_organs_mounted_passes(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "a", object())
         cat.assert_organs_mounted([("brain", "a")])  # 不抛
 
     def test_assert_organs_mounted_raises(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         with pytest.raises(OrganNotMountedError):
             cat.assert_organs_mounted([("brain", "missing")])
 
@@ -82,7 +103,7 @@ class TestMountProtocolCheck:
     """mount 带 Protocol 校验。"""
 
     def test_mount_valid_protocol(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class RealOrgan:
             name = "real"
@@ -93,7 +114,7 @@ class TestMountProtocolCheck:
         cat.mount("brain", "a", RealOrgan(), protocol=OrganProtocol)  # 不抛
 
     def test_mount_invalid_protocol_raises(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class FakeOrgan:
             pass  # 没有 name 属性
@@ -113,7 +134,7 @@ class TestCatBaseSignal:
     def test_signal_allowed_path(self) -> None:
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class Target:
             def greet(self, name: str) -> str:
@@ -137,7 +158,7 @@ class TestCatBaseSignal:
     def test_signal_illegal_path_raises(self) -> None:
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat.mount("brain", "cerebrum", object())
         cat.mount("sense", "paws", object())
         # cerebrum→paws 不在 wiring 里
@@ -153,7 +174,7 @@ class TestCatBaseSignal:
     def test_signal_awaits_coroutine(self) -> None:
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class AsyncTarget:
             async def fetch(self) -> str:
@@ -174,7 +195,7 @@ class TestCatBaseSignal:
     def test_signal_emits_nerve_event(self) -> None:
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
         seen: list[dict] = []
 
         cat.on("nerve.signal", lambda p: seen.append(p))
@@ -204,7 +225,7 @@ class TestCatBasePerceive:
     def test_perceive_no_reflex_raises(self) -> None:
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         async def _run() -> None:
             with pytest.raises(NoReflexMatchedError):
@@ -217,7 +238,7 @@ class TestCatBasePerceive:
         """有 reflex 但无 stages：只沿 path 逐跳广播。"""
         import anyio
 
-        cat = CatBase("test")
+        cat = make_cat("test")
         signals: list[dict] = []
         cat.on("nerve.signal", lambda p: signals.append(p))
 
@@ -245,7 +266,7 @@ class TestCatBaseAssemble:
     """CatBase._assemble 自动装配。"""
 
     def test_assemble_mounts_brain_organs(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class FakeCerebrum:
             name = "fake"
@@ -266,7 +287,7 @@ class TestCatBaseAssemble:
         assert cat.has_organ("brain", "cerebrum")
 
     def test_assemble_mounts_sense_organs(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class FakeEars:
             name = "fake"
@@ -285,7 +306,7 @@ class TestCatBaseAssemble:
         assert cat.has_organ("sense", "ears")
 
     def test_assemble_mounts_voice_organs(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         class FakeMouth:
             name = "fake"
@@ -298,12 +319,12 @@ class TestCatBaseAssemble:
         assert cat.has_organ("voice", "mouth")
 
     def test_assemble_freezes_wiring(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         cat._assemble()
         assert cat.wiring.frozen is True
 
     def test_assemble_registers_text_dialogue_reflex(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         ref = Reflex(
             name="text_dialogue",
             trigger=lambda x: True,
@@ -324,7 +345,7 @@ class TestCatBaseForbiddenMethods:
     def test_cat_with_forbidden_methods(self) -> None:
         import anyio
 
-        cat = CatBase(
+        cat = make_cat(
             "k1",
             forbidden_methods=frozenset({"spawn_kitten", "absorb_merge"}),
         )
@@ -344,7 +365,7 @@ class TestCatBaseForbiddenMethods:
     def test_cat_forbidden_absorb_merge(self) -> None:
         import anyio
 
-        cat = CatBase(
+        cat = make_cat(
             "k1",
             forbidden_methods=frozenset({"spawn_kitten", "absorb_merge"}),
         )
@@ -362,7 +383,7 @@ class TestCatBaseForbiddenMethods:
 
     def test_default_cat_no_forbidden_methods(self) -> None:
         """默认 CatBase（不传 forbidden_methods）方法调用不受限。"""
-        cat = CatBase("k1")
+        cat = make_cat("k1")
         cat.mount("brain", "a", object())
         cat.mount("brain", "b", object())
         cat.wiring.connect(("brain", "a"), ("brain", "b"))

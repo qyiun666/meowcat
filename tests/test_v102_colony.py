@@ -20,6 +20,7 @@ import asyncio
 import pytest
 
 from meowcat.assembly import CatBase
+from meowcat.testing import make_cat
 from meowcat.colony import Colony
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
@@ -56,7 +57,7 @@ class _Helper:
 
     @staticmethod
     def make_cat(cat_id: str) -> CatBase:
-        cat = CatBase(cat_id)
+        cat = make_cat(cat_id)
         cat.mount("brain", "hippocampus", _MockHippocampus())
         cat.mount("brain", "cerebrum", _MockCerebrum())
         return cat

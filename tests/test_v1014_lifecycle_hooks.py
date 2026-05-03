@@ -17,6 +17,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase, CatHook, Lifecycle
 
 
@@ -26,7 +27,7 @@ class TestOnStart:
     """on_start hook 在 start() 时被调用。"""
 
     def test_single_on_start_hook_called(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         hooks_called: list[str] = []
 
         async def _my_hook(c: CatBase) -> None:
@@ -41,7 +42,7 @@ class TestOnStart:
         assert hooks_called == ["test"]
 
     def test_on_start_hook_receives_correct_cat(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         received: list[CatBase] = []
 
         async def _my_hook(c: CatBase) -> None:
@@ -63,7 +64,7 @@ class TestOnShutdown:
     """on_shutdown hook 在 shutdown() 时被调用。"""
 
     def test_single_on_shutdown_hook_called(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         hooks_called: list[str] = []
 
         async def _my_hook(c: CatBase) -> None:
@@ -78,7 +79,7 @@ class TestOnShutdown:
         assert hooks_called == ["test"]
 
     def test_on_shutdown_hook_receives_correct_cat(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         received: list[CatBase] = []
 
         async def _my_hook(c: CatBase) -> None:
@@ -100,7 +101,7 @@ class TestHookOrder:
     """多 hooks 按正确顺序执行。"""
 
     def test_multiple_start_hooks_ordered(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _h1(c: CatBase) -> None:
@@ -123,7 +124,7 @@ class TestHookOrder:
         assert log == ["h1", "h2", "h3"]
 
     def test_multiple_shutdown_hooks_reversed(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _h1(c: CatBase) -> None:
@@ -152,7 +153,7 @@ class TestEventEmitOrder:
     """start/shutdown 与 hook 的事件发射顺序。"""
 
     def test_start_emits_event_before_hooks(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _listener(payload: dict) -> None:
@@ -173,7 +174,7 @@ class TestEventEmitOrder:
         assert log == ["lifecycle.start", "hook"]
 
     def test_shutdown_emits_event_after_hooks(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _listener(payload: dict) -> None:
@@ -200,7 +201,7 @@ class TestBackwardCompat:
     """无 hooks 时 start/shutdown 行为完全不变。"""
 
     def test_start_without_hooks_still_emits_event(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         events: list[str] = []
 
         async def _listener(payload: dict) -> None:
@@ -215,7 +216,7 @@ class TestBackwardCompat:
         assert events == ["lifecycle.start"]
 
     def test_shutdown_without_hooks_still_emits_event(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         events: list[str] = []
 
         async def _listener(payload: dict) -> None:
@@ -236,7 +237,7 @@ class TestFullLifecycle:
     """on_start + on_shutdown 组合完整生命周期。"""
 
     def test_full_lifecycle_with_hooks(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _start_listener(payload: dict) -> None:
@@ -269,7 +270,7 @@ class TestFullLifecycle:
         ]
 
     def test_multiple_start_and_shutdown_hooks(self) -> None:
-        cat = CatBase("test")
+        cat = make_cat("test")
         log: list[str] = []
 
         async def _s1(c): log.append("s1")  # type: ignore[no-untyped-def]

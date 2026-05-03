@@ -14,6 +14,7 @@ from __future__ import annotations
 import anyio
 import pytest
 
+from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.chain import Chain
 from meowcat.loop import Lifecycle
@@ -189,7 +190,7 @@ class TestLoopRegistryRun:
 
     def _setup_cat(self):
         """Create CatBase with fake organs + event tracking."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         TH = ("brain", "_thalamus")
         HC = ("brain", "_hippocampus")
         CB = ("brain", "_cerebrum")
@@ -347,7 +348,7 @@ class TestSelfLoopPath:
 
     def test_self_loop_path_run(self):
         """Self-loop path bypasses wiring signal, calls local method directly."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         TH = ("brain", "_thalamus")
 
         called: list[dict] = []
@@ -376,7 +377,7 @@ class TestSelfLoopPath:
 
     def test_self_loop_builtin_path_exists(self):
         """Built-in self-loop Paths exist."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         path = cat.path_registry.get("decide_route")
         assert path is not None
         assert path.from_organ == path.to_organ
@@ -394,13 +395,13 @@ class TestCatBaseLoopIntegration:
     """CatBase auto-registers 5 built-in loops + run_loop() facade."""
 
     def test_cat_has_loop_registry(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         assert hasattr(cat, "loop_registry")
         loops = cat.loop_registry.list_all()
         assert len(loops) == 5
 
     def test_cat_has_builtin_loops(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         for name in ("conversation", "tool_execution", "danger_response",
                      "maintenance", "diagnostic"):
             lp = cat.loop_registry.get(name)
@@ -408,13 +409,13 @@ class TestCatBaseLoopIntegration:
             assert lp.name == name
 
     def test_cat_has_run_loop_method(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         assert hasattr(cat, "run_loop")
         assert callable(cat.run_loop)
 
     def test_cat_run_loop_diagnostic(self):
         """cat.run_loop("diagnostic") executes correctly."""
-        cat = CatBase("test")
+        cat = make_cat("test")
 
         async def _run():
             result = await cat.run_loop("diagnostic", x=1)
@@ -424,20 +425,20 @@ class TestCatBaseLoopIntegration:
 
     def test_conversation_loop_chain_registered(self):
         """Built-in loops' inline Chains are in chain_registry."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         conv_chain = cat.chain_registry.get("conversation_chain")
         assert conv_chain is not None
         assert "hear" in conv_chain.path_names
         assert "speak" in conv_chain.path_names
 
     def test_tool_loop_chain_registered(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         tool_chain = cat.chain_registry.get("tool_loop_chain")
         assert tool_chain is not None
         assert "execute_tool" in tool_chain.path_names
 
     def test_danger_chain_registered(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         danger_chain = cat.chain_registry.get("danger_chain")
         assert danger_chain is not None
         assert "assess_safety" in danger_chain.path_names
@@ -457,29 +458,29 @@ class TestNewPathsForLoop:
     """v0.5.28b new Paths exist and are correct."""
 
     def test_execute_tool_path(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         p = cat.path_registry.get("execute_tool")
         assert p is not None
         assert p.mode == "write"
 
     def test_decide_route_is_self_loop(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         p = cat.path_registry.get("decide_route")
         assert p.from_organ == p.to_organ
         assert p.mode == "read"
 
     def test_check_danger_is_self_loop(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         p = cat.path_registry.get("assess_safety")
         assert p.from_organ == p.to_organ
 
     def test_assess_risk_is_self_loop(self):
-        cat = CatBase("test")
+        cat = make_cat("test")
         p = cat.path_registry.get("assess_safety")
         assert p.from_organ == p.to_organ
 
     def test_total_path_count(self):
         """BUILTIN_PATHS currently 26 (v1.0.15 added 3 orchestration domain paths)."""
-        cat = CatBase("test")
+        cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
         assert len(all_paths) == 26
