@@ -11,7 +11,6 @@ v1.1.13: MeowTui — Textual TUI bare-bones App skeleton.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
-from meowcat.cli.app import MeowTui
 from meowcat.cli.commands import (
     register_system_commands,
     register_colony_commands,
@@ -20,6 +19,11 @@ from meowcat.cli.commands import (
 from meowcat.cli.i18n import I18n
 from meowcat.cli.router import Command, CommandContext, CommandRouter
 from meowcat.cli.theme import Theme
+
+try:
+    from meowcat.cli.app import MeowTui  # requires textual
+except ImportError:
+    MeowTui = None
 
 __all__ = ["I18n", "Command", "CommandContext", "CommandRouter",
            "register_system_commands", "register_colony_commands", "is_debug",
