@@ -30,7 +30,7 @@ class TestOnStart:
         cat = make_cat("test")
         hooks_called: list[str] = []
 
-        async def _my_hook(c: CatBase) -> None:
+        def _my_hook(c: CatBase) -> None:
             hooks_called.append(c.cat_id)
 
         cat.on_start(_my_hook)
@@ -45,7 +45,7 @@ class TestOnStart:
         cat = make_cat("test")
         received: list[CatBase] = []
 
-        async def _my_hook(c: CatBase) -> None:
+        def _my_hook(c: CatBase) -> None:
             received.append(c)
 
         cat.on_start(_my_hook)
@@ -67,7 +67,7 @@ class TestOnShutdown:
         cat = make_cat("test")
         hooks_called: list[str] = []
 
-        async def _my_hook(c: CatBase) -> None:
+        def _my_hook(c: CatBase) -> None:
             hooks_called.append(c.cat_id)
 
         cat.on_shutdown(_my_hook)
@@ -82,7 +82,7 @@ class TestOnShutdown:
         cat = make_cat("test")
         received: list[CatBase] = []
 
-        async def _my_hook(c: CatBase) -> None:
+        def _my_hook(c: CatBase) -> None:
             received.append(c)
 
         cat.on_shutdown(_my_hook)
@@ -104,13 +104,13 @@ class TestHookOrder:
         cat = make_cat("test")
         log: list[str] = []
 
-        async def _h1(c: CatBase) -> None:
+        def _h1(c: CatBase) -> None:
             log.append("h1")
 
-        async def _h2(c: CatBase) -> None:
+        def _h2(c: CatBase) -> None:
             log.append("h2")
 
-        async def _h3(c: CatBase) -> None:
+        def _h3(c: CatBase) -> None:
             log.append("h3")
 
         cat.on_start(_h1)
@@ -127,13 +127,13 @@ class TestHookOrder:
         cat = make_cat("test")
         log: list[str] = []
 
-        async def _h1(c: CatBase) -> None:
+        def _h1(c: CatBase) -> None:
             log.append("h1")
 
-        async def _h2(c: CatBase) -> None:
+        def _h2(c: CatBase) -> None:
             log.append("h2")
 
-        async def _h3(c: CatBase) -> None:
+        def _h3(c: CatBase) -> None:
             log.append("h3")
 
         cat.on_shutdown(_h1)
@@ -161,7 +161,7 @@ class TestEventEmitOrder:
 
         cat.on(Lifecycle.START, _listener)
 
-        async def _hook(c: CatBase) -> None:
+        def _hook(c: CatBase) -> None:
             log.append("hook")
 
         cat.on_start(_hook)
@@ -182,7 +182,7 @@ class TestEventEmitOrder:
 
         cat.on(Lifecycle.SHUTDOWN, _listener)
 
-        async def _hook(c: CatBase) -> None:
+        def _hook(c: CatBase) -> None:
             log.append("hook")
 
         cat.on_shutdown(_hook)
@@ -246,10 +246,10 @@ class TestFullLifecycle:
         async def _shutdown_listener(payload: dict) -> None:
             log.append("event:shutdown")
 
-        async def _start_hook(c: CatBase) -> None:
+        def _start_hook(c: CatBase) -> None:
             log.append("hook:start")
 
-        async def _shutdown_hook(c: CatBase) -> None:
+        def _shutdown_hook(c: CatBase) -> None:
             log.append("hook:shutdown")
 
         cat.on(Lifecycle.START, _start_listener)
@@ -273,10 +273,10 @@ class TestFullLifecycle:
         cat = make_cat("test")
         log: list[str] = []
 
-        async def _s1(c): log.append("s1")  # type: ignore[no-untyped-def]
-        async def _s2(c): log.append("s2")  # type: ignore[no-untyped-def]
-        async def _d1(c): log.append("d1")  # type: ignore[no-untyped-def]
-        async def _d2(c): log.append("d2")  # type: ignore[no-untyped-def]
+        def _s1(c): log.append("s1")  # type: ignore[no-untyped-def]
+        def _s2(c): log.append("s2")  # type: ignore[no-untyped-def]
+        def _d1(c): log.append("d1")  # type: ignore[no-untyped-def]
+        def _d2(c): log.append("d2")  # type: ignore[no-untyped-def]
 
         cat.on_start(_s1)
         cat.on_start(_s2)

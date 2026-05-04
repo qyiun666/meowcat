@@ -7,10 +7,35 @@ Unprovided organs automatically use Noop* / InMemory* default implementations.
 
 
 from __future__ import annotations
+from meowcat.wiring import Wiring
+from meowcat.reflex import Reflex
+from meowcat.protocols import (
+    AmygdalaProtocol,
+    BrainStemProtocol,
+    CortexProtocol,
+    EarsProtocol,
+    EyesProtocol,
+    FrontalCortexProtocol,
+    GraphStorageProtocol,
+    HippocampusProtocol,
+    HypothalamusProtocol,
+    L6StorageProtocol,
+    LLMBrainProtocol,
+    PawsProtocol,
+    SharedStorageProtocol,
+    ThalamusProtocol,
+    VectorStorageProtocol,
+    WhiskersProtocol,
+)
+from meowcat.events import EventBus
+from meowcat.defaults.stores import (
+    InMemoryGraphStore,
+    InMemoryL6Store,
+    InMemorySharedStore,
+    InMemoryVectorStore,
+)
 
 from typing import Any
-
-import anyio
 
 from meowcat.assembly import CatBase, CatHook, mount_known_organs
 from meowcat.defaults.organs import (
@@ -52,33 +77,6 @@ from meowcat.defaults.renovated import (
 from meowcat.defaults.presets import KeywordPreset, PromptPreset
 
 _UNSET = object()
-from meowcat.defaults.stores import (
-    InMemoryGraphStore,
-    InMemoryL6Store,
-    InMemorySharedStore,
-    InMemoryVectorStore,
-)
-from meowcat.events import EventBus
-from meowcat.protocols import (
-    AmygdalaProtocol,
-    BrainStemProtocol,
-    CortexProtocol,
-    EarsProtocol,
-    EyesProtocol,
-    FrontalCortexProtocol,
-    GraphStorageProtocol,
-    HippocampusProtocol,
-    HypothalamusProtocol,
-    L6StorageProtocol,
-    LLMBrainProtocol,
-    PawsProtocol,
-    SharedStorageProtocol,
-    ThalamusProtocol,
-    VectorStorageProtocol,
-    WhiskersProtocol,
-)
-from meowcat.reflex import Reflex
-from meowcat.wiring import Wiring
 
 # -- Organ category constants (consistent with biology.py) --------------------------
 
@@ -124,6 +122,12 @@ def create_cat(
     correction_growth: Any = None,
     crystallizer: Any = None,
     role_emergence: Any = None,
+    # ━━ Renovation tuning (passed to简装修 constructors) ━━
+    dangerous_tools: set[str] | None = None,
+    dangerous_paths: list[str] | None = None,
+    frontal_threshold: float = 0.3,
+    crystallize_threshold: int = 5,
+    hotspot_threshold: int = 3,
     # ━━ Storage ━━
     graph_store: GraphStorageProtocol | None = None,
     l6_store: L6StorageProtocol | None = None,
@@ -134,6 +138,11 @@ def create_cat(
     # ━━ Assembly hooks ━━
     on_before_freeze: CatHook | None = None,
     on_assembled: CatHook | None = None,
+    # ━━ Default registration switches (v1.2.10) ━━
+    register_default_paths: bool = True,
+    register_default_chains: bool = True,
+    register_default_loops: bool = True,
+    register_default_tools: bool = True,
 ) -> CatBase:
     """Create a fully assembled cat with one line of code.
 
@@ -158,10 +167,18 @@ def create_cat(
         renovate_organs: Organ names to upgrade to简装修 when renovated=False.
         brainstem: Brainstem dispatcher, not mounted when None.
         reflexes: Reflex arc list.
-        on_before_freeze: Async hook called after wiring + reflex registration,
+        on_before_freeze: Sync hook called after wiring + reflex registration,
             before freeze. Use for injecting extra organs / wiring paths.
-        on_assembled: Async hook called after freeze, before return.
+        on_assembled: Sync hook called after freeze, before return.
             Use for registering Path/Chain/Loop, setting runtime attributes.
+        register_default_paths: When False, BUILTIN_PATHS are not auto-registered.
+            Call ``cat.register_default_paths()`` later. (v1.2.10)
+        register_default_chains: When False, BUILTIN_CHAINS are not auto-registered.
+            Call ``cat.register_default_chains()`` later. (v1.2.10)
+        register_default_loops: When False, BUILTIN_LOOPS are not auto-registered.
+            Call ``cat.register_default_loops()`` later. (v1.2.10)
+        register_default_tools: When False, BUILTIN_TOOLS are not auto-registered.
+            Call ``cat.register_default_tools()`` later. (v1.2.10)
         Other organs: Optional, defaults determined by ``renovated`` mode.
 
     Returns:
@@ -191,32 +208,58 @@ def create_cat(
         else:
             return reno_cls(**reno_kw) if organ_name in _reno else bare_cls()
 
-    cat = CatBase(cat_id, container=container)
+    cat = CatBase(
+        cat_id, container=container,
+        register_default_paths=register_default_paths,
+        register_default_chains=register_default_chains,
+        register_default_loops=register_default_loops,
+        register_default_tools=register_default_tools,
+    )
 
     # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]
-    cat.hippocampus = hippocampus or _pick_no_init(NoopHippocampus, RenovatedHippocampus, "hippocampus")
-    cat.thalamus = thalamus or _pick_no_init(NoopThalamus, RenovatedThalamus, "thalamus", keyword=keyword)  # type: ignore[attr-defined]
-    cat.amygdala = amygdala or _pick_no_init(NoopAmygdala, RenovatedAmygdala, "amygdala", keyword=keyword)  # type: ignore[attr-defined]
-    cat.frontal = frontal or _pick_no_init(NoopFrontal, RenovatedFrontal, "frontal", keyword=keyword)  # type: ignore[attr-defined]
+    cat.hippocampus = hippocampus or _pick_no_init(
+        NoopHippocampus, RenovatedHippocampus, "hippocampus")
+    cat.thalamus = thalamus or _pick_no_init(
+        # type: ignore[attr-defined]
+        NoopThalamus, RenovatedThalamus, "thalamus", keyword=keyword)
+    cat.amygdala = amygdala or _pick_no_init(
+        # type: ignore[attr-defined]
+        NoopAmygdala, RenovatedAmygdala, "amygdala", keyword=keyword,
+        dangerous_tools=dangerous_tools, dangerous_paths=dangerous_paths)
+    cat.frontal = frontal or _pick_no_init(
+        # type: ignore[attr-defined]
+        NoopFrontal, RenovatedFrontal, "frontal", keyword=keyword,
+        threshold=frontal_threshold)
     # type: ignore[attr-defined]
-    cat.hypothalamus = hypothalamus or _pick_no_init(NoopHypothalamus, RenovatedHypothalamus, "hypothalamus")
+    cat.hypothalamus = hypothalamus or _pick_no_init(
+        NoopHypothalamus, RenovatedHypothalamus, "hypothalamus")
     # type: ignore[attr-defined]
     cat.cerebellum = cerebrum if cerebellum is _UNSET else cerebellum
     cat.cerebrum = cerebrum  # type: ignore[attr-defined]
-    cat.cortex = cortex or _pick_no_init(NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
+    cat.cortex = cortex or _pick_no_init(
+        NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
     cat.brainstem = brainstem  # type: ignore[attr-defined]
 
     # -- Senses ----------------------------------------------------------
-    cat.ears = ears or _pick_no_init(NoopEars, RenovatedEars, "ears", keyword=keyword)  # type: ignore[attr-defined]
-    cat.eyes = eyes or _pick_no_init(NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
-    cat.whiskers = whiskers or _pick_no_init(NoopWhiskers, RenovatedWhiskers, "whiskers")  # type: ignore[attr-defined]
-    cat.paws = paws or _pick_no_init(NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
+    cat.ears = ears or _pick_no_init(
+        # type: ignore[attr-defined]
+        NoopEars, RenovatedEars, "ears", keyword=keyword)
+    cat.eyes = eyes or _pick_no_init(
+        NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
+    cat.whiskers = whiskers or _pick_no_init(
+        # type: ignore[attr-defined]
+        NoopWhiskers, RenovatedWhiskers, "whiskers")
+    cat.paws = paws or _pick_no_init(
+        NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
 
     # -- Outputs ---------------------------------------------------------
-    cat.mouth = mouth or _pick_no_init(NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
-    cat.purr = purr or _pick_no_init(NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
-    cat.tail = tail or _pick_no_init(NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
+    cat.mouth = mouth or _pick_no_init(
+        NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
+    cat.purr = purr or _pick_no_init(
+        NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
+    cat.tail = tail or _pick_no_init(
+        NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
 
     # -- Growth organs ---------------------------------------------------
     from meowcat.defaults.organs import (
@@ -226,13 +269,19 @@ def create_cat(
         NoopRoleEmergence as _NoopRE,
     )
     # type: ignore[attr-defined]
-    cat.anomaly_growth = anomaly_growth or _pick_no_init(_NoopAG, RenovatedAnomalyGrowth, "anomaly_growth")
+    cat.anomaly_growth = anomaly_growth or _pick_no_init(
+        _NoopAG, RenovatedAnomalyGrowth, "anomaly_growth")
     # type: ignore[attr-defined]
-    cat.correction_growth = correction_growth or _pick_no_init(_NoopCG, RenovatedCorrectionGrowth, "correction_growth")
+    cat.correction_growth = correction_growth or _pick_no_init(
+        _NoopCG, RenovatedCorrectionGrowth, "correction_growth")
     # type: ignore[attr-defined]
-    cat.crystallizer = crystallizer or _pick_no_init(_NoopCr, RenovatedCrystallizer, "crystallizer")
+    cat.crystallizer = crystallizer or _pick_no_init(
+        _NoopCr, RenovatedCrystallizer, "crystallizer",
+        crystallize_threshold=crystallize_threshold,
+        hotspot_threshold=hotspot_threshold)
     # type: ignore[attr-defined]
-    cat.role_emergence = role_emergence or _pick_no_init(_NoopRE, RenovatedRoleEmergence, "role_emergence")
+    cat.role_emergence = role_emergence or _pick_no_init(
+        _NoopRE, RenovatedRoleEmergence, "role_emergence")
 
     # -- Storage ---------------------------------------------------------
     # type: ignore[attr-defined]
@@ -249,6 +298,12 @@ def create_cat(
     # Nervous system
     cat.wire_default_nervous_system()
 
+    # Builtin tools (v1.2.10: optional, controlled by register_default_tools)
+    if register_default_tools:
+        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        for t in BUILTIN_TOOLS:
+            cat.tool_registry.register(t)
+
     # Reflex arcs (caller injects)
     if reflexes:
         for ref in reflexes:
@@ -256,15 +311,13 @@ def create_cat(
 
     # -- Assembly hook: before freeze (inject extra organs / wiring) --
     if on_before_freeze:
-        anyio.run(on_before_freeze, cat)
+        on_before_freeze(cat)
 
     # Freeze
     cat.freeze_nervous_system()
 
     # -- Assembly hook: after freeze (register paths / set runtime attrs) --
     if on_assembled:
-        anyio.run(on_assembled, cat)
+        on_assembled(cat)
 
     return cat
-
-

@@ -40,6 +40,7 @@ from meowcat.anatomy import (
     PAWS,
     THALAMUS,
 )
+from meowcat.errors import IllegalNeuralPathError
 from meowcat.wiring import Organ
 
 
@@ -120,7 +121,7 @@ BUILTIN_PATHS: tuple[Path, ...] = (
          "cleanup_orphan_connections", "write", "Cleanup orphan connections"),
     # -- Tool execution domain --
     Path("execute_tool",       CEREBELLUM,  PAWS,
-         "interact_with_tool",  "write", "Execute tool"),
+         "execute",             "write", "Execute tool"),
     # -- Self-loop paths (v0.5.28b added, from == to, bypass wiring) --
     Path("decide_route",       THALAMUS,    THALAMUS,
          "decide_route",        "read",  "Routing decision"),
@@ -136,6 +137,11 @@ BUILTIN_PATHS: tuple[Path, ...] = (
          "append_content",      "write", "Write checkpoint"),
     Path("workflow_resume",     BRAINSTEM,   HIPPOCAMPUS,
          "get_entity",          "read",  "Resume workflow"),
+    # -- CatSelf introspection (v1.2.4) --
+    Path("self_snapshot",       BRAINSTEM,   BRAINSTEM,
+         "before_act",          "read",  "Freeze self snapshot before action"),
+    Path("self_reflect",        BRAINSTEM,   BRAINSTEM,
+         "after_act",           "write", "Write back self reflection after action"),
 )
 
 
@@ -232,6 +238,16 @@ class PathRegistry:
         # Self-loop: from == to, call local method directly
         # (bypass wiring validation; wiring has no self-loop edges)
         if path.from_organ == path.to_organ:
+            # v1.2.25: enforce forbidden_methods even on self-loops
+            if (
+                hasattr(cat, "nervous")
+                and cat.nervous is not None
+                and path.method in cat.nervous.forbidden_methods
+            ):
+                raise IllegalNeuralPathError(
+                    path.from_organ, path.to_organ,
+                    reason=f"forbidden method '{path.method}'",
+                )
             organ = cat.organ(*path.to_organ)
             method = getattr(organ, path.method)
             result = method(**kwargs)

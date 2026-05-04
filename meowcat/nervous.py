@@ -44,10 +44,11 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any, Protocol
 
-from meowcat.errors import IllegalNeuralPathError
+from meowcat.errors import IllegalNeuralPathError, CircuitOpenError
 from meowcat.events import EventBus
 from meowcat.host import OrganHost
-from meowcat.loop import NerveEvent
+from meowcat.events import NerveEvent
+from meowcat.telemetry import Tracer, Metrics, SignalSpan
 from meowcat.wiring import Organ, Wiring
 
 
@@ -62,6 +63,20 @@ class SignalCall:
     args: tuple[Any, ...]
     kwargs: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.monotonic)
+
+
+# -- Circuit breaker types (v1.2.19) ---------------------------------------
+
+@dataclass
+class CircuitState:
+    """Per-circuit failure tracking for signal circuit breaker.
+
+    Keyed by ``(to_organ, method)``. Tracks consecutive failures and
+    controls open/closed/half-open transitions.
+    """
+    failures: int = 0
+    last_failure: float = 0.0
+    open_until: float = 0.0
 
 
 class SignalMiddleware(Protocol):
@@ -125,6 +140,10 @@ class Nervous:
         events: EventBus,
         *,
         forbidden_methods: frozenset[str] = frozenset(),
+        circuit_breaker: bool = False,
+        cb_threshold: int = 5,
+        cb_timeout: float = 30.0,
+        enable_telemetry: bool = False,
     ) -> None:
         """Construct nervous system.
 
@@ -134,14 +153,124 @@ class Nervous:
             forbidden_methods: method-level blocklist. ``signal(..., method=X)`` raises
                 :class:`IllegalNeuralPathError` when ``X in forbidden_methods``.
                 Kittens use this to disable main-cat-only methods like ``spawn_kitten`` / ``absorb_merge``.
+            circuit_breaker: enable signal-level circuit breaker (default False for
+                backward compatibility). When enabled, consecutive failures on a
+                ``(to_organ, method)`` pair will open the circuit after ``cb_threshold``
+                failures, blocking further calls for ``cb_timeout`` seconds.
+            cb_threshold: number of consecutive failures before circuit opens (default 5).
+            cb_timeout: seconds the circuit stays open before transitioning to half-open
+                to allow one probe call (default 30.0).
+            enable_telemetry: enable observability tracing (default False for
+                backward compatibility). When enabled, each ``signal()`` call produces
+                a :class:`~meowcat.telemetry.SignalSpan` tracked by an internal
+                :class:`~meowcat.telemetry.Tracer` and :class:`~meowcat.telemetry.Metrics`.
+                Span-completion events are emitted through the event bus as
+                ``TelemetryEvent.SPAN``.
         """
         self.host = host
         self.events = events
         self.wiring = Wiring()
         self.forbidden_methods = forbidden_methods
         self._middleware: list[SignalMiddleware] = []
+        self._mw_info: list[dict[str, Any]] = []
+        # circuit breaker (v1.2.19)
+        self._cb_enabled = circuit_breaker
+        self._cb_threshold = cb_threshold
+        self._cb_timeout = cb_timeout
+        self._circuits: dict[tuple[Organ, str], CircuitState] = {}
+        self._cb_probing: set[tuple[Organ, str]] = set()
+
+        # telemetry (v1.2.21)
+        self._telemetry_enabled = enable_telemetry
+        self.tracer: Tracer | None = Tracer(
+            event_bus=events) if enable_telemetry else None
+        self.metrics: Metrics | None = Metrics() if enable_telemetry else None
 
     # -- Synapse ------------------------------------------------------
+
+    def use_middleware(self, mw: SignalMiddleware) -> None:
+        """Register a signal middleware. Executed in registration order.
+
+        Pre-classifies middleware capabilities on registration so the
+        ``signal()`` hot path avoids repeated ``hasattr`` + ``isawaitable`` checks.
+        """
+        self._middleware.append(mw)
+        info: dict[str, Any] = {"mw": mw}
+        if hasattr(mw, "before"):
+            info["has_before"] = True
+            info["before_is_async"] = inspect.iscoroutinefunction(mw.before)
+        if hasattr(mw, "after"):
+            info["has_after"] = True
+            info["after_is_async"] = inspect.iscoroutinefunction(mw.after)
+        if hasattr(mw, "on_error"):
+            info["has_on_error"] = True
+            info["on_error_is_async"] = inspect.iscoroutinefunction(
+                mw.on_error)
+        self._mw_info.append(info)
+
+    # -- Circuit breaker helpers (v1.2.19) ------------------------------
+
+    def _cb_try_enter(self, to_organ: Organ, method: str) -> None:
+        """Check circuit breaker before signal execution.
+
+        Raises :class:`CircuitOpenError` if the circuit is open.
+        Transitions from half-open to probing on first call after timeout.
+        """
+        if not self._cb_enabled:
+            return
+        key = (to_organ, method)
+        state = self._circuits.get(key)
+        if state is None:
+            return  # no history, circuit closed
+
+        now = time.monotonic()
+
+        # Circuit is open → fast-fail (unless we are the probing call)
+        if now < state.open_until:
+            if key not in self._cb_probing:
+                raise CircuitOpenError(
+                    to_organ, method,
+                    failures=state.failures,
+                    retry_after=state.open_until - now,
+                )
+            # probing call: let it through
+            return
+
+        # Timeout expired, failures >= threshold → half-open
+        if state.failures >= self._cb_threshold and key not in self._cb_probing:
+            self._cb_probing.add(key)  # mark this call as probe
+
+    def _cb_on_success(self, to_organ: Organ, method: str) -> None:
+        """Record a successful signal call — reset the circuit."""
+        if not self._cb_enabled:
+            return
+        key = (to_organ, method)
+        self._circuits.pop(key, None)
+        self._cb_probing.discard(key)
+
+    def _cb_on_failure(self, to_organ: Organ, method: str) -> None:
+        """Record a failed signal call — increment failures / open circuit."""
+        if not self._cb_enabled:
+            return
+        key = (to_organ, method)
+        now = time.monotonic()
+        state = self._circuits.get(key)
+
+        if state is None:
+            state = CircuitState()
+            self._circuits[key] = state
+
+        state.last_failure = now
+
+        # If this was a probing call, re-open immediately
+        if key in self._cb_probing:
+            self._cb_probing.discard(key)
+            state.open_until = now + self._cb_timeout
+            return
+
+        state.failures += 1
+        if state.failures >= self._cb_threshold:
+            state.open_until = now + self._cb_timeout
 
     async def signal(
         self,
@@ -204,6 +333,14 @@ class Nervous:
                 ),
             )
 
+        # v1.2.19 circuit breaker: fast-fail if circuit is open
+        self._cb_try_enter(to_organ, method)
+
+        # v1.2.21 telemetry: start span
+        span: SignalSpan | None = None
+        if self._telemetry_enabled and self.tracer is not None:
+            span = self.tracer.start_span(from_organ, to_organ, method)
+
         # build signal context
         ctx = SignalCall(
             from_organ=from_organ,
@@ -214,10 +351,10 @@ class Nervous:
         )
 
         # before chain: any returns None → short-circuit
-        for mw in self._middleware:
-            if hasattr(mw, "before"):
-                before_result = mw.before(ctx)
-                if inspect.isawaitable(before_result):
+        for info in self._mw_info:
+            if info.get("has_before"):
+                before_result = info["mw"].before(ctx)
+                if info["before_is_async"]:
                     before_result = await before_result
                 if before_result is None:
                     return None
@@ -238,18 +375,34 @@ class Nervous:
             if inspect.isawaitable(result):
                 result = await result
         except Exception as exc:
-            for mw in self._middleware:
-                if hasattr(mw, "on_error"):
-                    on_err = mw.on_error(ctx, exc)
-                    if inspect.isawaitable(on_err):
+            # v1.2.21 telemetry: end span with error
+            if span is not None and self.tracer is not None:
+                self.tracer.end_span(span, error=exc)
+                if self.metrics is not None:
+                    self.metrics.record(span)
+            # v1.2.19 circuit breaker: record failure
+            self._cb_on_failure(to_organ, method)
+            for info in self._mw_info:
+                if info.get("has_on_error"):
+                    on_err = info["mw"].on_error(ctx, exc)
+                    if info["on_error_is_async"]:
                         await on_err
             raise
 
+        # v1.2.19 circuit breaker: reset on success
+        self._cb_on_success(to_organ, method)
+
+        # v1.2.21 telemetry: end span on success
+        if span is not None and self.tracer is not None:
+            self.tracer.end_span(span)
+            if self.metrics is not None:
+                self.metrics.record(span)
+
         # after chain: can modify/wrap return value
-        for mw in self._middleware:
-            if hasattr(mw, "after"):
-                after_result = mw.after(ctx, result)
-                if inspect.isawaitable(after_result):
+        for info in self._mw_info:
+            if info.get("has_after"):
+                after_result = info["mw"].after(ctx, result)
+                if info["after_is_async"]:
                     result = await after_result
                 else:
                     result = after_result
@@ -328,4 +481,4 @@ class Nervous:
         self.wiring.freeze()
 
 
-__all__ = ["Nervous", "SignalCall", "SignalMiddleware"]
+__all__ = ["Nervous", "SignalCall", "SignalMiddleware", "CircuitState"]

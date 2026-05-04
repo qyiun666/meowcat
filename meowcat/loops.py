@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from meowcat.chain import BUILTIN_CHAINS, Chain, MAINTENANCE_CHAIN as _MC, DIAGNOSTIC_CHAIN as _DC
-from meowcat.loop import Lifecycle
+from meowcat.events import Lifecycle
 
 
 # -- Lookup reusable Chains from BUILTIN_CHAINS -------------------------
@@ -413,27 +413,22 @@ class LoopSequenceRegistry:
                     raise
                 return (loop_name, {"_error": str(e)})
 
-        tasks = [asyncio.create_task(_run_one(ln)) for ln in seq.loops]
+        pending = {
+            asyncio.ensure_future(_run_one(ln)): ln
+            for ln in seq.loops
+        }
         results: dict[str, Any] = {}
 
         if seq.stop_on_error:
             # gather mode: any failure propagates exception, remaining tasks cancelled
-            gathered = await asyncio.gather(*tasks)
+            gathered = await asyncio.gather(*pending)
             for loop_name, result in gathered:
                 results[loop_name] = result
         else:
             # tolerate errors: wait one by one, collect all results
-            for t in asyncio.as_completed(tasks):
-                try:
-                    loop_name, result = await t
-                    results[loop_name] = result
-                except Exception:
-                    for i, task in enumerate(tasks):
-                        if task is t:
-                            results[seq.loops[i]] = {
-                                "_error": str(task.exception()),
-                            }
-                            break
+            for fut in asyncio.as_completed(pending):
+                loop_name, result = await fut
+                results[loop_name] = result
 
         return results
 

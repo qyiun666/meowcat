@@ -79,7 +79,7 @@ class Needle:
         """
         import inspect
 
-        target = self._cat._host.organ(*to_organ)
+        target = self._cat.host.organ(*to_organ)
         if target is None:
             raise ValueError(f"Organ {to_organ} not mounted")
         fn = getattr(target, method, None)

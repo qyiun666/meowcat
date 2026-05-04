@@ -69,7 +69,7 @@ def test_pluggable_mount_unmount():
     assert p.list_plugs() == {"test_hook": 2}
 
     # 按注册顺序执行
-    results = list(p._run_plugs("test_hook", 5))
+    results = list(p._run_plugs_sync("test_hook", 5))
     assert results == [("test_hook", 10), ("test_hook", 15)]
 
     # 卸载单个
@@ -88,7 +88,7 @@ def test_pluggable_unmount_nonexistent():
 
 def test_pluggable_run_plugs_no_plugs():
     p = _FakePluggable()
-    results = list(p._run_plugs("test_hook", "x"))
+    results = list(p._run_plugs_sync("test_hook", "x"))
     assert results == []
 
 
@@ -134,17 +134,17 @@ async def test_amygdala_mode_a_plug_safe_passes():
 @pytest.mark.asyncio
 async def test_frontal_mode_a():
     f = NoopFrontal()
-    assert f.is_continue("msg") is False
+    assert await f.is_continue("msg") is False
     f.mount_plug("is_continue", lambda _: True)
-    assert f.is_continue("msg") is True
+    assert await f.is_continue("msg") is True
 
 
 @pytest.mark.asyncio
 async def test_frontal_mode_a_detect_shift():
     f = NoopFrontal()
-    assert f.detect_shift("msg") is False
+    assert await f.detect_shift("msg") is False
     f.mount_plug("detect_shift", lambda _: True)
-    assert f.detect_shift("msg") is True
+    assert await f.detect_shift("msg") is True
 
 
 # ===================================================================
@@ -163,13 +163,14 @@ async def test_ears_mode_b_hear():
     assert r == {"text": "hello", "keywords": ["hello"], "language": "zh"}
 
 
-def test_ears_mode_b_extract_keywords():
+@pytest.mark.asyncio
+async def test_ears_mode_b_extract_keywords():
     e = NoopEars()
-    r = e.extract_keywords("test")
+    r = await e.extract_keywords("test")
     assert r == []
 
     e.mount_plug("extract_keywords", lambda text, top_k: ["a", "b"])
-    r = e.extract_keywords("test")
+    r = await e.extract_keywords("test")
     assert r == ["a", "b"]
 
 
@@ -183,13 +184,14 @@ async def test_whiskers_mode_b():
     assert r == {"injection": True}
 
 
-def test_whiskers_mode_b_hallucination():
+@pytest.mark.asyncio
+async def test_whiskers_mode_b_hallucination():
     w = NoopWhiskers()
-    r = w.check_hallucination("reply", "s1")
+    r = await w.check_hallucination("reply", "s1")
     assert r == {"hallucination": False}
     w.mount_plug("check_hallucination", lambda reply,
                  sid: {"hallucination": True})
-    r = w.check_hallucination("reply", "s1")
+    r = await w.check_hallucination("reply", "s1")
     assert r == {"hallucination": True}
 
 
@@ -205,12 +207,13 @@ async def test_hypothalamus_mode_b():
     assert r["orphans_cleaned"] == 0  # 保留默认
 
 
-def test_cortex_mode_b():
+@pytest.mark.asyncio
+async def test_cortex_mode_b():
     c = NoopCortex()
-    r = c.synthesize(100)
+    r = await c.synthesize(100)
     assert r == ""
     c.mount_plug("synthesize", lambda mt: "worldview snippet")
-    r = c.synthesize(100)
+    r = await c.synthesize(100)
     assert r == "worldview snippet"
 
 

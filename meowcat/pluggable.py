@@ -3,6 +3,9 @@
 v1.0.7: mount_plug / unmount_plug / _run_plugs on all 15 Noop organs,
 allowing app-layer plugins on framework defaults (LLM safety check, TTS adapter, etc.).
 
+v1.2.16: _run_plugs → async generator with automatic await for async plugins.
+Sync plugins still work (isawaitable returns False).
+
 Three execution modes (chosen by each Noop class, not enforced by Pluggable):
 - A First-hit: return first non-default result
 - B Merge-enhance: merge all plugin results into defaults
@@ -13,8 +16,12 @@ Three execution modes (chosen by each Noop class, not enforced by Pluggable):
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+import inspect
+import logging
+from collections.abc import AsyncIterator, Callable, Iterator
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 
 class Pluggable:
@@ -29,7 +36,7 @@ class Pluggable:
             }
 
             async def assess_safety(self, user_input: str) -> dict[str, Any]:
-                for _name, r in self._run_plugs("assess_safety", user_input):
+                async for _name, r in self._run_plugs("assess_safety", user_input):
                     if isinstance(r, dict) and not r.get("safe", True):
                         return r
                 return {"safe": True, "risk": "none"}
@@ -74,12 +81,26 @@ class Pluggable:
             if not self._plugs[hook]:
                 self._plugs.pop(hook, None)
 
-    def _run_plugs(
+    # Aliases (v1.1.6) — plug/unplug for consistency with Colony and design docs
+
+    def plug(self, hook: str, fn: Callable[..., Any]) -> None:
+        """Alias for :meth:`mount_plug`."""
+        self.mount_plug(hook, fn)
+
+    def unplug(self, hook: str, fn: Callable[..., Any] | None = None) -> None:
+        """Alias for :meth:`unmount_plug`."""
+        self.unmount_plug(hook, fn)
+
+    async def _run_plugs(
         self, hook: str, *args: Any, **kwargs: Any
-    ) -> Iterator[tuple[str, Any]]:
+    ) -> AsyncIterator[tuple[str, Any]]:
         """Run plugins in registration order, yielding (hook_name, result).
 
+        v1.2.16: Now an async generator — automatically awaits async plugins.
+        Sync plugins are yielded as-is; async plugins are awaited before yielding.
+
         Callers decide how to handle results (first-hit / merge / replace).
+        Callers MUST use ``async for``.
 
         Args:
             hook: hook name.
@@ -90,7 +111,39 @@ class Pluggable:
             ``(hook_name, result)`` tuple, once per registered plugin.
         """
         for fn in self._plugs.get(hook, ()):
-            yield hook, fn(*args, **kwargs)
+            result = fn(*args, **kwargs)
+            if inspect.isawaitable(result):
+                result = await result
+            yield hook, result
+
+    def _run_plugs_sync(
+        self, hook: str, *args: Any, **kwargs: Any
+    ) -> Iterator[tuple[str, Any]]:
+        """Sync variant — iterate plugins without await.
+
+        For callers that cannot use ``async for`` (property setters,
+        sync public API methods).  Async plugin results will be returned
+        as coroutine objects — callers must handle this themselves.
+
+        Prefer :meth:`_run_plugs` for new async-capable code.
+
+        Args:
+            hook: hook name.
+            *args: positional arguments passed to plugins.
+            **kwargs: keyword arguments passed to plugins.
+
+        Yields:
+            ``(hook_name, result)`` tuple, once per registered plugin.
+        """
+        for fn in self._plugs.get(hook, ()):
+            result = fn(*args, **kwargs)
+            if inspect.iscoroutine(result):
+                _log.debug(
+                    "_run_plugs_sync hook '%s' plugin %s returned coroutine — "
+                    "use async variant (_run_plugs) instead",
+                    hook, getattr(fn, '__name__', fn),
+                )
+            yield hook, result
 
     def list_plugs(self) -> dict[str, int]:
         """List all mounted hooks and their plugin counts.

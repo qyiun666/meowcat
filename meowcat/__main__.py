@@ -12,15 +12,34 @@ from pathlib import Path
 
 TEMPLATES: dict[str, str] = {
     "cat.py": '''"""{{name}} -- your custom cat."""
+from meowcat import Colony
 from meowcat.defaults import create_cat
-from meowcat.defaults.organs import NoopCerebrum
+from meowcat.defaults.stores import InMemorySharedStore
+
+
+class EchoCerebrum:
+    name = "echo_cerebrum"
+
+    async def generate(self, prompt, system_prompt=None, temperature=0.7, max_tokens=None):
+        return f"[Echo] Received: {prompt[:200]}"
+
+    async def stream_generate(self, prompt, system_prompt=None, temperature=0.7, max_tokens=None):
+        yield f"[Echo] {prompt[:200]}"
+
+    def reload_config(self):
+        pass
+
+    def diagnose(self):
+        return {"echo": True}
 
 
 async def main() -> None:
-    cat = create_cat("{{name}}", cerebrum=NoopCerebrum())
-    print(f"{{name}} is ready.")
+    colony = Colony("{{name}}-colony", storage=InMemorySharedStore())
+    cat = create_cat("{{name}}", container=colony, cerebrum=EchoCerebrum())
+    await cat.start()
     result = await cat.run_loop("conversation", message="Hello!")
     print(result)
+    await cat.shutdown()
 ''',
     "main.py": '''"""{{name}} entry point."""
 import asyncio

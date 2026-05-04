@@ -1,7 +1,9 @@
-"""meowcat Gateway — WsAdapter (WebSocket bidirectional streaming dialogue adapter).
+"""meowcat plus/gateway — WsAdapter (WebSocket bidirectional streaming dialogue adapter).
 
 Pure asyncio WebSocket protocol implementation (RFC 6455 minimal subset), zero external dependencies.
 Supports text frame send/receive + streaming push.
+
+Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 # (c) 2025-2026 Axonant. MIT License.
 

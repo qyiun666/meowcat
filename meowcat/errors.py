@@ -130,6 +130,50 @@ class OrganProtocolMismatchError(MeowCatError):
         )
 
 
+class OrganDelegateError(MeowCatError):
+    """Raised when an AgentOrgan/SkillOrgan fails to delegate to its external agent/skill.
+
+    v1.2.14: Added for AgentOrgan/SkillOrgan adapter system.
+    """
+
+    def __init__(self, adapter: str, method: str, detail: str = "") -> None:
+        self.adapter = adapter
+        self.method = method
+        self.detail = detail
+        msg = f"{adapter}.{method}() delegate failed"
+        if detail:
+            msg += f": {detail}"
+        super().__init__(msg)
+
+
+# -- v1.2.19: signal circuit breaker ----------------------------------------
+
+
+class CircuitOpenError(MeowCatError):
+    """Raised when a signal() call is blocked by an open circuit breaker.
+
+    The circuit opens when consecutive failures on a (to_organ, method) pair
+    reach the configured threshold. It stays open for cb_timeout seconds,
+    then transitions to half-open to allow one probe call.
+    """
+
+    def __init__(
+        self,
+        to_organ: tuple[str, str],
+        method: str,
+        failures: int,
+        retry_after: float,
+    ) -> None:
+        self.to_organ = to_organ
+        self.method = method
+        self.failures = failures
+        self.retry_after = retry_after
+        super().__init__(
+            f"Circuit open for {to_organ[0]}/{to_organ[1]}.{method}() — "
+            f"{failures} failures, retry in {retry_after:.1f}s"
+        )
+
+
 __all__ = [
     "MeowCatError",
     "OrganNotMountedError",
@@ -140,4 +184,6 @@ __all__ = [
     "NoReflexMatchedError",
     "StandaloneCatError",
     "OrganProtocolMismatchError",
+    "OrganDelegateError",
+    "CircuitOpenError",
 ]

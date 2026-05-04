@@ -18,13 +18,14 @@ path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvali
 
 from __future__ import annotations
 
+import bisect
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
 from meowcat.events import EventBus
-from meowcat.loop import Lifecycle, NerveEvent
+from meowcat.events import Lifecycle, NerveEvent
 from meowcat.perception import PerceptionContext, infer_modality
 from meowcat.pipeline import Pipeline
 from meowcat.protocols import StageProtocol
@@ -74,7 +75,12 @@ class ReflexRegistry:
     """Reflex registry."""
 
     def __init__(self) -> None:
-        self._items: list[Reflex] = []
+        # v1.2.15: dict + priority-sorted list instead of single list for O(1) lookup + O(log n) insert
+        self._by_name: dict[str, Reflex] = {}
+        self._by_priority: list[Reflex] = []  # always sorted by priority desc
+        # v1.1.26: hot path observation — per-reflex trigger counters
+        self._trigger_counts: dict[str, int] = {}
+        self._total_triggers: int = 0
 
     # -- Write API ------------------------------------------------------
 
@@ -85,28 +91,29 @@ class ReflexRegistry:
                 f"Reflex '{reflex.name}' path must have at least 2 hops",
             )
         # name is unique: replace if name already exists
-        self._items = [r for r in self._items if r.name != reflex.name]
-        self._items.append(reflex)
-        self._items.sort(key=lambda r: r.priority, reverse=True)
+        old = self._by_name.pop(reflex.name, None)
+        if old is not None:
+            self._by_priority.remove(old)
+        self._by_name[reflex.name] = reflex
+        bisect.insort(self._by_priority, reflex, key=lambda r: -r.priority)
 
     def unregister(self, name: str) -> bool:
         """Remove by name, returns False if not found."""
-        before = len(self._items)
-        self._items = [r for r in self._items if r.name != name]
-        return len(self._items) != before
+        reflex = self._by_name.pop(name, None)
+        if reflex is None:
+            return False
+        self._by_priority.remove(reflex)
+        return True
 
     # -- Query API ----------------------------------------------------
 
     def get(self, name: str) -> Reflex | None:
         """Retrieve reflex by name, returns None if not found."""
-        for r in self._items:
-            if r.name == name:
-                return r
-        return None
+        return self._by_name.get(name)
 
     def match(self, input: Any) -> Reflex | None:
         """From high to low priority, return first reflex whose trigger matches, or None."""
-        for r in self._items:
+        for r in self._by_priority:
             try:
                 if r.trigger(input):
                     return r
@@ -117,7 +124,41 @@ class ReflexRegistry:
 
     def all(self) -> list[Reflex]:
         """Return snapshot of all registered reflexes."""
-        return list(self._items)
+        return list(self._by_priority)
+
+    # -- Hot path observation (v1.1.26) -----------------------------
+
+    def _record_trigger(self, reflex_name: str) -> None:
+        """Internal: increment trigger counter for hot path tracking."""
+        self._trigger_counts[reflex_name] = (
+            self._trigger_counts.get(reflex_name, 0) + 1
+        )
+        self._total_triggers += 1
+
+    def observe_hot_paths(self, min_triggers: int = 5) -> list[tuple[str, int]]:
+        """Observe frequently triggered reflex paths for promotion.
+
+        Returns reflexes whose trigger count exceeds *min_triggers*,
+        sorted descending by trigger frequency. These are candidates
+        for optimisation into dedicated fast-path reflex arcs.
+
+        Args:
+            min_triggers: Minimum trigger count to qualify as a hot path.
+
+        Returns:
+            List of ``(reflex_name, trigger_count)`` tuples.
+        """
+        result = [
+            (name, count)
+            for name, count in self._trigger_counts.items()
+            if count >= min_triggers
+        ]
+        result.sort(key=lambda x: -x[1])
+        return result
+
+    def trigger_stats(self) -> dict[str, int]:
+        """Return per-reflex trigger counts (read-only copy)."""
+        return dict(self._trigger_counts)
 
     # -- Validation --------------------------------------------------------
 
@@ -126,7 +167,7 @@ class ReflexRegistry:
 
         Raises :class:`ReflexPathInvalidError` immediately on any illegal hop.
         """
-        for reflex in self._items:
+        for reflex in self._by_priority:
             for hop in reflex.hops():
                 frm, to = hop
                 if not wiring.is_allowed(frm, to):
@@ -225,6 +266,9 @@ class ReflexArc:
             extras=dict(extras),
         )
 
+        # v1.1.26: record trigger for hot path observation
+        self.registry._record_trigger(reflex.name)
+
         await self.events.emit(
             Lifecycle.PERCEIVE_START,
             {"input": input, "reflex_name": reflex.name},
@@ -259,4 +303,5 @@ arguments when registering ``Reflex`` instances. The ``trigger`` callable
 is always supplied by the application layer."""
 
 
-__all__ = ["Reflex", "ReflexRegistry", "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]
+__all__ = ["Reflex", "ReflexRegistry",
+           "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]

@@ -133,6 +133,8 @@ class Tool:
 class ToolRegistry:
     """Tool registry — globally unique, mounted on cat instance.
 
+    v1.1.5: Two-level cascade lookup — private tools first, then colony shared.
+
     Usage::
 
         registry = ToolRegistry()
@@ -143,6 +145,20 @@ class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}
         self._by_category: dict[str, list[str]] = {}
+        self._shared: ToolRegistry | None = None  # v1.1.5: colony shared tools
+
+    def set_shared(self, registry: ToolRegistry) -> None:
+        """Link to colony's shared tool registry for cascade lookup."""
+        self._shared = registry
+
+    def resolve(self, name: str) -> Tool | None:
+        """Two-level lookup: private → colony shared."""
+        tool = self._tools.get(name)
+        if tool is not None:
+            return tool
+        if self._shared is not None:
+            return self._shared.get(name)
+        return None
 
     def register(self, tool: Tool) -> None:
         """Register a tool. Same-named tool will be overwritten."""

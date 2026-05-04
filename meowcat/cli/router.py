@@ -129,7 +129,7 @@ class CommandRouter(Pluggable):
         )
 
         # Run middleware chain
-        for _hook, result in self._run_plugs("middleware", ctx):
+        for _hook, result in self._run_plugs_sync("middleware", ctx):
             if result is not None:
                 return str(result)
 

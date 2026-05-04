@@ -17,7 +17,7 @@ import pytest
 from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.chain import Chain
-from meowcat.loop import Lifecycle
+from meowcat.events import Lifecycle
 from meowcat.loops import (
     BUILTIN_LOOPS,
     Loop,
@@ -480,7 +480,7 @@ class TestNewPathsForLoop:
         assert p.from_organ == p.to_organ
 
     def test_total_path_count(self):
-        """BUILTIN_PATHS currently 26 (v1.0.15 added 3 orchestration domain paths)."""
+        """BUILTIN_PATHS currently 28 (v1.0.15 +3 orchestration, v1.2.4 +2 cat_self)."""
         cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
-        assert len(all_paths) == 26
+        assert len(all_paths) == 28

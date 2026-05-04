@@ -45,6 +45,8 @@ class Wiring:
         self._allowed: set[Edge] = set()
         self._forbidden: set[Edge] = set()
         self._frozen: bool = False
+        # v1.2.15: organ→edges reverse index for O(1) is_organ_wired lookup
+        self._organ_index: dict[Organ, set[Edge]] = {}
 
     # -- Write API ------------------------------------------------------
 
@@ -58,14 +60,19 @@ class Wiring:
         self._ensure_mutable()
         _validate_organ(from_organ, "from_organ")
         _validate_organ(to_organ, "to_organ")
-        self._allowed.add((from_organ, to_organ))
+        edge: Edge = (from_organ, to_organ)
+        self._allowed.add(edge)
+        self._organ_index.setdefault(from_organ, set()).add(edge)
+        self._organ_index.setdefault(to_organ, set()).add(edge)
 
     def forbid(self, from_organ: Organ, to_organ: Organ) -> None:
         """Declare a "forbid from→to" pathway. Takes priority over connect."""
         self._ensure_mutable()
         _validate_organ(from_organ, "from_organ")
         _validate_organ(to_organ, "to_organ")
-        self._forbidden.add((from_organ, to_organ))
+        edge: Edge = (from_organ, to_organ)
+        self._forbidden.add(edge)
+        # edge stays in _organ_index (it tracks allowed edges), is_organ_wired filters by forbidden
 
     def freeze(self) -> None:
         """Freeze the graph. Subsequent connect / forbid raise :class:`MeowCatError`."""
@@ -111,11 +118,10 @@ class Wiring:
 
     def is_organ_wired(self, organ: Organ) -> bool:
         """Whether the organ appears in any allowed edge (as source or target)."""
-        for frm, to in self._allowed:
-            if organ in (frm, to):
-                if (frm, to) not in self._forbidden:
-                    return True
-        return False
+        edges = self._organ_index.get(organ)
+        if not edges:
+            return False
+        return any(e not in self._forbidden for e in edges)
 
     def snapshot(self) -> "WiringSnapshot":
         """Return an immutable view of the current graph, for frozen reads during reflex execution."""

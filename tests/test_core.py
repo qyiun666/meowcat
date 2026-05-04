@@ -44,10 +44,11 @@ class TestProtocols:
         assert isinstance(a, AmygdalaProtocol)
         assert a.is_rejection("hello") is False
 
-    def test_noop_satisfies_ears(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_satisfies_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)
-        assert e.extract_keywords("hello") == []
+        assert await e.extract_keywords("hello") == []
 
 
 class TestWiring:
@@ -120,7 +121,8 @@ class TestCreateCat:
             pass
 
     def test_create_minimal_cat(self) -> None:
-        cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum())
+        cat = create_cat("test-cat", container=self.colony,
+                         cerebrum=self.MockCerebrum())
         assert cat.cat_id == "test-cat"
         assert cat.organs("brain")
         assert cat.organs("sense")
@@ -140,7 +142,7 @@ class TestCreateCat:
         hook_called = []
         wiring_frozen_at_hook = []
 
-        async def hook(cat: CatBase) -> None:
+        def hook(cat: CatBase) -> None:
             hook_called.append(True)
             wiring_frozen_at_hook.append(cat.wiring._frozen)
 
@@ -157,7 +159,7 @@ class TestCreateCat:
         hook_called = []
         wiring_frozen_at_hook = []
 
-        async def hook(cat: CatBase) -> None:
+        def hook(cat: CatBase) -> None:
             hook_called.append(True)
             wiring_frozen_at_hook.append(cat.wiring._frozen)
 
@@ -171,11 +173,11 @@ class TestCreateCat:
         """两个钩子都传入时，执行顺序: on_before_freeze → freeze → on_assembled。"""
         order = []
 
-        async def before_hook(cat: CatBase) -> None:
+        def before_hook(cat: CatBase) -> None:
             order.append("before")
             assert cat.wiring._frozen is False
 
-        async def after_hook(cat: CatBase) -> None:
+        def after_hook(cat: CatBase) -> None:
             order.append("after")
             assert cat.wiring._frozen is True
 
@@ -186,16 +188,18 @@ class TestCreateCat:
 
     def test_on_before_freeze_can_inject_organ(self) -> None:
         """on_before_freeze 钩子中可以 mount 新器官。"""
-        async def hook(cat: CatBase) -> None:
+        def hook(cat: CatBase) -> None:
             cat.mount("brain", "custom_organ", NoopAmygdala())
-            cat.wiring.connect(("brain", "custom_organ"), ("brain", "thalamus"))
+            cat.wiring.connect(("brain", "custom_organ"),
+                               ("brain", "thalamus"))
 
         cat = create_cat("test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          on_before_freeze=hook)
         # 钩子中注入的器官可见
         assert cat.has_organ("brain", "custom_organ")
         # wiring 边已建立（在 freeze 前）
-        assert cat.wiring.is_allowed(("brain", "custom_organ"), ("brain", "thalamus"))
+        assert cat.wiring.is_allowed(
+            ("brain", "custom_organ"), ("brain", "thalamus"))
 
 
 class TestModels:

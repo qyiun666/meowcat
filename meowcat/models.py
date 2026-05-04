@@ -19,7 +19,7 @@ __all__ = [
     "MaintenanceReportShape", "CandidateShape", "LocateResultShape",
     "StageEvent", "PipelineContext", "LoopEvent",
     "MergeProposalShape", "KittenCapability",
-    "WorkflowShape",
+    "WorkflowShape", "LLMConfig", "ModelConfig",
 ]
 
 # -- Brain-area shapes ------------------------------------------------------
@@ -301,3 +301,68 @@ class KittenCapability(BaseModel):
             raise ValueError(
                 "KittenCapability: at least one brain required (cerebrum or cerebellum), kitten cannot be brainless"
             )
+
+
+# -- LLM shelf (v1.1.5) --------------------------------------------------
+
+
+# -- Model config (v1.1.29) — litellm-free model shape ---------------------
+
+class ModelConfig(BaseModel):
+    """Provider-agnostic model configuration — framework-layer canonical shape.
+
+    Zero litellm dependency. Designed as the single source of truth for LLM
+    model descriptors across workers, agents, and pipeline stages.  Application
+    layer maps this to concrete provider SDK calls.
+
+    .. versionchanged:: 1.2.12
+        Added ``api_key``, ``base_url`` fields; now supersedes ``LLMConfig``.
+                .. deprecated:: 1.2.17
+                    Use :class:`ModelConfig` instead of ``LLMConfig``.
+
+    Usage::
+
+        from meowcat.models import ModelConfig
+        cfg = ModelConfig(provider="openai", model="gpt-4o", temperature=0.7)
+        worker = BaseWorker(model=cfg)
+    """
+    provider: str = "openai"
+    model: str
+    temperature: float = 0.7
+    max_tokens: int = 4096
+    top_p: float = 1.0
+    api_key: str = ""
+    base_url: str = ""
+    stop: list[str] = Field(default_factory=list)
+    extra: dict[str, Any] = Field(default_factory=dict)
+
+    def to_llm_config(self) -> ModelConfig:
+        """Convert to a :class:`ModelConfig` for the colony shelf.
+
+        .. deprecated:: 1.2.17
+            Use :class:`ModelConfig` directly.  ``LLMConfig`` is now an alias
+            for ``ModelConfig``.
+        """
+        import warnings
+        warnings.warn(
+            "ModelConfig.to_llm_config() is deprecated. "
+            "Use ModelConfig directly — LLMConfig is now an alias.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return ModelConfig(
+            model=self.model,
+            provider=self.provider,
+            api_key=self.api_key,
+            base_url=self.base_url,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            top_p=self.top_p,
+            stop=list(self.stop),
+            extra=self.extra,
+        )
+
+
+# v1.2.17: LLMConfig is now a deprecated alias for ModelConfig.
+# Use ModelConfig directly.  The two classes were unified in v1.2.12.
+LLMConfig = ModelConfig  # deprecated — use ModelConfig directly

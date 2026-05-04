@@ -167,6 +167,10 @@ class TestRuntimeCheckable:
             def set_last_seen(self, eid, ts) -> None: pass
             # v1.0.15 长流程 workflow 查询
             def list_active_workflows(self, cat_id) -> list: return []
+            # v1.1.21 跨猫记忆搜索 + 委托快照
+            def set_colony_memory(self, memory_pool) -> None: pass
+            def snapshot(self, *topics, scope="colony") -> dict: return {}
+            def locate(self, query, scope="self") -> list: return []
         assert isinstance(Dummy(), HippocampusProtocol)
 
     def test_thalamus_checkable(self) -> None:
@@ -253,12 +257,16 @@ class TestRuntimeCheckable:
             async def feel_output(self, out, schema=None) -> dict: return {}
             def detect_drift(self, recent) -> dict: return {}
             def check_hallucination(self, reply, sid=None) -> dict: return {}
+            def detect_blind_spot(self, queries, known=None) -> list: return []
         assert isinstance(Dummy(), WhiskersProtocol)
 
     def test_paws_checkable(self) -> None:
         class Dummy:
             name: str = "paws"
             async def execute(self, tool_name, params) -> dict: return {}
+            def on_tool_failure(self, tool, params, error,
+                                elapsed=0) -> dict: return {}
+
             async def touch_file(self, path, content=None) -> dict: return {}
             async def run_command(self, cmd, **kw) -> dict: return {}
             async def interact_with_tool(self, sn, params) -> dict: return {}

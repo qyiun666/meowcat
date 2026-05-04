@@ -1,0 +1,114 @@
+"""meowcat CLI theme engine — framework-layer colour/style definitions (v1.1.29).
+
+Provides :class:`Theme` — a zero-brand, neutral colour palette for terminal
+and TUI applications. Deliberately avoids brand-specific colours so every
+downstream app can apply its own identity on top.
+
+Usage::
+
+    from meowcat.cli.theme import Theme
+    print(f"{Theme.GREEN}success{Theme.RESET}")
+"""
+# (c) 2025-2026 Axonant. MIT License.
+
+from __future__ import annotations
+
+
+class Theme:
+    """Framework-layer neutral terminal theme.
+
+    No brand colours. No opinionated palette. Just readable ANSI codes
+    suitable as a base for any downstream app's custom theme.
+    """
+
+    # -- Reset ----------------------------------------------------------
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    ITALIC = "\033[3m"
+    UNDERLINE = "\033[4m"
+
+    # -- Foreground (neutral, high-contrast) ----------------------------
+    BLACK = "\033[30m"
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
+
+    # -- Bright foreground ----------------------------------------------
+    BRIGHT_BLACK = "\033[90m"
+    BRIGHT_RED = "\033[91m"
+    BRIGHT_GREEN = "\033[92m"
+    BRIGHT_YELLOW = "\033[93m"
+    BRIGHT_BLUE = "\033[94m"
+    BRIGHT_MAGENTA = "\033[95m"
+    BRIGHT_CYAN = "\033[96m"
+    BRIGHT_WHITE = "\033[97m"
+
+    # -- Background -----------------------------------------------------
+    BG_BLACK = "\033[40m"
+    BG_RED = "\033[41m"
+    BG_GREEN = "\033[42m"
+    BG_YELLOW = "\033[43m"
+    BG_BLUE = "\033[44m"
+    BG_MAGENTA = "\033[45m"
+    BG_CYAN = "\033[46m"
+    BG_WHITE = "\033[47m"
+
+    # -- Semantic aliases (framework-level, no brand mapping) ------------
+    SUCCESS = GREEN
+    WARNING = YELLOW
+    ERROR = RED
+    INFO = CYAN
+    DEBUG = DIM
+    HIGHLIGHT = BOLD
+    MUTED = DIM
+
+    # -- Helpers ---------------------------------------------------------
+
+    @staticmethod
+    def styled(text: str, *codes: str) -> str:
+        """Wrap text in ANSI codes with auto-reset.
+
+        Usage::
+
+            Theme.styled("OK", Theme.GREEN, Theme.BOLD)  # → bold green "OK"
+        """
+        prefix = "".join(codes)
+        return f"{prefix}{text}{Theme.RESET}"
+
+    @classmethod
+    def success(cls, text: str) -> str:
+        """Green success text."""
+        return cls.styled(text, cls.SUCCESS)
+
+    @classmethod
+    def warning(cls, text: str) -> str:
+        """Yellow warning text."""
+        return cls.styled(text, cls.WARNING)
+
+    @classmethod
+    def error(cls, text: str) -> str:
+        """Red error text."""
+        return cls.styled(text, cls.ERROR)
+
+    @classmethod
+    def info(cls, text: str) -> str:
+        """Cyan info text."""
+        return cls.styled(text, cls.INFO)
+
+    @classmethod
+    def header(cls, text: str) -> str:
+        """Bold highlighted header."""
+        return cls.styled(text, cls.HIGHLIGHT)
+
+    @classmethod
+    def muted(cls, text: str) -> str:
+        """Dim/muted secondary text."""
+        return cls.styled(text, cls.MUTED)
+
+
+__all__ = ["Theme"]

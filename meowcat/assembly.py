@@ -45,22 +45,25 @@ will raise RuntimeError clearly indicating the subsystem is disabled.
 from __future__ import annotations
 
 import json as _json
+import logging as _logging
 import time as _time
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from typing import Any, AsyncIterator
 
 from meowcat.errors import IllegalNeuralPathError, StandaloneCatError
 from meowcat.events import EventBus, Handler
 from meowcat.host import OrganHost
-from meowcat.loop import Lifecycle
+from meowcat.events import Lifecycle
 from meowcat.nervous import Nervous
 from meowcat.reflex import Reflex, ReflexArc
 from meowcat.tools.skill import SkillRegistry
 from meowcat.tools.tool import ToolRegistry
 from meowcat.wiring import Organ, Wiring
 
-# v1.0.14: Lifecycle hook type — async callable accepting a CatBase instance
-CatHook = Callable[["CatBase"], Awaitable[None]]
+_log = _logging.getLogger(__name__)
+
+# v1.0.14: Lifecycle hook type — sync callable accepting a CatBase instance
+CatHook = Callable[["CatBase"], None]
 
 
 class CatBase:
@@ -81,6 +84,10 @@ class CatBase:
         forbidden_methods: frozenset[str] = frozenset(),
         enable_wiring: bool = True,
         enable_reflex: bool = True,
+        register_default_paths: bool = True,
+        register_default_chains: bool = True,
+        register_default_loops: bool = True,
+        register_default_tools: bool = True,
     ) -> None:
         """Construct cat skeleton.
 
@@ -103,11 +110,23 @@ class CatBase:
             enable_reflex: When False, ReflexArc subsystem is not created;
                 ``perceive/register_reflex`` calls raise RuntimeError.
                 Suitable for "signal-only, no-reflex" scenarios.
+            register_default_paths: When False, BUILTIN_PATHS are not
+                auto-registered. Call ``register_default_paths()`` later.
+            register_default_chains: When False, BUILTIN_CHAINS are not
+                auto-registered. Call ``register_default_chains()`` later.
+            register_default_loops: When False, BUILTIN_LOOPS are not
+                auto-registered. Call ``register_default_loops()`` later.
+            register_default_tools: When False, BUILTIN_TOOLS are not
+                auto-registered by ``assemble_default_cat()``.
+                Call ``register_default_tools()`` later.
         """
         if container is None:
             raise StandaloneCatError(cat_id)
         self._container = container
-        self._address = f"{container.colony_id}/{cat_id}"
+        # _cat_uid will be overwritten by Colony.create_cat() with
+        # the real MD6+increment UID; fallback to cat_id for non-Colony usage
+        self._cat_uid = cat_id
+        self._address = f"{container.colony_id}/{cat_id}-{self._cat_uid}"
         self._parent_id = parent_id
         # v1.0.1: Set _allowed_organs=None first to avoid __init__ internal
         # self.xxx assignments being intercepted by __getattribute__;
@@ -129,15 +148,18 @@ class CatBase:
         # v0.5.27: Path registry — atomic path table
         from meowcat.path import PathRegistry, register_builtin_paths  # noqa: PLC0415
         self.path_registry = PathRegistry()
-        register_builtin_paths(self.path_registry)
+        if register_default_paths:
+            register_builtin_paths(self.path_registry)
         # v0.5.28a: Chain registry — Path sequence composer
         from meowcat.chain import ChainRegistry, register_builtin_chains  # noqa: PLC0415
         self.chain_registry = ChainRegistry()
-        register_builtin_chains(self.chain_registry)
+        if register_default_chains:
+            register_builtin_chains(self.chain_registry)
         # v0.5.28b: Loop registry — Chain + trigger/exit events
-        from meowcat.loops import LoopRegistry, register_default_loops  # noqa: PLC0415
+        from meowcat.loops import LoopRegistry, register_default_loops as _register_default_loops  # noqa: PLC0415
         self.loop_registry = LoopRegistry()
-        register_default_loops(self.loop_registry, self.chain_registry)
+        if register_default_loops:
+            _register_default_loops(self.loop_registry, self.chain_registry)
         # v1.0.4: LoopSequence registry — Loop sequence composer
         from meowcat.loops import LoopSequenceRegistry  # noqa: PLC0415
         self.loopseq_registry = LoopSequenceRegistry()
@@ -146,6 +168,12 @@ class CatBase:
         self._shutdown_hooks: list[CatHook] = []
         # v1.0.15: Long-running workflow tracking
         self._active_workflows: dict[str, dict[str, Any]] = {}
+        # v1.2.0: Unified self — all organ read/write converge here
+        self._cat_self: Any = None
+        # v1.2.5: Current self snapshot — set by DefaultLoops before each action
+        self._current_snapshot: Any = None
+        # v1.2.10: BUILTIN_* optional registration flags
+        self._register_default_tools = register_default_tools
         # v1.0.1: allowed_organs must be assigned after all properties are set,
         # to avoid __init__ internal self.xxx assignments being intercepted
         # by __getattribute__
@@ -160,13 +188,13 @@ class CatBase:
 
     @property
     def cat_address(self) -> str:
-        """Global address: ``colony_id/cat_id`` (uid will be appended in v1.1.4)."""
+        """Global address: ``colony_id/cat_id-cat_uid``."""
         return self._address
 
     @property
     def cat_uid(self) -> str:
-        """Cat unique identifier within the colony (placeholder, will be generated in v1.1.4)."""
-        return self.cat_id
+        """Cat unique identifier within the colony: ``cat_id-{MD6}{increment:04d}``."""
+        return self._cat_uid
 
     @property
     def parent_id(self) -> str | None:
@@ -177,6 +205,16 @@ class CatBase:
     def cat_id(self) -> str:
         """Cat unique identifier (read from ``_host``)."""
         return self._host.cat_id
+
+    @property
+    def host(self) -> OrganHost:
+        """Organ container (public accessor for diagnostic/injection tools).
+
+        .. versionadded:: 1.2.12
+            Previously only ``_host`` (private) was available.  This property
+            gives :class:`Stethoscope` and :class:`Needle` a public access path.
+        """
+        return self._host
 
     @property
     def wiring(self) -> Wiring:
@@ -202,6 +240,38 @@ class CatBase:
     def events(self) -> EventBus:
         """Event bus (always available)."""
         return self._events
+
+    # v1.2.0: Unified self
+
+    @property
+    def cat_self(self) -> Any:
+        """Unified self — single entry/exit for all organ read/write paths.
+
+        Set by the app layer during assembly. When None, closed-loop
+        features (before_act / after_act / default loops) are unavailable.
+
+        Returns:
+            :class:`~meowcat.biology.cat_self.CatSelf` instance, or None.
+        """
+        return self._cat_self
+
+    @cat_self.setter
+    def cat_self(self, value: Any) -> None:
+        self._cat_self = value
+
+    # v1.2.5: Current self snapshot
+
+    @property
+    def current_snapshot(self) -> Any:
+        """The most recent :class:`~meowcat.biology.cat_self.SelfSnapshot`
+        from ``CatSelf.before_act()``.
+
+        Set by DefaultLoops before each action. Organs can read this
+        to access consistent self-state during action execution.
+
+        Returns None if no snapshot has been taken yet.
+        """
+        return self._current_snapshot
 
     # -- Organ container facade ---------------------------------------------
 
@@ -238,6 +308,14 @@ class CatBase:
         """Assert required organs are mounted."""
         self._host.assert_organs_mounted(required)
 
+    def list_all_organs(self) -> list[tuple[str, str]]:
+        """List all mounted organ coordinates (v1.1.8).
+
+        Returns:
+            List of ``(category, name)`` tuples.
+        """
+        return self._host.list_all_organs()
+
     # -- Event facade -------------------------------------------------------
 
     def on(self, event: str, handler: Handler | None = None) -> Any:
@@ -253,6 +331,29 @@ class CatBase:
         await self._events.emit(event, payload)
 
     # -- Organ attribute access control (v1.0.1) ------------------------------
+    #
+    # ``__getattribute__`` intercepts ALL non-private attribute access on CatBase
+    # and kitten instances.  ``_ALWAYS_ALLOWED`` is the whitelist of attributes
+    # that bypass the ``allowed_organs`` check.
+    #
+    # Maintenance rules (v1.2.33):
+    #
+    # 1. ADD to this set when you add a new public property/method on CatBase
+    #    that ALL kittens must access regardless of their ``allowed_organs``.
+    #    Typical candidates: lifecycle facades, registries, diagnostics.
+    #
+    # 2. Do NOT add organ-specific accessors (e.g. ``cat.ears.hear(...)``)
+    #    — those go through ``allowed_organs`` filtering.
+    #
+    # 3. Properties that begin with ``_`` are automatically exempt (hot-path
+    #    skip in ``__getattribute__``) and do not need listing here.
+    #
+    # 4. Review this list whenever a new CatBase constructor boolean switch
+    #    (like ``enable_wiring``) is added — the corresponding property
+    #    should usually be listed here.
+    #
+    # Performance: O(1) frozenset membership test.  Keep the set small;
+    # each entry adds one lookup per attribute access in restricted kittens.
 
     def __getattribute__(self, name: str) -> Any:
         """Intercept direct access to forbidden organ names.
@@ -284,6 +385,8 @@ class CatBase:
         "path_registry", "chain_registry", "loop_registry",
         "loopseq_registry",
         "wiring", "reflexes", "events",
+        "list_all_organs", "has_organ",
+        "cat_self",  # v1.2.0
     })
 
     # -- Neural synapse facade -----------------------------------------------
@@ -302,7 +405,48 @@ class CatBase:
             raise RuntimeError(
                 "middleware unavailable — cat was constructed with enable_wiring=False",
             )
-        self._nervous._middleware.append(mw)
+        self._nervous.use_middleware(mw)
+
+    # -- Default registration methods (v1.2.10) ----------------------------
+
+    def register_default_paths(self) -> None:
+        """Register BUILTIN_PATHS into path_registry.
+
+        Safe to call multiple times — duplicates overwrite in registration
+        order. Use when ``register_default_paths=False`` was passed to
+        ``__init__`` but paths are needed later.
+        """
+        from meowcat.path import register_builtin_paths  # noqa: PLC0415
+        register_builtin_paths(self.path_registry)
+
+    def register_default_chains(self) -> None:
+        """Register BUILTIN_CHAINS into chain_registry.
+
+        Safe to call multiple times. Use when ``register_default_chains=False``
+        was passed to ``__init__`` but chains are needed later.
+        """
+        from meowcat.chain import register_builtin_chains  # noqa: PLC0415
+        register_builtin_chains(self.chain_registry)
+
+    def register_default_loops(self) -> None:
+        """Register BUILTIN_LOOPS into loop_registry (and associated Chains).
+
+        Safe to call multiple times. Use when ``register_default_loops=False``
+        was passed to ``__init__`` but loops are needed later.
+        """
+        from meowcat.loops import register_default_loops  # noqa: PLC0415
+        register_default_loops(self.loop_registry, self.chain_registry)
+
+    def register_default_tools(self) -> None:
+        """Register BUILTIN_TOOLS into tool_registry.
+
+        Safe to call multiple times — duplicates overwrite by tool name.
+        Use when ``register_default_tools=False`` was passed to ``__init__``
+        but builtin tools are needed later.
+        """
+        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        for t in BUILTIN_TOOLS:
+            self.tool_registry.register(t)
 
     async def signal(
         self,
@@ -489,8 +633,8 @@ class CatBase:
         """Scan Hippocampus for unfinished Workflows and load into
         ``_active_workflows``.
 
-        Silent failure: missing Hippocampus or query exceptions do not
-        block startup.
+        Logs failures at debug level — missing Hippocampus or query
+        exceptions do not block startup.
         """
         if not self.has_organ("brain", "hippocampus"):
             return
@@ -502,13 +646,14 @@ class CatBase:
                 if eid:
                     self._active_workflows[eid] = wf
         except Exception:
-            pass
+            _log.debug(
+                "_resume_workflows: failed to load workflows", exc_info=True)
 
     async def _checkpoint_workflows(self) -> None:
         """Iterate all active Workflows and write checkpoint to Hippocampus.
 
-        Silent failure: missing Hippocampus or write exceptions do not
-        block shutdown.
+        Logs failures at debug level — missing Hippocampus or write
+        exceptions do not block shutdown.
         """
         if not self._active_workflows or not self.has_organ("brain", "hippocampus"):
             return
@@ -530,7 +675,8 @@ class CatBase:
                     text="\n[checkpoint] " + _json.dumps(checkpoint_data),
                 )
         except Exception:
-            pass
+            _log.debug(
+                "_checkpoint_workflows: failed to write checkpoint", exc_info=True)
 
     def on_start(self, hook: CatHook) -> None:
         """Register a start hook. Called in registration order after
@@ -571,7 +717,7 @@ class CatBase:
         await self._resume_workflows()
         await self._events.emit(Lifecycle.START, {"cat": self})
         for hook in self._start_hooks:
-            await hook(self)
+            hook(self)
 
     async def shutdown(self) -> None:
         """Shut down the cat. Save active Workflows → call on_shutdown hooks
@@ -582,7 +728,7 @@ class CatBase:
         # v1.0.15: Save all active Workflows to Hippocampus
         await self._checkpoint_workflows()
         for hook in reversed(self._shutdown_hooks):
-            await hook(self)
+            hook(self)
         await self._events.emit(Lifecycle.SHUTDOWN, {"cat": self})
 
     # -- Loop execution -------------------------------------------------------
@@ -760,9 +906,11 @@ def assemble_default_cat(
     cat.wire_default_nervous_system()
 
     # v0.5.23: Register generic builtin tools (every cat needs these)
-    from meowcat.tools.builtin import BUILTIN_TOOLS  # noqa: PLC0415
-    for t in BUILTIN_TOOLS:
-        cat.tool_registry.register(t)
+    # v1.2.10: Optional — skip when register_default_tools=False
+    if cat._register_default_tools:
+        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        for t in BUILTIN_TOOLS:
+            cat.tool_registry.register(t)
 
     # Reflexes (caller-provided)
     if reflexes:

@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from meowcat.storage import SharedStore
+
 
 class InMemoryGraphStore:
     """Default graph store — pure Python dict, lost on process restart."""
@@ -64,7 +66,7 @@ class InMemoryVectorStore:
         return dot / (norm_a * norm_b)
 
 
-class InMemorySharedStore:
+class InMemorySharedStore(SharedStore):
     """Default shared store — pure Python dict, lost on process restart.
 
     Default implementation for Colony shared memory, suitable for single-process prototypes.
@@ -119,7 +121,7 @@ class InMemorySharedStore:
                     except asyncio.QueFull:
                         pass
 
-    # -- Protocol compat methods ------------------------------------------
+    # -- SharedStore compat methods (override for efficiency) ---------
     async def load(self) -> dict[str, Any]:
         return dict(self._data)
 

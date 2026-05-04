@@ -1,8 +1,10 @@
-"""meowcat Gateway — WebhookAdapter (callback skeleton adapter).
+"""meowcat plus/gateway — WebhookAdapter (callback skeleton adapter).
 
 Receives HTTP POST callbacks, supports signature verification interface (subclass implements).
 The framework layer only provides the protocol pipe; platform-specific logic
 (Feishu, WeChat, etc.) is implemented in application-layer subclasses.
+
+Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -14,6 +16,7 @@ import json
 import logging
 from typing import Any, AsyncIterator, Awaitable, Callable
 
+from meowcat.constants import GATEWAY_DEFAULT_TIMEOUT
 from meowcat.gateway.protocol import HTTP_REASONS, IoAdapterProtocol, SignalContext
 
 _logger = logging.getLogger(__name__)
@@ -83,7 +86,7 @@ class WebhookAdapter:
     ) -> None:
         """Handle a single webhook POST request."""
         try:
-            request_line = await asyncio.wait_for(reader.readline(), timeout=30)
+            request_line = await asyncio.wait_for(reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT)
             if not request_line:
                 writer.close()
                 return
@@ -134,7 +137,7 @@ class WebhookAdapter:
 
         except (json.JSONDecodeError, asyncio.TimeoutError):
             await self._respond(writer, 400)
-        except (ConnectionError, OSError, asyncio.TimeoutError):
+        except (ConnectionError, OSError):
             await self._respond(writer, 500)
         finally:
             try:

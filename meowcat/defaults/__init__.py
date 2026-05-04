@@ -30,10 +30,10 @@ from meowcat.defaults.organs import (
     NoopWhiskers,
 )
 from meowcat.defaults.presets import (
-    KW_BILINGUAL, KW_EN, KW_EDUCATION, KW_FINANCE, KW_LEGAL, KW_MEDICAL, KW_TECH, KW_ZH,
+    KW_BILINGUAL, KW_EN, KW_ZH,
     KW_PRESETS,
     KeywordPreset,
-    PROMPT_DEFAULT, PROMPT_EDUCATION, PROMPT_FINANCE, PROMPT_LEGAL, PROMPT_MEDICAL, PROMPT_TECH, PROMPT_ZH,
+    PROMPT_DEFAULT, PROMPT_ZH,
     PROMPT_PRESETS,
     PromptPreset,
 )
@@ -95,12 +95,10 @@ __all__ = [
     "RenovatedAnomalyGrowth", "RenovatedCorrectionGrowth",
     "RenovatedCrystallizer", "RenovatedRoleEmergence",
     "RENOVATED_ORGAN_MAP",
-    # Keyword & Prompt presets (二语 行业 可挂载)
+    # Keyword & Prompt presets (二语 可挂载)
     "KeywordPreset", "PromptPreset",
     "KW_EN", "KW_ZH", "KW_BILINGUAL",
-    "KW_TECH", "KW_FINANCE", "KW_MEDICAL", "KW_LEGAL", "KW_EDUCATION",
     "PROMPT_DEFAULT", "PROMPT_ZH",
-    "PROMPT_TECH", "PROMPT_FINANCE", "PROMPT_MEDICAL", "PROMPT_LEGAL", "PROMPT_EDUCATION",
     "KW_PRESETS", "PROMPT_PRESETS",
     # v1.0.17 Pipeline Stages
     "BaseStage",

@@ -70,7 +70,7 @@ class I18n(Pluggable):
     def lang(self, value: str) -> None:
         if value not in self._locales:
             # Try running plugins to see if one can supply the language
-            for _hook, r in self._run_plugs("language", value, None):
+            for _hook, r in self._run_plugs_sync("language", value, None):
                 if isinstance(r, dict):
                     self._locales[value] = r
                     break

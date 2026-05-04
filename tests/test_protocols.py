@@ -111,11 +111,12 @@ class TestNoopSatisfiesProtocol:
         assert a.classify_rejection("hello") == "none"
         assert a.parse_correction("hello") is None
 
-    def test_noop_frontal(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_frontal(self) -> None:
         f = NoopFrontal()
         assert isinstance(f, FrontalCortexProtocol)
-        assert f.detect_shift("hello") is False
-        assert f.is_continue("hello") is False
+        assert await f.detect_shift("hello") is False
+        assert await f.is_continue("hello") is False
 
     def test_noop_hypothalamus(self) -> None:
         h = NoopHypothalamus()
@@ -125,10 +126,11 @@ class TestNoopSatisfiesProtocol:
         c = NoopCortex()
         assert isinstance(c, CortexProtocol)
 
-    def test_noop_ears(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)
-        assert e.extract_keywords("hello") == []
+        assert await e.extract_keywords("hello") == []
         assert e.detect_language("hello") == "unknown"
 
     def test_noop_eyes(self) -> None:
@@ -165,29 +167,33 @@ class TestNoopSatisfiesProtocol:
         assert isinstance(c, LLMBrainProtocol)
         assert c.name == "noop_cerebellum"
 
-    def test_noop_anomaly_growth(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_anomaly_growth(self) -> None:
         a = NoopAnomalyGrowth()
         assert isinstance(a, AnomalyGrowthProtocol)
         assert a.name == "noop_anomaly_growth"
-        result = a.record("drift", "snippet", 0.9)
+        result = await a.record("drift", "snippet", 0.9)
         assert isinstance(result, dict)
 
-    def test_noop_correction_growth(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_correction_growth(self) -> None:
         c = NoopCorrectionGrowth()
         assert isinstance(c, CorrectionGrowthProtocol)
-        result = c.record("wrong", "correct", session_id="s1")
+        result = await c.record("wrong", "correct", session_id="s1")
         assert isinstance(result, dict)
 
-    def test_noop_crystallizer(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_crystallizer(self) -> None:
         c = NoopCrystallizer()
         assert isinstance(c, CrystallizerProtocol)
-        assert c.crystallize("my_skill", 3) is False
-        assert c.hotspots(2) == []
+        assert await c.crystallize("my_skill", 3) is False
+        assert await c.hotspots(2) == []
 
-    def test_noop_role_emergence(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_role_emergence(self) -> None:
         r = NoopRoleEmergence()
         assert isinstance(r, RoleEmergenceProtocol)
-        result = r.record("pattern_x", "evidence_y")
+        result = await r.record("pattern_x", "evidence_y")
         assert isinstance(result, dict)
 
 

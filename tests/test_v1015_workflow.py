@@ -11,7 +11,7 @@ Validates:
 
 from __future__ import annotations
 from meowcat.testing import make_cat
-from meowcat.loop import Lifecycle
+from meowcat.events import Lifecycle
 
 import anyio
 import pytest
@@ -381,7 +381,7 @@ class TestCatBaseWorkflowLifecycle:
         cat, hippo = self._setup_cat_with_hippo()
         order = []
 
-        async def hook(c):
+        def hook(c):
             order.append("hook")
 
         async def on_start_handler(payload):
@@ -409,7 +409,7 @@ class TestCatBaseWorkflowLifecycle:
         cat, hippo = self._setup_cat_with_hippo()
         order = []
 
-        async def hook(c):
+        def hook(c):
             order.append("hook")
 
         async def on_shutdown_handler(payload):

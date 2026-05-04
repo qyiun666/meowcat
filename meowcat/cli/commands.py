@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any
 
 from meowcat.cli.router import Command, CommandContext, CommandRouter
+
+_log = logging.getLogger(__name__)
 
 
 # -- Module-level debug flag ---------------------------------------------------
@@ -176,7 +179,8 @@ def register_colony_commands(
         cat_ids = colony.list_cats()
         if not cat_ids:
             return t.t("cats_no_cats")
-        max_cats = colony.max_cats if colony.max_cats is not None else t.t("colony_unlimited")
+        max_cats = colony.max_cats if colony.max_cats is not None else t.t(
+            "colony_unlimited")
         lines = [
             f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_ids), max_cats=max_cats)}**",
             "",
@@ -189,6 +193,8 @@ def register_colony_commands(
                 organs = len(cat.list_all_organs())
                 lines.append(f"  {cid} ({organs} organs){marker}")
             except Exception:
+                _log.debug("Failed to list organs for cat '%s'",
+                           cid, exc_info=True)
                 lines.append(f"  {cid}{marker}")
         return "\n".join(lines)
 
@@ -318,9 +324,11 @@ def _health_sync(t: Any, colony: Any) -> str:
         try:
             cat = colony.get_cat(cid)
             organs = cat.list_all_organs()
-            lines.append(t.t("health_cat_status", cat_id=cid, status=len(organs), errors=0))
+            lines.append(t.t("health_cat_status", cat_id=cid,
+                         status=len(organs), errors=0))
         except Exception as exc:
-            lines.append(t.t("health_cat_status", cat_id=cid, status=0, errors=1))
+            lines.append(
+                t.t("health_cat_status", cat_id=cid, status=0, errors=1))
     return "\n".join(lines) if lines else t.t("health_no_cats")
 
 
@@ -331,13 +339,16 @@ def _format_health_results(t: Any, results: dict) -> str:
     total_errors = 0
     for cat_id, organs in results.items():
         if isinstance(organs, dict):
-            errs = sum(1 for v in organs.values() if isinstance(v, dict) and "error" in v)
+            errs = sum(1 for v in organs.values()
+                       if isinstance(v, dict) and "error" in v)
             total_organs += len(organs)
             total_errors += errs
-            lines.append(t.t("health_cat_status", cat_id=cat_id, status=len(organs), errors=errs))
+            lines.append(t.t("health_cat_status", cat_id=cat_id,
+                         status=len(organs), errors=errs))
         else:
             total_errors += 1
-            lines.append(t.t("health_cat_status", cat_id=cat_id, status=0, errors=1))
+            lines.append(
+                t.t("health_cat_status", cat_id=cat_id, status=0, errors=1))
     lines.append("")
     if total_errors == 0:
         lines.append(t.t("health_all_ok"))
@@ -358,7 +369,8 @@ def _format_brain_results(t: Any, cat_id: str, results: dict) -> str:
             summary = json.dumps(data, default=str) if data else "OK"
             lines.append(f"  {organ_name}: {summary}")
     lines.append("")
-    lines.append(t.t("health_all_ok") if err_count == 0 else t.t("health_issues"))
+    lines.append(t.t("health_all_ok") if err_count ==
+                 0 else t.t("health_issues"))
     return "\n".join(lines)
 
 

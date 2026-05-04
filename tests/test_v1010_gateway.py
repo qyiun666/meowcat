@@ -28,14 +28,14 @@ import pytest
 
 from meowcat.assembly import CatBase
 from meowcat.testing import make_cat
-from meowcat.gateway import (
+from meowcat.plus.gateway import (
     CliAdapter,
-    Gateway,
     HttpAdapter,
     IpcAdapter,
     WebhookAdapter,
     WsAdapter,
 )
+from meowcat.gateway import Gateway
 from meowcat.gateway.protocol import (
     IoAdapterProtocol,
     GatewayProtocol,
@@ -346,7 +346,7 @@ class TestHttpAdapter:
 # ═══════════════════════════════════════════════════════════════════
 
 # WebSocket 帧工具（复用 ws_adapter 中的函数）
-from meowcat.gateway.ws_adapter import (  # noqa: E402
+from meowcat.plus.gateway.ws_adapter import (  # noqa: E402
     _compute_accept,
     _decode_frame,
     _encode_frame,

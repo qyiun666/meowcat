@@ -160,7 +160,7 @@ class Stethoscope:
             ``{"brain:hippocampus": {...}, "sense:ears": {...}, ...}``
             organs that fail diagnosis get ``{"error": str(exc)}``
         """
-        host: OrganHost = cat._host
+        host: OrganHost = cat.host
         result: dict[str, dict[str, Any]] = {}
         for category, name in host.list_all_organs():
             key = f"{category}:{name}"
@@ -181,7 +181,7 @@ class Stethoscope:
         Returns:
             ``{"hippocampus": {...}, "cerebrum": {...}}`` (category prefix omitted)
         """
-        host: OrganHost = cat._host
+        host: OrganHost = cat.host
         result: dict[str, dict[str, Any]] = {}
         for cat_name, instance in host.organs(category).items():
             key = cat_name  # omit category prefix

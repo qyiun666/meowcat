@@ -20,6 +20,9 @@ as a single-source table; ``BUILTIN_NERVOUS_SYSTEM`` and ``ORGAN_PROTOCOLS`` are
 auto-aggregated from this table. Adding/migrating organs only changes ``ORGAN_SPECS``,
 preventing edge list drift.
 
+**v1.1.22**: biology package also contains collective growth (:mod:`meowcat.biology.growth`)
+and role emergence (:mod:`meowcat.biology.roles`) modules for colony-level intelligence.
+
 This file has zero third-party dependencies, zero meowagent imports.
 """
 # (c) 2025-2026 Axonant. MIT License.
@@ -28,7 +31,7 @@ This file has zero third-party dependencies, zero meowagent imports.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 # Coordinate constants re-exported from anatomy.py (public API paths unchanged)
 from meowcat.anatomy import (
@@ -65,8 +68,62 @@ from meowcat.anatomy import (
 )
 from meowcat.wiring import Edge, Organ, Wiring
 
-if TYPE_CHECKING:
-    pass
+# v1.1.22: colony-level collective intelligence (lazy, see __getattr__)
+# v1.1.23: cat's private scratchpad (lazy)
+# v1.1.24: insight organ + fusion strategies (lazy)
+# v1.1.25: Cortex worldview L1 (lazy)
+# v1.1.26: active growth (lazy)
+# v1.1.27: metacognition L3 (lazy)
+# v1.2.0: unified self + three default closed loops (lazy)
+
+
+# v1.2.15: lazy submodule imports — these names are resolved on first access
+# to avoid eager-importing cat_self, pineal_gland, cortex, etc. when only OrganSpec is needed.
+_LAZY_BIOLOGY: dict[str, str] = {
+    # v1.1.22 colony-level collective intelligence
+    "CollectiveGrowth": "meowcat.biology.growth",
+    "CollectiveEmergence": "meowcat.biology.roles",
+    # v1.1.23 scribble pad
+    "ScribblePad": "meowcat.biology.scribble_pad",
+    "DefaultScribbleFilter": "meowcat.biology.scribble_pad",
+    "DefaultScribbleLogger": "meowcat.biology.scribble_pad",
+    "DefaultScribblePersister": "meowcat.biology.scribble_pad",
+    # v1.1.24 pineal gland + fusion cycle
+    "PinealGland": "meowcat.biology.pineal_gland",
+    "Insight": "meowcat.biology.pineal_gland",
+    "DefaultMerger": "meowcat.biology.pineal_gland",
+    "DefaultContradiction": "meowcat.biology.pineal_gland",
+    "DefaultInsightFilter": "meowcat.biology.pineal_gland",
+    "FusionCycle": "meowcat.biology.fusion_cycle",
+    # v1.1.25 cortex worldview L1
+    "Cortex": "meowcat.biology.cortex",
+    "DefaultRuleExtractor": "meowcat.biology.cortex",
+    # v1.1.26 active growth
+    "BlindSpotDetector": "meowcat.biology.active_growth",
+    "ToolFailureLearner": "meowcat.biology.active_growth",
+    "HotPathObserver": "meowcat.biology.active_growth",
+    "ActiveGrowthPack": "meowcat.biology.active_growth_pack",
+    # v1.1.27 metacognition L3
+    "Metacognition": "meowcat.biology.metacognition",
+    # v1.2.0 CatSelf + default closed loops
+    "CatSelf": "meowcat.biology.cat_self",
+    "SelfSnapshot": "meowcat.biology.cat_self",
+    "DefaultConversationLoop": "meowcat.biology.cat_self",
+    "DefaultTaskLoop": "meowcat.biology.cat_self",
+    "DefaultLearnLoop": "meowcat.biology.cat_self",
+}
+
+
+def __getattr__(name: str):
+    """Lazy-load biology submodules on first access."""
+    if name in _LAZY_BIOLOGY:
+        import importlib
+        mod = importlib.import_module(_LAZY_BIOLOGY[name])
+        attr = getattr(mod, name)
+        # Cache in module globals so subsequent access is direct
+        globals()[name] = attr
+        return attr
+    raise AttributeError(f"module 'meowcat.biology' has no attribute {name!r}")
 
 
 # -- Organ spec table (single source of truth) ---------------------------------------
@@ -372,6 +429,10 @@ FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = (
     # v1.0.8: cerebrum does not directly connect to growth organs. Growth is a side effect, routed through cerebellum or brainstem
     (CEREBRUM, ANOMALY_GROWTH),
     (CEREBRUM, CORRECTION_GROWTH),
+    # v1.2.17: cerebrum does not directly connect to crystallizer / role emergence.
+    # These are also growth-side-effect organs, routed through cerebellum or brainstem.
+    (CEREBRUM, CRYSTALLIZER),
+    (CEREBRUM, ROLE_EMERGENCE),
 )
 """Default forbidden pathway list (higher priority than allowed edges)."""
 
@@ -407,5 +468,24 @@ __all__ = [
     "ORGAN_PROTOCOLS",
     "apply_default_wiring",
 
-
+    # v1.1.22 colony-level collective intelligence
+    "CollectiveGrowth",
+    "CollectiveEmergence",
+    # v1.1.23 scribble pad
+    "ScribblePad", "DefaultScribbleFilter", "DefaultScribbleLogger",
+    "DefaultScribblePersister",
+    # v1.1.24 pineal gland + fusion cycle
+    "PinealGland", "Insight",
+    "DefaultMerger", "DefaultContradiction", "DefaultInsightFilter",
+    "FusionCycle",
+    # v1.1.25 cortex worldview L1
+    "Cortex", "DefaultRuleExtractor",
+    # v1.1.26 active growth
+    "BlindSpotDetector", "ToolFailureLearner", "HotPathObserver",
+    "ActiveGrowthPack",
+    # v1.1.27 metacognition L3
+    "Metacognition",
+    # v1.2.0 CatSelf + default closed loops
+    "CatSelf", "SelfSnapshot",
+    "DefaultConversationLoop", "DefaultTaskLoop", "DefaultLearnLoop",
 ]

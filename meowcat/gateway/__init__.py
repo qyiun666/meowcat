@@ -5,10 +5,15 @@ All protocol adapters (HTTP / WebSocket / Webhook / CLI / IPC) plug into the sam
 
 **1 cat : 1 Gateway : N Adapters.**
 
+Concrete adapters (HttpAdapter, WsAdapter, etc.) moved to ``meowcat.plus.gateway``
+in v1.2.22 as optional batteries. Use::
+
+    from meowcat.plus.gateway import HttpAdapter, CliAdapter
+
 Usage example::
 
     from meowcat import create_cat, Gateway
-    from meowcat.gateway import HttpAdapter, CliAdapter
+    from meowcat.plus.gateway import HttpAdapter, CliAdapter
 
     cat = create_cat("my-cat", cerebrum=MyBrain())
     gw = Gateway(cat)
@@ -104,22 +109,9 @@ class Gateway:
                 yield event.content
 
 
-# -- Sub-module re-exports ------------------------------------------------
-
-from meowcat.gateway.http_adapter import HttpAdapter  # noqa: E402, F401
-from meowcat.gateway.ws_adapter import WsAdapter  # noqa: E402, F401
-from meowcat.gateway.webhook_adapter import WebhookAdapter  # noqa: E402, F401
-from meowcat.gateway.cli_adapter import CliAdapter  # noqa: E402, F401
-from meowcat.gateway.ipc_adapter import IpcAdapter  # noqa: E402, F401
-
 __all__ = [
     "Gateway",
     "SignalContext",
     "IoAdapterProtocol",
     "GatewayProtocol",
-    "HttpAdapter",
-    "WsAdapter",
-    "WebhookAdapter",
-    "CliAdapter",
-    "IpcAdapter",
 ]

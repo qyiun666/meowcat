@@ -1,6 +1,8 @@
-"""meowcat Gateway — CliAdapter (stdin/stdout dialogue adapter).
+"""meowcat plus/gateway — CliAdapter (stdin/stdout dialogue adapter).
 
 Replaces app-layer embedded CLI loop. Pure stdlib, zero external dependencies.
+
+Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 # (c) 2025-2026 Axonant. MIT License.
 

@@ -66,8 +66,14 @@ class WhiskersProtocol(Protocol):
         self, output: str, expected_schema: dict[str, Any] | None = None) -> dict[str, Any]: ...
 
     def detect_drift(self, recent_outputs: list[str]) -> dict[str, Any]: ...
+
     def check_hallucination(
         self, reply: str, session_id: str | None = None) -> dict[str, Any]: ...
+
+    # v1.1.26 active growth: curiosity-driven blind spot detection
+    def detect_blind_spot(
+        self, recent_queries: list[str], known_topics: list[str] | None = None,
+    ) -> list[dict[str, Any]]: ...
 
 
 @runtime_checkable
@@ -84,6 +90,12 @@ class PawsProtocol(Protocol):
 
     async def execute(self, tool_name: str,
                       params: dict[str, Any]) -> dict[str, Any]: ...
+
+    # v1.1.26 active growth: learn from tool execution failures
+    def on_tool_failure(
+        self, tool_name: str, params: dict[str, Any],
+        error: str, elapsed_ms: float = 0,
+    ) -> dict[str, Any]: ...
 
     # -- deprecated (v1.0.8, internally delegates to execute) -----------
     async def touch_file(self, path: str, content: str |

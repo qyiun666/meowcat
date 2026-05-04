@@ -91,6 +91,9 @@ GOLDEN_FORBIDDEN_V059: frozenset[tuple[tuple[str, str], tuple[str, str]]] = froz
     # v1.0.8: cerebrum 不直连生长器官
     (("brain", "cerebrum"), ("growth", "anomaly_growth")),
     (("brain", "cerebrum"), ("growth", "correction_growth")),
+    # v1.2.17: cerebrum 不直连 crystallizer / role_emergence
+    (("brain", "cerebrum"), ("growth", "crystallizer")),
+    (("brain", "cerebrum"), ("growth", "role_emergence")),
 ])
 
 GOLDEN_ORGAN_PROTOCOLS_V059: dict[tuple[str, str], str] = {
@@ -148,6 +151,6 @@ def test_builtin_nervous_system_size_is_53() -> None:
     assert len(BUILTIN_NERVOUS_SYSTEM) == 53
 
 
-def test_forbidden_paths_size_is_4() -> None:
-    """v1.0.8: 禁止边增至 4 条（新增 cerebrum→anomaly_growth + cerebrum→correction_growth）。"""
-    assert len(FORBIDDEN_PATHS) == 4
+def test_forbidden_paths_size_is_6() -> None:
+    """v1.2.17: 禁止边增至 6 条（新增 cerebrum→crystallizer + cerebrum→role_emergence）。"""
+    assert len(FORBIDDEN_PATHS) == 6

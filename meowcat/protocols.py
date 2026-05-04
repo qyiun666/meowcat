@@ -77,7 +77,8 @@ __all__ = [
     "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
     "CrystallizerProtocol", "RoleEmergenceProtocol",
     "MouthProtocol", "PurrProtocol", "TailProtocol",
-    "StageProtocol", "KittenProtocol",
+    "StageProtocol",
+    "KittenProtocol",  # doc-only, not @runtime_checkable; isinstance() raises TypeError
     "OrchestratorProtocol", "SettingsProtocol", "CatProtocol",
     "AdapterProtocol", "SecurityPolicyProtocol",
 ]

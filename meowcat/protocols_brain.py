@@ -152,6 +152,14 @@ class HippocampusProtocol(Protocol):
     # v1.0.15: Long-running workflow queries
     def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]: ...
 
+    # v1.1.21: Cross-cat memory search + delegation snapshot
+    def set_colony_memory(self, memory_pool: Any) -> None: ...
+
+    def snapshot(self, *topics: str,
+                 scope: str = "colony") -> dict[str, Any]: ...
+    def locate(self, query: str,
+               scope: str = "self") -> list[dict[str, Any]]: ...
+
 
 @runtime_checkable
 class ThalamusProtocol(Protocol):
@@ -215,9 +223,8 @@ class AmygdalaProtocol(Protocol):
 
     async def assess_safety(self, user_input: str) -> dict[str, Any]: ...
 
-    @staticmethod
-    def assess_tool_risk(
-        tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
+    async def assess_tool_risk(
+        self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
 
 
 @runtime_checkable

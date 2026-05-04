@@ -42,7 +42,8 @@ def test_catbase_with_container_ok():
     cat = CatBase("test", container=colony)
     assert cat.cat_id == "test"
     assert cat.container is colony
-    assert cat.cat_address == "test/test"
+    assert cat.cat_address == "test/test-test"
+    assert cat.cat_uid == "test"  # fallback when not created via Colony.create_cat()
 
 
 # -- CatBase 器官管理 -----------------------------------------------

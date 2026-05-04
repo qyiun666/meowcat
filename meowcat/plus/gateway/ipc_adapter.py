@@ -1,7 +1,9 @@
-"""meowcat Gateway — IpcAdapter (Unix socket inter-process communication adapter).
+"""meowcat plus/gateway — IpcAdapter (Unix socket inter-process communication adapter).
 
 For desktop app IPC. The framework layer only provides Unix socket pipes;
 macOS sandbox, Windows named pipes, etc. are implemented by the desktop layer.
+
+Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 # (c) 2025-2026 Axonant. MIT License.
 

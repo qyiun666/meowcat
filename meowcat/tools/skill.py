@@ -102,6 +102,8 @@ class Skill:
 class SkillRegistry:
     """Skill registry. Indexed by name.
 
+    v1.1.5: Two-level cascade lookup — private skills first, then colony shared.
+
     Usage::
 
         registry = SkillRegistry()
@@ -111,6 +113,20 @@ class SkillRegistry:
 
     def __init__(self) -> None:
         self._skills: dict[str, Skill] = {}
+        self._shared: SkillRegistry | None = None  # v1.1.5: colony shared skills
+
+    def set_shared(self, registry: SkillRegistry) -> None:
+        """Link to colony's shared skill registry for cascade lookup."""
+        self._shared = registry
+
+    def resolve(self, name: str) -> Skill | None:
+        """Two-level lookup: private → colony shared."""
+        skill = self._skills.get(name)
+        if skill is not None:
+            return skill
+        if self._shared is not None:
+            return self._shared.get(name)
+        return None
 
     def register(self, skill: Skill) -> None:
         """Register a Skill. Same name will be overwritten."""

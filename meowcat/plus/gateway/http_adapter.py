@@ -1,7 +1,9 @@
-"""meowcat Gateway — HttpAdapter (HTTP POST /chat JSON protocol adapter).
+"""meowcat plus/gateway — HttpAdapter (HTTP POST /chat JSON protocol adapter).
 
 Non-streaming request/response: JSON body ``{"message": "..."}`` → JSON response ``{"reply": "..."}``.
 Optional SSE for streaming (``Accept: text/event-stream`` → stream_chunk push chunk by chunk).
+
+Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -13,6 +15,7 @@ import json
 import logging
 from typing import Any, AsyncIterator, Awaitable, Callable
 
+from meowcat.constants import GATEWAY_DEFAULT_TIMEOUT
 from meowcat.gateway.protocol import HTTP_REASONS, IoAdapterProtocol, SignalContext
 
 _logger = logging.getLogger(__name__)
@@ -55,7 +58,7 @@ class HttpAdapter:
     ) -> None:
         """Handle a single HTTP connection."""
         try:
-            request_line = await asyncio.wait_for(reader.readline(), timeout=30)
+            request_line = await asyncio.wait_for(reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT)
             if not request_line:
                 writer.close()
                 return
@@ -112,7 +115,7 @@ class HttpAdapter:
 
         except (json.JSONDecodeError, asyncio.TimeoutError):
             await self._write_response(writer, 400, {"error": "invalid json"})
-        except (ConnectionError, OSError, asyncio.TimeoutError):
+        except (ConnectionError, OSError):
             await self._write_response(writer, 500, {"error": "internal error"})
         finally:
             try:
