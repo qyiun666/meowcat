@@ -31,7 +31,7 @@ class TestOnStart:
         hooks_called: list[str] = []
 
         def _my_hook(c: CatBase) -> None:
-            hooks_called.append(c.cat_id)
+            hooks_called.append(c.name)
 
         cat.on_start(_my_hook)
 
@@ -68,7 +68,7 @@ class TestOnShutdown:
         hooks_called: list[str] = []
 
         def _my_hook(c: CatBase) -> None:
-            hooks_called.append(c.cat_id)
+            hooks_called.append(c.name)
 
         cat.on_shutdown(_my_hook)
 

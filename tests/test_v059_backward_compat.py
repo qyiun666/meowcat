@@ -27,9 +27,10 @@ class _Cerebrum:
 
 
 def test_catbase_legacy_single_arg_ctor() -> None:
-    """v0.5.0 风格：只传 cat_id 即可。"""
+    """v0.5.0 风格：只传 cat_id 即可（现为 name）。"""
     cat = make_cat("legacy")
-    assert cat.cat_id == "legacy"
+    assert cat.name == "legacy"
+    assert cat.cat_uid is not None
 
 
 def test_catbase_exposes_wiring_and_reflexes_property() -> None:

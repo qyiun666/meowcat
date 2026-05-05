@@ -40,10 +40,10 @@ class MockMemorySkill:
     async def locate(self, query, scope="self"):
         return [{"id": "m1", "text": f"found: {query}"}]
 
-    async def remember(self, user_msg, ai_reply, cat_id, model):
+    async def remember(self, user_msg, ai_reply, cat_uid, model):
         return {"stored": True, "user_msg": user_msg}
 
-    def fts_search(self, cat_id, keywords, limit=10):
+    def fts_search(self, cat_uid, keywords, limit=10):
         return [{"id": "s1", "keywords": keywords}]
 
 

@@ -24,7 +24,6 @@ Orthogonal to Kitten (master/slave mode):
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 from typing import Any, TYPE_CHECKING
 
@@ -32,7 +31,7 @@ from meowcat.assembly import CatBase
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.models import ModelConfig
 from meowcat.pluggable import Pluggable
-from meowcat.protocols import SharedStorageProtocol
+from meowcat.storage import SharedStore
 from meowcat.protocols_storage import FederationTransport
 
 from meowcat.colony.config import ColonyConfig, ColonyOwner
@@ -89,9 +88,6 @@ class Colony(Pluggable, _FederationMixin):
     ``broadcast_request()`` bypasses cross-wiring (colony-level operation).
     """
 
-    # -- UID salt (hardcoded, not configurable) -----------------------
-    _SALT = b"meowcat-colony-v1"
-
     # -- Cross-cat wiring edge type ------------------------------------
     # (from_cat_id, to_cat_id) allowlist/blocklist
     _CrossEdge = tuple[str, str]
@@ -99,11 +95,12 @@ class Colony(Pluggable, _FederationMixin):
     def __init__(
         self,
         colony_id: str,
-        storage: SharedStorageProtocol | None = None,
+        storage: SharedStore | None = None,
         *,
         name: str | None = None,
         description: str = "",
         max_cats: int | None = None,
+        region: str = "",
         llm_shelf: dict[str, ModelConfig] | None = None,
         owner: ColonyOwner | None = None,
         rules: ColonyRules | None = None,
@@ -114,11 +111,13 @@ class Colony(Pluggable, _FederationMixin):
 
         Args:
             colony_id: Unique identifier for the colony.
-            storage: Shared storage instance (satisfying SharedStorageProtocol).
+            storage: Shared storage instance (satisfying SharedStore).
                 None = auto-create InMemorySharedStore (for Colony.default() usage).
             name: Human-readable colony name. Defaults to colony_id.
             description: Colony description.
             max_cats: Maximum number of cats, None = unlimited.
+            region: Deployment region (e.g. "us-east", "cn-beijing").
+                Used to build ``global_address`` on cats.
             llm_shelf: Shared LLM shelf — named model configs cats can pick from.
                 None = empty shelf; cats must bring their own LLM.
             owner: Colony owner profile (name/email/language). Defaults to empty.
@@ -131,7 +130,8 @@ class Colony(Pluggable, _FederationMixin):
         self._name = name or colony_id
         self._description = description
         self._max_cats = max_cats
-        self._colony_uid = f"{colony_id}-{self._generate_uid(colony_id)}"
+        self.region = region
+        self._colony_uid = colony_id
         self._cat_counter: int = 0
         self._storage = storage
         self._llm_shelf: dict[str, ModelConfig] = dict(llm_shelf or {})
@@ -160,15 +160,10 @@ class Colony(Pluggable, _FederationMixin):
 
     # -- UID generation -----------------------------------------------
 
-    @staticmethod
-    def _generate_uid(base: str) -> str:
-        """Generate 6-char UID suffix from base string + hardcoded salt."""
-        return hashlib.md5(base.encode() + Colony._SALT).hexdigest()[:6]
-
-    def _next_cat_uid(self, cat_id: str) -> str:
-        """Generate cat_uid: cat_id + 6-char MD5 + 4-digit increment."""
+    def _next_cat_uid(self) -> str:
+        """Generate cat_uid: 2-digit increment."""
         self._cat_counter += 1
-        return f"{cat_id}-{self._generate_uid(cat_id)}{self._cat_counter:04d}"
+        return f"{self._cat_counter:02d}"
 
     # -- Nameplate properties ------------------------------------------
 
@@ -356,8 +351,8 @@ class Colony(Pluggable, _FederationMixin):
 
     def assemble_cat(
         self,
-        cat_id: str,
         *,
+        name: str | None = None,
         llm: str | ModelConfig | None = None,
         parent_id: str | None = None,
         allowed_organs: frozenset[str] | None = None,
@@ -372,7 +367,7 @@ class Colony(Pluggable, _FederationMixin):
         3. ``llm=None`` — pick first available from shelf
 
         Args:
-            cat_id: Unique identifier for the cat.
+            name: Optional display name (defaults to cat_uid).
             llm: LLM config or shelf name. None = auto-pick from shelf.
             parent_id: Parent cat identifier.
             allowed_organs: Organ access allowlist.
@@ -382,14 +377,13 @@ class Colony(Pluggable, _FederationMixin):
         Returns:
             Registered CatBase instance with ``_llm_config`` attribute.
         """
-        # Resolve LLM
         if isinstance(llm, ModelConfig):
             llm_config = llm
         else:
             llm_config = self.pick_llm(llm)
 
         cat = self.create_cat(
-            cat_id,
+            name=name,
             parent_id=parent_id,
             allowed_organs=allowed_organs,
             memory_snapshot=memory_snapshot,
@@ -463,8 +457,8 @@ class Colony(Pluggable, _FederationMixin):
 
     def create_cat(
         self,
-        cat_id: str,
         *,
+        name: str | None = None,
         parent_id: str | None = None,
         allowed_organs: frozenset[str] | None = None,
         memory_snapshot: dict | None = None,
@@ -472,34 +466,36 @@ class Colony(Pluggable, _FederationMixin):
     ) -> CatBase:
         """Create a cat in the colony and auto-register it.
 
+        The ``cat_uid`` is auto-generated (2-digit increment).
+
         Args:
-            cat_id: Unique identifier for the cat.
+            name: Optional display name (defaults to cat_uid).
             parent_id: Parent cat identifier (string, no object reference).
             allowed_organs: Organ access allowlist, None = allow all.
-            memory_snapshot: Context slice assigned by parent cat (written to shared storage).
+            memory_snapshot: Context slice assigned by parent cat.
             **cat_kwargs: Additional arguments passed to CatBase.
 
         Returns:
             Registered CatBase instance.
         """
-        # Check capacity
         if self.is_full:
             raise RuntimeError(
                 f"Colony '{self.colony_id}' is full "
                 f"({len(self._cats)}/{self._max_cats} cats)"
             )
 
+        cat_uid = self._next_cat_uid()
         cat = CatBase(
-            cat_id,
+            cat_uid,
             container=self,
             parent_id=parent_id,
             allowed_organs=allowed_organs,
             **cat_kwargs,
         )
-        # Generate cat_uid and assign
-        cat._cat_uid = self._next_cat_uid(cat_id)  # type: ignore[attr-defined]
+        if name is not None:
+            cat._name = name  # type: ignore[attr-defined]
         # type: ignore[attr-defined]
-        cat._address = f"{self.colony_id}/{cat_id}-{cat._cat_uid}"
+        cat._address = f"{self.colony_id}_{cat_uid}"
 
         # Inject shared storage reference
         if self._storage is not None:
@@ -523,8 +519,8 @@ class Colony(Pluggable, _FederationMixin):
 
     def spawn_cat(
         self,
-        cat_id: str,
         *,
+        name: str | None = None,
         parent_id: str | None = None,
         memory_snapshot: dict | None = None,
         allowed_organs: frozenset[str] | None = None,
@@ -533,26 +529,25 @@ class Colony(Pluggable, _FederationMixin):
         """Create a kitten with inherited memory context.
 
         Convenience wrapper around :meth:`create_cat` that explicitly
-        names the delegation intent.  The *memory_snapshot* carries a
-        context slice from the parent cat's hippocampus — see
-        :meth:`NoopHippocampus.snapshot`.
+        names the delegation intent.
 
         Usage::
 
             slice = parent.hippocampus.snapshot("users表", "auth模块")
-            kitten = colony.spawn_cat("executor-1",
-                                       parent_id=parent.cat_id,
-                                       memory_snapshot=slice)
+            kitten = colony.spawn_cat(
+                parent_id=parent.cat_uid,
+                memory_snapshot=slice,
+            )
 
         Args:
-            cat_id: Unique identifier for the kitten.
+            name: Optional display name (defaults to cat_uid).
             parent_id: Parent cat identifier.
             memory_snapshot: Context slice from parent's hippocampus.
             allowed_organs: Organ access allowlist.
             **cat_kwargs: Forwarded to CatBase.
         """
         return self.create_cat(
-            cat_id,
+            name=name,
             parent_id=parent_id,
             memory_snapshot=memory_snapshot,
             allowed_organs=allowed_organs,
@@ -569,24 +564,24 @@ class Colony(Pluggable, _FederationMixin):
         """
         if self._storage is not None:
             cat._colony_storage = self._storage  # type: ignore[attr-defined]
-        self._cats[cat.cat_id] = cat
+        self._cats[cat.cat_uid] = cat
 
-    def unregister(self, cat_id: str) -> None:
+    def unregister(self, cat_uid: str) -> None:
         """Remove a cat from the colony.
 
         Args:
-            cat_id: Unique identifier for the cat.
+            cat_uid: Unique identifier for the cat.
 
         Raises:
             KeyError: Cat does not exist.
         """
-        del self._cats[cat_id]
+        del self._cats[cat_uid]
 
-    def get_cat(self, cat_id: str) -> CatBase:
-        """Get a cat by ID.
+    def get_cat(self, cat_uid: str) -> CatBase:
+        """Get a cat by uid.
 
         Args:
-            cat_id: Unique identifier for the cat.
+            cat_uid: Unique identifier for the cat.
 
         Returns:
             CatBase instance.
@@ -594,13 +589,13 @@ class Colony(Pluggable, _FederationMixin):
         Raises:
             KeyError: Cat does not exist.
         """
-        return self._cats[cat_id]
+        return self._cats[cat_uid]
 
     def list_cats(self) -> list[str]:
-        """List all cat IDs in the colony.
+        """List all cat uids in the colony.
 
         Returns:
-            List of cat_id strings.
+            List of cat_uid strings.
         """
         return list(self._cats.keys())
 
@@ -614,61 +609,61 @@ class Colony(Pluggable, _FederationMixin):
         """
         self.register(cat)
 
-    def release(self, cat_id: str) -> None:
+    def release(self, cat_uid: str) -> None:
         """Release a cat (semantic alias for unregister).
 
         Args:
-            cat_id: Unique identifier for the cat.
+            cat_uid: Unique identifier for the cat.
 
         Raises:
             KeyError: Cat does not exist.
         """
-        self.unregister(cat_id)
+        self.unregister(cat_uid)
 
     # -- Shared storage (namespace isolation) -------------------------
 
-    def _ensure_storage(self) -> SharedStorageProtocol:
+    def _ensure_storage(self) -> SharedStore:
         """Lazy-init storage if not provided."""
         if self._storage is None:
             from meowcat.defaults.stores import InMemorySharedStore  # noqa: PLC0415
             self._storage = InMemorySharedStore()
         return self._storage
 
-    def _cat_key(self, cat_id: str, key: str) -> str:
-        """Construct a cat-isolated storage key: ``cat_id/key``.
+    def _cat_key(self, cat_uid: str, key: str) -> str:
+        """Construct a cat-isolated storage key: ``cat_uid/key``.
 
-        cat_id prefix provides automatic isolation: ``cat-a/memories/xxx`` vs ``cat-b/memories/xxx``.
+        cat_uid prefix provides automatic isolation.
         """
-        return f"{cat_id}/{key}"
+        return f"{cat_uid}/{key}"
 
-    async def storage_get(self, cat_id: str, key: str) -> Any:
-        """Cat reads from shared storage (auto cat_id prefix isolation)."""
-        return await self._ensure_storage().get(self._cat_key(cat_id, key))
+    async def storage_get(self, cat_uid: str, key: str) -> Any:
+        """Cat reads from shared storage (auto cat_uid prefix isolation)."""
+        return await self._ensure_storage().get(self._cat_key(cat_uid, key))
 
-    async def storage_set(self, cat_id: str, key: str, value: Any) -> None:
-        """Cat writes to shared storage (auto cat_id prefix isolation)."""
-        await self._ensure_storage().set(self._cat_key(cat_id, key), value)
+    async def storage_set(self, cat_uid: str, key: str, value: Any) -> None:
+        """Cat writes to shared storage (auto cat_uid prefix isolation)."""
+        await self._ensure_storage().set(self._cat_key(cat_uid, key), value)
 
-    async def storage_delete(self, cat_id: str, key: str) -> None:
+    async def storage_delete(self, cat_uid: str, key: str) -> None:
         """Cat deletes a shared storage entry."""
-        await self._ensure_storage().delete(self._cat_key(cat_id, key))
+        await self._ensure_storage().delete(self._cat_key(cat_uid, key))
 
-    async def storage_list_keys(self, cat_id: str) -> list[str]:
+    async def storage_list_keys(self, cat_uid: str) -> list[str]:
         """List all shared storage keys for a cat (prefix stripped)."""
-        prefix = f"{cat_id}/"
+        prefix = f"{cat_uid}/"
         all_keys = await self._ensure_storage().list_keys()
         return [
             k[len(prefix):] for k in all_keys if k.startswith(prefix)
         ]
 
     async def storage_watch(
-        self, cat_id: str, pattern: str,
+        self, cat_uid: str, pattern: str,
     ) -> Any:
         """Watch shared storage key changes matching pattern.
 
         Delegates to the underlying storage.watch(). Returns AsyncIterator.
         """
-        ns_pattern = f"{cat_id}/{pattern}"
+        ns_pattern = f"{cat_uid}/{pattern}"
         # type: ignore[attr-defined]
         async for item in self._ensure_storage().watch(ns_pattern):
             yield item
@@ -791,10 +786,10 @@ class Colony(Pluggable, _FederationMixin):
 
         Usage::
 
-            result = await colony.receive_external("feishu/planner", message="查询表结构")
+        result = await colony.receive_external("feishu_planner", message="查询表结构")
 
         Args:
-            address: Cat address in ``colony_id/cat_id`` format.
+            address: Cat address in ``colony_id_cat_uid`` format.
             **kwargs: Message payload — forwarded to the target cat as an event.
 
         Returns:
@@ -804,22 +799,22 @@ class Colony(Pluggable, _FederationMixin):
             ValueError: Invalid address format or colony mismatch.
             KeyError: Target cat not found in colony.
         """
-        parts = address.split("/", 1)
+        parts = address.split("_", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
             raise ValueError(
-                f"Invalid address '{address}': expected 'colony_id/cat_id'"
+                f"Invalid address '{address}': expected 'colony_id_cat_uid'"
             )
-        colony_id, cat_id = parts
+        colony_id, cat_uid = parts
         if colony_id != self.colony_id:
             raise ValueError(
                 f"Address colony '{colony_id}' does not match "
                 f"this colony '{self.colony_id}'"
             )
-        cat = self.get_cat(cat_id)
+        cat = self.get_cat(cat_uid)
         await cat.emit("external_message", {"address": address, **kwargs})
         return {
             "status": "delivered",
-            "cat_id": cat_id,
+            "cat_uid": cat_uid,
             "cats_count": len(self._cats),
         }
 
@@ -845,7 +840,7 @@ class Colony(Pluggable, _FederationMixin):
             ]
         return result
 
-    def search_scope_guard(self, cat_id: str, scope: str) -> None:
+    def search_scope_guard(self, cat_uid: str, scope: str) -> None:
         """Validate search scope boundaries (v1.1.8).
 
         Enforces the search boundary contract defined in §2.2:
@@ -862,9 +857,9 @@ class Colony(Pluggable, _FederationMixin):
                 f"Invalid search scope '{scope}': must be 'self' or 'colony'"
             )
         # Ensure cat exists
-        if cat_id not in self._cats:
+        if cat_uid not in self._cats:
             raise KeyError(
-                f"Cat '{cat_id}' not found in colony '{self.colony_id}'")
+                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
 
     # -- Inter-cat communication --------------------------------------
 

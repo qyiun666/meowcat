@@ -131,20 +131,20 @@ class HippocampusAgent(AgentOrgan):
         return await self._delegate("locate", query=query, scope=scope)
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_id: str, model: str,
+        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
     ) -> Any:
         return await self._delegate(
             "remember", user_msg=user_msg, ai_reply=ai_reply,
-            cat_id=cat_id, model=model,
+            cat_uid=cat_uid, model=model,
         )
 
     def fts_search(
-        self, cat_id: str, keywords: str, limit: int = 10,
+        self, cat_uid: str, keywords: str, limit: int = 10,
     ) -> list[dict[str, Any]]:
         fn = getattr(self._agent, "fts_search", None)
         if fn is None:
             return []
-        result = fn(cat_id=cat_id, keywords=keywords, limit=limit)
+        result = fn(cat_uid=cat_uid, keywords=keywords, limit=limit)
         return result if isinstance(result, list) else []
 
     # -- Optional delegation: only call agent if method exists ---------
@@ -259,10 +259,10 @@ class HippocampusAgent(AgentOrgan):
         if fn:
             fn(entity_id=entity_id, ts=ts)
 
-    def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]:
+    def list_active_workflows(self, cat_uid: str) -> list[dict[str, Any]]:
         fn = getattr(self._agent, "list_active_workflows", None)
         if fn:
-            result = fn(cat_id=cat_id)
+            result = fn(cat_uid=cat_uid)
             return result if isinstance(result, list) else []
         return []
 

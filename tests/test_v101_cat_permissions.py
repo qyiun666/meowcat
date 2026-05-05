@@ -44,7 +44,7 @@ class TestAllowedOrgans:
         """allowed_organs=None（默认）全部放行。"""
         cat = make_cat("cat1")
         # 非器官属性正常访问
-        assert cat.cat_id == "cat1"
+        assert cat.name == "cat1"
         # 不存在的属性抛普通 AttributeError
         with pytest.raises(AttributeError):
             _ = cat.hippocampus
@@ -83,12 +83,12 @@ class TestAllowedOrgans:
         assert cat._events is not None
 
     def test_cat_id_always_accessible(self) -> None:
-        """cat_id（property）不受 allowed_organs 影响。"""
+        """cat_uid（property）不受 allowed_organs 影响。"""
         cat = make_cat(
             "cat1",
             allowed_organs=frozenset({"cerebrum"}),
         )
-        assert cat.cat_id == "cat1"
+        assert cat.name == "cat1"  # cat_uid/name 始终可访问
 
 
 # -- 3. forbidden_methods 方法黑名单 --------------------------------
@@ -171,4 +171,4 @@ class TestDefaultCatBase:
             _ = cat.hippocampus
         except AttributeError:
             pass  # 预期
-        assert cat.cat_id == "cat1"
+        assert cat.name == "cat1"

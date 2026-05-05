@@ -70,14 +70,14 @@ class TestCreateCat:
 
     def test_create_cat_registers(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        cat = colony.create_cat("cat-1")
-        assert cat.cat_id == "cat-1"
-        assert colony.list_cats() == ["cat-1"]
-        assert colony.get_cat("cat-1") is cat
+        cat = colony.create_cat(name="cat-1")
+        assert cat.name == "cat-1"
+        assert colony.list_cats() == [cat.cat_uid]
+        assert colony.get_cat(cat.cat_uid) is cat
 
     def test_create_cat_with_parent_id(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        cat = colony.create_cat("kitten", parent_id="main-cat")
+        cat = colony.create_cat(name="kitten", parent_id="main-cat")
         assert cat.parent_id == "main-cat"
         # parent_id 只是字符串，不是对象引用
         assert isinstance(cat.parent_id, str)
@@ -85,20 +85,21 @@ class TestCreateCat:
     def test_create_cat_with_allowed_organs(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat = colony.create_cat(
-            "cat-1",
+            name="cat-1",
             allowed_organs=frozenset({"cerebrum", "paws"}),
         )
         # 允许的属性正常
-        assert cat.cat_id == "cat-1"
+        assert cat.name == "cat-1"
         # 禁止的属性抛异常
         with pytest.raises(IllegalNeuralPathError, match="hippocampus"):
             _ = cat.hippocampus
 
     def test_create_cat_multiple(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        cat_a = colony.create_cat("a")
-        cat_b = colony.create_cat("b")
-        assert sorted(colony.list_cats()) == ["a", "b"]
+        cat_a = colony.create_cat(name="a")
+        cat_b = colony.create_cat(name="b")
+        assert sorted(colony.list_cats()) == sorted(
+            [cat_a.cat_uid, cat_b.cat_uid])
 
 
 # -- 2. register / unregister --------------------------------------
@@ -110,9 +111,9 @@ class TestRegisterUnregister:
         colony = Colony("test", storage=InMemorySharedStore())
         cat = _Helper.make_cat("cat-1")
         colony.register(cat)
-        assert colony.list_cats() == ["cat-1"]
+        assert colony.list_cats() == [cat.cat_uid]
 
-        colony.unregister("cat-1")
+        colony.unregister(cat.cat_uid)
         assert colony.list_cats() == []
 
     def test_unregister_nonexistent(self) -> None:
@@ -131,12 +132,12 @@ class TestRegisterUnregister:
 
     def test_register_overwrite(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        cat1 = _Helper.make_cat("cat-1")
-        cat2 = _Helper.make_cat("cat-1")  # 同名
-        colony.register(cat1)
-        colony.register(cat2)
-        # 后注册覆盖前者
-        assert colony.get_cat("cat-1") is cat2
+        cat1 = colony.create_cat(name="cat-1")
+        cat2 = colony.create_cat(name="cat-1")  # 同名不同 uid
+        assert colony.get_cat(cat1.cat_uid) is cat1
+        # 注册同名但 uid 不同的猫，不会覆盖
+        assert len(colony._cats) == 2
+        assert colony.get_cat(cat2.cat_uid) is cat2
 
 
 # -- 3. deliver_result 回传 ----------------------------------------
@@ -148,25 +149,25 @@ class TestDeliverResult:
     async def test_deliver_result(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
-        cat = colony.create_cat("main-cat")
-        kitten = colony.create_cat("kitten", parent_id="main-cat")
+        cat = colony.create_cat(name="main-cat")
+        kitten = colony.create_cat(name="kitten", parent_id=cat.cat_uid)
 
-        await colony.deliver_result("main-cat", "kitten", {"done": True})
+        await colony.deliver_result(cat.cat_uid, kitten.cat_uid, {"done": True})
 
-        val = await colony.storage_get("main-cat", "kitten:kitten/result")
+        val = await colony.storage_get(cat.cat_uid, f"kitten:{kitten.cat_uid}/result")
         assert val == {"done": True}
 
     @pytest.mark.asyncio
     async def test_deliver_result_multiple_kittens(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
-        colony.create_cat("main-cat")
+        cat = colony.create_cat(name="main-cat")
 
-        await colony.deliver_result("main-cat", "k1", {"task": "A"})
-        await colony.deliver_result("main-cat", "k2", {"task": "B"})
+        await colony.deliver_result(cat.cat_uid, "k1", {"task": "A"})
+        await colony.deliver_result(cat.cat_uid, "k2", {"task": "B"})
 
-        v1 = await colony.storage_get("main-cat", "kitten:k1/result")
-        v2 = await colony.storage_get("main-cat", "kitten:k2/result")
+        v1 = await colony.storage_get(cat.cat_uid, "kitten:k1/result")
+        v2 = await colony.storage_get(cat.cat_uid, "kitten:k2/result")
         assert v1 == {"task": "A"}
         assert v2 == {"task": "B"}
 
@@ -179,8 +180,8 @@ class TestBroadcast:
     @pytest.mark.asyncio
     async def test_broadcast(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        cat_a = colony.create_cat("a")
-        cat_b = colony.create_cat("b")
+        cat_a = colony.create_cat(name="a")
+        cat_b = colony.create_cat(name="b")
 
         received: list[str] = []
 
@@ -209,7 +210,7 @@ class TestSignalBetween:
 
         # cat_a → cat_b.hippocampus.locate()
         result = await colony.signal_between(
-            "a", "b", "brain", "hippocampus", "locate",
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
             query="hello",
         )
         assert result == {"results": [], "query": "hello"}
@@ -217,11 +218,11 @@ class TestSignalBetween:
     @pytest.mark.asyncio
     async def test_signal_between_cat_not_found(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("a")
+        cat = colony.create_cat(name="a")
 
         with pytest.raises(KeyError):
             await colony.signal_between(
-                "a", "nonexistent", "brain", "hippocampus", "locate",
+                cat.cat_uid, "nonexistent", "brain", "hippocampus", "locate",
             )
 
 
@@ -273,18 +274,18 @@ class TestCrossWiring:
 
     @pytest.mark.asyncio
     async def test_signal_between_rejected_by_cross_wiring(self) -> None:
-        colony = Colony(
-            "test", storage=InMemorySharedStore(),
-            cross_wiring_forbidden={("a", "b")},
-        )
         cat_a = _Helper.make_cat("a")
         cat_b = _Helper.make_cat("b")
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_forbidden={(cat_a.cat_uid, cat_b.cat_uid)},
+        )
         colony.register(cat_a)
         colony.register(cat_b)
 
         with pytest.raises(IllegalNeuralPathError, match="forbidden"):
             await colony.signal_between(
-                "a", "b", "brain", "hippocampus", "locate",
+                cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
             )
 
 
@@ -366,10 +367,10 @@ class TestCatCount:
         colony = Colony("test", storage=InMemorySharedStore())
         assert colony.cat_count == 0
 
-        colony.create_cat("a")
+        colony.create_cat(name="a")
         assert colony.cat_count == 1
 
-        colony.create_cat("b")
+        colony.create_cat(name="b")
         assert colony.cat_count == 2
 
 
@@ -385,7 +386,7 @@ class TestHealthCheckAll:
         colony.register(cat_b)
 
         results = await colony.health_check_all()
-        assert set(results.keys()) == {"a", "b"}
+        assert set(results.keys()) == {cat_a.cat_uid, cat_b.cat_uid}
         # 每只猫的 hippocampus 都在
-        assert "brain:hippocampus" in results["a"]
-        assert "brain:hippocampus" in results["b"]
+        assert "brain:hippocampus" in results[cat_a.cat_uid]
+        assert "brain:hippocampus" in results[cat_b.cat_uid]

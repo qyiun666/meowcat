@@ -26,9 +26,9 @@ class _Bad:
     pass  # 无 name 属性，不满足 OrganProtocol
 
 
-def test_host_init_has_cat_id() -> None:
+def test_host_init_has_uid() -> None:
     host = OrganHost("cat-1")
-    assert host.cat_id == "cat-1"
+    assert host.uid == "cat-1"
 
 
 def test_mount_and_organ_roundtrip() -> None:

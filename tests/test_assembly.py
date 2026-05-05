@@ -40,10 +40,10 @@ def test_catbase_with_container_ok():
     from meowcat.defaults import InMemorySharedStore
     colony = Colony("test", storage=InMemorySharedStore())
     cat = CatBase("test", container=colony)
-    assert cat.cat_id == "test"
+    assert cat.cat_uid == "test"
     assert cat.container is colony
-    assert cat.cat_address == "test/test-test"
-    assert cat.cat_uid == "test"  # fallback when not created via Colony.create_cat()
+    assert cat.cat_address == "test_test"
+    assert cat.name == "test"  # default name = cat_uid
 
 
 # -- CatBase 器官管理 -----------------------------------------------

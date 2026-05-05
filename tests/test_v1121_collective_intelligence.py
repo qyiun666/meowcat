@@ -71,7 +71,7 @@ class TestCrossCatMemorySearch:
         creation requires manual wiring (the colony injection is best-effort).
         """
         colony = Colony("test-wire", storage=InMemorySharedStore())
-        cat = colony.create_cat("planner")
+        cat = colony.create_cat(name="planner")
         cat.mount("brain", "hippocampus", NoopHippocampus())
 
         # After mounting, manually wire colony memory (same logic as create_cat)
@@ -165,23 +165,23 @@ class TestDelegationSpawnCat:
     def test_spawn_cat_creates_with_snapshot(self):
         """spawn_cat stores memory_snapshot on the kitten."""
         colony = Colony("test-spawn", storage=InMemorySharedStore())
-        parent = colony.create_cat("parent")
+        parent = colony.create_cat(name="parent")
 
         snap = {"topics": ["users表"], "context": [{"type": "self",
                 "source": "episode", "content": "users 表结构"}]}
 
         kitten = colony.spawn_cat(
-            "kitten-1", parent_id="parent", memory_snapshot=snap)
-        assert kitten.cat_id == "kitten-1"
-        assert kitten.parent_id == "parent"
+            name="kitten-1", parent_id=parent.cat_uid, memory_snapshot=snap)
+        assert kitten.name == "kitten-1"
+        assert kitten.parent_id == parent.cat_uid
         assert kitten._memory_snapshot == snap
         assert kitten.container is colony
 
     def test_spawn_cat_without_snapshot(self):
         """spawn_cat without snapshot works fine."""
         colony = Colony("test-nosnap", storage=InMemorySharedStore())
-        kitten = colony.spawn_cat("kitten-2")
-        assert kitten.cat_id == "kitten-2"
+        kitten = colony.spawn_cat(name="kitten-2")
+        assert kitten.name == "kitten-2"
         assert not hasattr(kitten, '_memory_snapshot')
 
     def test_spawn_cat_full_flow(self):
@@ -189,7 +189,7 @@ class TestDelegationSpawnCat:
         colony = Colony("test-full", storage=InMemorySharedStore())
 
         # Parent cat with hippocampus
-        parent = colony.create_cat("architect")
+        parent = colony.create_cat(name="architect")
         hippo = NoopHippocampus()
         hippo.add_episode({"user_msg": "users 表设计",
                           "ai_reply": "users 表: id uuid, name text, email text"})
@@ -202,8 +202,8 @@ class TestDelegationSpawnCat:
 
         # Delegate to kitten with snapshot
         kitten = colony.spawn_cat(
-            "executor-1", parent_id="architect", memory_snapshot=slice_)
-        assert kitten.parent_id == "architect"
+            name="executor-1", parent_id=parent.cat_uid, memory_snapshot=slice_)
+        assert kitten.parent_id == parent.cat_uid
         assert kitten._memory_snapshot is slice_
         # Kitten has same colony storage
         assert kitten._colony_storage is colony._storage
@@ -212,10 +212,10 @@ class TestDelegationSpawnCat:
         """spawn_cat when colony is full raises RuntimeError."""
         colony = Colony("test-full-cap",
                         storage=InMemorySharedStore(), max_cats=1)
-        colony.create_cat("only-cat")
+        colony.create_cat(name="only-cat")
 
         with pytest.raises(RuntimeError, match="full"):
-            colony.spawn_cat("kitten-overflow")
+            colony.spawn_cat(name="kitten-overflow")
 
 
 # -- 4. SharedMemoryPool.keyword_search ------------------------------------

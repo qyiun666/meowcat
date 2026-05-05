@@ -51,7 +51,11 @@ class InMemoryVectorStore:
 
     # -- Protocol compat methods ------------------------------------------
     async def add(self, text: str, metadata: dict[str, Any]) -> str:
-        return ""
+        raise NotImplementedError(
+            "InMemoryVectorStore.add() is not implemented. "
+            "Use InMemoryVectorStore.store(entity_id, embedding) for vector ops, "
+            "or use meowcat.storage.VectorStore for text-level add/search/delete."
+        )
 
     async def delete(self, doc_id: str) -> bool:
         return self._store.pop(doc_id, None) is not None

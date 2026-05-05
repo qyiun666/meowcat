@@ -101,10 +101,10 @@ class NoReflexMatchedError(MeowCatError):
 class StandaloneCatError(MeowCatError):
     """Raised when a cat is created without a container (Colony is mandatory since v1.1.3)."""
 
-    def __init__(self, cat_id: str) -> None:
-        self.cat_id = cat_id
+    def __init__(self, cat_uid: str) -> None:
+        self.cat_uid = cat_uid
         super().__init__(
-            f"Cat '{cat_id}' must belong to a Colony — "
+            f"Cat '{cat_uid}' must belong to a Colony — "
             f"pass container=colony to CatBase()"
         )
 

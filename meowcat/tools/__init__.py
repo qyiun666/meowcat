@@ -16,35 +16,26 @@ from meowcat.tools.paws import PawsEngine
 from meowcat.tools.matcher import KeywordToolMatcher
 
 # -- Re-export concrete plus/ implementations for backward compatibility -----
-# Lazy-loaded to avoid circular import with meowcat.plus
-
-_PLUS_LAZY: dict[str, str] = {
-    "BUILTIN_TOOLS": "meowcat.plus.tools",
-    "BrowserTool": "meowcat.plus",
-    "ChromaStore": "meowcat.plus",
-    "Crystallizer": "meowcat.plus",
-    "DefaultDetector": "meowcat.plus",
-    "MCPClient": "meowcat.plus",
-    "MCPServerConfig": "meowcat.plus",
-    "MCPTool": "meowcat.plus",
-    "SkillLoader": "meowcat.plus",
-}
+# Delegates to the central _LAZY_MAP from meowcat._exports (single source of truth).
 
 
 def __getattr__(name: str):
-    if name in _PLUS_LAZY:
+    # Delegate to the top-level _LAZY_MAP (eliminates duplicate maintenance)
+    from meowcat import _LAZY_MAP  # noqa: PLC0415
+    entry = _LAZY_MAP.get(name)
+    if entry is not None:
         import importlib
+        mod_path, attr = entry
         try:
-            mod = importlib.import_module(_PLUS_LAZY[name])
+            module = importlib.import_module(mod_path)
         except ImportError as e:
             raise ImportError(
-                f"'{name}' requires the 'meowcat.plus' package, "
-                f"which is not installed. Install with: pip install meowcat[plus]"
+                f"'{name}' requires the '{mod_path}' package, "
+                f"which may not be installed."
             ) from e
-        attr = getattr(mod, name)
-        # Cache in module globals
-        globals()[name] = attr
-        return attr
+        value = getattr(module, attr)
+        globals()[name] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

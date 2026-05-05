@@ -52,6 +52,6 @@ def test_cat_disabled_reflex_accessing_reflexes_raises() -> None:
 def test_cat_disabled_both_subsystems_survives_init() -> None:
     """两个都关，容器 + 事件仍可用。"""
     cat = make_cat("c", enable_wiring=False, enable_reflex=False)
-    assert cat.cat_id == "c"
+    assert cat.name == "c"
     cat.mount("brain", "a", object())
     assert cat.has_organ("brain", "a")

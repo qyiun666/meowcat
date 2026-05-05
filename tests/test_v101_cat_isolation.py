@@ -23,8 +23,8 @@ class TestNoParentObjectRef:
     def test_kitten_parent_id_no_object_ref(self) -> None:
         """创建分身猫：parent_id 只是字符串，不会存储父猫对象。"""
         main_cat = make_cat("main")
-        kitten = make_cat("kit", parent_id=main_cat.cat_id)
-        assert kitten.parent_id == "main"
+        kitten = make_cat("kit", parent_id=main_cat.cat_uid)
+        assert kitten.parent_id == main_cat.cat_uid
         # parent_id 不是父猫对象
         assert not isinstance(kitten.parent_id, CatBase)
 
@@ -42,11 +42,11 @@ class TestNoParentObjectRef:
     def test_kitten_does_not_hold_parent_object(self) -> None:
         """分身猫无法通过任何属性访问父猫对象。"""
         main_cat = make_cat("main")
-        kitten = make_cat("kit", parent_id=main_cat.cat_id)
+        kitten = make_cat("kit", parent_id=main_cat.cat_uid)
         # 确认没有 parent 对象引用
         assert not hasattr(type(kitten), "parent")
         # parent_id 只是字符串标识
-        assert kitten.parent_id == "main"
+        assert kitten.parent_id == main_cat.cat_uid
 
 
 # -- 2. allowed_organs 器官裁剪 ------------------------------------
@@ -93,7 +93,8 @@ class TestAllowedOrgansIsolation:
             "kit", parent_id="main",
             allowed_organs=frozenset({"cerebrum"}),
         )
-        assert kitten.cat_id == "kit"
+        assert kitten.name == "kit"
+        assert kitten.cat_uid is not None  # auto-generated
         assert kitten.parent_id == "main"
 
     def test_kitten_private_attrs_accessible(self) -> None:

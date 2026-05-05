@@ -441,3 +441,22 @@ __all__ = [
     "LoopSequence", "LoopSequenceRegistry",
     "DAILY_MAINTENANCE_SEQ", "BUILTIN_LOOPSEQS",
 ]
+
+
+# -- Import protection: intercept wrong imports by hinting correct path ------
+
+_EVENTS_HELD_IN_MEOWCAT_EVENTS: frozenset[str] = frozenset({
+    "LocateEvent", "RememberEvent", "OrchestrateEvent", "GrowthEvent",
+    "Lifecycle", "KittenEvent", "NerveEvent", "SelfEvent", "FusionEvent",
+    "TelemetryEvent", "EventBus", "Handler", "ALL_EVENTS",
+})
+
+
+def __getattr__(name: str):
+    if name in _EVENTS_HELD_IN_MEOWCAT_EVENTS:
+        raise AttributeError(
+            f"{name!r} is not in meowcat.loops. "
+            f"Use: from meowcat.events import {name}  "
+            f"or: from meowcat import {name}"
+        )
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

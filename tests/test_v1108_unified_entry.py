@@ -21,12 +21,18 @@ from meowcat.testing import make_cat
 
 # -- 辅助工厂 -------------------------------------------------------
 
-def _colony_with_cats(*cat_ids: str) -> Colony:
-    """Create a colony with the given cats (no organs mounted)."""
+def _colony_with_cats(*names: str) -> tuple[Colony, dict[str, CatBase]]:
+    """Create a colony with the given cats (no organs mounted).
+
+    Returns:
+        (colony, dict_of_cats) where dict_of_cats maps name → CatBase.
+    """
+    from meowcat.assembly import CatBase
     colony = Colony("test-colony", storage=InMemorySharedStore())
-    for cid in cat_ids:
-        colony.create_cat(cid)
-    return colony
+    cats: dict[str, CatBase] = {}
+    for n in names:
+        cats[n] = colony.create_cat(name=n)
+    return colony, cats
 
 
 # -- 1. receive_external 统一入口 ----------------------------------
@@ -37,20 +43,21 @@ class TestReceiveExternal:
     @pytest.mark.asyncio
     async def test_valid_address_delivers(self) -> None:
         """有效地址路由消息到目标猫。"""
-        colony = _colony_with_cats("planner")
+        colony, cats = _colony_with_cats("planner")
+        cat = cats["planner"]
 
         result = await colony.receive_external(
-            "test-colony/planner", message="查询表结构"
+            f"test-colony_{cat.cat_uid}", message="查询表结构"
         )
         assert result["status"] == "delivered"
-        assert result["cat_id"] == "planner"
+        assert result["cat_uid"] == cat.cat_uid
         assert result["cats_count"] == 1
 
     @pytest.mark.asyncio
     async def test_event_emitted_on_cat(self) -> None:
         """消息以事件形式发送到目标猫。"""
-        colony = _colony_with_cats("planner")
-        cat = colony.get_cat("planner")
+        colony, cats = _colony_with_cats("planner")
+        cat = cats["planner"]
 
         received: list[dict] = []
 
@@ -59,46 +66,47 @@ class TestReceiveExternal:
 
         cat.on("external_message", _handler)
 
+        addr = f"test-colony_{cat.cat_uid}"
         await colony.receive_external(
-            "test-colony/planner", message="hello", priority="high"
+            addr, message="hello", priority="high"
         )
         assert len(received) == 1
         assert received[0]["message"] == "hello"
         assert received[0]["priority"] == "high"
-        assert received[0]["address"] == "test-colony/planner"
+        assert received[0]["address"] == addr
 
     @pytest.mark.asyncio
     async def test_invalid_address_format(self) -> None:
         """无效地址格式抛出 ValueError。"""
-        colony = _colony_with_cats("planner")
+        colony, _ = _colony_with_cats("planner")
 
         with pytest.raises(ValueError, match="Invalid address"):
-            await colony.receive_external("no-slash", message="hi")
+            await colony.receive_external("no-underscore", message="hi")
 
         with pytest.raises(ValueError, match="Invalid address"):
-            await colony.receive_external("/only_cat", message="hi")
+            await colony.receive_external("_only_cat", message="hi")
 
         with pytest.raises(ValueError, match="Invalid address"):
-            await colony.receive_external("colony/", message="hi")
+            await colony.receive_external("colony_", message="hi")
 
     @pytest.mark.asyncio
     async def test_colony_mismatch(self) -> None:
         """地址中的 colony_id 不匹配抛出 ValueError。"""
-        colony = _colony_with_cats("planner")
+        colony, _ = _colony_with_cats("planner")
 
         with pytest.raises(ValueError, match="does not match"):
             await colony.receive_external(
-                "other-colony/planner", message="hi"
+                "other-colony_nope01", message="hi"
             )
 
     @pytest.mark.asyncio
     async def test_cat_not_found(self) -> None:
         """目标猫不存在抛出 KeyError。"""
-        colony = _colony_with_cats("planner")
+        colony, _ = _colony_with_cats("planner")
 
         with pytest.raises(KeyError):
             await colony.receive_external(
-                "test-colony/nonexistent", message="hi"
+                "test-colony_nope01", message="hi"
             )
 
     @pytest.mark.asyncio
@@ -108,7 +116,7 @@ class TestReceiveExternal:
 
         with pytest.raises(KeyError):
             await colony.receive_external(
-                "test-colony/anyone", message="hi"
+                "test-colony_nope01", message="hi"
             )
 
 
@@ -124,34 +132,36 @@ class TestListCatCapabilities:
 
     def test_cats_without_organs(self) -> None:
         """猫没有挂载器官时返回空列表。"""
-        colony = _colony_with_cats("planner", "executor")
+        colony, cats = _colony_with_cats("planner", "executor")
         caps = colony.list_cat_capabilities()
 
-        assert set(caps.keys()) == {"planner", "executor"}
-        assert caps["planner"] == []
-        assert caps["executor"] == []
+        assert set(caps.keys()) == {
+            cats["planner"].cat_uid, cats["executor"].cat_uid}
+        assert caps[cats["planner"].cat_uid] == []
+        assert caps[cats["executor"].cat_uid] == []
 
     def test_cats_with_organs(self) -> None:
         """猫挂载器官后返回器官坐标。"""
-        colony = _colony_with_cats("planner", "executor")
-        colony.get_cat("planner").mount("brain", "cerebrum", object())
-        colony.get_cat("planner").mount("brain", "amygdala", object())
-        colony.get_cat("executor").mount("sense", "ears", object())
+        colony, cats = _colony_with_cats("planner", "executor")
+        cats["planner"].mount("brain", "cerebrum", object())
+        cats["planner"].mount("brain", "amygdala", object())
+        cats["executor"].mount("sense", "ears", object())
 
         caps = colony.list_cat_capabilities()
 
-        planner = {tuple(o.items()) for o in caps["planner"]}
+        planner = {tuple(o.items()) for o in caps[cats["planner"].cat_uid]}
         assert (("category", "brain"), ("name", "cerebrum")) in planner
         assert (("category", "brain"), ("name", "amygdala")) in planner
-        assert caps["executor"] == [{"category": "sense", "name": "ears"}]
+        assert caps[cats["executor"].cat_uid] == [
+            {"category": "sense", "name": "ears"}]
 
     def test_structure_has_category_and_name(self) -> None:
         """返回结构中每个条目包含 category 和 name。"""
-        colony = _colony_with_cats("cat-a")
-        colony.get_cat("cat-a").mount("brain", "hippocampus", object())
+        colony, cats = _colony_with_cats("cat-a")
+        cats["cat-a"].mount("brain", "hippocampus", object())
 
         caps = colony.list_cat_capabilities()
-        entry = caps["cat-a"][0]
+        entry = caps[cats["cat-a"].cat_uid][0]
 
         assert "category" in entry
         assert "name" in entry
@@ -166,30 +176,30 @@ class TestSearchScopeGuard:
 
     def test_valid_scope_self(self) -> None:
         """scope='self' 通过验证。"""
-        colony = _colony_with_cats("planner")
-        colony.search_scope_guard("planner", "self")  # 不抛异常
+        colony, cats = _colony_with_cats("planner")
+        colony.search_scope_guard(cats["planner"].cat_uid, "self")  # 不抛异常
 
     def test_valid_scope_colony(self) -> None:
         """scope='colony' 通过验证。"""
-        colony = _colony_with_cats("planner")
-        colony.search_scope_guard("planner", "colony")  # 不抛异常
+        colony, cats = _colony_with_cats("planner")
+        colony.search_scope_guard(cats["planner"].cat_uid, "colony")  # 不抛异常
 
     def test_invalid_scope(self) -> None:
         """无效 scope 值抛出 ValueError。"""
-        colony = _colony_with_cats("planner")
+        colony, cats = _colony_with_cats("planner")
 
         with pytest.raises(ValueError, match="Invalid search scope"):
-            colony.search_scope_guard("planner", "global")
+            colony.search_scope_guard(cats["planner"].cat_uid, "global")
 
         with pytest.raises(ValueError, match="Invalid search scope"):
-            colony.search_scope_guard("planner", "")
+            colony.search_scope_guard(cats["planner"].cat_uid, "")
 
         with pytest.raises(ValueError, match="Invalid search scope"):
-            colony.search_scope_guard("planner", "all")
+            colony.search_scope_guard(cats["planner"].cat_uid, "all")
 
     def test_cat_not_found(self) -> None:
         """猫不存在抛出 KeyError。"""
-        colony = _colony_with_cats("planner")
+        colony, _ = _colony_with_cats("planner")
 
         with pytest.raises(KeyError, match="not found"):
             colony.search_scope_guard("nonexistent", "self")

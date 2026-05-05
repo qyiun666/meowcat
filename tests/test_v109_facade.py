@@ -203,17 +203,17 @@ class TestColonyAliases:
         colony = Colony("test", storage=InMemorySharedStore())
         cat = make_cat("cat-1")
         colony.adopt(cat)
-        assert colony.list_cats() == ["cat-1"]
-        assert colony.get_cat("cat-1") is cat
+        assert colony.list_cats() == [cat.cat_uid]
+        assert colony.get_cat(cat.cat_uid) is cat
 
     def test_release_removes_cat(self) -> None:
         """release(cat_id) 等价于 unregister(cat_id)。"""
         colony = Colony("test", storage=InMemorySharedStore())
         cat = make_cat("cat-1")
         colony.register(cat)
-        assert colony.list_cats() == ["cat-1"]
+        assert colony.list_cats() == [cat.cat_uid]
 
-        colony.release("cat-1")
+        colony.release(cat.cat_uid)
         assert colony.list_cats() == []
 
     def test_release_nonexistent_raises(self) -> None:
@@ -225,11 +225,10 @@ class TestColonyAliases:
     def test_adopt_multiple_cats(self) -> None:
         """收养多只猫。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        cat_a = make_cat("a")
-        cat_b = make_cat("b")
-        colony.adopt(cat_a)
-        colony.adopt(cat_b)
-        assert sorted(colony.list_cats()) == ["a", "b"]
+        cat_a = colony.create_cat(name="a")
+        cat_b = colony.create_cat(name="b")
+        assert sorted(colony.list_cats()) == sorted(
+            [cat_a.cat_uid, cat_b.cat_uid])
 
     def test_adopt_and_release_workflow(self) -> None:
         """收养→释放完整流程。"""
@@ -238,7 +237,7 @@ class TestColonyAliases:
         colony.adopt(cat)
         assert colony.cat_count == 1
 
-        colony.release("whiskers")
+        colony.release(cat.cat_uid)
         assert colony.cat_count == 0
 
     def test_adopt_sets_colony_storage(self) -> None:

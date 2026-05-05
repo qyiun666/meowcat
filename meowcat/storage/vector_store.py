@@ -168,7 +168,7 @@ def _make_id(text: str, metadata: dict[str, Any]) -> str:
     import hashlib
     seed = json.dumps({"text": text[:200], "meta": metadata},
                       sort_keys=True, default=str)
-    return hashlib.md5(seed.encode()).hexdigest()[:12]
+    return hashlib.sha256(seed.encode()).hexdigest()[:12]
 
 
 def _tokenize(text: str) -> set[str]:

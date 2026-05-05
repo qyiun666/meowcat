@@ -78,37 +78,28 @@ class TestLookup:
         with pytest.raises(KeyError, match="nope"):
             reg.get_colony("nope")
 
-    def test_find_cat_by_id(self):
-        reg = GlobalColonyRegistry()
-        c = _make_colony("feishu")
-        cat = c.create_cat("planner")
-        reg.register(c)
-        found = reg.find_cat("feishu/planner")
-        assert found is cat
-
     def test_find_cat_by_uid(self):
         reg = GlobalColonyRegistry()
         c = _make_colony("feishu")
-        cat = c.create_cat("planner")
-        uid = cat._cat_uid
+        cat = c.create_cat(name="planner")
         reg.register(c)
-        found = reg.find_cat(f"feishu/{uid}")
+        found = reg.find_cat(f"feishu_{cat.cat_uid}")
         assert found is cat
 
-    def test_find_cat_by_full_address(self):
+    def test_find_cat_by_address(self):
         reg = GlobalColonyRegistry()
         c = _make_colony("feishu")
-        cat = c.create_cat("planner")
+        cat = c.create_cat(name="planner")
         reg.register(c)
-        # The cat's _address is colony_id/cat_id-cat_uid
-        found = reg.find_cat(cat._address)
+        # cat_address format: colony_id_cat_uid
+        found = reg.find_cat(cat.cat_address)
         assert found is cat
 
     def test_find_cat_invalid_address(self):
         reg = GlobalColonyRegistry()
         reg.register(_make_colony("feishu"))
         with pytest.raises(ValueError, match="Invalid address"):
-            reg.find_cat("no_slash")
+            reg.find_cat("noseparator")
         with pytest.raises(ValueError, match="Invalid address"):
             reg.find_cat("")
         with pytest.raises(ValueError, match="Invalid address"):
@@ -117,15 +108,15 @@ class TestLookup:
     def test_find_cat_colony_not_found(self):
         reg = GlobalColonyRegistry()
         with pytest.raises(KeyError, match="nope"):
-            reg.find_cat("nope/cat1")
+            reg.find_cat("nope_nope01")
 
     def test_find_cat_not_found(self):
         reg = GlobalColonyRegistry()
         c = _make_colony("feishu")
-        c.create_cat("planner")
+        c.create_cat(name="planner")
         reg.register(c)
-        with pytest.raises(KeyError, match="nonexistent"):
-            reg.find_cat("feishu/nonexistent")
+        with pytest.raises(KeyError, match="nope01"):
+            reg.find_cat(f"feishu_nope01")
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -142,10 +133,10 @@ class TestListing:
     def test_list_cats(self):
         reg = GlobalColonyRegistry()
         c = _make_colony("feishu")
-        c.create_cat("a")
-        c.create_cat("b")
+        a = c.create_cat(name="a")
+        b = c.create_cat(name="b")
         reg.register(c)
-        assert set(reg.list_cats("feishu")) == {"a", "b"}
+        assert set(reg.list_cats("feishu")) == {a.cat_uid, b.cat_uid}
 
     def test_list_cats_colony_not_found(self):
         reg = GlobalColonyRegistry()
@@ -155,14 +146,15 @@ class TestListing:
     def test_list_all_cats(self):
         reg = GlobalColonyRegistry()
         c1 = _make_colony("feishu")
-        c1.create_cat("a")
-        c1.create_cat("b")
+        a = c1.create_cat(name="a")
+        b = c1.create_cat(name="b")
         c2 = _make_colony("wechat")
-        c2.create_cat("x")
+        x = c2.create_cat(name="x")
         reg.register(c1)
         reg.register(c2)
         all_cats = reg.list_all_cats()
-        assert all_cats == {"feishu": ["a", "b"], "wechat": ["x"]}
+        assert all_cats == {"feishu": [
+            a.cat_uid, b.cat_uid], "wechat": [x.cat_uid]}
 
     def test_list_all_cats_empty(self):
         reg = GlobalColonyRegistry()
@@ -183,12 +175,12 @@ class TestCounts:
     def test_total_cat_count(self):
         reg = GlobalColonyRegistry()
         c1 = _make_colony("feishu")
-        c1.create_cat("a")
-        c1.create_cat("b")
+        c1.create_cat(name="a")
+        c1.create_cat(name="b")
         c2 = _make_colony("wechat")
-        c2.create_cat("x")
-        c2.create_cat("y")
-        c2.create_cat("z")
+        c2.create_cat(name="x")
+        c2.create_cat(name="y")
+        c2.create_cat(name="z")
         reg.register(c1)
         reg.register(c2)
         assert reg.total_cat_count() == 5

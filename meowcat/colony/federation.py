@@ -94,7 +94,7 @@ class _FederationMixin:
     async def signal_remote(
         self,
         target_colony: str,
-        cat_id: str,
+        cat_uid: str,
         to_category: str,
         to_name: str,
         method: str,
@@ -135,7 +135,7 @@ class _FederationMixin:
             "type": "signal_request",
             "request_id": request_id,
             "from_colony": self.colony_id,
-            "to_cat": cat_id,
+            "to_cat": cat_uid,
             "to_category": to_category,
             "to_name": to_name,
             "method": method,
@@ -151,7 +151,7 @@ class _FederationMixin:
             result = await asyncio.wait_for(fut, timeout=30.0)
             if result.get("error"):
                 raise IllegalNeuralPathError(
-                    ("colony", cat_id), (to_category, to_name),
+                    ("colony", cat_uid), (to_category, to_name),
                     reason=result["error"],
                 )
             return result.get("data")
@@ -187,7 +187,7 @@ class _FederationMixin:
         """Handle a signal request from a remote."""
         request_id = msg["request_id"]
         from_colony = msg.get("from_colony", "unknown")
-        cat_id = msg["to_cat"]
+        cat_uid = msg["to_cat"]
         to_category = msg["to_category"]
         to_name = msg["to_name"]
         method = msg["method"]
@@ -201,12 +201,12 @@ class _FederationMixin:
         }
 
         # Verify target cat exists
-        if cat_id not in self._cats:
-            response["error"] = f"Cat '{cat_id}' not found in colony '{self.colony_id}'"
+        if cat_uid not in self._cats:
+            response["error"] = f"Cat '{cat_uid}' not found in colony '{self.colony_id}'"
         else:
             try:
                 # Get target cat and organ
-                target_cat = self._cats[cat_id]
+                target_cat = self._cats[cat_uid]
                 target_organ = target_cat.organ(to_category, to_name)
                 fn = getattr(target_organ, method)
 

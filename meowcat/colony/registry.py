@@ -119,14 +119,11 @@ class GlobalColonyRegistry(Pluggable):
     def find_cat(self, address: str) -> CatBase:
         """Find a cat by global address.
 
-        Address format: ``colony_id/cat_id`` or ``colony_id/cat_id-cat_uid``.
-        The cat_id part is matched against registered cat IDs (exact or
-        prefix match for UID-suffixed IDs).
+        Address format: ``colony_id_cat_uid``.
 
         Usage::
 
-            cat = registry.find_cat("feishu/planner")
-            cat = registry.find_cat("feishu/planner-d4e5f60001")
+            cat = registry.find_cat("feishu_planner")
 
         Args:
             address: Global cat address.
@@ -138,34 +135,14 @@ class GlobalColonyRegistry(Pluggable):
             ValueError: Invalid address format.
             KeyError: Colony or cat not found.
         """
-        parts = address.split("/", 1)
+        parts = address.split("_", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
             raise ValueError(
-                f"Invalid address '{address}': expected 'colony_id/cat_id'"
+                f"Invalid address '{address}': expected 'colony_id_cat_uid'"
             )
-        colony_id, cat_ref = parts
+        colony_id, cat_uid = parts
         colony = self.get_colony(colony_id)
-
-        # Try exact match first
-        try:
-            return colony.get_cat(cat_ref)
-        except KeyError:
-            pass
-
-        # Try prefix match (for UID-suffixed IDs: cat_id-cat_uid)
-        for cat_id in colony.list_cats():
-            cat = colony.get_cat(cat_id)
-            cat_uid = getattr(cat, "_cat_uid", "")
-            if cat_uid == cat_ref or cat_id == cat_ref:
-                return cat
-            # Match full address: cat_id-cat_uid
-            if f"{cat_id}-{cat_uid}" == cat_ref:
-                return cat
-
-        raise KeyError(
-            f"Cat '{cat_ref}' not found in colony '{colony_id}'. "
-            f"Available: {colony.list_cats()}"
-        )
+        return colony.get_cat(cat_uid)
 
     # -- Listing ------------------------------------------------------
 
@@ -184,7 +161,7 @@ class GlobalColonyRegistry(Pluggable):
             colony_id: Colony identifier.
 
         Returns:
-            List of cat_id strings.
+            List of cat_uid strings.
 
         Raises:
             KeyError: Colony not found.
@@ -195,7 +172,7 @@ class GlobalColonyRegistry(Pluggable):
         """List all cats across all registered colonies.
 
         Returns:
-            ``{colony_id: [cat_id, ...], ...}``
+            ``{colony_id: [cat_uid, ...], ...}``
         """
         return {cid: colony.list_cats() for cid, colony in self._colonies.items()}
 

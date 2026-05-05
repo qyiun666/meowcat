@@ -26,8 +26,8 @@ from meowcat.errors import OrganNotMountedError, OrganProtocolMismatchError
 class OrganHost:
     """Organ container — pure data structure for mount / organ / has / unmount."""
 
-    def __init__(self, cat_id: str) -> None:
-        self.cat_id = cat_id
+    def __init__(self, uid: str) -> None:
+        self.uid = uid
         self._organs: dict[str, dict[str, Any]] = {}
 
     # -- Write interface ------------------------------------------------

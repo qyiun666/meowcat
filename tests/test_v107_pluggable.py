@@ -463,7 +463,7 @@ async def test_create_cat_default_thalamus_hippocampus():
     llm = FakeLLM()
     from meowcat.testing import make_test_colony
     colony = make_test_colony()
-    cat = create_cat("test-cat", container=colony, cerebrum=llm)
+    cat = create_cat(container=colony, cerebrum=llm, name="test-cat")
     assert isinstance(cat.thalamus, NoopThalamus)
     assert isinstance(cat.hippocampus, NoopHippocampus)
 

@@ -911,7 +911,7 @@ class NoopHippocampus(Pluggable):
 
     # -- v1.0.15 long-workflow query --------------------------------
 
-    def list_active_workflows(self, cat_id: str) -> list[dict[str, Any]]:
+    def list_active_workflows(self, cat_uid: str) -> list[dict[str, Any]]:
         """List all incomplete workflow entities.
 
         Filters entities with type="workflow" and status active/awaiting_user.
@@ -922,7 +922,7 @@ class NoopHippocampus(Pluggable):
                 continue
             if entity.get("status") not in ("active", "awaiting_user"):
                 continue
-            if entity.get("cat_id") != cat_id:
+            if entity.get("cat_uid") != cat_uid:
                 continue
             results.append({"entity_id": eid, **entity})
         return results

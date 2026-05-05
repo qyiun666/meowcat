@@ -206,7 +206,7 @@ class MergeProposalShape(BaseModel):
     See design.md section 12.6.
     """
     kitten_id: str
-    # parent cat_id, validated at absorb_merge to prevent spoofing
+    # parent cat_uid, validated at absorb_merge to prevent spoofing
     parent_id: str
     task_id: str
     status: str = "completed"  # completed / stuck / partial
@@ -226,7 +226,7 @@ class WorkflowShape(BaseModel):
     Framework does NOT handle: step decomposition (LLM), kitten execution logic, trigger strategies.
     """
     entity_id: str
-    cat_id: str
+    cat_uid: str
     session_id: str
     status: str = "active"  # "active" | "awaiting_user" | "completed" | "failed"
     plan: list[str] = Field(default_factory=list)

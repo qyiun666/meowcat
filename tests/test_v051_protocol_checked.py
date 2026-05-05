@@ -289,7 +289,7 @@ class TestRuntimeCheckable:
 
     def test_cat_protocol_checkable(self) -> None:
         class Dummy:
-            cat_id: str = "cat"
+            cat_uid: str = "cat"
             settings: object = None
             data_dir: object = None
             turn: int = 0

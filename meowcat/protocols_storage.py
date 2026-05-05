@@ -8,6 +8,7 @@ All typing.Protocol (duck typing), zero third-party dependencies.
 from __future__ import annotations
 
 from typing import Any, AsyncIterator, Protocol, runtime_checkable
+import warnings
 
 __all__ = [
     "GraphStorageProtocol", "L6StorageProtocol",
@@ -71,18 +72,23 @@ class VectorStorageProtocol(Protocol):
 
 @runtime_checkable
 class SharedStorageProtocol(Protocol):
-    """Colony shared memory storage interface.
+    """Deprecated: use :class:`meowcat.storage.SharedStore` instead.
 
-    **Position**: none (storage layer, no organ coordinate)
-    **Inbound**: held directly by ColonyManager, not called via wiring
-    **Outbound**: none
-    **Reflex Arc**: none
-    **Implemented by**: app layer (storage backend)
+    This protocol only covers sync load/save/merge. Colony now requires
+    async get/set/delete/list_keys/watch from SharedStore.
     """
 
     def load(self) -> dict[str, Any]: ...
     def save(self, data: dict[str, Any]) -> None: ...
     def merge(self, delta: dict[str, Any]) -> dict[str, Any]: ...
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        warnings.warn(
+            "SharedStorageProtocol is deprecated. "
+            "Extend meowcat.storage.SharedStore instead.",
+            DeprecationWarning, stacklevel=2,
+        )
+        super().__init_subclass__(**kwargs)
 
 
 @runtime_checkable

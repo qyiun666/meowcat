@@ -175,16 +175,16 @@ class TestAssembleCat:
         colony = Colony("test")
         colony.stock_llm("smart", ModelConfig(model="gpt-4o"))
 
-        cat = colony.assemble_cat("planner", llm="smart")
+        cat = colony.assemble_cat(name="planner", llm="smart")
         assert cat._llm_config.model == "gpt-4o"
-        assert cat.cat_id == "planner"
+        assert cat.name == "planner"
         assert cat.container is colony
 
     def test_assemble_with_own_llm(self) -> None:
         colony = Colony("test")
         own = ModelConfig(model="claude-3-opus", provider="anthropic")
 
-        cat = colony.assemble_cat("planner", llm=own)
+        cat = colony.assemble_cat(name="planner", llm=own)
         assert cat._llm_config is own
         assert cat._llm_config.provider == "anthropic"
 
@@ -192,22 +192,22 @@ class TestAssembleCat:
         colony = Colony("test")
         colony.stock_llm("default", ModelConfig(model="gpt-4o-mini"))
 
-        cat = colony.assemble_cat("planner")
+        cat = colony.assemble_cat(name="planner")
         assert cat._llm_config.model == "gpt-4o-mini"
 
     def test_assemble_cat_is_registered(self) -> None:
         colony = Colony("test")
         colony.stock_llm("default", ModelConfig(model="gpt-4o-mini"))
 
-        cat = colony.assemble_cat("planner")
-        assert colony.list_cats() == ["planner"]
-        assert colony.get_cat("planner") is cat
+        cat = colony.assemble_cat(name="planner")
+        assert colony.list_cats() == [cat.cat_uid]
+        assert colony.get_cat(cat.cat_uid) is cat
 
     def test_assemble_with_parent_id(self) -> None:
         colony = Colony("test")
         colony.stock_llm("default", ModelConfig(model="gpt-4o-mini"))
 
-        kitten = colony.assemble_cat("kitten", parent_id="main-cat")
+        kitten = colony.assemble_cat(name="kitten", parent_id="main-cat")
         assert kitten.parent_id == "main-cat"
         assert kitten._llm_config.model == "gpt-4o-mini"
 

@@ -8,16 +8,15 @@ from meowcat.colony import Colony
 from meowcat.defaults import InMemorySharedStore
 
 
-def make_test_colony(cat_id: str = "test") -> Colony:
+def make_test_colony(colony_id: str = "test") -> Colony:
     """Create a minimal Colony for test use."""
-    return Colony(cat_id, storage=InMemorySharedStore())
+    return Colony(colony_id, storage=InMemorySharedStore())
 
 
-def make_cat(cat_id: str = "test", **kwargs):
+def make_cat(name: str = "test", **kwargs):
     """Create a CatBase with a test container.
 
-    Migration: ``CatBase("x")`` → ``make_cat("x")``
+    Migration: ``CatBase("x")`` → ``make_cat(name="x")``
     """
-    from meowcat.assembly import CatBase
-    colony = make_test_colony(cat_id)
-    return CatBase(cat_id, container=colony, **kwargs)
+    colony = make_test_colony()
+    return colony.create_cat(name=name, **kwargs)

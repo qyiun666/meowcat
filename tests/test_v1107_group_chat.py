@@ -69,9 +69,9 @@ class _ErrorOrgan:
 
 # -- 辅助工厂 -------------------------------------------------------
 
-def _make_cat_with_brain(cat_id: str, safe: bool = True, prefix: str = "echo") -> CatBase:
+def _make_cat_with_brain(name: str, safe: bool = True, prefix: str = "echo") -> CatBase:
     """创建带 amygdale + cerebrum 的测试猫。"""
-    cat = make_cat(cat_id)
+    cat = make_cat(name=name)
     cat.mount("brain", "amygdala", _MockAmygdala(safe=safe))
     cat.mount("brain", "cerebrum", _MockCerebrum(prefix=prefix))
     return cat
@@ -86,46 +86,47 @@ class TestBroadcastRequest:
     async def test_broadcast_single_cat(self) -> None:
         """单猫 broadcast_request 返回单结果。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("planner")
-        colony.get_cat("planner").mount(
+        planner = colony.create_cat(name="planner")
+        planner.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
 
         results = await colony.broadcast_request(
             "assess_safety", sql="DROP TABLE users")
-        assert results == {"planner": {"safe": True,
-                                       "input": {"sql": "DROP TABLE users"}}}
+        assert results == {planner.cat_uid: {"safe": True,
+                                             "input": {"sql": "DROP TABLE users"}}}
 
     @pytest.mark.asyncio
     async def test_broadcast_multiple_cats(self) -> None:
         """多猫 broadcast_request 返回所有猫的结果。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("planner")
-        colony.create_cat("executor")
-        colony.create_cat("reviewer")
-        colony.get_cat("planner").mount(
+        planner = colony.create_cat(name="planner")
+        executor = colony.create_cat(name="executor")
+        reviewer = colony.create_cat(name="reviewer")
+        planner.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
-        colony.get_cat("executor").mount(
+        executor.mount(
             "brain", "amygdala", _MockAmygdala(safe=False))
-        colony.get_cat("reviewer").mount(
+        reviewer.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
 
         results = await colony.broadcast_request(
             "assess_safety", sql="DROP TABLE")
-        assert set(results.keys()) == {"planner", "executor", "reviewer"}
-        assert results["planner"]["safe"] is True
-        assert results["executor"]["safe"] is False
-        assert results["reviewer"]["safe"] is True
+        assert set(results.keys()) == {
+            planner.cat_uid, executor.cat_uid, reviewer.cat_uid}
+        assert results[planner.cat_uid]["safe"] is True
+        assert results[executor.cat_uid]["safe"] is False
+        assert results[reviewer.cat_uid]["safe"] is True
 
     @pytest.mark.asyncio
-    async def test_broadcast_returns_cat_id_keys(self) -> None:
-        """确保键是 cat_id 字符串。"""
+    async def test_broadcast_returns_cat_uid_keys(self) -> None:
+        """确保键是 cat_uid 字符串。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("alpha")
-        colony.get_cat("alpha").mount(
+        alpha = colony.create_cat(name="alpha")
+        alpha.mount(
             "brain", "amygdala", _MockAmygdala())
 
         results = await colony.broadcast_request("assess_safety")
-        assert "alpha" in results
+        assert alpha.cat_uid in results
         assert isinstance(list(results.keys())[0], str)
 
 
@@ -137,11 +138,11 @@ class TestBroadcastRequestCustom:
     @pytest.mark.asyncio
     async def test_custom_organ_target(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("cat-a")
-        colony.get_cat("cat-a").mount(
+        cat_a = colony.create_cat(name="cat-a")
+        cat_a.mount(
             "brain", "cerebrum", _MockCerebrum(prefix="cat-a"))
-        colony.create_cat("cat-b")
-        colony.get_cat("cat-b").mount(
+        cat_b = colony.create_cat(name="cat-b")
+        cat_b.mount(
             "brain", "cerebrum", _MockCerebrum(prefix="cat-b"))
 
         results = await colony.broadcast_request(
@@ -151,16 +152,16 @@ class TestBroadcastRequestCustom:
             prompt="hello",
         )
         assert results == {
-            "cat-a": "cat-a: hello",
-            "cat-b": "cat-b: hello",
+            cat_a.cat_uid: "cat-a: hello",
+            cat_b.cat_uid: "cat-b: hello",
         }
 
     @pytest.mark.asyncio
     async def test_async_method_support(self) -> None:
         """broadcast_request 支持异步方法。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("cat-a")
-        colony.get_cat("cat-a").mount(
+        cat_a = colony.create_cat(name="cat-a")
+        cat_a.mount(
             "brain", "cerebrum", _MockCerebrum(prefix="cat-a"))
 
         results = await colony.broadcast_request(
@@ -169,7 +170,7 @@ class TestBroadcastRequestCustom:
             to_name="cerebrum",
             prompt="hi",
         )
-        assert results == {"cat-a": "async_cat-a: hi"}
+        assert results == {cat_a.cat_uid: "async_cat-a: hi"}
 
 
 # -- 3. 错误处理 ---------------------------------------------------
@@ -181,25 +182,25 @@ class TestBroadcastRequestErrors:
     async def test_ignore_errors_default(self) -> None:
         """默认 ignore_errors=True，猫异常变成错误字典。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("planner")
-        colony.get_cat("planner").mount(
+        planner = colony.create_cat(name="planner")
+        planner.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
-        colony.create_cat("broken")
-        colony.get_cat("broken").mount(
+        broken = colony.create_cat(name="broken")
+        broken.mount(
             "brain", "amygdala", _ErrorOrgan(RuntimeError("oops")))
 
         # assess_safety: planner 正常返回，broken 抛异常
         results = await colony.broadcast_request("assess_safety")
-        assert results["planner"] == {"safe": True, "input": {}}
-        assert "error" in results["broken"]
-        assert "oops" in results["broken"]["error"]
+        assert results[planner.cat_uid] == {"safe": True, "input": {}}
+        assert "error" in results[broken.cat_uid]
+        assert "oops" in results[broken.cat_uid]["error"]
 
     @pytest.mark.asyncio
     async def test_ignore_errors_false(self) -> None:
         """ignore_errors=False 时第一只猫异常即抛出。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("broken")
-        colony.get_cat("broken").mount(
+        broken = colony.create_cat(name="broken")
+        broken.mount(
             "brain", "amygdala", _ErrorOrgan(RuntimeError("boom")))
 
         with pytest.raises(RuntimeError, match="boom"):
@@ -210,10 +211,10 @@ class TestBroadcastRequestErrors:
         """器官未挂载时返回错误。"""
         colony = Colony("test", storage=InMemorySharedStore())
         # cat 没有挂载 amygdale
-        colony.create_cat("bare")
+        bare = colony.create_cat(name="bare")
 
         results = await colony.broadcast_request("assess_safety")
-        assert "error" in results["bare"]
+        assert "error" in results[bare.cat_uid]
 
 
 # -- 4. 空猫群 -----------------------------------------------------
@@ -237,26 +238,26 @@ class TestGroupChatIntegration:
     async def test_broadcast_then_private(self) -> None:
         """群聊获取全局视图 → 私聊对特定猫深入追问。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("master")
-        colony.create_cat("worker-1")
-        colony.create_cat("worker-2")
+        master = colony.create_cat(name="master")
+        worker1 = colony.create_cat(name="worker-1")
+        worker2 = colony.create_cat(name="worker-2")
 
-        colony.get_cat("master").mount(
+        master.mount(
             "brain", "cerebrum", _MockCerebrum(prefix="master"))
-        colony.get_cat("worker-1").mount(
+        worker1.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
-        colony.get_cat("worker-2").mount(
+        worker2.mount(
             "brain", "amygdala", _MockAmygdala(safe=False))
 
         # Step 1: 群聊 — 所有猫评估安全性
         results = await colony.broadcast_request(
             "assess_safety", action="delete_db")
-        assert results["worker-1"]["safe"] is True
-        assert results["worker-2"]["safe"] is False
+        assert results[worker1.cat_uid]["safe"] is True
+        assert results[worker2.cat_uid]["safe"] is False
 
         # Step 2: 私聊 — 对不安全的猫深入追问
         worker2_result = await colony.signal_between(
-            "master", "worker-2", "brain", "amygdala",
+            master.cat_uid, worker2.cat_uid, "brain", "amygdala",
             "assess_safety", action="explain_why",
         )
         assert worker2_result["safe"] is False
@@ -265,20 +266,20 @@ class TestGroupChatIntegration:
     async def test_private_then_broadcast(self) -> None:
         """私聊确认某猫状态 → 群聊广播最新结论。"""
         colony = Colony("test", storage=InMemorySharedStore())
-        colony.create_cat("coordinator")
-        colony.create_cat("alice")
-        colony.create_cat("bob")
+        coordinator = colony.create_cat(name="coordinator")
+        alice = colony.create_cat(name="alice")
+        bob = colony.create_cat(name="bob")
 
-        colony.get_cat("coordinator").mount(
+        coordinator.mount(
             "brain", "cerebrum", _MockCerebrum(prefix="coord"))
-        colony.get_cat("alice").mount(
+        alice.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
-        colony.get_cat("bob").mount(
+        bob.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
 
         # Step 1: 私聊 — 先问 alice
         alice_result = await colony.signal_between(
-            "coordinator", "alice", "brain", "amygdala",
+            coordinator.cat_uid, alice.cat_uid, "brain", "amygdala",
             "assess_safety", proposal="new_policy",
         )
         assert alice_result["safe"] is True
@@ -286,8 +287,8 @@ class TestGroupChatIntegration:
         # Step 2: 群聊 — 广播给所有人
         results = await colony.broadcast_request(
             "assess_safety", proposal="new_policy")
-        assert results["alice"]["safe"] is True
-        assert results["bob"]["safe"] is True
+        assert results[alice.cat_uid]["safe"] is True
+        assert results[bob.cat_uid]["safe"] is True
 
     @pytest.mark.asyncio
     async def test_broadcast_bypasses_cross_wiring(self) -> None:
@@ -296,14 +297,14 @@ class TestGroupChatIntegration:
             "test", storage=InMemorySharedStore(),
             cross_wiring_forbidden={("a", "b")},  # 阻止 a→b 私聊
         )
-        colony.create_cat("a")
-        colony.create_cat("b")
-        colony.get_cat("a").mount(
+        a = colony.create_cat(name="a")
+        b = colony.create_cat(name="b")
+        a.mount(
             "brain", "amygdala", _MockAmygdala(safe=True))
-        colony.get_cat("b").mount(
+        b.mount(
             "brain", "amygdala", _MockAmygdala(safe=False))
 
         # broadcast_request 不应受 cross_wiring 影响
         results = await colony.broadcast_request("assess_safety")
-        assert results["a"]["safe"] is True
-        assert results["b"]["safe"] is False
+        assert results[a.cat_uid]["safe"] is True
+        assert results[b.cat_uid]["safe"] is False

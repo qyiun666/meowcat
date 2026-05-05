@@ -176,17 +176,17 @@ def register_colony_commands(
 
     def cmd_cats(ctx: CommandContext) -> str:
         t = ctx.i18n
-        cat_ids = colony.list_cats()
-        if not cat_ids:
+        cat_uids = colony.list_cats()
+        if not cat_uids:
             return t.t("cats_no_cats")
         max_cats = colony.max_cats if colony.max_cats is not None else t.t(
             "colony_unlimited")
         lines = [
-            f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_ids), max_cats=max_cats)}**",
+            f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_uids), max_cats=max_cats)}**",
             "",
         ]
-        active_id = active_cat_ref[0].cat_id if active_cat_ref[0] else None
-        for cid in cat_ids:
+        active_id = active_cat_ref[0].cat_uid if active_cat_ref[0] else None
+        for cid in cat_uids:
             marker = " ← active" if cid == active_id else ""
             try:
                 cat = colony.get_cat(cid)
@@ -210,7 +210,7 @@ def register_colony_commands(
         if colony.is_full:
             return t.t("cats_adopt_full", count=len(colony._cats), max_cats=colony.max_cats)
         try:
-            cat = colony.create_cat(cat_id)
+            cat = colony.create_cat(name=cat_id)
             if active_cat_ref[0] is None:
                 active_cat_ref[0] = cat
             return t.t("cats_adopt", cat_id=cat_id)
@@ -228,7 +228,7 @@ def register_colony_commands(
             return t.t("cats_release_not_found", cat_id=cat_id)
         try:
             colony.release(cat_id)
-            if active_cat_ref[0] and active_cat_ref[0].cat_id == cat_id:
+            if active_cat_ref[0] and active_cat_ref[0].cat_uid == cat_id:
                 active_cat_ref[0] = None
             return t.t("cats_release", cat_id=cat_id)
         except Exception as exc:
@@ -279,13 +279,13 @@ def register_colony_commands(
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                return t.t("brain_running", cat_id=cat.cat_id)
+                return t.t("brain_running", cat_id=cat.cat_uid)
             results = loop.run_until_complete(cat.brain_check())
         except RuntimeError:
             loop = asyncio.new_event_loop()
             results = loop.run_until_complete(cat.brain_check())
             loop.close()
-        return _format_brain_results(t, cat.cat_id, results)
+        return _format_brain_results(t, cat.cat_uid, results)
 
     # -- Register --------------------------------------------------------
 

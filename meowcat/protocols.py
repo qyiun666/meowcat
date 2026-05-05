@@ -135,7 +135,7 @@ class KittenProtocol(Protocol):
     **Implemented by**: app layer (KittenAgent implementation)
     """
 
-    parent_id: str                   # parent cat_id, string identifier only
+    parent_id: str                   # parent cat_uid, string identifier only
     task: SubTaskShape
     role: str
     workspace: Any
@@ -217,7 +217,7 @@ class CatProtocol(Protocol):
     **Lifecycle**: start() → event loop → shutdown()
     **Implemented by**: app layer (Cat assembly class)
     """
-    cat_id: str
+    cat_uid: str
     settings: Any
     data_dir: Any
     turn: int

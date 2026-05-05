@@ -76,7 +76,7 @@ class CatBase:
 
     def __init__(
         self,
-        cat_id: str,
+        cat_uid: str,
         *,
         container: "Colony | None" = None,
         parent_id: str | None = None,
@@ -92,7 +92,7 @@ class CatBase:
         """Construct cat skeleton.
 
         Args:
-            cat_id: Unique cat identifier.
+            cat_uid: Unique cat identifier (2-digit increment per colony).
             container: The Colony this cat belongs to (mandatory since v1.1.3).
             parent_id: Parent cat identifier (plain string, no object reference).
                 Used for tracking and result routing back to parent.
@@ -121,18 +121,15 @@ class CatBase:
                 Call ``register_default_tools()`` later.
         """
         if container is None:
-            raise StandaloneCatError(cat_id)
+            raise StandaloneCatError(cat_uid)
+        assert container is not None  # type guard: container is Colony after raise
         self._container = container
-        # _cat_uid will be overwritten by Colony.create_cat() with
-        # the real MD6+increment UID; fallback to cat_id for non-Colony usage
-        self._cat_uid = cat_id
-        self._address = f"{container.colony_id}/{cat_id}-{self._cat_uid}"
+        self._cat_uid = cat_uid
+        self._name = cat_uid  # default display name = uid
+        self._address = f"{container.colony_id}_{cat_uid}"
         self._parent_id = parent_id
-        # v1.0.1: Set _allowed_organs=None first to avoid __init__ internal
-        # self.xxx assignments being intercepted by __getattribute__;
-        # set the real value at the end.
         self._allowed_organs: frozenset[str] | None = None
-        self._host = OrganHost(cat_id)
+        self._host = OrganHost(cat_uid)
         self._events = EventBus()
         self._nervous: Nervous | None = (
             Nervous(self._host, self._events,
@@ -188,12 +185,27 @@ class CatBase:
 
     @property
     def cat_address(self) -> str:
-        """Global address: ``colony_id/cat_id-cat_uid``."""
+        """Colony-local address: ``colony_id_cat_uid``."""
         return self._address
 
     @property
+    def global_address(self) -> str:
+        """Global address: ``region_colony_id_cat_uid``.
+
+        Reserved for future cross-region routing.  The *region* part
+        comes from :attr:`Colony.region` and is empty when unset.
+
+        Format:
+            No region: ``{colony_id}_{cat_uid}``
+            With region: ``{region}_{colony_id}_{cat_uid}``
+        """
+        region = self._container.region
+        prefix = f"{region}_" if region else ""
+        return f"{prefix}{self._address}"
+
+    @property
     def cat_uid(self) -> str:
-        """Cat unique identifier within the colony: ``cat_id-{MD6}{increment:04d}``."""
+        """Cat unique identifier within the colony: 2-digit increment."""
         return self._cat_uid
 
     @property
@@ -202,9 +214,16 @@ class CatBase:
         return self._parent_id
 
     @property
-    def cat_id(self) -> str:
-        """Cat unique identifier (read from ``_host``)."""
-        return self._host.cat_id
+    def name(self) -> str:
+        """Human-readable display name (defaults to :attr:`cat_uid`).
+
+        Mutable — users can rename cats at runtime.
+        """
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = value
 
     @property
     def host(self) -> OrganHost:
@@ -373,14 +392,14 @@ class CatBase:
                 raise IllegalNeuralPathError(
                     ("_cat", "_cat"), ("_cat", name),
                     reason=(
-                        f"Cat '{super().__getattribute__('cat_id')}' "
+                        f"Cat '{super().__getattribute__('cat_uid')}' "
                         f"is not allowed to access organ '{name}'."
                     ),
                 )
         return super().__getattribute__(name)
 
     _ALWAYS_ALLOWED: frozenset[str] = frozenset({
-        "cat_id", "cat_uid", "cat_address", "container", "parent_id",
+        "cat_uid", "name", "cat_address", "global_address", "container", "parent_id",
         "tool_registry", "skill_registry",
         "path_registry", "chain_registry", "loop_registry",
         "loopseq_registry",
@@ -640,7 +659,7 @@ class CatBase:
             return
         try:
             hippo = self.organ("brain", "hippocampus")
-            active = hippo.list_active_workflows(self.cat_id)
+            active = hippo.list_active_workflows(self.cat_uid)
             for wf in active:
                 eid = wf.get("entity_id", wf.get("id", ""))
                 if eid:
@@ -798,7 +817,7 @@ class CatBase:
             Memory retrieval result dict
         """
         return await self.chain_registry.run(
-            self, "memory_search", msg=query, session_id=self.cat_id,
+            self, "memory_search", msg=query, session_id=self.cat_uid,
         )
 
     async def memory_stats(self) -> dict[str, Any]:

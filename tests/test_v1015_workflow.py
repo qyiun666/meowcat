@@ -41,10 +41,10 @@ class TestWorkflowShape:
     def test_default_values(self):
         """Default values are correct."""
         wf = WorkflowShape(
-            entity_id="wf-1", cat_id="cat-1", session_id="sess-1",
+            entity_id="wf-1", cat_uid="cat-1", session_id="sess-1",
         )
         assert wf.entity_id == "wf-1"
-        assert wf.cat_id == "cat-1"
+        assert wf.cat_uid == "cat-1"
         assert wf.session_id == "sess-1"
         assert wf.status == "active"
         assert wf.plan == []
@@ -58,7 +58,7 @@ class TestWorkflowShape:
         """Custom field values stored correctly."""
         wf = WorkflowShape(
             entity_id="wf-2",
-            cat_id="cat-2",
+            cat_uid="cat-2",
             session_id="sess-2",
             status="awaiting_user",
             plan=["step1", "step2", "step3"],
@@ -77,7 +77,7 @@ class TestWorkflowShape:
     def test_model_dump(self):
         """model_dump is serializable."""
         wf = WorkflowShape(
-            entity_id="wf-3", cat_id="cat-3", session_id="sess-3",
+            entity_id="wf-3", cat_uid="cat-3", session_id="sess-3",
             plan=["a", "b"],
         )
         d = wf.model_dump()
@@ -105,11 +105,11 @@ class TestNoopHippocampusListActiveWorkflows:
         hippo = NoopHippocampus()
         hippo.add_entity({
             "id": "e1", "type": "memory", "status": "active",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         hippo.add_entity({
             "id": "e2", "type": "workflow", "status": "active",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         result = hippo.list_active_workflows("cat-1")
         assert len(result) == 1
@@ -120,19 +120,19 @@ class TestNoopHippocampusListActiveWorkflows:
         hippo = NoopHippocampus()
         hippo.add_entity({
             "id": "w1", "type": "workflow", "status": "active",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         hippo.add_entity({
             "id": "w2", "type": "workflow", "status": "awaiting_user",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         hippo.add_entity({
             "id": "w3", "type": "workflow", "status": "completed",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         hippo.add_entity({
             "id": "w4", "type": "workflow", "status": "failed",
-            "cat_id": "cat-1",
+            "cat_uid": "cat-1",
         })
         result = hippo.list_active_workflows("cat-1")
         assert len(result) == 2
@@ -144,11 +144,11 @@ class TestNoopHippocampusListActiveWorkflows:
         hippo = NoopHippocampus()
         hippo.add_entity({
             "id": "w1", "type": "workflow", "status": "active",
-            "cat_id": "cat-a",
+            "cat_uid": "cat-a",
         })
         hippo.add_entity({
             "id": "w2", "type": "workflow", "status": "active",
-            "cat_id": "cat-b",
+            "cat_uid": "cat-b",
         })
         result = hippo.list_active_workflows("cat-a")
         assert len(result) == 1
@@ -159,7 +159,7 @@ class TestNoopHippocampusListActiveWorkflows:
         hippo = NoopHippocampus()
         hippo.add_entity({
             "id": "wf-x", "type": "workflow", "status": "active",
-            "cat_id": "cat-1", "plan": ["step1"],
+            "cat_uid": "cat-1", "plan": ["step1"],
         })
         result = hippo.list_active_workflows("cat-1")
         assert result[0]["entity_id"] == "wf-x"
@@ -183,7 +183,7 @@ class TestCatBaseWorkflowTracking:
         """register_workflow correctly adds to tracking list."""
         cat = make_cat("test")
         wf = {
-            "entity_id": "wf-1", "cat_id": "test",
+            "entity_id": "wf-1", "cat_uid": cat.cat_uid,
             "status": "active", "plan": ["s1", "s2"],
         }
         cat.register_workflow(wf)
@@ -194,7 +194,7 @@ class TestCatBaseWorkflowTracking:
         """register_workflow compatible with "id" key (legacy compat)."""
         cat = make_cat("test")
         wf = {
-            "id": "wf-old", "cat_id": "test",
+            "id": "wf-old", "cat_uid": cat.cat_uid,
             "status": "active",
         }
         cat.register_workflow(wf)
@@ -235,9 +235,9 @@ class TestCatBaseWorkflowTracking:
 class TestCatBaseWorkflowLifecycle:
     """start()/shutdown() workflow checkpoint/resume integration."""
 
-    def _setup_cat_with_hippo(self, cat_id="test"):
+    def _setup_cat_with_hippo(self, name="test"):
         """Create CatBase with NoopHippocampus and wiring."""
-        cat = make_cat(cat_id)
+        cat = make_cat(name)
         hippo = NoopHippocampus()
         cat.mount("brain", "hippocampus", hippo)
         # need brainstem for signal support
@@ -284,12 +284,12 @@ class TestCatBaseWorkflowLifecycle:
         # Create workflow entity in Hippocampus
         hippo.add_entity({
             "id": "wf-1", "type": "workflow", "status": "active",
-            "cat_id": "test", "content": "initial",
+            "cat_uid": cat.cat_uid, "content": "initial",
             "current_step": 1, "checkpoint": {"data": "step1"},
         })
         # Register with cat
         cat.register_workflow({
-            "entity_id": "wf-1", "cat_id": "test",
+            "entity_id": "wf-1", "cat_uid": cat.cat_uid,
             "status": "active", "current_step": 1,
             "checkpoint": {"data": "step1"},
         })
@@ -310,11 +310,11 @@ class TestCatBaseWorkflowLifecycle:
 
         hippo.add_entity({
             "id": "wf-active", "type": "workflow", "status": "active",
-            "cat_id": "test", "content": "",
+            "cat_uid": cat.cat_uid, "content": "",
         })
         hippo.add_entity({
             "id": "wf-done", "type": "workflow", "status": "completed",
-            "cat_id": "test", "content": "",
+            "cat_uid": cat.cat_uid, "content": "",
         })
         cat.register_workflow({
             "entity_id": "wf-active", "status": "active",
@@ -341,7 +341,7 @@ class TestCatBaseWorkflowLifecycle:
 
         hippo.add_entity({
             "id": "wf-1", "type": "workflow", "status": "active",
-            "cat_id": "test", "plan": ["step1", "step2"],
+            "cat_uid": cat.cat_uid, "plan": ["step1", "step2"],
             "current_step": 1,
         })
 
@@ -361,11 +361,11 @@ class TestCatBaseWorkflowLifecycle:
 
         hippo.add_entity({
             "id": "wf-active", "type": "workflow", "status": "active",
-            "cat_id": "test",
+            "cat_uid": cat.cat_uid,
         })
         hippo.add_entity({
             "id": "wf-done", "type": "workflow", "status": "completed",
-            "cat_id": "test",
+            "cat_uid": cat.cat_uid,
         })
 
         async def _run():

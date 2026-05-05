@@ -58,9 +58,9 @@ class _MockCerebrum:
         return {"status": "ok"}
 
 
-def _make_cat(cat_id: str) -> CatBase:
+def _make_cat(name: str) -> CatBase:
     """创建一个带海马体和大脑的测试猫。"""
-    cat = make_cat(cat_id)
+    cat = make_cat(name)
     cat.mount("brain", "hippocampus", _MockHippocampus())
     cat.mount("brain", "cerebrum", _MockCerebrum())
     return cat
@@ -171,7 +171,7 @@ class TestColonySignalRemote:
             await asyncio.sleep(0.05)
 
             result = await colony_a.signal_remote(
-                "colony-b", "cat-b",
+                "colony-b", cat_b.cat_uid,
                 "brain", "hippocampus", "locate",
                 query="hello federation",
             )
@@ -204,7 +204,7 @@ class TestColonySignalRemote:
             await asyncio.sleep(0.05)
 
             result = await colony_a.signal_remote(
-                "colony-b", "cat-b",
+                "colony-b", cat_b.cat_uid,
                 "brain", "cerebrum", "generate",
                 "test prompt",
             )
