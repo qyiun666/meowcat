@@ -1,403 +1,386 @@
-# meowcat
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Axonant/MeowAgent/main/assets/logo_white_240.png">
+  <img alt="meowcat logo" src="https://raw.githubusercontent.com/Axonant/MeowAgent/main/assets/logo_dark_240.png" width="120">
+</picture>
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
+# 🐱 meowcat · Bio-Neural AI Agent Framework
 
-> 🐱 **Solo indie project** — if you find this useful, a ⭐ star ⭐ would make this cat purr!
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![version](https://img.shields.io/badge/version-1.2.36-lightgrey.svg)]()
+[![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 
-**An agent framework built on the biological blueprint of a cat.**
+An AI agent framework built on a cat's biological blueprint. Define your organs, wire their nerves, and the cat comes alive.
 
-meowcat is the pure-framework layer of the MeowAgent ecosystem — cat anatomy:
-protocols, neural wiring, reflexes, tools, and a four-layer abstraction from
-atomic signals to composable closed loops. Bring your own LLM; the cat provides
-everything else.
-
-> Full catalog of 20 organs, 26 paths, 6 chains, 5 loops, entry/exit rules → **[CATALOG.md](CATALOG.md)**
-
----
-
-## Big Picture
-
-**Gateway (the cat's skin)** — sole external I/O entry/exit. All protocol adapters plug into one Gateway.
-
-```
-┌────────────────── Gateway — the cat's skin ───────────────────┐
-│                                                              │
-│   Outside World                                              │
-│   HTTP · WebSocket · Webhook · CLI · IPC                    │
-│          │                                                   │
-│          ▼                                                   │
-│   ┌──────────────────────────────┐                          │
-│   │  Gateway._on_message()       │  ← 1 Cat : 1 Gateway    │
-│   │  Gateway._on_stream()        │    : N Adapters          │
-│   └──────────────┬───────────────┘                          │
-│                  │                                           │
-│                  ▼                                           │
-│          cat.perceive()  →  enters cat's nervous system     │
-│                                                              │
-│   Gateway is not an organ — independent subsystem composing  │
-│   with CatBase, not inheriting.                              │
-│   Adapters: meowcat.plus.gateway (HTTP/WS/Webhook/CLI/IPC)   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-```
-                        ┌──────────────────────────────────────────────────────────────┐
-                        │                    THE CAT'S NERVOUS SYSTEM                     │
-                        │                                                              │
-   Human Input ──────► EARS ──► ╔══════════╗                                           │
-   (text/voice)        (ears)    ║ THALAMUS ║──► CEREBRUM (cerebrum) ──► CEREBELLUM ─┬─► MOUTH ──► Text
-                        │        ║  ★fork★  ║     deep reasoning         fast response │   (mouth)
-                  ──────► EYES   ╚══╤══╤═══╝     (LLM call)            (effect router)├─► PURR  ──► Stream
-                  (eyes)           │  │              │                       │          │   (purr)
-                                   │  │              ▼                       ▼          ├─► TAIL  ──► Status
-                  ──────► WHISKERS │  │         HIPPOCAMPUS                 PAWS       │   (tail)
-                  (whiskers)       │  │         (memory graph)          (tool exec)    │
-                                   │  │              │                                    │
-                                   │  ├──────────────┤                                    │
-                                   │  │  AMYGDALA ←──┼── fear bypass ────────────────────┤
-                                   │  │  (safety)     │                                    │
-                                   │  │               │                                    │
-                                   │  └──► BRAINSTEM ─┴── master dispatch ────────────────┤
-                                   │       (brainstem)                                     │
-                                   │          │                                            │
-                                   │          ▼                                            │
-                                   │       FRONTAL ──► CORTEX                              │
-                                   │       (focus)     (worldview L0-L3)                   │
-                                   │                                                       │
-                                   │    ┌─── Epiphany Pipeline ───────────────────────┐   │
-                                   │    │  ScribblePad ──► PinealGland ──► meditate    │   │
-                                   │    │  (fragments)      (pineal gland)   │         │   │
-                                   │    │                                     ▼         │   │
-                                   │    │              fuse_to_self ──► Cortex          │   │
-                                   │    │              fuse_to_colony ──► SharedStorage │   │
-                                   │    └──────────────────────────────────────────────┘   │
-                                   │                                                       │
-                                   │    ┌─── Active Growth ───────────────────────────┐   │
-                                   │    │  BlindSpotDetector / ToolFailureLearner     │   │
-                                   │    │  HotPathObserver / CollectiveGrowth         │   │
-                                   │    └──────────────────────────────────────────────┘   │
-                                   │                                                       │
-                                   └─── CatSelf (unified self) ───────────────────────────┘
-                                         before_act → act → after_act → scribble
-
-   Legend:  ──► one-way    ★ fork ★ routing    ◄──► bidirectional
-```
-
-**Colony (Cat House)** — Multi-cat peer collaboration via SharedStorage.
-
-```
-┌─────────── Colony (Cat House) ──────────────────────────┐
-│                                                          │
-│  ┌─────────┐    ┌─────────┐    ┌─────────┐             │
-│  │  Cat A  │    │  Cat B  │    │  Cat C  │             │
-│  │ (peer)  │◄──►│ (peer)  │◄──►│ (peer)  │             │
-│  │ cat_uid= │    │ cat_uid= │    │ cat_uid= │             │
-│  │  "a"   │    │  "b"   │    │  "c"   │             │
-│  └────┬────┘    └────┬────┘    └────┬────┘             │
-│       │              │              │                   │
-│       └──────────────┼──────────────┘                   │
-│                      │                                  │
-│               ┌──────▼──────┐                           │
-│               │ SharedStorage│ ← shared mem / state     │
-│               └─────────────┘                           │
-│                                                          │
-│   Each cat internally = full nervous system (above).    │
-│   Cats communicate via signal_between() + SharedStorage.│
-└──────────────────────────────────────────────────────────┘
-```
-
-**Four-layer abstraction** — Path → Chain → Loop → LoopSequence — compose atomic signals into autonomous closed loops.
-
-**Two closed loops** — Inner loop (self-evolution via CatSelf) + Outer loop (collective intelligence via Colony). The PinealGland is the hub.
-
-> Detailed organ specs, entry/exit rules, path tables, and loop definitions → **[CATALOG.md](CATALOG.md)**
+> **Framework defines the skeleton. You choose the materials.**
+>
+> 20 organs · 26 paths · 6 chains · 5 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
 
 ---
 
-## Highlights
+## 📐 What is meowcat?
 
-| Category              | What You Get                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------- |
-| **Cat anatomy**       | 20 organs on a real neural blueprint (Thalamus, Hippocampus, Amygdala...)          |
-| **Slot / Plug model** | Organ = typed slot (Protocol). Implementation = plug (4 styles). Swap freely.      |
-| **Four-layer**        | Path (atomic) → Chain (sequence) → Loop (trigger+exit) → LoopSequence (meta)       |
-| **Two closed loops**  | Inner: self-evolution. Outer: collective intelligence. PinealGland hub.            |
-| **Epiphany pipeline** | ScribblePad → PinealGland → meditate → fuse_to_self / fuse_to_colony               |
-| **Cortex L0-L3**      | Facts → Rules → Beliefs → Metacognition. All Pluggable.                            |
-| **CatSelf**           | Unified self-model: before_act / after_act + 3 prefab default loops                |
-| **Active Growth**     | BlindSpotDetector + ToolFailureLearner + HotPathObserver — the cat learns          |
-| **Pluggable**         | Every organ supports runtime hook mount/unmount. 3 execution modes. Async-capable. |
-| **Colony**            | Multi-cat peer collaboration: shared memory, cross-cat signal, federation          |
-| **Signal safety**     | Circuit breaker per `(organ, method)` — auto-open on consecutive failures          |
-| **Telemetry**         | Built-in Tracer + Metrics — zero-dependency observability for signal calls         |
-| **Loop bridge**       | CatSelf DefaultLoop ↔ LoopRegistry bridge — compose both loop systems              |
-| **Zero hardcoded**    | All thresholds, danger lists, language presets are constructor parameters          |
-| **Lazy import**       | `import meowcat` loads only the skeleton. Full tree on first attribute access.     |
-| **Zero I/O core**     | Framework has zero file/network I/O. All concrete I/O lives in `plus/`.            |
-| **Dual track**        | Noop (bare shell) or Renovated (pre-furnished) — mix per organ.                    |
-| **Bilingual**         | KW_EN / KW_ZH / KW_BILINGUAL keyword presets + PROMPT_DEFAULT / PROMPT_ZH          |
+meowcat is to AI agents what a skeleton is to a body — it defines the structure, the connections, the rules of signal flow.
+
+```
+          Protocols    Anatomy    Wiring    Nervous    Reflex
+         organ contract blueprint nerve paths dispatch  stimulus→response
+              │          │         │         │         │
+              └──────────┴────┬────┴─────────┴─────────┘
+                              │
+                    CatBase (skeleton + lifecycle)
+                              │
+              ┌───────────────┼───────────────┐
+              │               │               │
+          OrganHost        Colony         defaults/
+         mount/validate  multi-cat     Noop stubs/Renovated
+```
+
+- **Zero I/O core** — framework has no file/network I/O, pure abstractions
+- **Slot-Plug separation** — framework defines Slots (Protocols), you provide Plugs (implementations)
+- **Optional batteries** — `pip install meowcat[plus]` gets you browser, ChromaDB, MCP, gateways
 
 ---
 
-## Quick Start
+## ✨ Why "Cat"?
+
+meowcat models an AI agent after a **cat's biological nervous system** — a proven architecture refined by millions of years of evolution:
+
+| Biological Reality | meowcat Equivalent |
+|:---|:---|
+| Thalamus routes all sensory input | `Thalamus` — single sensory relay hub |
+| Cerebrum handles deep reasoning | `Cerebrum` — LLM-powered deep thinking |
+| Cerebellum coordinates fast action | `Cerebellum` — sole gateway to effectors |
+| Amygdala triggers fear responses | `Amygdala` — safety bypass (can act without reasoning) |
+| Hippocampus stores memories | `Hippocampus` — entity graph memory |
+| Hypothalamus maintains homeostasis | `Hypothalamus` — memory decay + cleanup |
+| Cortex builds worldview from experience | `Cortex` — L0→L3 cognition pipeline |
+| Reflex arcs bypass the brain | `ReflexArc` — stimulus→response with zero LLM |
+
+**20 organs. 5 categories. 1 unified nervous system.** The cat architecture gives you biological defense layers (amygdala safety bypass, circuit breakers, forbidden edges) that a flat LLM pipeline can never have.
+
+---
+
+## 🎯 Highlights
+
+<table>
+<tr>
+<td width="50%">
+
+### 🧬 Bio-Neural Blueprint
+Modeled after real neuroanatomy. 20 organs in 5 categories (BRAIN / SENSE / VOICE / STORAGE / GROWTH). Each organ has entry/exit rules, read/write permissions, and supported implementation styles — just like real biological constraints.
+
+### 🔌 Slot-Plug Architecture
+Framework defines the **Slot** (Protocol interface + OrganSpec contract). You provide the **Plug** (concrete implementation). 4 plug styles: `ALGORITHM` | `RULE` | `MODEL` | `HYBRID`. Mix and match per organ.
+
+### 🧠 Four-Layer Execution Model
+`Path` (atomic signal) → `Chain` (sequence + rollback) → `Loop` (trigger + exit + event) → `LoopSequence` (orchestration). From microscopic to macroscopic, layered composability.
+
+</td>
+<td width="50%">
+
+### 🛡️ Biological Defense Layers
+- **Amygdala safety bypass** — danger detected → output directly, zero LLM reasoning
+- **Circuit breaker** — per (organ, method) independent breaker, consecutive failures → open circuit
+- **Forbidden edges** — biologically plausible wiring restrictions (brain can't control paws directly)
+- **Kittens** — fine-grained permission views (allowlisted organs + forbidden methods)
+
+### 🔄 Double Closed Loop
+- **Inner loop (CatSelf)**: freeze snapshot → act → reflect → fuse insights → evolve worldview
+- **Outer loop (Colony)**: shared storage → cross-cat signals → collective growth → role emergence
+
+### 📦 Zero I/O Core + Optional Plus
+`pip install meowcat` → pure framework, zero file/network I/O. `pip install meowcat[plus]` → browser, ChromaDB, MCP, gateway adapters, crystallizer — all I/O lives in the optional `plus/` package.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Architecture at a Glance
+
+```
+                             ┌────────────────────┐
+  External World ──────────► │  Gateway (Skin)     │  HTTP / WebSocket / CLI / IPC / Webhook
+                             └────────┬───────────┘
+                                      │
+  ┌───────────────────────────────────▼───────────────────────────────────┐
+  │                         cat.perceive()                                │
+  │                                                                       │
+  │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │
+  │   │ SENSES   │───►│ THALAMUS │───►│         BRAIN REGIONS        │   │
+  │   │ Ears     │    │ (Relay)  │    │ Cerebrum Cerebellum Amygdala  │   │
+  │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │
+  │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │
+  │   └──────────┘                    └──────────────┬───────────────┘   │
+  │                                                  │                    │
+  │                              ┌───────────────────▼───────────────┐   │
+  │                              │           EFFECTORS               │   │
+  │                              │  Mouth (speak)  Purr (stream)     │   │
+  │                              │  Tail (status)  Paws (tools)      │   │
+  │                              └───────────────────────────────────┘   │
+  │                                                                       │
+  │   ┌──────────────────────────────────────────────────────────────┐   │
+  │   │  GROWTH: PinealGland · AnomalyGrowth · CorrectionGrowth     │   │
+  │   │          Crystallizer · RoleEmergence                        │   │
+  │   └──────────────────────────────────────────────────────────────┘   │
+  └───────────────────────────────────────────────────────────────────────┘
+                                      │
+                             ┌────────▼───────────┐
+                             │  Colony (Multi-Cat) │  SharedStorage · Federation · Cross-Cat Signals
+                             └────────────────────┘
+```
+
+---
+
+## 🚀 Quick Start
 
 ```bash
 pip install meowcat
 ```
 
-### Renovated (furnished, 20 organs ready)
-
 ```python
-from meowcat.defaults import create_cat, KW_BILINGUAL, PROMPT_ZH
+from meowcat.defaults import create_cat
 
-class MyBrain:
+# Your LLM — just needs generate(prompt) → str
+class MyCerebrum:
     name = "cerebrum"
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        return f"Meow! You said: {prompt[:50]}"
+        return f"Meow! {prompt[:100]}"
 
-cat = create_cat("Kitty", cerebrum=MyBrain(),
-                 keyword=KW_BILINGUAL, prompt=PROMPT_ZH)
+# One line: a fully assembled cat with 20 organs, wired nerves, and reflex arcs
+cat = create_cat("Kitty", cerebrum=MyCerebrum())
 
-# Path — atomic signal
-result = await cat.path_registry.run("locate", query="weather")
+# Unified perception entry — input enters, reply comes out
+reply = await cat.perceive("What's the weather today?")
 
-# Chain — named sequence
+# Path: atomic organ-to-organ signal
+result = await cat.path_registry.run("locate", query="weather in Tokyo")
+
+# Chain: named path sequence
 result = await cat.chain_registry.run("full_reasoning", prompt="Why is the sky blue?")
 
-# Loop — closed loop with trigger/exit
-result = await cat.run_loop("conversation", message="Hello!")
-
-# LoopSequence — multi-loop orchestration
-result = await cat.run_loopseq("daily_maintenance")
+# Loop: closed-loop execution with trigger/exit events
+await cat.run_loop("conversation", message="Hello, cat!")
 ```
 
-### Noop (bare shell, wire your own)
+---
+
+## 🔬 Slot-Plug Model
+
+The framework only defines the **Slot** — what an organ looks like, what it can connect to, what it can read/write, what implementations it supports. You provide the **Plug** — the actual implementation.
 
 ```python
-cat = create_cat("Kitty", cerebrum=MyBrain(), renovated=False)
-# All 20 organs are safe no-op stubs. Mount your own.
+# Framework defines the SLOT (OrganSpec)
+#   coord:          ("brain", "amygdala")
+#   protocol:       AmygdalaProtocol
+#   in_edges:       [THALAMUS, BRAINSTEM, EARS, EYES, WHISKERS]
+#   out_edges:      [CEREBELLUM, MOUTH, CEREBRUM, ...]
+#   read_methods:   [is_rejection, classify_rejection, assess_safety]
+#   write_methods:  [handle_rejection, handle_correction]
+#   write_callers:  [BRAINSTEM]   # only brainstem may call write methods
+#   supported_styles: [ALGORITHM, RULE, MODEL, HYBRID]
+
+# You provide the PLUG — must satisfy AmygdalaProtocol
+class MyAmygdala:
+    name = "amygdala"
+    impl_style = ImplementationStyle.RULE
+
+    async def assess_safety(self, input, **kw) -> SafetyReport:
+        # Your safety logic here
+        return SafetyReport(safe=True, risk_level=0)
+
+cat = create_cat("Kitty", cerebrum=MyLLM(), amygdala=MyAmygdala())
 ```
 
-### Custom presets (your domain / language)
+**Plug styles per organ** — framework validates compatibility:
+
+| Style | Description | Example Organs |
+|:---|:---|:---|
+| `ALGORITHM` | Deterministic, no LLM | Ears, Mouth, Purr, Tail, Brainstem |
+| `RULE` | Rule-based decision | Amygdala, Cortex |
+| `MODEL` | LLM-powered | Cerebrum, Cerebellum |
+| `HYBRID` | Algorithm + LLM combined | Hippocampus, Frontal |
+
+---
+
+## 🔗 Four-Layer Execution Model
+
+| Layer | Primitive | Description |
+|:---|:---|:---|
+| **L1 Path** | `source → target.method` | Atomic organ-to-organ signal. 26 built-in paths. |
+| **L2 Chain** | `[path1, path2, ...] + rollback` | Named path sequence. Previous result fed to next. 6 built-in chains. |
+| **L3 Loop** | `Chain + trigger_event + exit_event` | Autonomous closed loop. 5 built-in loops. |
+| **L4 LoopSequence** | `[loop1, loop2, ...]` | Sequential or concurrent loop orchestration. |
 
 ```python
-from meowcat.defaults import create_cat, KeywordPreset, PromptPreset
+# L1: Path
+await cat.path_registry.run("deep_reason", prompt="...")
 
-cat = create_cat("my-bot", cerebrum=my_llm,
-    keyword=KeywordPreset(
-        name="logistics",
-        stop_words=frozenset({"uh", "um", "the", "a"}),
-        command_patterns={"ship": "action", "track": "memory"},
-        danger_patterns=[],
-        priority_keywords=["shipping", "logistics", "delivery"],
-    ),
-    prompt=PromptPreset(
-        name="Logistics",
-        templates={"chat": "You are a logistics AI. Domain: {domain}. Language: {language}."},
-        pre_prompt="You are a professional logistics AI.",
-        post_prompt="Do not promise specific delivery times.",
-    ),
-)
+# L2: Chain with rollback
+await cat.chain_registry.run("full_reasoning", prompt="...")
+# = deep_reason → speak  (if speak fails, nothing to roll back)
+
+await cat.chain_registry.run("maintenance")
+# = decay → cleanup_orphans
+
+# L3: Loop — event-driven autonomous execution
+await cat.loop_registry.start("conversation")
+# Runs on perceive.start event, exits on conversation.end
+
+# L4: LoopSequence
+await cat.loopseq_registry.run("daily_maintenance")
+# = maintenance → diagnostic  (sequential)
 ```
 
 ---
 
-## Organ = Slot, Implementation = Plug
+## 🧭 Data Flow: From Input to Output
 
-Every organ is a **slot** — a typed contract (Protocol) with defined in/out edges.
-You pick a **plug** to fill it — algorithm, rule, model, or hybrid.
+```
+User Input
+    │
+    ▼
+┌──────────┐     ┌──────────┐     ┌─────────────────────────┐
+│  EARS    │────►│ THALAMUS │────►│      BRAIN REGIONS      │
+│ (sense)  │     │ (relay)  │     │  ┌───────────────────┐  │
+└──────────┘     └──────────┘     │  │ CEREBRUM (deep)   │  │
+                                  │  │    ↓              │  │
+                                  │  │ CEREBELLUM (fast) │  │
+                                  │  │    ↓              │  │
+                                  │  │ EFFECTORS         │  │
+                                  │  │ Mouth/Purr/Tail   │  │
+                                  │  │ Paws (tools)      │  │
+                                  │  └───────────────────┘  │
+                                  └─────────────────────────┘
+    │                                                     │
+    │         ┌───────────────────────────┐               │
+    └────────►│ AMYGDALA (safety bypass)  │───────────────┘
+              │ Danger → output directly  │
+              └───────────────────────────┘
+```
 
-| Plug Style  | Meaning          | Example                        |
-| ----------- | ---------------- | ------------------------------ |
-| `ALGORITHM` | Pure code        | regex, dict lookup, subprocess |
-| `RULE`      | Declarative rule | allowlist/blocklist, threshold |
-| `MODEL`     | ML model         | LLM, classifier, embedding     |
-| `HYBRID`    | Mixed            | rule-first → model fallback    |
+**Two pathways exist for every input:**
+1. **Reasoning path**: EARS → THALAMUS → CEREBRUM → CEREBELLUM → MOUTH (full reasoning)
+2. **Emergency path**: EARS → THALAMUS → AMYGDALA → MOUTH (bypasses brain, instant safety response)
 
-Only **CEREBRUM requires MODEL**. The other 19 organs support at least ALGORITHM.
+---
+
+## 📦 Organ Catalog
+
+### 9 Brain Regions
+| Organ | Role | Key Trait |
+|:---|:---|:---|
+| **Thalamus** | Sensory relay hub | All input routes through here |
+| **Cerebrum** | Deep reasoning | LLM-powered, only MODEL/HYBRID |
+| **Cerebellum** | Fast response | Sole gateway to ALL effectors |
+| **Hippocampus** | Memory graph | Entity-association storage |
+| **Amygdala** | Safety bypass | Can trigger output without reasoning |
+| **Frontal** | Focus & planning | Topic tracking, task decomposition |
+| **Hypothalamus** | Homeostasis | Memory decay, orphan cleanup |
+| **Cortex** | Worldview distiller | L0→L3 cognition pipeline |
+| **Brainstem** | Master dispatch | Coordinates ALL brain regions |
+
+### 4 Senses + 3 Voice + 4 Growth
+| Category | Organs |
+|:---|:---|
+| **SENSE** | Ears (text), Eyes (vision), Whiskers (anomaly), Paws (tools — also effector) |
+| **VOICE** | Mouth (speak), Purr (streaming status), Tail (status bar) |
+| **GROWTH** | PinealGland (insight fusion), AnomalyGrowth, CorrectionGrowth, Crystallizer, RoleEmergence |
+
+---
+
+## 🐱 Colony — Multi-Cat Container
 
 ```python
-from meowcat import ImplementationStyle
-print(cat.organ("brain", "amygdala").impl_style)  # ImplementationStyle.ALGORITHM
+from meowcat.defaults import create_colony
+
+colony = create_colony("my-squad")
+
+# Spawn cats into the colony
+analyst  = colony.create_cat("analyst", cerebrum=AnalystBrain())
+executor = colony.create_cat("executor", cerebrum=ExecutorBrain())
+
+# 1:1 inter-cat communication
+await colony.signal_between("analyst", "executor",
+    "brain", "amygdala", "assess_safety", input=data)
+
+# 1:N broadcast
+await colony.broadcast("alert", level="high")
+
+# Shared memory
+await colony.shared_set("knowledge/weather", {"city": "NYC"})
+result = await colony.shared_get("knowledge/weather")
+
+# Federation — cross-host colony communication
+await colony.federate(transport)
+await colony.signal_remote("other-colony", "cat-3", ...)
 ```
+
+| Feature | Description |
+|:---|:---|
+| **Cross-cat signals** | 1:1 (`signal_between`), 1:N (`broadcast_request`), N:N (`broadcast`) |
+| **Shared storage** | Namespaced: `owner/` `rules/` `knowledge/` `growth/` `cats/` |
+| **Federation** | Cross-host colony P2P communication (request-response, 30s timeout) |
+| **Collective growth** | Cats learn from each other's anomalies and corrections |
+| **Role emergence** | Behavior patterns → implicit role specialization |
 
 ---
 
-## Four-Layer Architecture
+## 🛠️ Apps Built on meowcat
 
-```
-  Organ ──► Path ──► Chain ──► Loop ──► LoopSequence
-  single    atomic    named     Path+       multi-Loop
-  unit      signal    Path seq  trigger     orchestration
-```
-
-| Layer       | Module       | Concept                                        | Count  |
-| ----------- | ------------ | ---------------------------------------------- | ------ |
-| **Organ**   | `anatomy.py` | 20 default organs (THALAMUS, CEREBRUM...)      | **20** |
-| **Path**    | `path.py`    | 26 built-in atomic paths ("locate", "speak")   | **26** |
-| **Chain**   | `chain.py`   | 6 built-in chains (MEMORY_SEARCH_CHAIN...)     | **6**  |
-| **Loop**    | `loops.py`   | 5 built-in loops (CONVERSATION_LOOP...)        | **5**  |
-| **LoopSeq** | `loops.py`   | 1 loop sequence (DAILY_MAINTENANCE_SEQ)        | **1**  |
-| **Reflex**  | `reflex.py`  | 2 built-in reflex arcs (text_dialogue, danger) | **2**  |
-
-> Full Path/Chain/Loop tables → **[CATALOG.md](CATALOG.md)**
+Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.com/Axonant/MeowAgent)** — real organs, SQLite production storage, Discord/Telegram adapters. One `Cat(CatBase)` inheritance and it runs.
 
 ---
 
-## Memory Architecture — Multi-Dimensional
+## 📊 Version History (Key Milestones)
 
-The cat's memory is not a single flat store — it's a **4×5×4×2** system spanning cognitive depth, functional organs, physical backends, and scope.
-
-```
-┌─── Cognitive Layers (Cortex L0→L3) ─────────────────────────────────────────┐
-│                                                                              │
-│   L0 Raw Facts        L1 Inferred Rules      L2 Beliefs       L3 Metacog.   │
-│  ┌───────────┐    ┌──────────────────┐   ┌──────────────┐   ┌────────────┐  │
-│  │Hippocampus│───→│  extract_rules   │──→│promote_belief│──→│Metacogni.  │  │
-│  │ entities  │    │ "X is always Y"  │   │"Always param"│   │"I'm good X"│  │
-│  │ episodes  │    │ conf 0.95        │   │conf 0.8 □    │   │"I can't Y" │  │
-│  └───────────┘    └──────────────────┘   └──────────────┘   └────────────┘  │
-│                                                                              │
-│  Facts distilled via extract_rules → promoted to beliefs → self-awareness    │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌─── Functional Organs (5 memory roles) ──────────────────────────────────────┐
-│                                                                              │
-│  Hippocampus   Hypothalamus    ScribblePad    PinealGland       Cortex      │
-│  store·find     decay·clean     fragments(200) epiphany hub      worldview   │
-│      ↑              ↑                ↑              ↑               ↑       │
-│  BRAINSTEM writes  BRAINSTEM     CatSelf        trigger_if()     read-only   │
-│      │           triggers     after_act      on_full/timer/event  terminal   │
-│      └───────────────────────────┴───────────────────────────────┘           │
-│                                    │                                          │
-│                          Epiphany Pipeline                                    │
-│                    fuse_to_self ↕ fuse_to_colony                             │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌─── Storage Backends ──────────┐  ┌─── Scope ───────────────────────────────┐
-│                               │  │                                           │
-│  InMemoryStore    KV memory   │  │  Private ──── PinealGland ──── Shared    │
-│  VectorStore      keyword /   │  │  Hippocampus       │       SharedStorage │
-│                   semantic    │  │  ScribblePad        │       Collective*   │
-│  SqliteGraphStore graph DB    │  │  Cortex             │                      │
-│  JsonlL6Store     JSONL       │  │       fuse_to_self ─┴── fuse_to_colony   │
-│                               │  │                                           │
-└───────────────────────────────┘  └───────────────────────────────────────────┘
-
-Legend:  ──→ data flow    ↑ write entry    ↕ bidirectional    □ challengeable
-```
-
-**Two closed loops** intersect here: **Inner** (Hippocampus → Cortex → CatSelf → ScribblePad → PinealGland → back to Cortex) for self-evolution, and **Outer** (PinealGland → SharedStorage → other cats) for collective intelligence.
+| Version | Highlights |
+|:---|:---|
+| **v1.2.x** | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor |
+| **v1.1.x** | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks |
+| **v1.0.x** | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook) |
+| **v0.5.x** | CatBase facade, Dual brain architecture, OrganHost/Wiring/Nervous subsystem split, Reflex arc, Slot-Plug model, ImplementationStyle, 20-organ blueprint |
 
 ---
 
-## Organ Groups
-
-### Brain (9)
-
-| Organ            | Slot `(brain, ...)` | Role                                      |
-| ---------------- | ------------------- | ----------------------------------------- |
-| **THALAMUS**     | `thalamus`          | Route fork — all input passes through     |
-| **HIPPOCAMPUS**  | `hippocampus`       | Memory — store, find, forget              |
-| **CEREBRUM**     | `cerebrum`          | Deep reasoning (LLM)                      |
-| **CEREBELLUM**   | `cerebellum`        | Fast response, sole upstream to effectors |
-| **AMYGDALA**     | `amygdala`          | Safety review, danger detection           |
-| **FRONTAL**      | `frontal`           | Focus / planning / topic tracking         |
-| **HYPOTHALAMUS** | `hypothalamus`      | Homeostasis — memory decay, cleanup       |
-| **CORTEX**       | `cortex`            | Worldview L0-L3, belief system            |
-| **BRAINSTEM**    | `brainstem`         | Master dispatch hub, system prompt        |
-
-### Senses (4)
-
-| Organ        | Slot `(sense, ...)` | Role                        |
-| ------------ | ------------------- | --------------------------- |
-| **EARS**     | `ears`              | Text/voice input            |
-| **EYES**     | `eyes`              | Image/video input           |
-| **WHISKERS** | `whiskers`          | Environment sensing, drift  |
-| **PAWS**     | `paws`              | Tool execution (sole entry) |
-
-### Voice (3)
-
-| Organ     | Slot `(voice, ...)` | Role              |
-| --------- | ------------------- | ----------------- |
-| **MOUTH** | `mouth`             | Text output       |
-| **PURR**  | `purr`              | Streaming status  |
-| **TAIL**  | `tail`              | Status bar render |
-
-### Growth (4)
-
-| Organ                 | Slot `(growth, ...)` | Role                      |
-| --------------------- | -------------------- | ------------------------- |
-| **ANOMALY_GROWTH**    | `anomaly_growth`     | Anomaly sedimentation     |
-| **CORRECTION_GROWTH** | `correction_growth`  | Correction solidification |
-| **CRYSTALLIZER**      | `crystallizer`       | Skill crystallization     |
-| **ROLE_EMERGENCE**    | `role_emergence`     | Implicit role emergence   |
-
-> Full organ entry/exit rules → **[CATALOG.md](CATALOG.md)**
-
----
-
-## Architecture — Implemented
-
-- 20 organs, 26 paths, 6 chains, 5 loops, 2 reflexes, 1 loop sequence
-- Two closed loops: inner (CatSelf self-evolution) + outer (Colony collective intelligence)
-- ScribblePad → PinealGland epiphany pipeline + Cortex L0-L3 worldview
-- Active Growth: BlindSpotDetector + ToolFailureLearner + HotPathObserver
-- CatSelf unified self-model + 3 prefab default loops (conversation / task / learn)
-- Pluggable organ plugin system (async-capable, 3 execution modes)
-- Colony multi-cat peer collaboration + GlobalColonyRegistry + WorkerScheduler
-- Bilingual keyword presets (EN/ZH/Bilingual) + Noop/Renovated dual track
-- Gateway I/O abstraction (HTTP/WS/Webhook/CLI/IPC adapters in `plus/gateway/`)
-- Signal middleware (logger, rate-limiter, timeout, context-injector) + circuit breaker
-- Built-in telemetry: Tracer + Metrics + SignalSpan (zero external dependencies)
-- CatSelf DefaultLoop ↔ LoopRegistry bridge (compose both loop systems)
-- Lazy import (`import meowcat` loads skeleton only)
-- Zero hardcoded magic values — all thresholds/patterns are constructor parameters
-- `plus/` optional batteries (file I/O, browser, MCP client, ChromaDB, skill loader, gateway)
-
-## Future Directions
-
-1. PinealGland fusion event broadcasting — GrowthEvent on fuse_to_self/fuse_to_colony
-2. ScribblePad persistent presets — DefaultScribblePersister auto-writes to JsonlL6Store
-3. `execute_tool` Path migration to unified `execute()` on PawsProtocol
-
----
-
-## Version History
-
-```
-v1.2.24~v1.2.33 (2026-05-05) — Full polish: 11 bug/security fixes, 9 code-quality cleanups, 3 architecture refinements across 34 roadmap items; magic numbers extracted to constants.py, exception-swallowing audited, lazy-import coupling documented
-v1.2.15~v1.2.23 (2026-05-04) — Architecture polish: hot-path perf, Pluggable async, event type-safety, circuit breaker, loop bridge, telemetry, WorkerScheduler, adapters, gateway→plus
-v1.2.6~v1.2.13 (2026-05-04) — Plus refactor: 4 bugs fixed, plus/ created, industry presets removed, Renovated fully parameterized, colony split + lazy init
-v1.2.0        (2026-05-04) — CatSelf unified self + ScribblePad→PinealGland pipeline + Cortex L0-L3 + Metacognition + Active Growth
-v1.1.1~v1.1.29 (2026-05-03~04) — ScribblePad, PinealGland, Cortex worldview, Active Growth trio, CollectiveGrowth+Emergence, GlobalColonyRegistry
-v1.1.0        (2026-05-03) — Renovated/Noop dual-track, ImplementationStyle 4 plug styles, bilingual presets, 20 organs pre-loaded, CATALOG.md
-v1.0.1~v1.0.18 (2026-05-01~03) — 20 organs+26 paths+6 chains+5 loops, Pluggable system, Colony multi-cat, Gateway I/O, Middleware, Lifecycle Hooks, Workflow
-v1.0.0        (2026-05-01) — Initial release: cat neural framework core, four-layer Path→Chain→Loop→LoopSeq, pip install meowcat
-```
-
----
-
-## Examples
+## 📦 Installation
 
 ```bash
-python -m meowcat.examples.01_organ_host_only   # OrganHost as typed container
-python -m meowcat.examples.02_wiring_validation  # Wiring safety validation
-python -m meowcat.examples.03_event_bus_only     # EventBus standalone
-python -m meowcat.examples.04_custom_cat         # Build a cat from 5 subsystems
-python -m meowcat.examples.05_minimal_chat_cat   # Minimal chat cat in <80 lines
-python -m meowcat.examples.06_custom_organ       # Write + mount a custom organ
-python -m meowcat.examples.07_custom_organ       # Custom organ + Path/Chain/Loop
+# Core framework (zero I/O)
+pip install meowcat
+
+# With optional batteries (browser, ChromaDB, MCP, gateway adapters)
+pip install meowcat[plus]
+
+# Development
+pip install -e ".[plus,dev]"
+pytest tests/
 ```
 
----
-
-## License
-
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+**Requirements**: Python 3.10+, `pydantic>=2.0`, `anyio>=4.0`
 
 ---
 
-_Built with the biological blueprint of a cat. The framework layer of [MeowAgent](https://github.com/Axonant/MeowAgent)._
+## 📂 Package Map
+
+| Module | Purpose |
+|:---|:---|
+| `meowcat/anatomy.py` | Organ coordinates, categories, ImplementationStyle |
+| `meowcat/biology/` | OrganSpec SSOT, CatSelf, Cortex, PinealGland, Fusion, Growth |
+| `meowcat/assembly.py` | CatBase — compose 5 subsystems into a living cat |
+| `meowcat/host.py` | OrganHost — mount/unmount/find organs, protocol validation |
+| `meowcat/wiring.py` | Wiring — directed nerve graph (allow + forbid) |
+| `meowcat/nervous.py` | Nervous — signal dispatch with middleware + circuit breaker |
+| `meowcat/reflex.py` | ReflexArc — stimulus→response, zero-LLM paths |
+| `meowcat/tools/` | Tool/Skill/Paws core (zero I/O abstractions) |
+| `meowcat/plus/` | Optional I/O: browser, ChromaDB, MCP, gateway, crystallizer |
+| `meowcat/colony/` | Colony multi-cat container + federation |
+| `meowcat/defaults/` | Noop stubs, Renovated implants, presets, factory |
+
+---
+
+## 📄 License
+
+[MIT](LICENSE) © 2025-2026 Axonant — built with curiosity and cat-like instincts.

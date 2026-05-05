@@ -1,808 +1,453 @@
-# MeowCat v1.2.23 — Full Catalog
+# meowcat v1.2.36 · Default Configuration & Execution Catalog
 
-> 20 organs + 26 paths + 6 chains + 5 loops + 3 default loops + 2 reflexes + 1 loop sequence + epiphany pipeline + telemetry + circuit breaker + WorkerScheduler
+> **开箱即用的一切**：20 器官 + 26 路径 + 6 链条 + 5 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
 
----
-
-## Core Concepts
-
-```
-Organ = Slot (typed contract)    ← Protocol defining in/out edges + method permissions
-Impl  = Plug (fill style)        ← internal style: algorithm / rule / model / hybrid
-
-★ Epiphany Pipeline: ScribblePad → PinealGland → meditate → fuse_to_self / fuse_to_colony
-★ Two Closed Loops: Inner (CatSelf → Cortex/Metacognition) + Outer (PinealGland → SharedStorage → other cats)
-```
-
-### Plug Styles (ImplementationStyle)
-
-| Style       | Value       | Meaning          | Typical Example                |
-| ----------- | ----------- | ---------------- | ------------------------------ |
-| `ALGORITHM` | `algorithm` | Pure code        | regex, dict, subprocess        |
-| `RULE`      | `rule`      | Declarative rule | allowlist/blocklist, threshold |
-| `MODEL`     | `model`     | ML model         | LLM, classifier, embedding     |
-| `HYBRID`    | `hybrid`    | Mixed            | rule-first → model fallback    |
+`create_cat()` 一行代码做了什么？出厂自带了哪些默认执行流？这里就是答案。
 
 ---
 
-## I. Organ Catalog (20 organs)
-
-### Brain (9)
-
-#### 1. THALAMUS — Route Fork Point
+## I. Default Assembly — `create_cat()` 全流程
 
 ```
-Slot:          (brain, thalamus)
-Protocol:      ThalamusProtocol
-Role:          Route decision — all input passes through me first
-
-Entry Rules:
-  - Can receive signal from: EARS, EYES, WHISKERS
-  - Self-loop allowed: locate(), decide_route() callable without wiring check
-  - Protocol check: must implement ThalamusProtocol
-
-Exit Rules:
-  - Can signal to: CEREBRUM, BRAINSTEM, AMYGDALA, HIPPOCAMPUS
-  - Cannot signal to: CEREBELLUM (forbidden edge)
-  - All out-edges wired at assembly time
-
-Read Methods:   locate, decide_route
-Supported Plugs: [algorithm, rule, model, hybrid]
-Renovated Plug:  ALGORITHM (keyword match + /command detection)
-Noop Plug:       ALGORITHM (always returns route=chat)
+工厂函数 create_cat(container, cerebrum, ...)
+  │
+  ├─ 1. Colony 孵化容器
+  │     container.create_cat(name) → CatBase 空壳
+  │
+  ├─ 2. 器官填充 (二选一模式)
+  │     ┌─ 简装修 renovated=True (默认): 20 器官预装 Renovated* 实现
+  │     │    • 安全正则 · 关键词路由 · 内存图存储 · 工具集成
+  │     │    • 开箱即用 → 用户只需提供 cerebrum
+  │     └─ 毛坯   renovated=False:        20 器官全为 Noop* 桩
+  │          • 所有方法返回空/安全默认值
+  │          • 用于完整控制或接线测试
+  │
+  ├─ 3. 混合模式 (bare_organs / renovate_organs)
+  │     renovated=True  + bare_organs={"amygdala"}     → 简装修但杏仁核留毛坯
+  │     renovated=False + renovate_organs={"thalamus"} → 毛坯但丘脑升级简装修
+  │
+  ├─ 4. 预设注入 (二语 行业 可挂载)
+  │     keyword=KW_BILINGUAL → 注入 Ears/Thalamus/Amygdala/Frontal
+  │     prompt=PROMPT_ZH     → 注入 Brainstem/Cerebrum
+  │
+  ├─ 5. 自动装配 mount_known_organs(cat)
+  │     OrganHost 逐一 mount → Protocol 校验 → impl_style 兼容性检查
+  │
+  ├─ 6. 接线 wire_default_nervous_system()
+  │     允许边 + 禁止边 → Wiring 有向神经图
+  │
+  ├─ 7. 内置工具注册 (可选)
+  │     register_default_tools=True → BUILTIN_TOOLS → tool_registry
+  │
+  ├─ 8. 反射弧注入 (调用方提供)
+  │     reflexes=[...] → cat.register_reflex(ref) 逐一注册
+  │
+  ├─ 9. 装配钩子 on_before_freeze
+  │     用户注入额外器官 / 接线 / 路径 (在冻结前)
+  │
+  ├─ 10. 冻结 freeze_nervous_system()
+  │      Wiring 不可变 · CircuitBreaker 初始化 · Path/Chain/Loop 注册
+  │
+  ├─ 11. 装配钩子 on_assembled
+  │     冻结后→运行时属性设置 (路径/链条/循环注册已在冻结时完成)
+  │
+  └─ 返回 → CatBase (完整装配、接线、冻结、就绪)
 ```
 
-#### 2. HIPPOCAMPUS — Memory
+### 装配开关一览
 
-```
-Slot:          (brain, hippocampus)
-Protocol:      HippocampusProtocol
-Role:          Memory — single entry for store, find, forget
-
-Entry Rules:
-  - Read from: CEREBRUM, FRONTAL, HYPOTHALAMUS, BRAINSTEM, THALAMUS
-  - Write from: BRAINSTEM, HYPOTHALAMUS (only these two may write)
-  - Write callers enforced by OrganSpec.write_callers
-
-Exit Rules:
-  - Can signal to: CEREBRUM, CORTEX
-  - Terminal for writes (read-only output to CORTEX)
-
-Read Methods:   entities, episodes, locate, get_entity, get_all, get_by_name,
-                get_related, stats, fts_search, to_dict
-Write Methods:  remember, add_entity, add_episode, connect, decay,
-                weaken_connections, cleanup_orphan_connections, from_dict,
-                record_access, set_dormant, append_content,
-                update_importance, set_last_seen
-Write Permissions: BRAINSTEM, HYPOTHALAMUS (enforced by wiring)
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (InMemoryGraphStore + keyword index)
-Noop Plug:       ALGORITHM (empty dict/list)
-```
-
-#### 3. CEREBRUM — Deep Reasoning (A-Brain)
-
-```
-Slot:          (brain, cerebrum)
-Protocol:      LLMBrainProtocol
-Role:          Deep reasoning — invokes LLM for complex thinking
-
-Entry Rules:
-  - Can receive signal from: THALAMUS, HIPPOCAMPUS, FRONTAL, BRAINSTEM
-  - Requires MODEL or HYBRID plug (only organ with this restriction)
-
-Exit Rules:
-  - Can signal to: HIPPOCAMPUS, CEREBELLUM, FRONTAL
-  - Cannot signal to: PAWS (brain→paws forbidden), MOUTH (brain→mouth forbidden)
-
-Methods:       generate(), stream_generate(), reload_config(), diagnose()
-Supported Plugs: [model, hybrid]
-Renovated Plug:  MODEL (callable LLM adapter)
-Noop Plug:       ALGORITHM (returns empty string)
-```
-
-#### 4. CEREBELLUM — Fast Response (B-Brain)
-
-```
-Slot:          (brain, cerebellum)
-Protocol:      LLMBrainProtocol
-Role:          Fast response — sole upstream for all effectors
-
-Entry Rules:
-  - Can receive signal from: CEREBRUM, AMYGDALA, BRAINSTEM
-  - Cannot receive from: THALAMUS (forbidden edge)
-
-Exit Rules:
-  - Can signal to: PAWS, MOUTH, PURR, TAIL (all EFFECTORS)
-  - Sole gateway to effectors — nothing else can drive output directly
-  - Cannot signal back to: CEREBRUM (forbidden — cerebellum does not feed back to cerebrum)
-
-Methods:       generate(), stream_generate(), reload_config(), diagnose()
-Supported Plugs: [model, algorithm, hybrid]
-Renovated Plug:  MODEL (callable LLM adapter)
-Noop Plug:       ALGORITHM (returns empty string)
-```
-
-#### 5. AMYGDALA — Safety
-
-```
-Slot:          (brain, amygdala)
-Protocol:      AmygdalaProtocol
-Role:          Safety review — danger detection + risk assessment
-
-Entry Rules:
-  - Can receive signal from: THALAMUS, BRAINSTEM, EARS, EYES, WHISKERS
-  - Bypass path: SENSORS → AMYGDALA (fast fear bypass, no thalamus routing)
-  - assess_safety() is a self-loop (no wiring, direct method call)
-
-Exit Rules:
-  - Can signal to: CEREBELLUM, MOUTH, CEREBRUM, ANOMALY_GROWTH, CORRECTION_GROWTH
-  - Cannot signal to: HIPPOCAMPUS (amygdala does not directly access memory)
-  - Danger output can bypass reasoning: AMYGDALA → MOUTH directly
-
-Methods:       is_rejection, classify_rejection, parse_correction,
-               handle_rejection, handle_correction, assess_safety, assess_tool_risk
-Supported Plugs: [algorithm, rule, model, hybrid]
-Renovated Plug:  ALGORITHM (bilingual regex safety scan)
-Noop Plug:       ALGORITHM (always returns safe=True)
-```
-
-#### 6. FRONTAL — Focus / Planning
-
-```
-Slot:          (brain, frontal)
-Protocol:      FrontalCortexProtocol
-Role:          Focus/Planning — topic management + task decomposition
-
-Entry Rules:
-  - Can receive signal from: CEREBRUM, BRAINSTEM
-
-Exit Rules:
-  - Can signal to: CEREBRUM, HIPPOCAMPUS, BRAINSTEM
-
-Methods:       detect_shift, is_continue, archive_focus, update_focus, save, load
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (keyword overlap topic detection)
-Noop Plug:       ALGORITHM (always returns False)
-```
-
-#### 7. HYPOTHALAMUS — Homeostasis
-
-```
-Slot:          (brain, hypothalamus)
-Protocol:      HypothalamusProtocol
-Role:          Self-maintenance — memory decay + orphan cleanup
-
-Entry Rules:
-  - Can receive signal from: BRAINSTEM
-  - Has write permission to HIPPOCAMPUS (enforced by OrganSpec.write_callers)
-
-Exit Rules:
-  - Can signal to: HYPOTHALAMUS (self-loop), HIPPOCAMPUS, CORTEX
-  - run_maintenance() is self-loop; decay/cleanup go to HIPPOCAMPUS
-
-Methods:       run_maintenance, decay_memories, compress_long_history
-Supported Plugs: [algorithm, rule]
-Renovated Plug:  ALGORITHM (TTL-configurable decay)
-Noop Plug:       ALGORITHM (returns zero counts)
-```
-
-#### 8. CORTEX — Worldview
-
-```
-Slot:          (brain, cortex)
-Protocol:      CortexProtocol
-Role:          Worldview — distill cognition from experience
-
-Entry Rules:
-  - Can receive signal from: HIPPOCAMPUS, HYPOTHALAMUS, BRAINSTEM
-  - L0-L3 pipeline: facts → rules → beliefs → metacognition
-
-Exit Rules:
-  - None — terminal organ, only read
-
-Methods:       ingest, record_weakness, weaknesses, synthesize,
-               extract_rules, promote_to_belief, challenge_belief
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (4-layer worldview dict)
-Noop Plug:       ALGORITHM (returns empty)
-```
-
-#### 9. BRAINSTEM — Master Dispatch Hub
-
-```
-Slot:          (brain, brainstem)
-Protocol:      BrainStemProtocol
-Role:          Coordination hub — lifecycle + flow orchestration
-
-Entry Rules:
-  - Can receive signal from: THALAMUS
-  - Acts as central coordinator — the only organ that can send to all others
-
-Exit Rules:
-  - Can signal to: THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM, AMYGDALA,
-    FRONTAL, HYPOTHALAMUS, CORTEX, ANOMALY_GROWTH, CORRECTION_GROWTH,
-    CRYSTALLIZER, ROLE_EMERGENCE, EARS, EYES, WHISKERS, MOUTH, PURR, TAIL
-  - Has write permission to HIPPOCAMPUS (enforced)
-  - All lifecycle events originate from here
-
-Methods:       build_system_prompt, cancel_current, diagnose
-Supported Plugs: [algorithm, rule, model, hybrid]
-Renovated Plug:  ALGORITHM (PromptPreset template builder)
-Noop Plug:       ALGORITHM (returns empty)
-```
+| 参数 | 默认 | 作用 |
+|:---|:---|:---|
+| `renovated` | `True` | `True` = 简装修 / `False` = 毛坯 |
+| `bare_organs` | `None` | 简装修模式下保留毛坯的器官名集合 |
+| `renovate_organs` | `None` | 毛坯模式下升级简装修的器官名集合 |
+| `keyword` | `None` | `KeywordPreset` — 注入 Ears/Thalamus/Amygdala/Frontal |
+| `prompt` | `None` | `PromptPreset` — 注入 Brainstem/Cerebrum |
+| `register_default_paths` | `True` | 自动注册 26 条内置路径 |
+| `register_default_chains` | `True` | 自动注册 6 条内置链条 |
+| `register_default_loops` | `True` | 自动注册 5 条内置循环 |
+| `register_default_tools` | `True` | 自动注册内置工具集 |
+| `on_before_freeze` | `None` | 冻结前钩子 — 注入额外器官/接线 |
+| `on_assembled` | `None` | 冻结后钩子 — 设置运行时属性 |
 
 ---
 
-### Senses (4)
+## II. Built-in Execution Flows
 
-#### 10. EARS — Text Input
+### L1 — Path 路径 (26 built-in)
+
+原子信号：`源器官 → 目标器官.方法`。无 rollback，无 trigger。
+
+#### 记忆域 (Memory)
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `locate` | THALAMUS → THALAMUS.locate | read | 记忆搜索（丘脑自环） |
+| `remember` | BRAINSTEM → HIPPOCAMPUS.remember | write | 存储记忆 |
+| `get_entity` | THALAMUS → HIPPOCAMPUS.get_entity | read | 读取单个实体 |
+| `get_all` | THALAMUS → HIPPOCAMPUS.get_all | read | 读取全部实体 |
+| `fts_search` | THALAMUS → HIPPOCAMPUS.fts_search | read | 全文搜索 |
+| `add_entity` | BRAINSTEM → HIPPOCAMPUS.add_entity | write | 添加实体 |
+| `add_episode` | BRAINSTEM → HIPPOCAMPUS.add_episode | write | 添加情节 |
+| `connect` | BRAINSTEM → HIPPOCAMPUS.connect | write | 连接实体 |
+| `record_access` | BRAINSTEM → HIPPOCAMPUS.record_access | write | 记录访问 |
+| `set_dormant` | BRAINSTEM → HIPPOCAMPUS.set_dormant | write | 设为休眠 |
+| `append_content` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 追加内容 |
+| `update_importance` | BRAINSTEM → HIPPOCAMPUS.update_importance | write | 更新重要性 |
+| `set_last_seen` | BRAINSTEM → HIPPOCAMPUS.set_last_seen | write | 设置最后可见时间 |
+
+#### 推理域 (Reasoning)
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `deep_reason` | THALAMUS → CEREBRUM.generate | read | 深度推理 |
+| `decide_route` | THALAMUS → THALAMUS.decide_route | read | 路由决策（自环） |
+| `assess_safety` | AMYGDALA → AMYGDALA.assess_safety | read | 安全评估（自环） |
+
+#### 输出域 (Output)
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `speak` | CEREBELLUM → MOUTH.speak | write | 输出回复 |
+| `hear` | EARS → THALAMUS.hear | read | 接收输入 |
+
+#### 工具域 (Tool)
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `execute_tool` | CEREBELLUM → PAWS.execute | write | 执行工具 |
+
+#### 维护域 (Maintenance)
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `decay` | HYPOTHALAMUS → HIPPOCAMPUS.decay | write | 记忆衰减 |
+| `weaken_connections` | HYPOTHALAMUS → HIPPOCAMPUS.weaken_connections | write | 弱化连接 |
+| `cleanup_orphans` | HYPOTHALAMUS → HIPPOCAMPUS.cleanup_orphan_connections | write | 清理孤立连接 |
+
+#### 合成 + 工作流域
+
+| 路径 | 信号 | 模式 | 说明 |
+|:---|:---|:---|:---|
+| `synthesize` | BRAINSTEM → CORTEX.synthesize | read | 世界观合成 |
+| `workflow_create` | BRAINSTEM → HIPPOCAMPUS.add_entity | write | 创建工作流 |
+| `workflow_checkpoint` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 写入检查点 |
+| `workflow_resume` | BRAINSTEM → HIPPOCAMPUS.get_entity | read | 恢复工作流 |
+
+---
+
+### L2 — Chain 链条 (6 built-in)
+
+命名路径序列。上一步结果作为 `**kwargs` 传入下一步。支持 rollback。
+
+| # | 链条 | 路径序列 | 说明 |
+|:---|:---|:---|:---|
+| C1 | `memory_search_chain` | `locate` | 记忆搜索 |
+| C2 | `conversation_chain` | `hear` → `decide_route` → `locate` → `deep_reason` → `speak` → `remember` | 完整对话流 |
+| C3 | `tool_loop_chain` | `hear` → `decide_route` → `execute_tool` → `speak` → `remember` | 工具执行流 |
+| C4 | `danger_chain` | `assess_safety` | 安全评估 |
+| C5 | `maintenance_chain` | `decay` → `cleanup_orphans` | 记忆维护 |
+| C6 | `diagnostic_chain` | (空 — 听诊器扫描) | 健康检查 |
+
+---
+
+### L3 — Loop 循环 (5 built-in + 3 CatSelf)
+
+> 链条 + 触发事件 + 退出事件 = 自主闭环执行
+
+#### LoopRegistry 循环 (5) — 器官间信号编排
 
 ```
-Slot:          (sense, ears)
-Protocol:      EarsProtocol
-Role:          Text input — CLI/API/Discord/Telegram
-
-Entry Rules:
-  - Pure input terminal — no incoming wiring edges
-  - Receives raw input from application layer
-
-Exit Rules:
-  - Can signal to: THALAMUS, AMYGDALA
-  - Output is standardized text + keywords + language tag
-
-Methods:       hear, extract_keywords, detect_language, tag_emotion
-Supported Plugs: [algorithm]
-Renovated Plug:  ALGORITHM (text normalization + keyword + zh/en detection)
-Noop Plug:       ALGORITHM (returns as-is)
+★ conversation (Loop A: 感知→推理→输出)
+  trigger: perceive.start
+  chain:   hear → decide_route → locate → deep_reason → speak → remember
+  path:    EARS → THALAMUS → CEREBRUM → CEREBELLUM → MOUTH → HIPPOCAMPUS
 ```
 
-#### 11. EYES — Visual Input
+| # | 循环 | 链条 | 触发器 | 说明 |
+|:---|:---|:---|:---|:---|
+| L1 | `conversation` | conversation_chain | `perceive.start` | 对话闭环 |
+| L2 | `tool_execution` | tool_loop_chain | `orchestrate.start` | 工具执行闭环 |
+| L3 | `danger_response` | danger_chain | `amygdala.alert` | 紧急安全闭环 |
+| L4 | `maintenance` | maintenance_chain | `heartbeat.tick` | 体内稳态闭环 |
+| L5 | `diagnostic` | diagnostic_chain | (手动触发) | 健康检查 |
+
+#### CatSelf 默认循环 (3) — 自意识成长
 
 ```
-Slot:          (sense, eyes)
-Protocol:      EyesProtocol
-Role:          Visual input — images/video
+★ 内环：单猫自进化
+  before_act(冻结快照) → action → after_act(scribble) → PinealGland.trigger_if() → fuse_to_self → Cortex/Metacognition
 
-Entry Rules:
-  - Pure input terminal — no incoming wiring edges
-
-Exit Rules:
-  - Can signal to: THALAMUS, AMYGDALA
-
-Methods:       see
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (magic bytes format detection)
-Noop Plug:       ALGORITHM (returns empty dict)
+★ 外环：集体智能融合
+  ScribblePad → PinealGland.trigger_if(on_full/on_timer) → fuse_to_colony → SharedStorage → 其他猫
 ```
 
-#### 12. WHISKERS — Environment Sensing
+| 循环 | 流程 | 融合触发 | 说明 |
+|:---|:---|:---|:---|
+| `conversation` | 读自我→聊天→回复→scribble→反思 | `on_event("conversation_end")` | 对话中进化（最常用） |
+| `task` | 读自我→分析→执行→观察→scribble | `on_full(50)` | 任务驱动进化 |
+| `learn` | 读自我→盲点→探索→验证→scribble | `trigger()` 即时 | 好奇心驱动学习 |
+
+---
+
+### L4 — LoopSequence 循环序列 (1 built-in)
+
+| # | 名称 | 循环序列 | 模式 | 说明 |
+|:---|:---|:---|:---|:---|
+| LS1 | `daily_maintenance` | maintenance → diagnostic | sequential | 日常维护→检查 |
+
+---
+
+### Reflex 反射 (2 built-in)
+
+> 刺激→响应，零 LLM 依赖。触发时跳过推理直接执行。
+
+| # | 名称 | 触发器 | 路径 | 跳数 | 说明 |
+|:---|:---|:---|:---|:---|:---|
+| R1 | `text_dialogue` | `modality == "text"` | EARS → THALAMUS → BRAINSTEM → CEREBRUM → CEREBELLUM → MOUTH | 5 | 标准文本对话全路径 |
+| R2 | `danger` | 内容匹配危险模式 | EARS → THALAMUS → AMYGDALA → MOUTH | 3 | 杏仁核紧急反射 — 绕过大脑直接输出 |
+
+---
+
+## III. Organ Quick Reference
+
+### 9 大脑区域
+
+| 器官 | 角色 | 核心特征 | 支持 Plug | 简装修类型 |
+|:---|:---|:---|:---|:---|
+| **Thalamus** | 感觉中继枢纽 | 所有输入必经此地 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
+| **Cerebrum** | 深度推理 | LLM 驱动，仅 MODEL/HYBRID | MODEL / HYBRID | — (用户提供) |
+| **Cerebellum** | 快速响应 | 所有效应器唯一入口 | MODEL / ALGO / HYBRID | — (默认同 Cerebrum) |
+| **Hippocampus** | 记忆图谱 | 实体-关联存储 | ALGO / MODEL / HYBRID | ALGORITHM |
+| **Amygdala** | 安全旁路 | 可无推理直接输出 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
+| **Frontal** | 专注与规划 | 话题跟踪、任务分解 | ALGO / MODEL / HYBRID | ALGORITHM |
+| **Hypothalamus** | 体内稳态 | 记忆衰减、孤立清理 | ALGO / RULE | ALGORITHM |
+| **Cortex** | 世界观蒸馏 | L0→L3 认知管线 | ALGO / MODEL / HYBRID | ALGORITHM |
+| **Brainstem** | 总调度 | 协调所有脑区 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
+
+### 4 感觉 (SENSE) + 4 效应器
+
+| 器官 | 类别 | 角色 | 简装修类型 |
+|:---|:---|:---|:---|
+| **Ears** | SENSE | 文本输入 (CLI/API/Discord/Telegram) | ALGORITHM |
+| **Eyes** | SENSE | 视觉输入 (图片/视频) | ALGORITHM |
+| **Whiskers** | SENSE | 环境感知 (I/O 异常检测) | ALGORITHM |
+| **Paws** | SENSE + 效应器 | 工具执行 (Skill/MCP/命令) | ALGORITHM |
+| **Mouth** | VOICE | 语音/文本输出 | ALGORITHM |
+| **Purr** | VOICE | 流式状态指示 | ALGORITHM |
+| **Tail** | VOICE | 状态栏 (CLI/TUI 健康信号) | ALGORITHM |
+
+### 5 成长 (GROWTH)
+
+| 器官 | 角色 | 简装修类型 |
+|:---|:---|:---|
+| **PinealGland** | 顿悟融合枢纽 — 碎片→洞察，双向融合 | Pluggable (不在 OrganHost) |
+| **AnomalyGrowth** | 异常沉淀 — 用户标记→持久化 | ALGORITHM |
+| **CorrectionGrowth** | 纠错固化 — 用户纠正→永久修复 | ALGORITHM |
+| **Crystallizer** | 技能晶化 — 高频操作→可复用技能 | ALGORITHM |
+| **RoleEmergence** | 角色涌现 — 行为模式→隐式角色 | ALGORITHM |
+
+---
+
+## IV. Wiring Reference
+
+### 禁止边 (Forbidden Edges)
+
+> 生物学合理接线约束 — 允许边开放，禁止边硬阻断。禁止优先于允许。
+
+| 禁止边 | 原因 |
+|:---|:---|
+| CEREBRUM → PAWS | 大脑不直接控制肢体 |
+| CEREBRUM → MOUTH | 大脑不直接驱动语言 |
+| CEREBRUM → ANOMALY_GROWTH | 大脑不直接触发成长 |
+| CEREBRUM → CORRECTION_GROWTH | 大脑不直接触发纠错 |
+| CEREBRUM → CRYSTALLIZER | 大脑不直接结晶技能 (v1.2.17) |
+| CEREBRUM → ROLE_EMERGENCE | 大脑不直接触发角色涌现 (v1.2.17) |
+| CEREBELLUM → CEREBRUM | 小脑不反馈至大脑 |
+| AMYGDALA → HIPPOCAMPUS | 杏仁核不直接访问记忆 |
+| THALAMUS → CEREBELLUM | 丘脑不绕行大脑 |
+
+### 写权限约束
+
+| 目标器官 | 允许写入方 |
+|:---|:---|
+| HIPPOCAMPUS | BRAINSTEM, HYPOTHALAMUS (仅此二者可写) |
+
+### 默认接线架构
 
 ```
-Slot:          (sense, whiskers)
-Protocol:      WhiskersProtocol
-Role:          Environment sensing — I/O anomaly detection
-
-Entry Rules:
-  - Pure input terminal — no incoming wiring edges
-
-Exit Rules:
-  - Can signal to: THALAMUS, AMYGDALA, ANOMALY_GROWTH
-  - Direct path to ANOMALY_GROWTH for anomaly recording (bypass thalamus)
-
-Methods:       feel_input, feel_output, detect_drift, check_hallucination
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (input/output sensing + drift detection)
-Noop Plug:       ALGORITHM (returns empty)
-```
-
-#### 13. PAWS — Tool Execution
-
-```
-Slot:          (sense, paws)
-Protocol:      PawsProtocol
-Role:          Tool execution — Skill/MCP/commands
-
-Entry Rules:
-  - Can receive signal from: CEREBELLUM (ONLY)
-  - Brain→PAWS is a forbidden edge — tool calls must route through cerebellum
-
-Exit Rules:
-  - None — terminal executor
-
-Methods:       execute, touch_file, run_command, interact_with_tool
-Supported Plugs: [algorithm, rule, hybrid]
-Renovated Plug:  ALGORITHM (tool_registry integration + safety pre-check)
-Noop Plug:       ALGORITHM (returns ok=False)
+SENSE 输入 → THALAMUS (唯一中继)
+                ├─→ CEREBRUM (深度推理)
+                │     └─→ CEREBELLUM (快速响应) ← AMYGDALA (安全输入)
+                │           └─→ MOUTH / PAWS / PURR / TAIL (效应器)
+                ├─→ AMYGDALA (安全旁路)
+                │     └─→ MOUTH (危险直接输出，零推理)
+                ├─→ HIPPOCAMPUS (记忆读写)
+                ├─→ FRONTAL (专注/规划)
+                └─→ BRAINSTEM (总调度)
+                      └─→ 所有器官 (生命周期事件)
 ```
 
 ---
 
-### Voice (3)
+## V. Presets Catalog
 
-#### 14. MOUTH — Text Output
+### Keyword Presets — 关键词预设
 
-```
-Slot:          (voice, mouth)
-Protocol:      MouthProtocol
-Role:          Voice output — TTS + text reply
+> 注入 Ears / Thalamus / Amygdala / Frontal。每个器官选取自己需要的子集。
 
-Entry Rules:
-  - Can receive signal from: CEREBELLUM, AMYGDALA, BRAINSTEM
-  - AMYGDALA→MOUTH is the danger bypass path (no reasoning)
+| 预设 | 停用词 | 命令 | 危险规则 | 话题词 | 说明 |
+|:---|:---|:---|:---|:---|:---|
+| `KW_EN` | 70 英文词 | 28 | 8 regex | — | 英文基础 |
+| `KW_ZH` | 70 中文词 | 36 | 9 regex | — | 中文基础 |
+| `KW_BILINGUAL` | 中英合并 | 64 | 17 regex | — | 双语合并（推荐） |
 
-Exit Rules:
-  - None — terminal output organ
+```python
+from meowcat.defaults import KW_BILINGUAL, KW_EN, KW_ZH
 
-Methods:       speak, diagnose
-Supported Plugs: [algorithm]
-Renovated Plug:  ALGORITHM (stdout print + log)
-Noop Plug:       ALGORITHM (returns empty string)
-```
+# 标准双语
+cat = create_cat(container=colony, cerebrum=MyLLM(), keyword=KW_BILINGUAL)
 
-#### 15. PURR — Streaming
-
-```
-Slot:          (voice, purr)
-Protocol:      PurrProtocol
-Role:          Streaming status — progress indication
-
-Entry Rules:
-  - Can receive signal from: CEREBELLUM, BRAINSTEM
-
-Exit Rules:
-  - None — terminal output organ
-
-Methods:       stream, diagnose
-Supported Plugs: [algorithm]
-Renovated Plug:  ALGORITHM (streaming status tracker)
-Noop Plug:       ALGORITHM (returns None)
+# 自定义合并
+custom = KW_ZH.merge(KW_EN)
 ```
 
-#### 16. TAIL — Status Bar
+### Prompt Presets — 提示词预设
 
-```
-Slot:          (voice, tail)
-Protocol:      TailProtocol
-Role:          Status bar — CLI/TUI health signal
+> 注入 Brainstem / Cerebrum。7 条路由模板。
 
-Entry Rules:
-  - Can receive signal from: CEREBELLUM, BRAINSTEM
+| 预设 | 模板数 | 说明 |
+|:---|:---|:---|
+| `PROMPT_DEFAULT` | 7 路由 (EN) | 英文默认 |
+| `PROMPT_ZH` | 7 路由 (CN) | 中文默认 |
 
-Exit Rules:
-  - None — terminal output organ
+```python
+from meowcat.defaults import PROMPT_DEFAULT, PROMPT_ZH
 
-Methods:       render, diagnose
-Supported Plugs: [algorithm]
-Renovated Plug:  ALGORITHM (status bar render)
-Noop Plug:       ALGORITHM (no-op)
+cat = create_cat(container=colony, cerebrum=MyLLM(), prompt=PROMPT_ZH)
 ```
 
 ---
 
-### Growth (4) — Loop C: Evolution Circuit
-
-#### 17. ANOMALY_GROWTH — Anomaly Sedimentation
-
-```
-Slot:          (growth, anomaly_growth)
-Protocol:      AnomalyGrowthProtocol
-Role:          Anomaly sedimentation — user-flagged anomalies → persistent
-
-Entry Rules:
-  - Can receive signal from: BRAINSTEM, AMYGDALA, WHISKERS
-
-Exit Rules:
-  - Can signal to: HIPPOCAMPUS, CORTEX
-
-Methods:       record, diagnose
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (in-memory anomaly log)
-Noop Plug:       ALGORITHM (no-op)
-```
-
-#### 18. CORRECTION_GROWTH — Correction Solidification
-
-```
-Slot:          (growth, correction_growth)
-Protocol:      CorrectionGrowthProtocol
-Role:          Correction solidification — user corrections → permanent fixes
-
-Entry Rules:
-  - Can receive signal from: BRAINSTEM, AMYGDALA
-
-Exit Rules:
-  - Can signal to: HIPPOCAMPUS, CORTEX
-
-Methods:       record, diagnose
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (in-memory correction log)
-Noop Plug:       ALGORITHM (no-op)
-```
-
-#### 19. CRYSTALLIZER — Skill Crystallization
-
-```
-Slot:          (growth, crystallizer)
-Protocol:      CrystallizerProtocol
-Role:          Experience crystallization — frequent ops → reusable skills
-
-Entry Rules:
-  - Can receive signal from: BRAINSTEM
-
-Exit Rules:
-  - None — terminal
-
-Methods:       crystallize, hotspots, diagnose
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (hit counter + hotspot detection)
-Noop Plug:       ALGORITHM (returns False/empty)
-```
-
-#### 20. ROLE_EMERGENCE — Role Emergence
-
-```
-Slot:          (growth, role_emergence)
-Protocol:      RoleEmergenceProtocol
-Role:          Role emergence — behavior patterns → implicit roles
-
-Entry Rules:
-  - Can receive signal from: BRAINSTEM
-
-Exit Rules:
-  - None — terminal
-
-Methods:       record, diagnose
-Supported Plugs: [algorithm, model, hybrid]
-Renovated Plug:  ALGORITHM (behavior pattern log)
-Noop Plug:       ALGORITHM (no-op)
-```
-
----
-
-## II. Epiphany Pipeline (v1.1.23–v1.2.0)
-
-### ScribblePad — Private Scratchpad
-
-```
-Component:    Pluggable (not in OrganHost)
-Mount Point:  cat.cat_self.scribble_pad
-Role:         Fragment accumulation buffer — store only, no judgment. Socket design.
-Capacity:     200 items (default)
-Plug Slots:   on_scribble / on_drain / post_filter
-Presets:      DefaultScribbleFilter (dedup) / DefaultScribbleLogger (log)
-```
-
-### PinealGland — Epiphany Organ (Hub)
-
-```
-Component:    Pluggable (not in OrganHost)
-Mount Point:  cat.cat_self.pineal_gland
-Role:         Junction of two loops — fragments → insights, bidirectional fusion
-Flow:         drain → meditate(merger→contradiction→filter) → fuse_to_self + fuse_to_colony
-Plug Slots:   merger / contradiction / filter
-Presets:      DefaultMerger / DefaultContradiction / DefaultInsightFilter
-Fusion Hooks: on_fuse_self (app sets → Cortex) / on_fuse_colony (app sets → SharedStorage)
-```
-
-### FusionCycle — Trigger Strategies
-
-| Strategy      | Trigger Condition      | Usage                                                  |
-| ------------- | ---------------------- | ------------------------------------------------------ |
-| `on_full(n)`  | ScribblePad at n items | `trigger_if(FusionCycle.on_full(50))`                  |
-| `on_timer(m)` | Every m minutes        | `trigger_if(FusionCycle.on_timer(30))`                 |
-| `on_event(e)` | Event fired            | `trigger_if(FusionCycle.on_event("conversation_end"))` |
-
-### Cortex — Four-Layer Worldview
-
-```
-L0: Raw Facts (Hippocampus entities)
-L1: Inferred Rules (extract_rules: frequency stats → {if, then, confidence})
-L2: Beliefs (promote_to_belief / challenge_belief → challengeable, revisable)
-L3: Metacognition (Metacognition.self_assess → capable/incapable/unknown)
-```
-
-### Metacognition — Self-Knowledge L3
-
-```
-Role:        Cat's self-awareness — what I can / cannot / don't know
-Methods:     self_assess(domain) → {capable, confidence, evidence} or {suggestion: "explore"}
-Driven by:   BlindSpotDetector curiosity → record_capability
-```
-
-### Active Growth — Three Components
-
-| Component              | Function                           | Drives To                         |
-| ---------------------- | ---------------------------------- | --------------------------------- |
-| **BlindSpotDetector**  | Detect knowledge gaps from queries | → Metacognition.record_capability |
-| **ToolFailureLearner** | Record tool failure patterns       | → AnomalyGrowth.record()          |
-| **HotPathObserver**    | Track high-frequency reflex paths  | → Crystallizer.crystallize()      |
-
-### CatSelf — Unified Self Meta-Organ
-
-```
-Component:    Pluggable (meta-organ, outside OrganHost/Wiring)
-Mount Point:  cat.cat_self
-Role:         Single entry for all organ reads/writes — ultimate start + ultimate end
-Holds:        Personality / Cortex / Metacognition / Skills / Reflexes / ScribblePad / PinealGland
-Loop Nodes:   before_act(freeze snapshot) → action → after_act(scribble fragment)
-Default Loops: conversation / task / learn (three presets, plug-and-play)
-```
-
-### CollectiveGrowth + CollectiveEmergence
-
-| Component               | Location            | Function                                     |
-| ----------------------- | ------------------- | -------------------------------------------- |
-| **CollectiveGrowth**    | `biology/growth.py` | Cross-cat anomaly/correction → SharedStorage |
-| **CollectiveEmergence** | `biology/roles.py`  | Behavior pattern analysis → role emergence   |
-
----
-
-## III. Forbidden Edges
-
-| Forbidden Edge               | Reason                                                   |
-| ---------------------------- | -------------------------------------------------------- |
-| CEREBRUM → PAWS              | Brain does not directly control limbs                    |
-| CEREBRUM → MOUTH             | Brain does not directly drive speech                     |
-| CEREBRUM → ANOMALY_GROWTH    | Brain does not directly trigger growth                   |
-| CEREBRUM → CORRECTION_GROWTH | Brain does not directly trigger correction               |
-| CEREBRUM → CRYSTALLIZER      | Brain does not directly crystallize skills (v1.2.17)     |
-| CEREBRUM → ROLE_EMERGENCE    | Brain does not directly trigger role emergence (v1.2.17) |
-| CEREBELLUM → CEREBRUM        | Cerebellum does not feed back to cerebrum                |
-| AMYGDALA → HIPPOCAMPUS       | Amygdala does not directly access memory                 |
-| THALAMUS → CEREBELLUM        | Thalamus does not bypass cerebrum                        |
-
----
-
-## IV. Path Catalog (26 paths)
-
-Each Path = `from_organ → to_organ.method` atomic signal recipe.
-
-### Self-Loop Paths (no wiring, direct method call)
-
-| #   | Path            | Signal                            | Mode | Description   |
-| --- | --------------- | --------------------------------- | ---- | ------------- |
-| P1  | `locate`        | THALAMUS → THALAMUS.locate        | read | Memory search |
-| P2  | `decide_route`  | THALAMUS → THALAMUS.decide_route  | read | Route fork    |
-| P3  | `assess_safety` | AMYGDALA → AMYGDALA.assess_safety | read | Safety check  |
-
-### Cross-Organ Paths
-
-#### Input Domain (Sense → Brain)
-
-| #   | Path   | Signal               | Mode | Description |
-| --- | ------ | -------------------- | ---- | ----------- |
-| P4  | `hear` | EARS → THALAMUS.hear | read | Text input  |
-
-#### Reasoning Domain (Brain Internal)
-
-| #   | Path          | Signal                       | Mode | Description    |
-| --- | ------------- | ---------------------------- | ---- | -------------- |
-| P5  | `deep_reason` | THALAMUS → CEREBRUM.generate | read | Deep reasoning |
-
-#### Output Domain (Brain → Voice)
-
-| #   | Path    | Signal                   | Mode  | Description |
-| --- | ------- | ------------------------ | ----- | ----------- |
-| P6  | `speak` | CEREBELLUM → MOUTH.speak | write | Text output |
-
-#### Tool Domain (Brain → Paws)
-
-| #   | Path           | Signal                               | Mode  | Description |
-| --- | -------------- | ------------------------------------ | ----- | ----------- |
-| P7  | `execute_tool` | CEREBELLUM → PAWS.interact_with_tool | write | Tool exec   |
-
-#### Memory Domain (Brain ↔ Hippocampus)
-
-| #   | Path                | Signal                                    | Mode  | Description        |
-| --- | ------------------- | ----------------------------------------- | ----- | ------------------ |
-| P8  | `remember`          | BRAINSTEM → HIPPOCAMPUS.remember          | write | Store memory       |
-| P9  | `get_entity`        | THALAMUS → HIPPOCAMPUS.get_entity         | read  | Read entity        |
-| P10 | `get_all`           | THALAMUS → HIPPOCAMPUS.get_all            | read  | Read all entities  |
-| P11 | `fts_search`        | THALAMUS → HIPPOCAMPUS.fts_search         | read  | Full-text search   |
-| P12 | `add_entity`        | BRAINSTEM → HIPPOCAMPUS.add_entity        | write | Add entity         |
-| P13 | `add_episode`       | BRAINSTEM → HIPPOCAMPUS.add_episode       | write | Add episode        |
-| P14 | `connect`           | BRAINSTEM → HIPPOCAMPUS.connect           | write | Connect entities   |
-| P15 | `record_access`     | BRAINSTEM → HIPPOCAMPUS.record_access     | write | Record access      |
-| P16 | `set_dormant`       | BRAINSTEM → HIPPOCAMPUS.set_dormant       | write | Set dormant        |
-| P17 | `append_content`    | BRAINSTEM → HIPPOCAMPUS.append_content    | write | Append content     |
-| P18 | `update_importance` | BRAINSTEM → HIPPOCAMPUS.update_importance | write | Update importance  |
-| P19 | `set_last_seen`     | BRAINSTEM → HIPPOCAMPUS.set_last_seen     | write | Set last seen time |
-
-#### Maintenance Domain (Hypothalamus → Hippocampus)
-
-| #   | Path                 | Signal                                                | Mode  | Description        |
-| --- | -------------------- | ----------------------------------------------------- | ----- | ------------------ |
-| P20 | `decay`              | HYPOTHALAMUS → HIPPOCAMPUS.decay                      | write | Memory decay       |
-| P21 | `weaken_connections` | HYPOTHALAMUS → HIPPOCAMPUS.weaken_connections         | write | Weaken connections |
-| P22 | `cleanup_orphans`    | HYPOTHALAMUS → HIPPOCAMPUS.cleanup_orphan_connections | write | Cleanup orphans    |
-
-#### Synthesis Domain (Brain → Cortex)
-
-| #   | Path         | Signal                        | Mode | Description         |
-| --- | ------------ | ----------------------------- | ---- | ------------------- |
-| P23 | `synthesize` | BRAINSTEM → CORTEX.synthesize | read | Worldview synthesis |
-
-#### Workflow Domain
-
-| #   | Path                  | Signal                                 | Mode  | Description      |
-| --- | --------------------- | -------------------------------------- | ----- | ---------------- |
-| P24 | `workflow_create`     | BRAINSTEM → HIPPOCAMPUS.add_entity     | write | Create workflow  |
-| P25 | `workflow_checkpoint` | BRAINSTEM → HIPPOCAMPUS.append_content | write | Write checkpoint |
-| P26 | `workflow_resume`     | BRAINSTEM → HIPPOCAMPUS.get_entity     | read  | Resume workflow  |
-
----
-
-## V. Chain Catalog (6 chains)
-
-Each Chain = named Path sequence. Previous result passed as kwargs to next.
-
-| #   | Chain            | Path Sequence                                              | Description          |
-| --- | ---------------- | ---------------------------------------------------------- | -------------------- |
-| C1  | `memory_search`  | `locate`                                                   | Memory search        |
-| C2  | `full_reasoning` | `deep_reason` → `speak`                                    | Deep reason → output |
-| C3  | `tool_exec`      | `execute_tool`                                             | Tool execution       |
-| C4  | `maintenance`    | `decay` → `cleanup_orphans`                                | Memory maintenance   |
-| C5  | `diagnostic`     | (empty — Stethoscope)                                      | Health check         |
-| C6  | `workflow_chain` | `workflow_create` → `execute_tool` → `workflow_checkpoint` | Long workflow        |
-
----
-
-## VI. Loop Catalog
-
-### 6.1 LoopRegistry Loops (5) — Organ-to-Organ Signal Orchestration
-
-Each Loop = Chain + trigger event + exit event.
-
-```
-★ CONVERSATION_LOOP — Loop A: Perceive-Reason-Output
-├─ trigger:  perceive.start
-├─ chain:    hear → decide_route → locate → deep_reason → speak → remember
-└─ path:     EARS→THALAMUS→CEREBRUM→CEREBELLUM→MOUTH→HIPPOCAMPUS
-```
-
-| #   | Loop              | Chain                                               | Trigger             | Description             |
-| --- | ----------------- | --------------------------------------------------- | ------------------- | ----------------------- |
-| L1  | `conversation`    | hear→decide_route→locate→deep_reason→speak→remember | `perceive.start`    | Loop A: perceive-output |
-| L2  | `tool_execution`  | hear→decide_route→execute_tool→speak→remember       | `orchestrate.start` | Tool execution loop     |
-| L3  | `danger_response` | assess_safety                                       | `amygdala.alert`    | Emergency safety loop   |
-| L4  | `maintenance`     | decay→cleanup_orphans                               | `heartbeat.tick`    | Loop B: homeostasis     |
-| L5  | `diagnostic`      | (empty)                                             | (manual)            | Health check            |
-
-### 6.2 CatSelf Default Loops (3) — Self-Awareness Growth
-
-CatSelf provides three prefab default loops, imperative orchestration (not declarative Loop):
-
-```
-★ Inner Loop: Single-Cat Self-Evolution
-  before_act(freeze snapshot) → action → after_act(scribble) → PinealGland.trigger_if() → fuse_to_self → Cortex/Metacognition
-
-★ Outer Loop: Collective Intelligence Fusion
-  ScribblePad → PinealGland.trigger_if(on_full/on_timer) → fuse_to_colony → SharedStorage → other cats
-```
-
-| Loop           | Flow                                         | Fusion Trigger                 | Description                    |
-| -------------- | -------------------------------------------- | ------------------------------ | ------------------------------ |
-| `conversation` | read self→chat→reply→scribble→reflect        | `on_event("conversation_end")` | Most common — evolve in dialog |
-| `task`         | read self→analyze→execute→observe→scribble   | `on_full(50)`                  | Task-driven evolution          |
-| `learn`        | read self→blind spot→explore→verify→scribble | `trigger()` immediate          | Curiosity-driven learning      |
-
----
-
-## VII. Reflex Catalog (2)
-
-Reflex = trigger (match condition) + path (organ sequence) + stages (optional).
-
-### R1 — text_dialogue
-
-```
-trigger:     modality == "text"
-path:        EARS → THALAMUS → BRAINSTEM → CEREBRUM → CEREBELLUM → MOUTH
-hops:        5
-description: Standard text dialogue full path
-```
-
-### R2 — danger
-
-```
-trigger:     content matches danger pattern
-path:        EARS → THALAMUS → AMYGDALA → MOUTH (bypass brain!)
-hops:        3
-description: Amygdala emergency reflex — danger detected → output directly, no reasoning
-```
-
----
-
-## VIII. LoopSequence (1)
-
-| #   | Name                | Loop Sequence            | Mode       | Description                      |
-| --- | ------------------- | ------------------------ | ---------- | -------------------------------- |
-| LS1 | `daily_maintenance` | maintenance → diagnostic | sequential | Daily maintain → check, in order |
-
----
-
-## IX. Presets Catalog
-
-### Keyword Presets (3)
-
-| Preset         | Stop Words   | Commands | Danger Rules | Description      |
-| -------------- | ------------ | -------- | ------------ | ---------------- |
-| `KW_EN`        | 70 English   | 28       | 8 regex      | English base     |
-| `KW_ZH`        | 70 Chinese   | 36       | 9 regex      | Chinese base     |
-| `KW_BILINGUAL` | zh+en merged | 64       | 17 regex     | Bilingual merged |
-
-### Prompt Presets (2)
-
-| Preset           | Templates    | Description     |
-| ---------------- | ------------ | --------------- |
-| `PROMPT_DEFAULT` | 7 route      | Default English |
-| `PROMPT_ZH`      | 7 route (CN) | Default Chinese |
-
----
-
-## X. Quick Reference
+## VI. Assembly Recipes
 
 ```python
 from meowcat import create_cat, ImplementationStyle
 from meowcat.defaults import KW_BILINGUAL, PROMPT_ZH
 
-# Renovated cat (default, 20 organs pre-furnished)
-cat = create_cat("bot", cerebrum=MyCerebrum())
+# 1. 最简装配 — 只需提供 cerebrum，其余全部简装修
+cat = create_cat(container=colony, cerebrum=MyLLM())
 
-# Renovated + bilingual + Chinese prompts
-cat = create_cat("bot", cerebrum=MyLLM(), keyword=KW_BILINGUAL, prompt=PROMPT_ZH)
+# 2. 简装修 + 双语 + 中文提示词
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 keyword=KW_BILINGUAL, prompt=PROMPT_ZH)
 
-# Noop cat (all bare stubs)
-cat = create_cat("bot", cerebrum=MyLLM(), renovated=False)
+# 3. 毛坯 — 全部 Noop 桩，完全自控
+cat = create_cat(container=colony, cerebrum=MyLLM(), renovated=False)
 
-# Mixed: renovated but amygdala bare
-cat = create_cat("bot", cerebrum=MyLLM(), bare_organs={"amygdala"})
+# 4. 混合 — 简装修但杏仁核留毛坯（无安全检查）
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 bare_organs={"amygdala"})
 
-# Check plug style per organ
-print(cat.organ("brain", "amygdala").impl_style)  # ImplementationStyle.ALGORITHM
+# 5. 混合 — 毛坯但丘脑升级简装修
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 renovated=False, renovate_organs={"thalamus"})
 
-# Path
-await cat.path_registry.run("locate", query="weather")
-await cat.path_registry.run("deep_reason", prompt="Why is the sky blue?")
+# 6. 延迟注册 — 先冻结，手动注册路径/链条/循环
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 register_default_paths=False,
+                 register_default_chains=False,
+                 register_default_loops=False)
+cat.register_default_paths()
+cat.register_default_chains()
+cat.register_default_loops()
 
-# Chain
-await cat.chain_registry.run("full_reasoning", prompt="...")
-await cat.chain_registry.run("maintenance")
+# 7. 装配钩子 — 冻结前注入额外器官/接线
+def my_before_freeze(cat):
+    cat.wire("thalamus", "my_organ", "my_method")
 
-# Loop
-await cat.run_loop("conversation", message="Hello!")
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 on_before_freeze=my_before_freeze)
+
+# 8. 反射弧注入
+from meowcat.reflex import Reflex
+my_reflex = Reflex(name="custom_alert", trigger={"type": "urgent"},
+                   path=["ears", "thalamus", "amygdala", "mouth"])
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 reflexes=[my_reflex])
+
+# 9. 自选存储后端
+cat = create_cat(container=colony, cerebrum=MyLLM(),
+                 graph_store=MyGraphStore(),
+                 vector_store=MyVectorStore())
+
+# --- 运行时调用 ---
+
+# 路径 (原子信号)
+result = await cat.path_registry.run("locate", query="天气")
+result = await cat.path_registry.run("deep_reason", prompt="天为什么是蓝的？")
+
+# 链条 (路径序列)
+result = await cat.chain_registry.run("conversation_chain", prompt="你好")
+result = await cat.chain_registry.run("maintenance_chain")
+
+# 循环 (闭环)
+await cat.run_loop("conversation", message="你好！")
 await cat.run_loop("maintenance")
+
+# 循环序列
 await cat.run_loopseq("daily_maintenance")
+
+# 统一感知入口 — 输入进，回复出
+reply = await cat.perceive("今天天气怎么样？")
+
+# 检查装配状态
+print(cat.organ("brain", "amygdala").impl_style)  # ImplementationStyle.ALGORITHM
+print(cat.list_organs())                            # 所有已挂载器官
+print(cat.wiring.describe())                        # 接线图描述
 ```
 
 ---
 
-## XI. File Index
+## VII. File Index
 
-| Concept                  | File                                                                        |
-| ------------------------ | --------------------------------------------------------------------------- |
-| Public API (lazy)        | `meowcat/__init__.py` + `meowcat/_exports.py`                               |
-| Organ coordinates        | `meowcat/anatomy.py`                                                        |
-| Organ specs (slots)      | `meowcat/biology.py`                                                        |
-| Organ role descriptions  | `meowcat/organ_roles.py`                                                    |
-| Noop impls (plugs)       | `meowcat/defaults/organs.py`                                                |
-| Renovated impls          | `meowcat/defaults/renovated.py`                                             |
-| Keyword & prompt presets | `meowcat/defaults/presets.py`                                               |
-| Factory function         | `meowcat/defaults/factory.py`                                               |
-| Tool abstractions        | `meowcat/tools/` (tool/skill/paws/matcher)                                  |
-| Tool batteries (plus)    | `meowcat/plus/` (tools/browser/mcp/chroma/skill/gateway)                    |
-| Storage ref impls        | `meowcat/defaults/stores.py`                                                |
-| Path                     | `meowcat/path.py`                                                           |
-| Chain                    | `meowcat/chain.py`                                                          |
-| Loop                     | `meowcat/loops.py`                                                          |
-| Reflex                   | `meowcat/reflex.py`                                                         |
-| Wiring                   | `meowcat/wiring.py`                                                         |
-| Nervous system           | `meowcat/nervous.py` (signal + circuit breaker)                             |
-| Middleware               | `meowcat/middleware.py`                                                     |
-| Event payload types      | `meowcat/events_payloads.py` (v1.2.18)                                      |
-| Telemetry                | `meowcat/telemetry.py` — Tracer + Metrics (v1.2.21)                         |
-| Plug style enum          | `meowcat/anatomy.py` (ImplementationStyle)                                  |
-| Biology subsystem        | `meowcat/biology/` (cat_self/pineal_gland/cortex...)                        |
-| Colony container         | `meowcat/colony/`                                                           |
-| Worker / Scheduler       | `meowcat/worker/` (v1.2.22: +WorkerScheduler)                               |
-| Gateway I/O              | `meowcat/gateway/` (Protocol) + `meowcat/plus/gateway/` (adapters, v1.2.22) |
+| 内容 | 文件路径 |
+|:---|:---|
+| 公共 API (延迟加载) | `meowcat/__init__.py` + `meowcat/_exports.py` |
+| 器官坐标 / 类别 / PlugStyle | `meowcat/anatomy.py` |
+| 器官规约 (Slot SSOT) | `meowcat/biology.py` |
+| 器官角色描述 | `meowcat/organ_roles.py` |
+| CatBase 装配逻辑 | `meowcat/assembly.py` |
+| OrganHost 挂载/校验 | `meowcat/host.py` |
+| Wiring 神经接线图 | `meowcat/wiring.py` |
+| Nervous 信号调度 + 断路器 | `meowcat/nervous.py` |
+| 中间件 | `meowcat/middleware.py` |
+| 事件总线 | `meowcat/events.py` |
+| 事件载荷类型 (v1.2.18) | `meowcat/events_payloads.py` |
+| 遥测 (Tracer+Metrics, v1.2.21) | `meowcat/telemetry.py` |
+| Path / BUILTIN_PATHS (26) | `meowcat/path.py` |
+| Chain / BUILTIN_CHAINS (6) | `meowcat/chain.py` |
+| Loop / BUILTIN_LOOPS (5) + LoopSequence (1) | `meowcat/loops.py` |
+| Reflex / 反射弧 (2) | `meowcat/reflex.py` |
+| CatSelf 统一自我 + 3 默认循环 | `meowcat/biology/cat_self.py` |
+| PinealGland 顿悟融合 | `meowcat/biology/pineal_gland.py` |
+| Cortex L0-L3 世界观 | `meowcat/biology/cortex.py` |
+| ScribblePad 草稿纸 | `meowcat/biology/scribble_pad.py` |
+| Fusion + ActiveGrowth | `meowcat/biology/` |
+| 简装修实现 (Renovated*) | `meowcat/defaults/renovated.py` |
+| 毛坯桩 (Noop*) | `meowcat/defaults/organs.py` |
+| 关键词 + 提示词预设 | `meowcat/defaults/presets.py` |
+| 存储参考实现 | `meowcat/defaults/stores.py` |
+| create_cat 工厂 | `meowcat/defaults/factory.py` |
+| 工具/技能/Paws 核心 | `meowcat/tools/` |
+| 可选 I/O: 浏览器/ChromaDB/MCP/网关 | `meowcat/plus/` |
+| Colony 多猫容器 + 联邦 | `meowcat/colony/` |
+| Worker / Scheduler (v1.2.22) | `meowcat/worker/` |
+| Gateway 协议 | `meowcat/gateway/` |
+| 测试 (60+ 用例) | `tests/` |
+
+---
+
+> **README** = 门面：亮点 + 生态 + 快速开始  
+> **CATALOG** = 配置手册：默认装配 + 执行流 + 预设 + 接线  
+> **CODE_WIKI** = 深度文档：完整架构 + 类与函数 + 依赖关系
