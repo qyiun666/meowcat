@@ -93,19 +93,19 @@ class TestRuntimeCheckable:
 
     def test_graph_storage_checkable(self) -> None:
         class Dummy:
-            async def load(self, cat_id: str) -> dict: return {}
-            async def save(self, cat_id: str, data: dict) -> None: pass
+            async def load(self, cat_uid: str) -> dict: return {}
+            async def save(self, cat_uid: str, data: dict) -> None: pass
         assert isinstance(Dummy(), GraphStorageProtocol)
 
     def test_l6_storage_checkable(self) -> None:
         class Dummy:
-            def append(self, cat_id: str, turn: int,
+            def append(self, cat_uid: str, turn: int,
                        u: str, a: str) -> None: pass
 
-            def load_all(self, cat_id: str) -> list: return []
-            def load_recent(self, cat_id: str, n: int = 20) -> list: return []
-            def total_chars(self, cat_id: str) -> int: return 0
-            def get_stats(self, cat_id: str) -> dict: return {}
+            def load_all(self, cat_uid: str) -> list: return []
+            def load_recent(self, cat_uid: str, n: int = 20) -> list: return []
+            def total_chars(self, cat_uid: str) -> int: return 0
+            def get_stats(self, cat_uid: str) -> dict: return {}
         assert isinstance(Dummy(), L6StorageProtocol)
 
     def test_vector_storage_checkable(self) -> None:
@@ -166,7 +166,7 @@ class TestRuntimeCheckable:
             def update_importance(self, eid, importance) -> None: pass
             def set_last_seen(self, eid, ts) -> None: pass
             # v1.0.15 长流程 workflow 查询
-            def list_active_workflows(self, cat_id) -> list: return []
+            def list_active_workflows(self, cat_uid) -> list: return []
             # v1.1.21 跨猫记忆搜索 + 委托快照
             def set_colony_memory(self, memory_pool) -> None: pass
             def snapshot(self, *topics, scope="colony") -> dict: return {}
@@ -175,6 +175,8 @@ class TestRuntimeCheckable:
 
     def test_thalamus_checkable(self) -> None:
         class Dummy:
+            async def hear(self, raw_input: str | bytes) -> dict: return {}
+
             async def locate(self, msg, session_id,
                              chroma=None, weights=None): pass
 

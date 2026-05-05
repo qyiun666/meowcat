@@ -109,7 +109,7 @@ class _FederationMixin:
 
         Args:
             target_colony: Remote colony_id.
-            cat_id: Remote cat ID.
+            cat_uid: Remote cat ID.
             to_category: Target organ category.
             to_name: Target organ name.
             method: Target method name.

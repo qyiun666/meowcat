@@ -3,7 +3,7 @@
 Implements :class:`~meowcat.protocols_storage.L6StorageProtocol` using
 stdlib ``json`` + ``pathlib``, zero external dependencies.  Each cat's
 raw dialogue turns are appended as one JSON line per turn in
-``{data_dir}/{cat_id}.jsonl``.
+``{data_dir}/{cat_uid}.jsonl``.
 
 Usage::
 
@@ -34,47 +34,47 @@ class JsonlL6Store:
 
     # -- Protocol (L6StorageProtocol) -----------------------------------
 
-    def append(self, cat_id: str, turn: int,
+    def append(self, cat_uid: str, turn: int,
                user_msg: str, ai_reply: str) -> None:
         """Append one dialogue turn to the cat's JSONL file."""
         record = {"turn": turn, "user": user_msg, "ai": ai_reply}
         line = json.dumps(record, ensure_ascii=False) + "\n"
-        with open(self._file_path(cat_id), "a", encoding="utf-8") as fh:
+        with open(self._file_path(cat_uid), "a", encoding="utf-8") as fh:
             fh.write(line)
             fh.flush()
 
-    def load_all(self, cat_id: str) -> list[dict[str, Any]]:
-        """Load all conversation turns for *cat_id*."""
-        return self._read_lines(cat_id)
+    def load_all(self, cat_uid: str) -> list[dict[str, Any]]:
+        """Load all conversation turns for *cat_uid*."""
+        return self._read_lines(cat_uid)
 
-    def load_recent(self, cat_id: str, n: int = 20) -> list[dict[str, Any]]:
+    def load_recent(self, cat_uid: str, n: int = 20) -> list[dict[str, Any]]:
         """Load the most recent *n* turns."""
-        lines = self._read_lines(cat_id)
+        lines = self._read_lines(cat_uid)
         return lines[-n:] if lines else []
 
-    def total_chars(self, cat_id: str) -> int:
+    def total_chars(self, cat_uid: str) -> int:
         """Total characters (user + ai) across all turns."""
         return sum(
             len(r.get("user", "")) + len(r.get("ai", ""))
-            for r in self._read_lines(cat_id)
+            for r in self._read_lines(cat_uid)
         )
 
-    def get_stats(self, cat_id: str) -> dict[str, Any]:
+    def get_stats(self, cat_uid: str) -> dict[str, Any]:
         """Return ``{"total_turns": N, "total_chars": C}``."""
-        records = self._read_lines(cat_id)
+        records = self._read_lines(cat_uid)
         return {
             "total_turns": len(records),
-            "total_chars": self.total_chars(cat_id),
+            "total_chars": self.total_chars(cat_uid),
         }
 
     # -- Internal -------------------------------------------------------
 
-    def _file_path(self, cat_id: str) -> Path:
-        return self._dir / f"{cat_id}.jsonl"
+    def _file_path(self, cat_uid: str) -> Path:
+        return self._dir / f"{cat_uid}.jsonl"
 
-    def _read_lines(self, cat_id: str) -> list[dict[str, Any]]:
-        """Read and parse all lines from {cat_id}.jsonl (idempotent)."""
-        fp = self._file_path(cat_id)
+    def _read_lines(self, cat_uid: str) -> list[dict[str, Any]]:
+        """Read and parse all lines from {cat_uid}.jsonl (idempotent)."""
+        fp = self._file_path(cat_uid)
         if not fp.exists():
             return []
         result: list[dict[str, Any]] = []

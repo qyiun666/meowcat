@@ -56,7 +56,7 @@ class CollectiveEmergence(Pluggable):
     async def detect_roles(self, min_events: int = 2) -> list[dict[str, Any]]:
         """Detect emergent roles by scanning growth events.
 
-        The default detector groups anomalies/corrections by ``cat_id``
+        The default detector groups anomalies/corrections by ``cat_uid``
         and ``reason`` keyword, surfacing cats that specialise in certain
         kinds of detection or correction.
 
@@ -64,7 +64,7 @@ class CollectiveEmergence(Pluggable):
             min_events: Minimum events required before a role emerges.
 
         Returns:
-            ``[{"cat_id": ..., "role": ..., "confidence": ..., "evidence": ...}, ...]``
+            ``[{"cat_uid": ..., "role": ..., "confidence": ..., "evidence": ...}, ...]``
         """
         # Collect all growth events (anomalies + corrections)
         events: list[dict[str, Any]] = []
@@ -91,11 +91,11 @@ class CollectiveEmergence(Pluggable):
     def _default_detect(
         events: list[dict[str, Any]], min_events: int,
     ) -> list[dict[str, Any]]:
-        """Default role detector — keyword + cat_id clustering."""
-        # Group by cat_id → reasons
+        """Default role detector — keyword + cat_uid clustering."""
+        # Group by cat_uid → reasons
         cat_reasons: dict[str, list[str]] = {}
         for ev in events:
-            cid = ev.get("cat_id", "unknown")
+            cid = ev.get("cat_uid", "unknown")
             reason = ev.get("reason", "")
             cat_reasons.setdefault(cid, []).append(reason)
 
@@ -107,7 +107,7 @@ class CollectiveEmergence(Pluggable):
             top_reason, top_count = counter.most_common(1)[0]
             role = _infer_role(top_reason)
             roles.append({
-                "cat_id": cid,
+                "cat_uid": cid,
                 "role": role,
                 "confidence": min(top_count / max(len(reasons), 1), 1.0),
                 "evidence_count": len(reasons),
@@ -118,12 +118,12 @@ class CollectiveEmergence(Pluggable):
         return roles
 
     async def record_pattern(
-        self, cat_id: str, pattern: str, evidence: str = "",
+        self, cat_uid: str, pattern: str, evidence: str = "",
     ) -> str:
         """Record a behaviour pattern for role emergence in colony storage.
 
         Args:
-            cat_id: Source cat identifier.
+            cat_uid: Source cat identifier.
             pattern: Behaviour pattern description.
             evidence: Supporting evidence.
 
@@ -133,7 +133,7 @@ class CollectiveEmergence(Pluggable):
         ts = str(_time.time())
         key = f"{_ROLE_PREFIX}{ts}"
         record = json.dumps({
-            "cat_id": cat_id,
+            "cat_uid": cat_uid,
             "pattern": pattern,
             "evidence": evidence[:500],
             "ts": ts,
@@ -142,13 +142,13 @@ class CollectiveEmergence(Pluggable):
         return key
 
     async def list_patterns(
-        self, limit: int = 50, cat_id: str | None = None,
+        self, limit: int = 50, cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List role patterns, newest first.
 
         Args:
             limit: Max results.
-            cat_id: Optional cat filter.
+            cat_uid: Optional cat filter.
 
         Returns:
             List of role pattern records.
@@ -162,7 +162,7 @@ class CollectiveEmergence(Pluggable):
             if raw:
                 try:
                     rec = json.loads(raw) if isinstance(raw, str) else raw
-                    if cat_id is None or rec.get("cat_id") == cat_id:
+                    if cat_uid is None or rec.get("cat_uid") == cat_uid:
                         results.append(rec)
                 except (json.JSONDecodeError, TypeError):
                     pass

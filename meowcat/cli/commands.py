@@ -202,18 +202,18 @@ def register_colony_commands(
 
     def cmd_adopt(ctx: CommandContext) -> str:
         t = ctx.i18n
-        cat_id = ctx.args.strip()
-        if not cat_id:
+        cat_uid = ctx.args.strip()
+        if not cat_uid:
             return t.t("cats_adopt_usage")
-        if cat_id in colony._cats:
-            return t.t("cats_adopt_exists", cat_id=cat_id)
+        if cat_uid in colony._cats:
+            return t.t("cats_adopt_exists", cat_uid=cat_uid)
         if colony.is_full:
             return t.t("cats_adopt_full", count=len(colony._cats), max_cats=colony.max_cats)
         try:
-            cat = colony.create_cat(name=cat_id)
+            cat = colony.create_cat(name=cat_uid)
             if active_cat_ref[0] is None:
                 active_cat_ref[0] = cat
-            return t.t("cats_adopt", cat_id=cat_id)
+            return t.t("cats_adopt", cat_uid=cat_uid)
         except Exception as exc:
             return t.t("command_error", error=str(exc))
 
@@ -221,16 +221,16 @@ def register_colony_commands(
 
     def cmd_release(ctx: CommandContext) -> str:
         t = ctx.i18n
-        cat_id = ctx.args.strip()
-        if not cat_id:
+        cat_uid = ctx.args.strip()
+        if not cat_uid:
             return t.t("cats_release_usage")
-        if cat_id not in colony._cats:
-            return t.t("cats_release_not_found", cat_id=cat_id)
+        if cat_uid not in colony._cats:
+            return t.t("cats_release_not_found", cat_uid=cat_uid)
         try:
-            colony.release(cat_id)
-            if active_cat_ref[0] and active_cat_ref[0].cat_uid == cat_id:
+            colony.release(cat_uid)
+            if active_cat_ref[0] and active_cat_ref[0].cat_uid == cat_uid:
                 active_cat_ref[0] = None
-            return t.t("cats_release", cat_id=cat_id)
+            return t.t("cats_release", cat_uid=cat_uid)
         except Exception as exc:
             return t.t("command_error", error=str(exc))
 
@@ -238,13 +238,13 @@ def register_colony_commands(
 
     def cmd_switch(ctx: CommandContext) -> str:
         t = ctx.i18n
-        cat_id = ctx.args.strip()
-        if not cat_id:
+        cat_uid = ctx.args.strip()
+        if not cat_uid:
             return t.t("cats_switch_usage")
-        if cat_id not in colony._cats:
-            return t.t("cats_not_found", cat_id=cat_id)
-        active_cat_ref[0] = colony.get_cat(cat_id)
-        return t.t("cats_switch", cat_id=cat_id)
+        if cat_uid not in colony._cats:
+            return t.t("cats_not_found", cat_uid=cat_uid)
+        active_cat_ref[0] = colony.get_cat(cat_uid)
+        return t.t("cats_switch", cat_uid=cat_uid)
 
     # -- /health (async) -------------------------------------------------
 
@@ -263,15 +263,15 @@ def register_colony_commands(
             loop.close()
         return _format_health_results(t, results)
 
-    # -- /brain [cat_id] (async) ----------------------------------------
+    # -- /brain [cat_uid] (async) ----------------------------------------
 
     def cmd_brain(ctx: CommandContext) -> str:
         t = ctx.i18n
-        cat_id = ctx.args.strip()
-        if cat_id:
-            if cat_id not in colony._cats:
-                return t.t("brain_cat_not_found", cat_id=cat_id)
-            cat = colony.get_cat(cat_id)
+        cat_uid = ctx.args.strip()
+        if cat_uid:
+            if cat_uid not in colony._cats:
+                return t.t("brain_cat_not_found", cat_uid=cat_uid)
+            cat = colony.get_cat(cat_uid)
         elif active_cat_ref[0]:
             cat = active_cat_ref[0]
         else:
@@ -279,7 +279,7 @@ def register_colony_commands(
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                return t.t("brain_running", cat_id=cat.cat_uid)
+                return t.t("brain_running", cat_uid=cat.cat_uid)
             results = loop.run_until_complete(cat.brain_check())
         except RuntimeError:
             loop = asyncio.new_event_loop()
@@ -324,11 +324,11 @@ def _health_sync(t: Any, colony: Any) -> str:
         try:
             cat = colony.get_cat(cid)
             organs = cat.list_all_organs()
-            lines.append(t.t("health_cat_status", cat_id=cid,
+            lines.append(t.t("health_cat_status", cat_uid=cid,
                          status=len(organs), errors=0))
         except Exception as exc:
             lines.append(
-                t.t("health_cat_status", cat_id=cid, status=0, errors=1))
+                t.t("health_cat_status", cat_uid=cid, status=0, errors=1))
     return "\n".join(lines) if lines else t.t("health_no_cats")
 
 
@@ -337,18 +337,18 @@ def _format_health_results(t: Any, results: dict) -> str:
     lines = [f"**{t.t('health_title')}**", ""]
     total_organs = 0
     total_errors = 0
-    for cat_id, organs in results.items():
+    for cat_uid, organs in results.items():
         if isinstance(organs, dict):
             errs = sum(1 for v in organs.values()
                        if isinstance(v, dict) and "error" in v)
             total_organs += len(organs)
             total_errors += errs
-            lines.append(t.t("health_cat_status", cat_id=cat_id,
+            lines.append(t.t("health_cat_status", cat_uid=cat_uid,
                          status=len(organs), errors=errs))
         else:
             total_errors += 1
             lines.append(
-                t.t("health_cat_status", cat_id=cat_id, status=0, errors=1))
+                t.t("health_cat_status", cat_uid=cat_uid, status=0, errors=1))
     lines.append("")
     if total_errors == 0:
         lines.append(t.t("health_all_ok"))
@@ -357,9 +357,9 @@ def _format_health_results(t: Any, results: dict) -> str:
     return "\n".join(lines)
 
 
-def _format_brain_results(t: Any, cat_id: str, results: dict) -> str:
+def _format_brain_results(t: Any, cat_uid: str, results: dict) -> str:
     """Format brain check results dict into readable text."""
-    lines = [f"**{t.t('brain_title')}: {cat_id}**", ""]
+    lines = [f"**{t.t('brain_title')}: {cat_uid}**", ""]
     err_count = 0
     for organ_name, data in sorted(results.items()):
         if isinstance(data, dict) and "error" in data:

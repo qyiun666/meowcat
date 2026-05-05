@@ -137,11 +137,6 @@ BUILTIN_PATHS: tuple[Path, ...] = (
          "append_content",      "write", "Write checkpoint"),
     Path("workflow_resume",     BRAINSTEM,   HIPPOCAMPUS,
          "get_entity",          "read",  "Resume workflow"),
-    # -- CatSelf introspection (v1.2.4) --
-    Path("self_snapshot",       BRAINSTEM,   BRAINSTEM,
-         "before_act",          "read",  "Freeze self snapshot before action"),
-    Path("self_reflect",        BRAINSTEM,   BRAINSTEM,
-         "after_act",           "write", "Write back self reflection after action"),
 )
 
 

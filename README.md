@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
+> 🐱 **Solo indie project** — if you find this useful, a ⭐ star ⭐ would make this cat purr!
+
 **An agent framework built on the biological blueprint of a cat.**
 
 meowcat is the pure-framework layer of the MeowAgent ecosystem — cat anatomy:
@@ -91,7 +93,7 @@ everything else.
 │  ┌─────────┐    ┌─────────┐    ┌─────────┐             │
 │  │  Cat A  │    │  Cat B  │    │  Cat C  │             │
 │  │ (peer)  │◄──►│ (peer)  │◄──►│ (peer)  │             │
-│  │ cat_id= │    │ cat_id= │    │ cat_id= │             │
+│  │ cat_uid= │    │ cat_uid= │    │ cat_uid= │             │
 │  │  "a"   │    │  "b"   │    │  "c"   │             │
 │  └────┬────┘    └────┬────┘    └────┬────┘             │
 │       │              │              │                   │

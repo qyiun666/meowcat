@@ -1,6 +1,6 @@
 """GlobalColonyRegistry — process-wide multi-Colony registry.
 
-Cross-colony cat lookup by global address (``colony_id/cat_id``).
+Cross-colony cat lookup by global address (``colony_id/cat_uid``).
 """
 # (c) 2025-2026 Axonant. MIT License.
 
@@ -19,7 +19,7 @@ class GlobalColonyRegistry(Pluggable):
     """Global registry for multiple Colonies — cross-colony cat lookup.
 
     A process-wide registry that holds references to all Colony instances,
-    enabling cat lookup by global address (``colony_id/cat_id``) across
+    enabling cat lookup by global address (``colony_id/cat_uid``) across
     multiple colonies.  Useful for multi-tenant or multi-team deployments
     where external systems need to route messages to any cat in any colony.
 

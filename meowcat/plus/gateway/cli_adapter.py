@@ -91,6 +91,12 @@ class CliAdapter:
             reply = await on_message(text, ctx)
             if reply:
                 await self.send(reply, ctx.session_id)
+            else:
+                stream = await on_stream(text, ctx)
+                if stream is not None:
+                    async for chunk in stream:
+                        await self.stream_chunk(chunk, ctx.session_id)
+                    await self.stream_end(ctx.session_id)
 
     async def _serve_queue(
         self,
@@ -115,6 +121,12 @@ class CliAdapter:
             reply = await on_message(text, ctx)
             if reply:
                 await self.send(reply, ctx.session_id)
+            else:
+                stream = await on_stream(text, ctx)
+                if stream is not None:
+                    async for chunk in stream:
+                        await self.stream_chunk(chunk, ctx.session_id)
+                    await self.stream_end(ctx.session_id)
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
         """Output to stdout."""

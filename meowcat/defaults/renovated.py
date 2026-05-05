@@ -507,18 +507,18 @@ class RenovatedHippocampus(NoopHippocampus):
         self._keyword_index: dict[str, set[str]] = {}
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_id: str, model: str,
+        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
     ) -> Any:
-        result = await NoopHippocampus.remember(self, user_msg, ai_reply, cat_id, model)
+        result = await NoopHippocampus.remember(self, user_msg, ai_reply, cat_uid, model)
         kws = _extract_keywords(f"{user_msg} {ai_reply}", top_k=10)
         for kw in kws:
             self._keyword_index.setdefault(kw, set()).add(user_msg[:80])
         return result
 
     def fts_search(
-        self, cat_id: str, keywords: str, limit: int = 10,
+        self, cat_uid: str, keywords: str, limit: int = 10,
     ) -> list[dict[str, Any]]:
-        results = NoopHippocampus.fts_search(self, cat_id, keywords, limit)
+        results = NoopHippocampus.fts_search(self, cat_uid, keywords, limit)
         kws = set(keywords.lower().split())
         for kw in kws:
             if kw in self._keyword_index:

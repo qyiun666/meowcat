@@ -222,7 +222,7 @@ class TestNamespaceStorage:
 
     @pytest.mark.anyio
     async def test_ns_cats_profile(self, colony: Colony) -> None:
-        """cats/{cat_id}/ 命名空间存储猫公开简介。"""
+        """cats/{cat_uid}/ 命名空间存储猫公开简介。"""
         await colony.ns_set("cats", "planner/profile", {"role": "planner", "model": "gpt-4o"})
         profile = await colony.ns_get("cats", "planner/profile")
         assert profile["role"] == "planner"

@@ -13,6 +13,8 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
+import shlex
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -31,6 +33,8 @@ class Command:
     handler: Callable[..., Any]
     group: str = "General"
     description: str = ""
+    min_args: int = 0
+    max_args: int | None = None
 
 
 @dataclass
@@ -98,13 +102,15 @@ class CommandRouter(Pluggable):
 
     # -- Routing ---------------------------------------------------------
 
-    def route(self, user_input: str) -> str:
+    async def route(self, user_input: str) -> str:
         """Route a user input string to the matching command handler.
+
+        Async — both sync and async handlers are supported.
 
         Steps:
         1. Parse command name and args from input.
         2. Find matching command (exact name match).
-        3. Run middleware chain; first non-None result short-circuits.
+        3. Run middleware chain (async); first non-None result short-circuits.
         4. If no middleware short-circuits, execute the handler.
         5. Return result string or i18n-translated error.
         """
@@ -128,19 +134,64 @@ class CommandRouter(Pluggable):
             i18n=self.i18n,
         )
 
-        # Run middleware chain
-        for _hook, result in self._run_plugs_sync("middleware", ctx):
+        # Middleware chain — async
+        async for _hook, result in self._run_plugs("middleware", ctx):
             if result is not None:
                 return str(result)
 
-        # Execute handler
         try:
             result = cmd.handler(ctx)
+            if asyncio.iscoroutine(result):
+                result = await result
             return str(result)
         except Exception as exc:
             return self._t("command_error", error=str(exc))
 
-    # -- Helpers ---------------------------------------------------------
+    def command(
+        self, name: str | None = None, group: str = "General",
+        description: str = "", min_args: int = 0, max_args: int | None = None,
+    ) -> Callable:
+        """Decorator: register a command handler in one line.
+
+        Usage::
+
+            @router.command(name="/stats", group="System", description="Show stats")
+            def cmd_stats(ctx: CommandContext) -> str:
+                return "Stats: ..."
+
+            @router.command()  # auto-derives name from handler: /foo for cmd_foo
+            async def cmd_foo(ctx: CommandContext) -> str:
+                return await do_something()
+        """
+        def decorator(handler):
+            cmd_name = name or f"/{handler.__name__.removeprefix('cmd_')}"
+            self.register(Command(
+                name=cmd_name, handler=handler, group=group,
+                description=description, min_args=min_args, max_args=max_args,
+            ))
+            return handler
+        return decorator
+
+    async def parse_and_route(self, raw: str) -> str:
+        """``shlex`` parse → arg validation → route.
+
+        Supports quoted arguments like ``/adopt "my cat"``.
+        Returns translated error if arg count is out of bounds.
+        """
+        try:
+            parts = shlex.split(raw)
+        except ValueError:
+            parts = raw.split()
+        if not parts:
+            return await self.route(raw)
+        name, args = parts[0], parts[1:]
+        cmd = self._commands.get(name)
+        if cmd is not None:
+            if len(args) < cmd.min_args:
+                return self._t("too_few_args", cmd=name, expected=cmd.min_args)
+            if cmd.max_args is not None and len(args) > cmd.max_args:
+                return self._t("too_many_args", cmd=name, expected=cmd.max_args)
+        return await self.route(raw)
 
     def _t(self, key: str, **kwargs: Any) -> str:
         """Translate via i18n if available, otherwise return the key."""

@@ -2,7 +2,7 @@
 
 Implements :class:`~meowcat.protocols_storage.GraphStorageProtocol` using
 stdlib ``sqlite3``, zero external dependencies.  Each cat's entanglement
-graph is stored as a JSON blob keyed by ``cat_id``.
+graph is stored as a JSON blob keyed by ``cat_uid``.
 
 Usage::
 
@@ -14,6 +14,7 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sqlite3
 from pathlib import Path
@@ -24,7 +25,7 @@ class SqliteGraphStore:
     """Persistent graph store backed by a single SQLite database file.
 
     Implements ``GraphStorageProtocol`` (load/save).  Uses a simple
-    key-value table where ``cat_id`` is the primary key and
+    key-value table where ``cat_uid`` is the primary key and
     ``graph_data`` holds the JSON-serialised graph dict.
     """
 
@@ -34,20 +35,26 @@ class SqliteGraphStore:
 
     # -- Protocol (GraphStorageProtocol) ---------------------------------
 
-    async def load(self, cat_id: str) -> dict[str, Any]:
-        """Load the persisted graph data for *cat_id*, or ``{}`` if missing."""
+    async def load(self, cat_uid: str) -> dict[str, Any]:
+        """Load the persisted graph data for *cat_uid*, or ``{}`` if missing."""
+        return await asyncio.to_thread(self._load_sync, cat_uid)
+
+    def _load_sync(self, cat_uid: str) -> dict[str, Any]:
         row = self._query_one(
-            "SELECT graph_data FROM cat_graphs WHERE cat_id = ?", (cat_id,))
+            "SELECT graph_data FROM cat_graphs WHERE cat_uid = ?", (cat_uid,))
         if row is None:
             return {}
         return json.loads(row[0])  # type: ignore[no-any-return]
 
-    async def save(self, cat_id: str, graph_data: dict[str, Any]) -> None:
-        """Persist *graph_data* for *cat_id* (upsert)."""
+    async def save(self, cat_uid: str, graph_data: dict[str, Any]) -> None:
+        """Persist *graph_data* for *cat_uid* (upsert)."""
+        return await asyncio.to_thread(self._save_sync, cat_uid, graph_data)
+
+    def _save_sync(self, cat_uid: str, graph_data: dict[str, Any]) -> None:
         blob = json.dumps(graph_data, ensure_ascii=False)
         self._execute(
-            "INSERT OR REPLACE INTO cat_graphs(cat_id, graph_data) VALUES (?, ?)",
-            (cat_id, blob),
+            "INSERT OR REPLACE INTO cat_graphs(cat_uid, graph_data) VALUES (?, ?)",
+            (cat_uid, blob),
         )
 
     # -- Internal helpers --------------------------------------------------
@@ -55,7 +62,7 @@ class SqliteGraphStore:
     def _ensure_table(self) -> None:
         self._execute(
             "CREATE TABLE IF NOT EXISTS cat_graphs ("
-            "  cat_id TEXT PRIMARY KEY,"
+            "  cat_uid TEXT PRIMARY KEY,"
             "  graph_data TEXT NOT NULL"
             ")"
         )

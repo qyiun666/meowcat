@@ -145,6 +145,33 @@ class Pluggable:
                 )
             yield hook, result
 
+    async def _run_plugs_async(
+        self, slot: str, *args: Any, **kwargs: Any
+    ) -> AsyncIterator[tuple[str, Any]]:
+        """Async plug runner — auto-detects coroutines, handles object plugs.
+
+        Unlike :meth:`_run_plugs` which expects callables, this method also
+        handles plug *objects* by looking up ``slot`` as an attribute.
+        Useful when middleware/hooks are registered as objects rather than
+        bare callables.
+
+        Args:
+            slot: hook/slot name.
+            *args: positional arguments passed to plug.
+            **kwargs: keyword arguments passed to plug.
+
+        Yields:
+            ``(plug_name, result)`` tuple, once per registered plug.
+        """
+        plugs = list(self._plugs.get(slot, []))
+        for plug in plugs:
+            cb = plug if callable(plug) else getattr(plug, slot, None)
+            if cb is not None:
+                result = cb(*args, **kwargs)
+                if inspect.iscoroutine(result):
+                    result = await result
+                yield (getattr(plug, "name", plug.__class__.__name__), result)
+
     def list_plugs(self) -> dict[str, int]:
         """List all mounted hooks and their plugin counts.
 

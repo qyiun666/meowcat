@@ -1,6 +1,6 @@
 """v0.5.9 — 向后兼容契约：v0.5.0~v0.5.8 旧 API 保持一字不改。
 
-锚点：meowagent/cat/agent.py#L75 ``super().__init__(cat_id)``
+锚点：meowagent/cat/agent.py#L75 ``super().__init__(cat_uid)``
        meowagent/cat/agent.py#L165 ``self._assemble(reflex_stages=[...])``
 """
 
@@ -27,7 +27,7 @@ class _Cerebrum:
 
 
 def test_catbase_legacy_single_arg_ctor() -> None:
-    """v0.5.0 风格：只传 cat_id 即可（现为 name）。"""
+    """v0.5.0 风格：只传 cat_uid 即可（现为 name）。"""
     cat = make_cat("legacy")
     assert cat.name == "legacy"
     assert cat.cat_uid is not None

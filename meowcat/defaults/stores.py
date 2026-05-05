@@ -19,11 +19,11 @@ class InMemoryGraphStore:
     def __init__(self) -> None:
         self._graphs: dict[str, dict[str, Any]] = {}
 
-    async def load(self, cat_id: str) -> dict[str, Any]:
-        return self._graphs.get(cat_id, {})
+    async def load(self, cat_uid: str) -> dict[str, Any]:
+        return self._graphs.get(cat_uid, {})
 
-    async def save(self, cat_id: str, graph_data: dict[str, Any]) -> None:
-        self._graphs[cat_id] = graph_data
+    async def save(self, cat_uid: str, graph_data: dict[str, Any]) -> None:
+        self._graphs[cat_uid] = graph_data
 
 
 class InMemoryVectorStore:
@@ -147,31 +147,31 @@ class InMemoryL6Store:
     def __init__(self) -> None:
         self._records: dict[str, list[dict[str, Any]]] = {}
 
-    def append(self, cat_id: str, turn: int, user_msg: str, ai_reply: str) -> None:
-        if cat_id not in self._records:
-            self._records[cat_id] = []
-        self._records[cat_id].append({
+    def append(self, cat_uid: str, turn: int, user_msg: str, ai_reply: str) -> None:
+        if cat_uid not in self._records:
+            self._records[cat_uid] = []
+        self._records[cat_uid].append({
             "turn": turn,
             "user": user_msg,
             "ai": ai_reply,
         })
 
-    def load_all(self, cat_id: str) -> list[dict[str, Any]]:
-        return self._records.get(cat_id, [])
+    def load_all(self, cat_uid: str) -> list[dict[str, Any]]:
+        return self._records.get(cat_uid, [])
 
-    def load_recent(self, cat_id: str, n: int = 20) -> list[dict[str, Any]]:
-        records = self._records.get(cat_id, [])
+    def load_recent(self, cat_uid: str, n: int = 20) -> list[dict[str, Any]]:
+        records = self._records.get(cat_uid, [])
         return records[-n:] if records else []
 
-    def total_chars(self, cat_id: str) -> int:
-        records = self._records.get(cat_id, [])
+    def total_chars(self, cat_uid: str) -> int:
+        records = self._records.get(cat_uid, [])
         return sum(
             len(r.get("user", "")) + len(r.get("ai", "")) for r in records
         )
 
-    def get_stats(self, cat_id: str) -> dict[str, Any]:
-        records = self._records.get(cat_id, [])
+    def get_stats(self, cat_uid: str) -> dict[str, Any]:
+        records = self._records.get(cat_uid, [])
         return {
             "total_turns": len(records),
-            "total_chars": self.total_chars(cat_id),
+            "total_chars": self.total_chars(cat_uid),
         }

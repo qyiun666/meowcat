@@ -88,7 +88,7 @@ class TestAllowedOrgansIsolation:
                 pytest.fail(f"{name} 在 allowed_organs 中，不应被拦截")
 
     def test_kitten_can_access_own_properties(self) -> None:
-        """分身猫可访问自身属性（cat_id、parent_id 等）。"""
+        """分身猫可访问自身属性（cat_uid、parent_id 等）。"""
         kitten = make_cat(
             "kit", parent_id="main",
             allowed_organs=frozenset({"cerebrum"}),

@@ -163,6 +163,8 @@ class CatBase:
         # v1.0.14: Lifecycle hooks
         self._start_hooks: list[CatHook] = []
         self._shutdown_hooks: list[CatHook] = []
+        # v1.2.36: Organs mounted hooks — fired after mount_known_organs()
+        self._organs_mounted_hooks: list[CatHook] = []
         # v1.0.15: Long-running workflow tracking
         self._active_workflows: dict[str, dict[str, Any]] = {}
         # v1.2.0: Unified self — all organ read/write converge here
@@ -406,6 +408,7 @@ class CatBase:
         "wiring", "reflexes", "events",
         "list_all_organs", "has_organ",
         "cat_self",  # v1.2.0
+        "on_organs_mounted",  # v1.2.36: hook for post-mount organ injection
     })
 
     # -- Neural synapse facade -----------------------------------------------
@@ -697,6 +700,27 @@ class CatBase:
             _log.debug(
                 "_checkpoint_workflows: failed to write checkpoint", exc_info=True)
 
+    def on_organs_mounted(self, hook: CatHook) -> None:
+        """Register a hook called after all known organs are mounted.
+
+        Use this when you need to interact with organs (e.g. inject colony
+        memory into hippocampus) — at this point ``has_organ()`` and
+        ``organ()`` are guaranteed to work.
+
+        Args:
+            hook: Sync callable accepting a CatBase instance.
+
+        Examples:
+
+            >>> cat.on_organs_mounted(lambda c: colony._inject_colony_memory(c))
+        """
+        self._organs_mounted_hooks.append(hook)
+
+    def _notify_organs_mounted(self) -> None:
+        """Internal: fire all on_organs_mounted hooks in registration order."""
+        for hook in self._organs_mounted_hooks:
+            hook(self)
+
     def on_start(self, hook: CatHook) -> None:
         """Register a start hook. Called in registration order after
         assembly completes.
@@ -892,6 +916,9 @@ def mount_known_organs(cat: CatBase) -> None:
         organ = getattr(cat, name, None)
         if organ is not None:
             cat.mount("growth", name, organ)
+
+    # v1.2.36: Notify that organs are mounted — hooks can now access organs
+    cat._notify_organs_mounted()
 
 
 # -- Top-level assembly function (v0.5.9 added) ------------------------------

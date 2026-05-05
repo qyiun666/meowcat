@@ -34,7 +34,7 @@ class TestCollectiveGrowthAnomaly:
             assert key.startswith("anomaly:")
             anomalies = await colony.growth.list_anomalies()
             assert len(anomalies) >= 1
-            assert anomalies[0]["cat_id"] == "cat1"
+            assert anomalies[0]["cat_uid"] == "cat1"
             assert anomalies[0]["reason"] == "DB schema mismatch"
             assert anomalies[0]["confidence"] == 0.9
             assert anomalies[0]["phase"] == "execute"
@@ -50,8 +50,8 @@ class TestCollectiveGrowthAnomaly:
             await colony.growth.record_anomaly("cat1", "Memory leak")
 
             all_ = await colony.growth.list_anomalies()
-            cat1 = await colony.growth.list_anomalies(cat_id="cat1")
-            cat2 = await colony.growth.list_anomalies(cat_id="cat2")
+            cat1 = await colony.growth.list_anomalies(cat_uid="cat1")
+            cat2 = await colony.growth.list_anomalies(cat_uid="cat2")
 
             assert len(all_) == 3
             assert len(cat1) == 2
@@ -91,14 +91,14 @@ class TestCollectiveGrowthCorrection:
             assert key.startswith("correction:")
             corrections = await colony.growth.list_corrections()
             assert len(corrections) >= 1
-            assert corrections[0]["cat_id"] == "cat1"
+            assert corrections[0]["cat_uid"] == "cat1"
             assert corrections[0]["wrong"] == "DROP TABLE users"
             assert corrections[0]["correct"] == "DELETE FROM users WHERE id=:id"
             assert corrections[0]["topic"] == "SQL安全"
         _run(_test())
 
     def test_list_corrections_by_cat(self):
-        """list_corrections can filter by cat_id."""
+        """list_corrections can filter by cat_uid."""
         colony = Colony("test-cg2", storage=InMemorySharedStore())
 
         async def _test():
@@ -106,9 +106,9 @@ class TestCollectiveGrowthCorrection:
             await colony.growth.record_correction("cat2", "wrong2", "correct2")
 
             assert len(await colony.growth.list_corrections()) == 2
-            assert len(await colony.growth.list_corrections(cat_id="cat1")) == 1
+            assert len(await colony.growth.list_corrections(cat_uid="cat1")) == 1
             assert len(await colony.growth.list_corrections(
-                cat_id="cat3")) == 0
+                cat_uid="cat3")) == 0
         _run(_test())
 
 
@@ -154,7 +154,7 @@ class TestCollectiveGrowthPlug:
         """strategy plug returning False stops anomaly recording."""
         colony = Colony("test-veto", storage=InMemorySharedStore())
 
-        def veto_low_confidence(cat_id, event):
+        def veto_low_confidence(cat_uid, event):
             if event.get("confidence", 0) < 0.9:
                 return False
             return None
@@ -178,7 +178,7 @@ class TestCollectiveGrowthPlug:
         """strategy plug returning False stops correction recording."""
         colony = Colony("test-veto2", storage=InMemorySharedStore())
 
-        def block_drop(cat_id, event):
+        def block_drop(cat_uid, event):
             if "DROP" in event.get("wrong", ""):
                 return False
             return None
@@ -215,13 +215,13 @@ class TestCollectiveEmergence:
             roles = await colony.emergence.detect_roles(min_events=2)
 
             # Cat1 should have a role
-            sql_roles = [r for r in roles if r["cat_id"] == "sql-guard"]
+            sql_roles = [r for r in roles if r["cat_uid"] == "sql-guard"]
             assert len(sql_roles) >= 1
             # Default detector should infer SQL-related role
             assert any("SQL" in sql_roles[0]["role"] for _ in [1])
 
             # Cat2 should not have a role (below min_events)
-            helper_roles = [r for r in roles if r["cat_id"] == "helper"]
+            helper_roles = [r for r in roles if r["cat_uid"] == "helper"]
             assert len(helper_roles) == 0
         _run(_test())
 
@@ -253,12 +253,12 @@ class TestCollectiveEmergencePatterns:
 
             patterns = await colony.emergence.list_patterns()
             assert len(patterns) >= 1
-            assert patterns[0]["cat_id"] == "cat1"
+            assert patterns[0]["cat_uid"] == "cat1"
             assert patterns[0]["pattern"] == "SQL审查"
         _run(_test())
 
     def test_list_patterns_filter_cat(self):
-        """list_patterns can filter by cat_id."""
+        """list_patterns can filter by cat_uid."""
         colony = Colony("test-rp2", storage=InMemorySharedStore())
 
         async def _test():
@@ -266,7 +266,7 @@ class TestCollectiveEmergencePatterns:
             await colony.emergence.record_pattern("cat2", "p2")
 
             assert len(await colony.emergence.list_patterns()) == 2
-            assert len(await colony.emergence.list_patterns(cat_id="cat1")) == 1
+            assert len(await colony.emergence.list_patterns(cat_uid="cat1")) == 1
         _run(_test())
 
 
@@ -280,7 +280,7 @@ class TestCollectiveEmergencePlug:
         colony = Colony("test-cd", storage=InMemorySharedStore())
 
         def my_detector(events):
-            return [{"cat_id": "always", "role": "custom",
+            return [{"cat_uid": "always", "role": "custom",
                      "confidence": 1.0, "events_seen": len(events)}]
 
         colony.emergence.plug("detector", my_detector)
@@ -289,7 +289,7 @@ class TestCollectiveEmergencePlug:
             await colony.growth.record_anomaly("cat1", "test reason")
             roles = await colony.emergence.detect_roles()
             assert len(roles) == 1
-            assert roles[0]["cat_id"] == "always"
+            assert roles[0]["cat_uid"] == "always"
             assert roles[0]["role"] == "custom"
         _run(_test())
 
@@ -338,13 +338,13 @@ class TestFullLifecycle:
             roles = await colony.emergence.detect_roles(min_events=2)
 
             # db-expert should have a role
-            db_roles = [r for r in roles if r["cat_id"] == "db-expert"]
+            db_roles = [r for r in roles if r["cat_uid"] == "db-expert"]
             assert len(db_roles) >= 1
             assert db_roles[0]["evidence_count"] >= 3
             assert db_roles[0]["confidence"] > 0
 
             # sec-guard should have a role
-            sec_roles = [r for r in roles if r["cat_id"] == "sec-guard"]
+            sec_roles = [r for r in roles if r["cat_uid"] == "sec-guard"]
             assert len(sec_roles) >= 1
             assert sec_roles[0]["evidence_count"] >= 2
 
@@ -353,7 +353,7 @@ class TestFullLifecycle:
                 "db-expert", "数据库安全检查",
                 evidence="连续发现SQL相关异常")
 
-            patterns = await colony.emergence.list_patterns(cat_id="db-expert")
+            patterns = await colony.emergence.list_patterns(cat_uid="db-expert")
             assert len(patterns) >= 1
             assert patterns[0]["pattern"] == "数据库安全检查"
         _run(_test())

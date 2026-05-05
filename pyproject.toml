@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "MeowCat"
-version = "1.2.35"
+version = "1.2.36"
 description = "An agent framework built on the biological blueprint of a cat"
 requires-python = ">=3.10"
 dependencies = [
@@ -28,3 +28,6 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["meowcat"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

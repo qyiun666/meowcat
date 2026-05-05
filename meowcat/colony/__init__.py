@@ -404,6 +404,17 @@ class Colony(Pluggable, _FederationMixin):
 
     # -- Factory -------------------------------------------------------
 
+    def _inject_colony_memory(self, cat: CatBase) -> None:
+        """v1.2.36: Inject colony shared memory pool after organs are mounted.
+
+        Called by the on_organs_mounted hook — at this point
+        has_organ("brain", "hippocampus") is guaranteed to work.
+        """
+        if cat.has_organ("brain", "hippocampus"):
+            hippo = cat.organ("brain", "hippocampus")
+            if hasattr(hippo, "set_colony_memory"):
+                hippo.set_colony_memory(self.memory)
+
     @classmethod
     def default(cls, colony_id: str, **kwargs: Any) -> Colony:
         """Quick setup with InMemorySharedStore + name defaults.
@@ -506,11 +517,9 @@ class Colony(Pluggable, _FederationMixin):
             # type: ignore[attr-defined]
             cat._memory_snapshot = memory_snapshot
 
-        # v1.1.21: Wire colony memory to hippocampus for cross-cat search
-        if cat.has_organ("brain", "hippocampus"):
-            hippo = cat.organ("brain", "hippocampus")
-            if hasattr(hippo, "set_colony_memory"):
-                hippo.set_colony_memory(self.memory)
+        # v1.2.36: Register hook to inject colony memory after organs are mounted.
+        # Replaces the dead code that called set_colony_memory before organs existed.
+        cat.on_organs_mounted(lambda c: self._inject_colony_memory(c))
 
         self.register(cat)
         return cat
@@ -709,7 +718,7 @@ class Colony(Pluggable, _FederationMixin):
         """Broadcast a request to all cats and collect responses (group chat).
 
         Calls ``method`` on ``to_category:to_name`` organ of every cat,
-        collecting results keyed by cat_id. This is the 1→many request-response
+        collecting results keyed by cat_uid. This is the 1→many request-response
         pattern — group chat where every cat responds.
 
         Unlike :meth:`broadcast` (fire-and-forget event), this method waits
@@ -740,11 +749,11 @@ class Colony(Pluggable, _FederationMixin):
             **kw: Keyword arguments forwarded to the target method.
 
         Returns:
-            ``{cat_id: result, ...}`` — each cat's response keyed by cat_id.
+            ``{cat_uid: result, ...}`` — each cat's response keyed by cat_uid.
             Cat errors become ``{"error": "..."}`` when ``ignore_errors=True``.
         """
         results: dict[str, Any] = {}
-        for cat_id, cat in self._cats.items():
+        for cat_uid, cat in self._cats.items():
             try:
                 organ = cat.organ(to_category, to_name)
                 fn = getattr(organ, method)
@@ -752,25 +761,25 @@ class Colony(Pluggable, _FederationMixin):
                 import inspect as _inspect
                 if _inspect.isawaitable(result):
                     result = await result
-                results[cat_id] = result
+                results[cat_uid] = result
             except Exception as exc:
                 if not ignore_errors:
                     raise
-                results[cat_id] = {"error": str(exc)}
+                results[cat_uid] = {"error": str(exc)}
         return results
 
     async def health_check_all(self) -> dict[str, dict]:
         """Run health check on all cats.
 
         Returns:
-            ``{cat_id: {...diagnose...}, ...}``
+            ``{cat_uid: {...diagnose...}, ...}``
         """
         results: dict[str, dict] = {}
-        for cat_id, cat in self._cats.items():
+        for cat_uid, cat in self._cats.items():
             try:
-                results[cat_id] = await cat.health_check()
+                results[cat_uid] = await cat.health_check()
             except Exception as exc:
-                results[cat_id] = {"error": str(exc)}
+                results[cat_uid] = {"error": str(exc)}
         return results
 
     # -- Unified External Entry (v1.1.8) ------------------------------
@@ -782,7 +791,7 @@ class Colony(Pluggable, _FederationMixin):
         system (CLI, HTTP, WebSocket, etc.) delivers messages through this method
         by specifying a cat address.
 
-        Address format: ``colony_id/cat_id``, e.g. ``"feishu/planner"``.
+        Address format: ``colony_id/cat_uid``, e.g. ``"feishu/planner"``.
 
         Usage::
 
@@ -793,7 +802,7 @@ class Colony(Pluggable, _FederationMixin):
             **kwargs: Message payload — forwarded to the target cat as an event.
 
         Returns:
-            ``{"status": "delivered", "cat_id": ..., "cats_count": ...}``
+            ``{"status": "delivered", "cat_uid": ..., "cats_count": ...}``
 
         Raises:
             ValueError: Invalid address format or colony mismatch.
@@ -830,12 +839,12 @@ class Colony(Pluggable, _FederationMixin):
             # → {"planner": [{"category": "brain", "name": "cerebrum"}, ...]}
 
         Returns:
-            ``{cat_id: [{"category": ..., "name": ...}, ...], ...}``
+            ``{cat_uid: [{"category": ..., "name": ...}, ...], ...}``
         """
         result: dict[str, list[dict[str, Any]]] = {}
-        for cat_id, cat in self._cats.items():
+        for cat_uid, cat in self._cats.items():
             organs = cat.list_all_organs()
-            result[cat_id] = [
+            result[cat_uid] = [
                 {"category": c, "name": n} for c, n in organs
             ]
         return result

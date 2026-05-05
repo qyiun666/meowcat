@@ -193,6 +193,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             in_edges=SENSORS,                              # sensors → thalamus
             out_edges=(CEREBRUM, BRAINSTEM, AMYGDALA,
                        HIPPOCAMPUS),  # thalamus → cerebrum/brainstem/amygdala/hippocampus
+            read_methods=("hear",),  # sensory relay entry point
             supported_styles=(
                 ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
                 ImplementationStyle.MODEL, ImplementationStyle.HYBRID,

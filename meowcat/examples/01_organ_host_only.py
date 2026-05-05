@@ -23,7 +23,7 @@ class Cerebrum:
 
 
 def main() -> None:
-    host = OrganHost(cat_id="demo")
+    host = OrganHost(uid="demo")
 
     # Mount — with Protocol validation (isinstance must pass)
     host.mount("brain", "cerebrum", Cerebrum(), protocol=OrganProtocol)

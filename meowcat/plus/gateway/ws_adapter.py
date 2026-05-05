@@ -181,12 +181,18 @@ class WsAdapter:
 
                     if opcode == _OP_TEXT:
                         text = payload.decode("utf-8")
-                        # Streaming processing
+                        # Streaming processing — message ↔ stream bidirectional fallback
                         result = await self._on_stream(text, ctx)
                         if result is not None:
                             async for chunk_text in result:
                                 writer.write(_encode_frame(
                                     chunk_text.encode("utf-8")))
+                                await writer.drain()
+                        else:
+                            reply = await self._on_message(text, ctx)
+                            if reply:
+                                writer.write(_encode_frame(
+                                    reply.encode("utf-8")))
                                 await writer.drain()
                         writer.write(_encode_frame(b"[DONE]"))
                         await writer.drain()

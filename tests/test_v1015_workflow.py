@@ -140,7 +140,7 @@ class TestNoopHippocampusListActiveWorkflows:
         assert statuses == {"active", "awaiting_user"}
 
     def test_filters_by_cat_id(self):
-        """Filters by cat_id, does not return other cats' workflows."""
+        """Filters by cat_uid, does not return other cats' workflows."""
         hippo = NoopHippocampus()
         hippo.add_entity({
             "id": "w1", "type": "workflow", "status": "active",

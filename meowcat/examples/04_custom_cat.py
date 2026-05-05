@@ -40,7 +40,7 @@ class Thalamus:
 
 async def main() -> None:
     # 1. Compose five subsystems
-    host = OrganHost(cat_id="mini")
+    host = OrganHost(uid="mini")
     events = EventBus()
     nervous = Nervous(host, events)
     reflex = ReflexArc(events, nervous)

@@ -45,7 +45,7 @@ class CollectiveGrowth(Pluggable):
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "strategy": {"in": "cat_id: str, event: dict", "out": "bool | None"},
+        "strategy": {"in": "cat_uid: str, event: dict", "out": "bool | None"},
     }
 
     def __init__(self, colony: Colony) -> None:
@@ -56,7 +56,7 @@ class CollectiveGrowth(Pluggable):
 
     async def record_anomaly(
         self,
-        cat_id: str,
+        cat_uid: str,
         reason: str,
         snippet: str = "",
         confidence: float = 0.8,
@@ -65,7 +65,7 @@ class CollectiveGrowth(Pluggable):
         """Record an anomaly to the colony growth namespace.
 
         Args:
-            cat_id: Source cat identifier.
+            cat_uid: Source cat identifier.
             reason: Anomaly description.
             snippet: Relevant context snippet (truncated to 500 chars).
             confidence: Detection confidence 0.0-1.0.
@@ -76,7 +76,7 @@ class CollectiveGrowth(Pluggable):
         """
         # Strategy hook — can veto recording
         async for _name, r in self._run_plugs(
-            "strategy", cat_id,
+            "strategy", cat_uid,
             {"type": "anomaly", "reason": reason, "confidence": confidence},
         ):
             if r is False:
@@ -85,7 +85,7 @@ class CollectiveGrowth(Pluggable):
         ts = str(_time.time())
         key = f"{_ANOMALY_PREFIX}{ts}"
         record = json.dumps({
-            "cat_id": cat_id,
+            "cat_uid": cat_uid,
             "reason": reason,
             "snippet": snippet[:500],
             "confidence": confidence,
@@ -97,7 +97,7 @@ class CollectiveGrowth(Pluggable):
 
     async def record_correction(
         self,
-        cat_id: str,
+        cat_uid: str,
         wrong: str,
         correct: str,
         topic: str = "",
@@ -105,7 +105,7 @@ class CollectiveGrowth(Pluggable):
         """Record a user correction to the colony growth namespace.
 
         Args:
-            cat_id: Source cat identifier.
+            cat_uid: Source cat identifier.
             wrong: The incorrect statement or action.
             correct: The corrected version.
             topic: Optional topic tag.
@@ -115,7 +115,7 @@ class CollectiveGrowth(Pluggable):
         """
         # Strategy hook — can veto recording
         async for _name, r in self._run_plugs(
-            "strategy", cat_id,
+            "strategy", cat_uid,
             {"type": "correction", "wrong": wrong, "topic": topic},
         ):
             if r is False:
@@ -124,7 +124,7 @@ class CollectiveGrowth(Pluggable):
         ts = str(_time.time())
         key = f"{_CORRECTION_PREFIX}{ts}"
         record = json.dumps({
-            "cat_id": cat_id,
+            "cat_uid": cat_uid,
             "wrong": wrong[:500],
             "correct": correct[:500],
             "topic": topic,
@@ -136,13 +136,13 @@ class CollectiveGrowth(Pluggable):
     # -- Query ---------------------------------------------------------
 
     async def list_anomalies(
-        self, limit: int = 20, cat_id: str | None = None,
+        self, limit: int = 20, cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List recent anomalies, newest first.
 
         Args:
             limit: Max results to return.
-            cat_id: Optional filter by source cat.
+            cat_uid: Optional filter by source cat.
 
         Returns:
             List of anomaly records.
@@ -156,7 +156,7 @@ class CollectiveGrowth(Pluggable):
             if raw:
                 try:
                     record = json.loads(raw) if isinstance(raw, str) else raw
-                    if cat_id is None or record.get("cat_id") == cat_id:
+                    if cat_uid is None or record.get("cat_uid") == cat_uid:
                         results.append(record)
                 except (json.JSONDecodeError, TypeError):
                     pass
@@ -164,13 +164,13 @@ class CollectiveGrowth(Pluggable):
         return results[:limit]
 
     async def list_corrections(
-        self, limit: int = 20, cat_id: str | None = None,
+        self, limit: int = 20, cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List recent corrections, newest first.
 
         Args:
             limit: Max results to return.
-            cat_id: Optional filter by source cat.
+            cat_uid: Optional filter by source cat.
 
         Returns:
             List of correction records.
@@ -184,7 +184,7 @@ class CollectiveGrowth(Pluggable):
             if raw:
                 try:
                     record = json.loads(raw) if isinstance(raw, str) else raw
-                    if cat_id is None or record.get("cat_id") == cat_id:
+                    if cat_uid is None or record.get("cat_uid") == cat_uid:
                         results.append(record)
                 except (json.JSONDecodeError, TypeError):
                     pass

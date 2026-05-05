@@ -480,7 +480,7 @@ class TestNewPathsForLoop:
         assert p.from_organ == p.to_organ
 
     def test_total_path_count(self):
-        """BUILTIN_PATHS currently 28 (v1.0.15 +3 orchestration, v1.2.4 +2 cat_self)."""
+        """BUILTIN_PATHS currently 26 (v1.0.15 +3 orchestration; v1.2.36 removed 2 cat_self)."""
         cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
-        assert len(all_paths) == 28
+        assert len(all_paths) == 26

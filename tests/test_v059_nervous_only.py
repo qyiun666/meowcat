@@ -20,8 +20,8 @@ class _Organ:
         return f"{self.name}:{msg}"
 
 
-def _build_triplet(cat_id: str = "n") -> tuple[OrganHost, EventBus, Nervous]:
-    host = OrganHost(cat_id)
+def _build_triplet(cat_uid: str = "n") -> tuple[OrganHost, EventBus, Nervous]:
+    host = OrganHost(cat_uid)
     events = EventBus()
     nervous = Nervous(host, events)
     return host, events, nervous

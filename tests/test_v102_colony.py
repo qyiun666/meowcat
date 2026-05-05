@@ -56,8 +56,8 @@ class _Helper:
     """测试辅助: 创建一个带海马体的猫。"""
 
     @staticmethod
-    def make_cat(cat_id: str) -> CatBase:
-        cat = make_cat(cat_id)
+    def make_cat(cat_uid: str) -> CatBase:
+        cat = make_cat(cat_uid)
         cat.mount("brain", "hippocampus", _MockHippocampus())
         cat.mount("brain", "cerebrum", _MockCerebrum())
         return cat

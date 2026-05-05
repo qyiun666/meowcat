@@ -8,7 +8,7 @@ Usage::
     from meowcat.log import MeowLog
 
     log = MeowLog.get("meowcat.colony")
-    log.info("cat_created", cat_id="planner", colony="feishu")
+    log.info("cat_created", cat_uid="planner", colony="feishu")
 
     # Custom handler
     MeowLog.plug_handler(lambda entry: print(entry))

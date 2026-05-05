@@ -47,9 +47,9 @@ class _MockGrowth:
         return {"records": len(self.records)}
 
 
-def _make_wired_cat(cat_id: str = "wired-cat") -> CatBase:
+def _make_wired_cat(cat_uid: str = "wired-cat") -> CatBase:
     """创建装配了关键 Noop 器官的猫。"""
-    cat = make_cat(cat_id)
+    cat = make_cat(cat_uid)
     cat.mount("brain", "thalamus", NoopThalamus())
     cat.mount("brain", "hippocampus", NoopHippocampus())
     cat.mount("brain", "amygdala", NoopAmygdala())
@@ -83,9 +83,9 @@ class _MaintenanceMockHippocampus:
         return {"entities": 0, "episodes": 0}
 
 
-def _make_maintenance_cat(cat_id: str = "maint-cat") -> CatBase:
+def _make_maintenance_cat(cat_uid: str = "maint-cat") -> CatBase:
     """创建维护专用猫 — 挂载维护链需要的 hypothalamus + brainstem + hippocampus。"""
-    cat = make_cat(cat_id)
+    cat = make_cat(cat_uid)
     cat.mount("brain", "hippocampus", _MaintenanceMockHippocampus())
     cat.mount("brain", "hypothalamus", NoopHypothalamus())
     cat.mount("brain", "brainstem", NoopBrainstem())
@@ -207,7 +207,7 @@ class TestColonyAliases:
         assert colony.get_cat(cat.cat_uid) is cat
 
     def test_release_removes_cat(self) -> None:
-        """release(cat_id) 等价于 unregister(cat_id)。"""
+        """release(cat_uid) 等价于 unregister(cat_uid)。"""
         colony = Colony("test", storage=InMemorySharedStore())
         cat = make_cat("cat-1")
         colony.register(cat)

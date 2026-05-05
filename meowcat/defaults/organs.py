@@ -611,10 +611,11 @@ class NoopPaws(Pluggable):
 class NoopThalamus(Pluggable):
     """Default thalamus: simple routing, no memory retrieval.
 
-    Mode B — locate merge enhancement.
+    Mode B — locate merge enhancement; hear receives raw sensory input.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
+        "hear": {"in": "raw_input: str | bytes", "out": "dict[str, Any]"},
         "locate": {"in": "msg: str, session_id: str", "out": "LocateResultShape"},
     }
 
@@ -623,6 +624,14 @@ class NoopThalamus(Pluggable):
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
+
+    async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
+        """Receive raw sensory input, run plugs for preprocessing."""
+        result: dict[str, Any] = {"raw_input": raw_input, "route": "chat"}
+        async for _name, r in self._run_plugs("hear", raw_input):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
 
     async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -645,7 +654,7 @@ class NoopHippocampus(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "remember": {
-            "in": "user_msg: str, ai_reply: str, cat_id: str, model: str",
+            "in": "user_msg: str, ai_reply: str, cat_uid: str, model: str",
             "out": "Any",
         },
         "recall": {
@@ -677,11 +686,11 @@ class NoopHippocampus(Pluggable):
     # -- Memory storage -----------------------------------------------
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_id: str, model: str,
+        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
     ) -> Any:
         result: dict[str, Any] = {"user_msg": user_msg, "ai_reply": ai_reply}
         async for _name, r in self._run_plugs(
-            "remember", user_msg, ai_reply, cat_id, model,
+            "remember", user_msg, ai_reply, cat_uid, model,
         ):
             if isinstance(r, dict):
                 result.update(r)
@@ -698,7 +707,7 @@ class NoopHippocampus(Pluggable):
     # -- Memory retrieval --------------------------------------------
 
     def fts_search(
-        self, cat_id: str, keywords: str, limit: int = 10,
+        self, cat_uid: str, keywords: str, limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Full-text search memory (simple keyword matching)."""
         results: list[dict[str, Any]] = []

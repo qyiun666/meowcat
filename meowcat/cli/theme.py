@@ -110,5 +110,36 @@ class Theme:
         """Dim/muted secondary text."""
         return cls.styled(text, cls.MUTED)
 
+    @classmethod
+    def to_textual_theme(cls, dark: bool = True) -> dict[str, str]:
+        """生成 Textual 兼容主题字典, 供 MeowTui 使用."""
+        if dark:
+            return {
+                "primary": "#58a6ff",
+                "secondary": "#30363d",
+                "background": "#0d1117",
+                "surface": "#161b22",
+                "text": "#e0e0f0",
+                "text-muted": "#8b949e",
+                "error": "#f85149",
+                "success": "#3fb950",
+                "warning": "#d29922",
+                "accent": "#a371f7",
+                "border": "#30363d",
+            }
+        return {
+            "primary": "#0969da",
+            "secondary": "#d0d7de",
+            "background": "#ffffff",
+            "surface": "#f6f8fa",
+            "text": "#1f2328",
+            "text-muted": "#656d76",
+            "error": "#cf222e",
+            "success": "#1a7f37",
+            "warning": "#9a6700",
+            "accent": "#8250df",
+            "border": "#d0d7de",
+        }
+
 
 __all__ = ["Theme"]

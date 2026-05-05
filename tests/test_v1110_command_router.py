@@ -109,27 +109,27 @@ class TestRegistration:
 class TestRouting:
     """route 方法路由匹配。"""
 
-    def test_exact_match(self) -> None:
+    async def test_exact_match(self) -> None:
         router = CommandRouter()
         router.register(Command(name="/hello", handler=lambda ctx: "world"))
-        assert router.route("/hello") == "world"
+        assert await router.route("/hello") == "world"
 
-    def test_unknown_command(self) -> None:
+    async def test_unknown_command(self) -> None:
         router = CommandRouter()
-        result = router.route("/unknown")
+        result = await router.route("/unknown")
         assert "unknown_command" in result
 
-    def test_unknown_command_with_i18n_en(self) -> None:
+    async def test_unknown_command_with_i18n_en(self) -> None:
         router = CommandRouter(i18n=I18n())
-        result = router.route("/xyz")
+        result = await router.route("/xyz")
         assert result == "Unknown command: /xyz"
 
-    def test_unknown_command_with_i18n_zh(self) -> None:
+    async def test_unknown_command_with_i18n_zh(self) -> None:
         router = CommandRouter(i18n=I18n(lang="zh"))
-        result = router.route("/xyz")
+        result = await router.route("/xyz")
         assert result == "未知命令: /xyz"
 
-    def test_with_args(self) -> None:
+    async def test_with_args(self) -> None:
         router = CommandRouter()
         captured = {}
 
@@ -139,19 +139,19 @@ class TestRouting:
             return f"got: {ctx.args}"
 
         router.register(Command(name="/echo", handler=handler))
-        result = router.route("/echo hello world")
+        result = await router.route("/echo hello world")
         assert result == "got: hello world"
         assert captured["args"] == "hello world"
         assert captured["raw"] == "/echo hello world"
 
-    def test_empty_input(self) -> None:
+    async def test_empty_input(self) -> None:
         router = CommandRouter()
-        result = router.route("")
+        result = await router.route("")
         assert "unknown_command" in result
 
-    def test_non_slash_input(self) -> None:
+    async def test_non_slash_input(self) -> None:
         router = CommandRouter()
-        result = router.route("hello")
+        result = await router.route("hello")
         assert "unknown_command" in result
 
 
@@ -160,7 +160,7 @@ class TestRouting:
 class TestMiddleware:
     """middleware 中间件拦截。"""
 
-    def test_middleware_passes_through(self) -> None:
+    async def test_middleware_passes_through(self) -> None:
         """中间件返回 None 时继续执行 handler。"""
         router = CommandRouter()
         called = []
@@ -171,10 +171,10 @@ class TestMiddleware:
 
         router.plug("middleware", mw)
         router.register(Command(name="/go", handler=lambda ctx: "done"))
-        assert router.route("/go") == "done"
+        assert await router.route("/go") == "done"
         assert called == ["mw"]
 
-    def test_middleware_short_circuits(self) -> None:
+    async def test_middleware_short_circuits(self) -> None:
         """中间件返回非 None 值时短路，不执行 handler。"""
         router = CommandRouter()
         handler_called = False
@@ -187,10 +187,10 @@ class TestMiddleware:
             Command(name="/secret", handler=lambda ctx: setattr(
                 type(ctx), "_flag", True) or "exposed")
         )
-        result = router.route("/secret")
+        result = await router.route("/secret")
         assert result == "blocked by middleware"
 
-    def test_multiple_middleware_first_wins(self) -> None:
+    async def test_multiple_middleware_first_wins(self) -> None:
         """多个中间件，第一个非 None 短路。"""
         router = CommandRouter()
 
@@ -203,7 +203,7 @@ class TestMiddleware:
         router.plug("middleware", mw1)
         router.plug("middleware", mw2)
         router.register(Command(name="/x", handler=lambda ctx: "handler"))
-        assert router.route("/x") == "first"
+        assert await router.route("/x") == "first"
 
 
 # -- 6. 命令列表与分组 ------------------------------------------------
@@ -243,17 +243,17 @@ class TestListing:
 class TestErrorHandling:
     """handler 异常处理。"""
 
-    def test_handler_raises_returns_error_message(self) -> None:
+    async def test_handler_raises_returns_error_message(self) -> None:
         router = CommandRouter(i18n=I18n())
 
         def broken(ctx: CommandContext) -> str:
             raise ValueError("boom")
 
         router.register(Command(name="/crash", handler=broken))
-        result = router.route("/crash")
+        result = await router.route("/crash")
         assert "command_error" in result or "boom" in result
 
-    def test_handler_raises_without_i18n(self) -> None:
+    async def test_handler_raises_without_i18n(self) -> None:
         """无 i18n 时的错误降级处理。"""
         router = CommandRouter()
 
@@ -261,7 +261,7 @@ class TestErrorHandling:
             raise RuntimeError("fail")
 
         router.register(Command(name="/fail", handler=broken))
-        result = router.route("/fail")
+        result = await router.route("/fail")
         assert "command_error" in result or "fail" in result
 
 
@@ -287,16 +287,16 @@ class TestPluggableInheritance:
 class TestStandalone:
     """CommandRouter 完全独立，零依赖 CatBase/Colony."""
 
-    def test_no_dependency_on_cat(self) -> None:
+    async def test_no_dependency_on_cat(self) -> None:
         from meowcat.cli.router import CommandRouter as DirectRouter
         router = DirectRouter()
         router.register(Command(name="/x", handler=lambda ctx: "y"))
-        assert router.route("/x") == "y"
+        assert await router.route("/x") == "y"
 
-    def test_from_meowcat_top_level(self) -> None:
+    async def test_from_meowcat_top_level(self) -> None:
         router = CommandRouter()
         router.register(Command(name="/top", handler=lambda ctx: "level"))
-        assert router.route("/top") == "level"
+        assert await router.route("/top") == "level"
 
 
 # -- 10. 综合场景 ------------------------------------------------------
@@ -304,7 +304,7 @@ class TestStandalone:
 class TestIntegrationScenarios:
     """综合使用场景。"""
 
-    def test_help_command_no_i18n(self) -> None:
+    async def test_help_command_no_i18n(self) -> None:
         """模拟 /help 命令，输出命令列表。"""
         router = CommandRouter()
 
@@ -317,11 +317,11 @@ class TestIntegrationScenarios:
         router.register(Command(name="/version", handler=lambda ctx: "1.0.0",
                                 group="System", description="Show version"))
 
-        result = router.route("/help")
+        result = await router.route("/help")
         assert "/help" in result
         assert "/version" in result
 
-    def test_full_cli_flow_with_i18n(self) -> None:
+    async def test_full_cli_flow_with_i18n(self) -> None:
         """模拟完整 CLI 命令流 + 中英文。"""
         i18n = I18n(lang="zh")
         router = CommandRouter(i18n=i18n)
@@ -329,11 +329,11 @@ class TestIntegrationScenarios:
         router.register(Command(name="/hello", handler=lambda ctx: "你好！"))
         router.register(Command(name="/bye", handler=lambda ctx: "再见！"))
 
-        assert router.route("/hello") == "你好！"
-        assert router.route("/bye") == "再见！"
-        assert router.route("/nope") == "未知命令: /nope"
+        assert await router.route("/hello") == "你好！"
+        assert await router.route("/bye") == "再见！"
+        assert await router.route("/nope") == "未知命令: /nope"
 
-    def test_middleware_logging(self) -> None:
+    async def test_middleware_logging(self) -> None:
         """中间件记录所有命令调用。"""
         log = []
 
@@ -346,8 +346,8 @@ class TestIntegrationScenarios:
         router.register(Command(name="/a", handler=lambda ctx: "A"))
         router.register(Command(name="/b", handler=lambda ctx: "B"))
 
-        router.route("/a")
-        router.route("/b")
-        router.route("/a")
+        await router.route("/a")
+        await router.route("/b")
+        await router.route("/a")
 
         assert log == ["/a", "/b", "/a"]

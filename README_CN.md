@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
+> 🐱 **纯个人开发** — 如果觉得有用，给个 ⭐ star ⭐ 支持一下吧！
+
 **以猫的生物蓝图构建的 Agent 框架。**
 
 meowcat 是 MeowAgent 生态的纯框架层 — 猫解剖学：协议、神经布线、反射、工具，以及从原子信号到可组合闭环的四层抽象。自带 LLM 即可，猫提供其余一切。
@@ -87,7 +89,7 @@ meowcat 是 MeowAgent 生态的纯框架层 — 猫解剖学：协议、神经�
 │  ┌─────────┐    ┌─────────┐    ┌─────────┐             │
 │  │  猫 A   │    │  猫 B   │    │  猫 C   │             │
 │  │ (对等)  │◄──►│ (对等)  │◄──►│ (对等)  │             │
-│  │ cat_id= │    │ cat_id= │    │ cat_id= │             │
+│  │ cat_uid= │    │ cat_uid= │    │ cat_uid= │             │
 │  │  "a"   │    │  "b"   │    │  "c"   │             │
 │  └────┬────┘    └────┬────┘    └────┬────┘             │
 │       │              │              │                   │

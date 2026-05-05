@@ -175,6 +175,8 @@ class ThalamusProtocol(Protocol):
 
     async def locate(self, msg: str, session_id: str) -> LocateResultShape: ...  # type: ignore[name-defined]  # noqa: F821
 
+    async def hear(self, raw_input: str | bytes) -> dict[str, Any]: ...
+
     def decide_route(self, **kwargs: Any) -> dict[str, Any]: ...
 
 
