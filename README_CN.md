@@ -1,8 +1,3 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Axonant/MeowAgent/main/assets/logo_white_240.png">
-  <img alt="meowcat logo" src="https://raw.githubusercontent.com/Axonant/MeowAgent/main/assets/logo_dark_240.png" width="120">
-</picture>
-
 # 🐱 meowcat · 仿生神经 AI Agent 框架
 
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
