@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![version](https://img.shields.io/badge/version-1.3.1-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
-![Visitor Count](https://visitor-badge.laobi.cc/badge?page_id=Axonant.meowagent)
+![visitors](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/qyiun666/meowcat&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23FFFFFF&title=visitors&edge_flat=false)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
 

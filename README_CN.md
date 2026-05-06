@@ -11,7 +11,7 @@
 [![version](https://img.shields.io/badge/version-1.3.1-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
-![Visitor Count](https://visitor-badge.laobi.cc/badge?page_id=Axonant.meowagent)
+![visitors](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/qyiun666/meowcat&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23FFFFFF&title=visitors&edge_flat=false)
 
 > 🐱 **纯个人开发** — 如果觉得有用，给个 ⭐ star ⭐ 支持一下吧！
 
