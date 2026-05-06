@@ -205,6 +205,14 @@ class OpenAICerebrum:
         r = await self.client.chat.completions.create(model=self.model, messages=msgs)
         return r.choices[0].message.content
 
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
+
 # Fully assembled: 20 organs + wiring + reflex arcs
 cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
 
@@ -213,6 +221,12 @@ cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
 #     name = "cerebrum"
 #     async def generate(self, prompt, system_prompt=None, **kw) -> str:
 #         return f"Meow! {prompt[:100]}"
+#     async def stream_generate(self, prompt, system_prompt=None,
+#                               temperature=0.7, max_tokens=None):
+#         result = await self.generate(prompt, system_prompt=system_prompt)
+#         yield result
+#     def reload_config(self) -> None:
+#         pass
 # cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="Kitty")
 
 # Unified perception entry — input enters, reply comes out
@@ -246,6 +260,14 @@ class MockBrain:
     name = "cerebrum"
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         return f"[thinking: {prompt[:50]}]"
+
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
 
 # You provide the PLUG — must satisfy AmygdalaProtocol
 class MyAmygdala:
@@ -372,6 +394,14 @@ class TaskBrain:
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         return f"[thinking: {prompt[:50]}]"
 
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
+
 # Spawn cats into the colony
 analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
 executor = create_cat(container=colony, cerebrum=TaskBrain(), name="executor")
@@ -421,8 +451,8 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 ## 📊 Version History (Key Milestones)
 
-| Version    | Date    | Highlights                                                                                                                                                                                                       |
-| :--------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Version    | Date       | Highlights                                                                                                                                                                                                       |
+| :--------- | :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **v1.3.x** | 2026.05.06 | Task delegation delegate_async / await_task, auto-generated colony UID with CALL_SIGN watermark, Growth +4 Paths +2 Chains +2 Loops                                                                              |
 | **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
 | **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |

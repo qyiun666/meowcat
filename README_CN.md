@@ -206,6 +206,14 @@ class OpenAICerebrum:
         r = await self.client.chat.completions.create(model=self.model, messages=msgs)
         return r.choices[0].message.content
 
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
+
 # 完整装配：20 器官 + 接线 + 反射弧
 cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="小喵")
 
@@ -214,6 +222,12 @@ cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="小喵")
 #     name = "cerebrum"
 #     async def generate(self, prompt, system_prompt=None, **kw) -> str:
 #         return f"喵！{prompt[:100]}"
+#     async def stream_generate(self, prompt, system_prompt=None,
+#                               temperature=0.7, max_tokens=None):
+#         result = await self.generate(prompt, system_prompt=system_prompt)
+#         yield result
+#     def reload_config(self) -> None:
+#         pass
 # cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="小喵")
 
 # 统一感知入口 — 输入进入，回复出来
@@ -247,6 +261,14 @@ class MockBrain:
     name = "cerebrum"
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         return f"[思考: {prompt[:50]}]"
+
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
 
 # 你提供插头 — 必须满足 AmygdalaProtocol
 class MyAmygdala:
@@ -373,6 +395,14 @@ class TaskBrain:
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         return f"[处理: {prompt[:50]}]"
 
+    async def stream_generate(self, prompt, system_prompt=None,
+                              temperature=0.7, max_tokens=None):
+        result = await self.generate(prompt, system_prompt=system_prompt)
+        yield result
+
+    def reload_config(self) -> None:
+        pass
+
 # 孵化多只猫到猫舍中
 analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
 executor = create_cat(container=colony, cerebrum=TaskBrain(), name="executor")
@@ -422,8 +452,8 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本       | 时间    | 亮点                                                                                                                                                                    |
-| :--------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 版本       | 时间       | 亮点                                                                                                                                                                    |
+| :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                          |
 | **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
 | **v1.1.x** | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
