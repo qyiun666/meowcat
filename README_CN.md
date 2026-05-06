@@ -191,6 +191,9 @@ pip install meowcat
 
 ```python
 from meowcat.defaults import create_cat
+from meowcat.colony import Colony
+
+colony = Colony()  # colony_uid 自动生成（含版权水印）
 
 # ✅ 方式一：接入真实 LLM（以 OpenAI 为例）
 from openai import AsyncOpenAI
@@ -208,15 +211,15 @@ class OpenAICerebrum:
         r = await self.client.chat.completions.create(model=self.model, messages=msgs)
         return r.choices[0].message.content
 
-# 一行代码：完整装配的猫，20 器官 + 接线 + 反射弧
-cat = create_cat("小喵", cerebrum=OpenAICerebrum())
+# 完整装配：20 器官 + 接线 + 反射弧
+cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="小喵")
 
 # ✅ 方式二：最小 mock（无需 API key，用于测试布线）
 # class EchoCerebrum:
 #     name = "cerebrum"
 #     async def generate(self, prompt, system_prompt=None, **kw) -> str:
 #         return f"喵！{prompt[:100]}"
-# cat = create_cat("小喵", cerebrum=EchoCerebrum())
+# cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="小喵")
 
 # 统一感知入口 — 输入进入，回复出来
 reply = await cat.perceive("今天天气怎么样？")
@@ -238,26 +241,27 @@ await cat.run_loop("conversation", message="你好，猫猫！")
 框架只定义**插槽（Slot）** — 器官长什么样、能连接谁、能读写什么、支持什么实现。你来提供**插头（Plug）** — 实际实现。
 
 ```python
-# 框架定义插槽 (OrganSpec)
-#   coord:          ("brain", "amygdala")
-#   protocol:       AmygdalaProtocol
-#   in_edges:       [THALAMUS, BRAINSTEM, EARS, EYES, WHISKERS]
-#   out_edges:      [CEREBELLUM, MOUTH, CEREBRUM, ...]
-#   read_methods:   [is_rejection, classify_rejection, assess_safety]
-#   write_methods:  [handle_rejection, handle_correction]
-#   write_callers:  [BRAINSTEM]   # 仅脑干可调用写方法
-#   supported_styles: [ALGORITHM, RULE, MODEL, HYBRID]
+from meowcat.defaults import create_cat
+from meowcat.colony import Colony
+from meowcat.anatomy import ImplementationStyle
+
+colony = Colony()
+
+# cerebrum（Mock，用于演示）
+class MockBrain:
+    name = "cerebrum"
+    async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        return f"[思考: {prompt[:50]}]"
 
 # 你提供插头 — 必须满足 AmygdalaProtocol
 class MyAmygdala:
     name = "amygdala"
     impl_style = ImplementationStyle.RULE
+    async def assess_safety(self, input, **kw):
+        return {"safe": True, "risk_level": 0}
 
-    async def assess_safety(self, input, **kw) -> SafetyReport:
-        # 你的安全逻辑
-        return SafetyReport(safe=True, risk_level=0)
-
-cat = create_cat("小喵", cerebrum=MyLLM(), amygdala=MyAmygdala())
+cat = create_cat(container=colony, cerebrum=MockBrain(),
+                 amygdala=MyAmygdala(), name="小喵")
 ```
 
 **各器官的插头风格** — 框架自动校验兼容性：
@@ -363,24 +367,32 @@ await cat.loopseq_registry.run("daily_maintenance")
 ## 🐱 Colony — 猫舍多猫容器
 
 ```python
-from meowcat.defaults import create_colony
+from meowcat.defaults import create_cat
+from meowcat.colony import Colony
 
-colony = create_colony("my-squad")
+colony = Colony("my-squad")
+
+# 定义 cerebrum（参照快速开始）
+class TaskBrain:
+    name = "cerebrum"
+    async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        return f"[处理: {prompt[:50]}]"
 
 # 孵化多只猫到猫舍中
-analyst  = colony.create_cat("analyst", cerebrum=AnalystBrain())
-executor = colony.create_cat("executor", cerebrum=ExecutorBrain())
+analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
+executor = create_cat(container=colony, cerebrum=TaskBrain(), name="executor")
 
-# 1:1 跨猫通信
-await colony.signal_between("analyst", "executor",
-    "brain", "amygdala", "assess_safety", input=data)
+# 1:1 跨猫通信（用 cat_uid）
+data = {"sql": "DELETE FROM orders"}
+await colony.signal_between(analyst.cat_uid, executor.cat_uid,
+    "brain", "amygdala", "assess_safety", user_input=data)
 
 # 1:N 广播
 await colony.broadcast("alert", level="high")
 
-# 共享记忆
-await colony.shared_set("knowledge/weather", {"city": "北京"})
-result = await colony.shared_get("knowledge/weather")
+# 共享存储（命名空间 ns_set / ns_get）
+await colony.ns_set("knowledge", "weather", {"city": "北京"})
+result = await colony.ns_get("knowledge", "weather")
 
 # 联邦 — 跨主机猫舍通信
 await colony.federate(transport)
@@ -415,12 +427,13 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本       | 亮点                                                                                                                                                                    |
-| :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.2.x** | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
-| **v1.1.x** | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
-| **v1.0.x** | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                      |
-| **v0.5.x** | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图 |
+| 版本       | 时间     | 亮点                                                                                                                                                                    |
+| :--------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.3.x** | 2026.05  | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                          |
+| **v1.2.x** | 2026.05  | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
+| **v1.1.x** | 2026.05  | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
+| **v1.0.x** | 2026.05  | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                      |
+| **v0.5.x** | 2026.05  | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图 |
 
 ---
 

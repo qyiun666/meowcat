@@ -190,6 +190,9 @@ pip install meowcat
 
 ```python
 from meowcat.defaults import create_cat
+from meowcat.colony import Colony
+
+colony = Colony()  # colony_uid auto-generated (with copyright watermark)
 
 # ✅ Option 1: Real LLM (OpenAI example)
 from openai import AsyncOpenAI
@@ -207,15 +210,15 @@ class OpenAICerebrum:
         r = await self.client.chat.completions.create(model=self.model, messages=msgs)
         return r.choices[0].message.content
 
-# One line: fully assembled cat with 20 organs, wired nerves, and reflex arcs
-cat = create_cat("Kitty", cerebrum=OpenAICerebrum())
+# Fully assembled: 20 organs + wiring + reflex arcs
+cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
 
 # ✅ Option 2: Minimal mock (no API key, for testing wiring)
 # class EchoCerebrum:
 #     name = "cerebrum"
 #     async def generate(self, prompt, system_prompt=None, **kw) -> str:
 #         return f"Meow! {prompt[:100]}"
-# cat = create_cat("Kitty", cerebrum=EchoCerebrum())
+# cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="Kitty")
 
 # Unified perception entry — input enters, reply comes out
 reply = await cat.perceive("What's the weather today?")
@@ -237,26 +240,27 @@ await cat.run_loop("conversation", message="Hello, cat!")
 The framework only defines the **Slot** — what an organ looks like, what it can connect to, what it can read/write, what implementations it supports. You provide the **Plug** — the actual implementation.
 
 ```python
-# Framework defines the SLOT (OrganSpec)
-#   coord:          ("brain", "amygdala")
-#   protocol:       AmygdalaProtocol
-#   in_edges:       [THALAMUS, BRAINSTEM, EARS, EYES, WHISKERS]
-#   out_edges:      [CEREBELLUM, MOUTH, CEREBRUM, ...]
-#   read_methods:   [is_rejection, classify_rejection, assess_safety]
-#   write_methods:  [handle_rejection, handle_correction]
-#   write_callers:  [BRAINSTEM]   # only brainstem may call write methods
-#   supported_styles: [ALGORITHM, RULE, MODEL, HYBRID]
+from meowcat.defaults import create_cat
+from meowcat.colony import Colony
+from meowcat.anatomy import ImplementationStyle
+
+colony = Colony()
+
+# cerebrum (mock for demonstration)
+class MockBrain:
+    name = "cerebrum"
+    async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        return f"[thinking: {prompt[:50]}]"
 
 # You provide the PLUG — must satisfy AmygdalaProtocol
 class MyAmygdala:
     name = "amygdala"
     impl_style = ImplementationStyle.RULE
+    async def assess_safety(self, input, **kw):
+        return {"safe": True, "risk_level": 0}
 
-    async def assess_safety(self, input, **kw) -> SafetyReport:
-        # Your safety logic here
-        return SafetyReport(safe=True, risk_level=0)
-
-cat = create_cat("Kitty", cerebrum=MyLLM(), amygdala=MyAmygdala())
+cat = create_cat(container=colony, cerebrum=MockBrain(),
+                 amygdala=MyAmygdala(), name="Kitty")
 ```
 
 **Plug styles per organ** — framework validates compatibility:
@@ -362,24 +366,32 @@ User Input
 ## 🐱 Colony — Multi-Cat Container
 
 ```python
-from meowcat.defaults import create_colony
+from meowcat.defaults import create_cat
+from meowcat.colony import Colony
 
-colony = create_colony("my-squad")
+colony = Colony("my-squad")
+
+# Define cerebrum (see Quick Start above)
+class TaskBrain:
+    name = "cerebrum"
+    async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        return f"[thinking: {prompt[:50]}]"
 
 # Spawn cats into the colony
-analyst  = colony.create_cat("analyst", cerebrum=AnalystBrain())
-executor = colony.create_cat("executor", cerebrum=ExecutorBrain())
+analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
+executor = create_cat(container=colony, cerebrum=TaskBrain(), name="executor")
 
-# 1:1 inter-cat communication
-await colony.signal_between("analyst", "executor",
-    "brain", "amygdala", "assess_safety", input=data)
+# 1:1 inter-cat communication (use cat_uid)
+data = {"sql": "DELETE FROM orders"}
+await colony.signal_between(analyst.cat_uid, executor.cat_uid,
+    "brain", "amygdala", "assess_safety", user_input=data)
 
 # 1:N broadcast
 await colony.broadcast("alert", level="high")
 
-# Shared memory
-await colony.shared_set("knowledge/weather", {"city": "NYC"})
-result = await colony.shared_get("knowledge/weather")
+# Shared storage (namespace ns_set / ns_get)
+await colony.ns_set("knowledge", "weather", {"city": "NYC"})
+result = await colony.ns_get("knowledge", "weather")
 
 # Federation — cross-host colony communication
 await colony.federate(transport)
@@ -414,12 +426,13 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 ## 📊 Version History (Key Milestones)
 
-| Version    | Highlights                                                                                                                                                                                                       |
-| :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.2.x** | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
-| **v1.1.x** | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |
-| **v1.0.x** | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                             |
-| **v0.5.x** | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
+| Version    | Date     | Highlights                                                                                                                                                                                                      |
+| :--------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.3.x** | 2026.05  | Task delegation delegate_async / await_task, auto-generated colony UID with CALL_SIGN watermark, Growth +4 Paths +2 Chains +2 Loops                                                                             |
+| **v1.2.x** | 2026.05  | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                |
+| **v1.1.x** | 2026.05  | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                          |
+| **v1.0.x** | 2026.05  | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                            |
+| **v0.5.x** | 2026.05  | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
 
 ---
 
