@@ -183,6 +183,8 @@ Harness 解决的是**"怎么让 LLM 干活"**，meowcat 回答的是**"Agent �
 
 ## 🚀 快速开始
 
+> 💡 **你需要先准备一个大模型。** meowcat 不内置 LLM — 你提供一个 `generate(prompt) → str` 的实现即可接入任意模型。
+
 ```bash
 pip install meowcat
 ```
@@ -190,14 +192,31 @@ pip install meowcat
 ```python
 from meowcat.defaults import create_cat
 
-# 你的 LLM — 只需要 generate(prompt) → str
-class MyCerebrum:
+# ✅ 方式一：接入真实 LLM（以 OpenAI 为例）
+from openai import AsyncOpenAI
+
+class OpenAICerebrum:
     name = "cerebrum"
+    def __init__(self, model="gpt-4o-mini"):
+        self.client = AsyncOpenAI()
+        self.model = model
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        return f"喵！{prompt[:100]}"
+        msgs = []
+        if system_prompt:
+            msgs.append({"role": "system", "content": system_prompt})
+        msgs.append({"role": "user", "content": prompt})
+        r = await self.client.chat.completions.create(model=self.model, messages=msgs)
+        return r.choices[0].message.content
 
 # 一行代码：完整装配的猫，20 器官 + 接线 + 反射弧
-cat = create_cat("小喵", cerebrum=MyCerebrum())
+cat = create_cat("小喵", cerebrum=OpenAICerebrum())
+
+# ✅ 方式二：最小 mock（无需 API key，用于测试布线）
+# class EchoCerebrum:
+#     name = "cerebrum"
+#     async def generate(self, prompt, system_prompt=None, **kw) -> str:
+#         return f"喵！{prompt[:100]}"
+# cat = create_cat("小喵", cerebrum=EchoCerebrum())
 
 # 统一感知入口 — 输入进入，回复出来
 reply = await cat.perceive("今天天气怎么样？")

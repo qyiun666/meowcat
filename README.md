@@ -182,6 +182,8 @@ Framework defines the **Slot** (Protocol interface + OrganSpec contract). You pr
 
 ## 🚀 Quick Start
 
+> 💡 **You need to bring your own LLM.** meowcat doesn't ship with one — provide any `generate(prompt) → str` implementation to plug in your model.
+
 ```bash
 pip install meowcat
 ```
@@ -189,14 +191,31 @@ pip install meowcat
 ```python
 from meowcat.defaults import create_cat
 
-# Your LLM — just needs generate(prompt) → str
-class MyCerebrum:
-    name = "cerebrum"
-    async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        return f"Meow! {prompt[:100]}"
+# ✅ Option 1: Real LLM (OpenAI example)
+from openai import AsyncOpenAI
 
-# One line: a fully assembled cat with 20 organs, wired nerves, and reflex arcs
-cat = create_cat("Kitty", cerebrum=MyCerebrum())
+class OpenAICerebrum:
+    name = "cerebrum"
+    def __init__(self, model="gpt-4o-mini"):
+        self.client = AsyncOpenAI()
+        self.model = model
+    async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        msgs = []
+        if system_prompt:
+            msgs.append({"role": "system", "content": system_prompt})
+        msgs.append({"role": "user", "content": prompt})
+        r = await self.client.chat.completions.create(model=self.model, messages=msgs)
+        return r.choices[0].message.content
+
+# One line: fully assembled cat with 20 organs, wired nerves, and reflex arcs
+cat = create_cat("Kitty", cerebrum=OpenAICerebrum())
+
+# ✅ Option 2: Minimal mock (no API key, for testing wiring)
+# class EchoCerebrum:
+#     name = "cerebrum"
+#     async def generate(self, prompt, system_prompt=None, **kw) -> str:
+#         return f"Meow! {prompt[:100]}"
+# cat = create_cat("Kitty", cerebrum=EchoCerebrum())
 
 # Unified perception entry — input enters, reply comes out
 reply = await cat.perceive("What's the weather today?")
