@@ -191,19 +191,37 @@ from meowcat.colony import Colony
 colony = Colony()  # colony_uid 自动生成（含版权水印）
 
 # ✅ 方式一：接入真实 LLM（以 OpenAI 为例）
+# 框架不存模型名，只存 provider + API 接口，绑定后动态拉取
 from openai import AsyncOpenAI
 
 class OpenAICerebrum:
+    """OpenAI 大脑 — 不硬编码模型名，首次调用时从 provider 拉取。"""
     name = "cerebrum"
-    def __init__(self, model="gpt-4o-mini"):
-        self.client = AsyncOpenAI()
-        self.model = model
+
+    def __init__(self, *, api_key=None):
+        """api_key 不存框架内，由环境变量或配置中心注入。"""
+        self.client = AsyncOpenAI(api_key=api_key)
+        self._model = None  # 延迟绑定，首次调用时拉取
+
+    async def _resolve_model(self) -> str:
+        """从 provider 拉取可用模型列表，取最新 chat 模型。"""
+        models = await self.client.models.list()
+        chat = sorted(
+            [m.id for m in models.data if m.id.startswith("gpt-")],
+            reverse=True,
+        )
+        return chat[0] if chat else "gpt-4o-mini"
+
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        if self._model is None:
+            self._model = await self._resolve_model()
         msgs = []
         if system_prompt:
             msgs.append({"role": "system", "content": system_prompt})
         msgs.append({"role": "user", "content": prompt})
-        r = await self.client.chat.completions.create(model=self.model, messages=msgs)
+        r = await self.client.chat.completions.create(
+            model=self._model, messages=msgs
+        )
         return r.choices[0].message.content
 
     async def stream_generate(self, prompt, system_prompt=None,

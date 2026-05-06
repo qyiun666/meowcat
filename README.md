@@ -190,19 +190,37 @@ from meowcat.colony import Colony
 colony = Colony()  # colony_uid auto-generated (with copyright watermark)
 
 # ✅ Option 1: Real LLM (OpenAI example)
+# Framework stores no model names — only provider + API; resolved at bind time
 from openai import AsyncOpenAI
 
 class OpenAICerebrum:
+    """OpenAI cerebrum — no hardcoded model, fetched from provider on first call."""
     name = "cerebrum"
-    def __init__(self, model="gpt-4o-mini"):
-        self.client = AsyncOpenAI()
-        self.model = model
+
+    def __init__(self, *, api_key=None):
+        """api_key not stored in framework — injected via env or config center."""
+        self.client = AsyncOpenAI(api_key=api_key)
+        self._model = None  # lazy bind, resolved on first call
+
+    async def _resolve_model(self) -> str:
+        """Fetch available models from provider, pick latest chat model."""
+        models = await self.client.models.list()
+        chat = sorted(
+            [m.id for m in models.data if m.id.startswith("gpt-")],
+            reverse=True,
+        )
+        return chat[0] if chat else "gpt-4o-mini"
+
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
+        if self._model is None:
+            self._model = await self._resolve_model()
         msgs = []
         if system_prompt:
             msgs.append({"role": "system", "content": system_prompt})
         msgs.append({"role": "user", "content": prompt})
-        r = await self.client.chat.completions.create(model=self.model, messages=msgs)
+        r = await self.client.chat.completions.create(
+            model=self._model, messages=msgs
+        )
         return r.choices[0].message.content
 
     async def stream_generate(self, prompt, system_prompt=None,
