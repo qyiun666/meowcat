@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v0.5.1 Task 1.9a — Wiring 神经通路图契约测试
 ================================================
@@ -196,3 +199,4 @@ class TestWiringSnapshot:
         with pytest.raises(AttributeError):
             # type: ignore[union-attr]
             snap.allowed.add((("x", "y"), ("z", "w")))
+

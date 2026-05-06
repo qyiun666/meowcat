@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat structured logger — pluggable handlers + context-aware logging.
 
 Replaces scattered ``logging.getLogger(...)`` calls with a unified structured
@@ -13,7 +16,6 @@ Usage::
     # Custom handler
     MeowLog.plug_handler(lambda entry: print(entry))
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -48,6 +50,9 @@ class MeowLog:
     def plug_handler(cls, handler: Callable[[dict[str, Any]], None]) -> None:
         """Register a custom handler. Receives ``{level, message, timestamp, logger, data}``."""
         _handlers.append(handler)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     @classmethod
     def clear_handlers(cls) -> None:
@@ -88,3 +93,4 @@ class MeowLog:
 
 
 __all__ = ["MeowLog"]
+

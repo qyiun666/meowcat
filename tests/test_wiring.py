@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: Wiring 连通/禁止/冻结/快照。
 
 验证:
@@ -167,3 +170,4 @@ class TestWiringEdgeTypes:
         organ: Organ = ("brain", "cerebrum")
         assert organ[0] == "brain"
         assert organ[1] == "cerebrum"
+

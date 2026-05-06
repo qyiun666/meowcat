@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat voice protocols — mouth/purr/tail output organ interfaces.
 
 v1.0.7: completed Protocol definitions for Mouth/Purr/Tail,
 replacing the weak ``protocol=None`` constraint in biology.py.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -21,6 +23,9 @@ class MouthProtocol(Protocol):
     **Reflex Arc**: text_dialogue, danger
     **Implemented by**: app layer (output organ)
     """
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     name: str
 
@@ -28,6 +33,9 @@ class MouthProtocol(Protocol):
 
     def diagnose(self) -> dict[str, Any]: ...
 
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 @runtime_checkable
 class PurrProtocol(Protocol):
@@ -66,3 +74,4 @@ class TailProtocol(Protocol):
 
 
 __all__ = ["MouthProtocol", "PurrProtocol", "TailProtocol"]
+

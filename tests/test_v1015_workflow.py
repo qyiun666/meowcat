@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat standalone tests: v1.0.15 Long-Running Workflow.
 
 Validates:
@@ -514,3 +517,4 @@ class TestGracefulDegradation:
                 await cat.shutdown()
 
         anyio.run(_run)  # no exception = pass
+

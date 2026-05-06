@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.27 Worldview L2+L3 — beliefs + metacognition tests."""
 
 from __future__ import annotations
@@ -261,3 +264,4 @@ class TestBlindSpotMetacognitionIntegration:
         result = mc.self_assess("rust")
         assert result["suggestion"] == "explore"
         # This is the signal for BlindSpotDetector to analyse
+

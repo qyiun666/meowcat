@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.2.20 — Two closed-loop systems bridge (A1).
 
 CatSelf DefaultLoops ↔ LoopRegistry bridge via ``use_organ_pipeline``.
@@ -235,3 +238,4 @@ class TestCatSelfLoopBridge:
                        use_organ_pipeline=True)
         assert loop._fusion is my_strategy
         assert loop._use_organ_pipeline is True
+

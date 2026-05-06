@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat Textual TUI — slot-based composable App skeleton for agent TUIs (v1.2.36).
 
 Default layout (single-column)::
@@ -31,7 +34,6 @@ Sidebar layout (``show_sidebar=True``)::
 Subclass :class:`MeowTui`, set ``show_sidebar=True``, then call
 :meth:`mount_slot` to populate the sidebar or other named slots.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -48,6 +50,9 @@ class MeowTui(App[None]):
     Subclass and set ``show_sidebar=True`` to enable dual-column layout.
     Use :meth:`mount_slot` to populate named slots (sidebar, main, etc.).
     """
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     CSS: ClassVar[str] = """
     Screen {
@@ -60,6 +65,9 @@ class MeowTui(App[None]):
         background: #161b22;
         padding: 0 1;
     }
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     #main {
         width: 1fr;
     }
@@ -150,3 +158,4 @@ class MeowTui(App[None]):
         for child in list(scroll.children):
             if child.id != "loading":
                 child.remove()
+

@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat create_cat() factory — create a complete cat with one line of code.
 
 Auto-assembly: mount organs → wiring → reflex → freeze.
 Unprovided organs automatically use Noop* / InMemory* default implementations.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -215,6 +217,9 @@ def create_cat(
     _bare = bare_organs or set()
     _reno = renovate_organs or set()
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     def _pick_no_init(bare_cls: type, reno_cls: type, organ_name: str, **reno_kw: Any) -> Any:
         if renovated:
             return reno_cls(**reno_kw) if organ_name not in _bare else bare_cls()
@@ -362,3 +367,4 @@ def create_cat(
         on_assembled(cat)
 
     return cat
+

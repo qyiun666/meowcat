@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.23 ScribblePad — cat's private scratchpad for fragment accumulation."""
 
 from __future__ import annotations
@@ -247,3 +250,4 @@ class TestScribblePadIntegration:
         assert pad.list_plugs() == {}
         pad.plug("on_scribble", lambda x: None)
         assert "on_scribble" in pad.list_plugs()
+

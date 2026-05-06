@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.2.21 — Observability layer (telemetry) tests.
 
 Tests the Tracer + Metrics + Nervous telemetry integration:
@@ -8,7 +11,6 @@ Tests the Tracer + Metrics + Nervous telemetry integration:
 - bounded buffer (max_spans)
 - clear/reset
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -347,3 +349,4 @@ def test_telemetry_does_not_suppress_errors():
     with pytest.raises(RuntimeError, match="boom"):
         anyio.run(nervous.signal, ("brain", "a"),
                   ("brain", "b"), "act", "fail")
+

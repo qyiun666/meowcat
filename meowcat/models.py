@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat data models — pydantic BaseModel shapes.
 
 Zero ORM, zero business logic. Concrete implementations live in meowagent.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -217,6 +219,9 @@ class MergeProposalShape(BaseModel):
     anomaly_hits: list[str] = Field(default_factory=list)
     observations: list[str] = Field(default_factory=list)
     error_detail: str = ""
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 class WorkflowShape(BaseModel):
@@ -366,3 +371,4 @@ class ModelConfig(BaseModel):
 # v1.2.17: LLMConfig is now a deprecated alias for ModelConfig.
 # Use ModelConfig directly.  The two classes were unified in v1.2.12.
 LLMConfig = ModelConfig  # deprecated — use ModelConfig directly
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v0.5.1 Task 1.9b — Reflex 反射弧 + ReflexRegistry 契约测试
 ============================================================
@@ -262,3 +265,4 @@ class TestReflexValidate:
         ))
         with pytest.raises(ReflexPathInvalidError, match="forbidden_hop"):
             reg.validate(w)
+

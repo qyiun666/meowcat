@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat coordination — async approval gate for multi-agent coordination (v1.1.29).
 
 Provides :class:`AsyncApprovalGate` — a lightweight async coordination primitive
@@ -6,7 +9,6 @@ for human-in-the-loop and cross-cat approval workflows.
 Framework-layer: provides the gate primitive with pluggable approval strategy.
 App-layer: defines who approves, what requires approval, timeout/retry policies.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -60,11 +62,17 @@ class AsyncApprovalGate:
         # Agent waits for resolution
         result = await gate.wait(req.request_id)
         assert result.status == ApprovalStatus.APPROVED
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     **Pluggable strategy**::
 
         gate.plug("on_submit", my_custom_submit_hook)
         gate.plug("on_resolve", my_audit_logger)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     .. note:: (v1.2.33)
 
@@ -79,6 +87,9 @@ class AsyncApprovalGate:
         self._futures: dict[str, asyncio.Future[ApprovalRequest]] = {}
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
         self._counter = 0
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
     # -- Plugin system (lightweight, Pluggable-compatible) ---------------
 
@@ -211,3 +222,4 @@ __all__ = [
     "ApprovalRequest",
     "AsyncApprovalGate",
 ]
+

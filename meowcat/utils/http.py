@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat HTTP connection pool — shared httpx AsyncClient singleton.
 
 Provides a reusable connection pool for all HTTP-based tools (Browser,
@@ -12,7 +15,6 @@ Usage::
     resp = await client.get("https://api.example.com/data")
     await close_shared_client()  # graceful shutdown
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -33,6 +35,9 @@ def get_shared_client(
     headers: dict[str, str] | None = None,
 ) -> Any:
     """Get or create a shared httpx AsyncClient.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     On first call, creates a new client with the given config.
     Subsequent calls return the same client — config params are
@@ -96,3 +101,4 @@ async def close_shared_client() -> None:
         _shared_client = None
         _shared_client_config = {}
         logger.info("Shared HTTP client closed")
+

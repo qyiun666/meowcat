@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v1.1.5 — LLM 货架 + 级联查找测试
 ===================================
@@ -299,3 +302,4 @@ class TestSkillCascade:
         private.set_shared(shared)
 
         assert private.resolve("nope") is None
+

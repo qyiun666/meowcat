@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat adapter base classes — AgentOrgan / SkillOrgan.
 
 v1.2.14: Two thin base classes that adapt any external agent or skill
@@ -6,7 +9,6 @@ into a meowcat organ.  Both inherit :class:`Pluggable` so hooks still work.
 The only difference between ``AgentOrgan`` and ``SkillOrgan`` is semantic:
 *Use whichever name conveys intent* — the delegation mechanics are identical.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -36,11 +38,17 @@ class AgentOrgan(Pluggable):
                 return await self._delegate("generate", prompt=prompt,
                                            system_prompt=system_prompt, **kw)
     """
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def __init__(self, agent: Any, *, name: str | None = None) -> None:
         Pluggable.__init__(self)
         self._agent = agent
         self.name: str = name or getattr(agent, "name", type(agent).__name__)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     # ------------------------------------------------------------------
     # Core delegation
@@ -104,3 +112,4 @@ class SkillOrgan(AgentOrgan):
 
 
 __all__ = ["AgentOrgan", "SkillOrgan"]
+

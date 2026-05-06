@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat injection needle — bypass wiring validation, directly operate any organ.
 
 The third communication mode alongside :meth:`signal` and :meth:`probe`.
@@ -16,7 +19,6 @@ Usage::
     await needle.poke(("brain", "hippocampus"), "add_entity", name="Python")
     await needle.poke_memory({"name": "fix", "content": "corrected"})
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -45,9 +47,15 @@ class Needle:
 
     def __init__(self, cat) -> None:
         """Construct the injector.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Args:
             cat: ``CatBase`` or instance with ``_host`` attribute
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         Raises:
             NeedleDisabledError: when ``MEOWCAT_DISABLE_NEEDLE=1``
@@ -61,6 +69,9 @@ class Needle:
             "Needle created — this bypasses wiring checks. "
             "For debugging/admin use only."
         )
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def poke(self, to_organ: Organ, method: str, **kwargs: Any) -> Any:
         """Directly call a method on the target organ, without wiring validation.
@@ -127,3 +138,4 @@ class Needle:
 
 
 __all__ = ["Needle", "NeedleDisabledError"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.1.9 — I18n 多语言引擎 测试。
 
 覆盖:
@@ -12,7 +15,6 @@
 - 空占位符 / 多余占位符 容错
 - I18n 继承 Pluggable 验证
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -264,3 +266,4 @@ class TestIntegrationScenarios:
         assert i18n.t("search_scope") == "Search scope"
         assert i18n.t("search_scope_self") == "Self"
         assert i18n.t("search_scope_colony") == "Colony"
+

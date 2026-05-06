@@ -1,8 +1,10 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat framework-level exceptions.
 
 Only defines framework-internal error types, no business exceptions.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -89,6 +91,9 @@ class ReflexPathInvalidError(MeowCatError):
             f"{frm[0]}/{frm[1]} → {to[0]}/{to[1]}"
         )
 
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 class NoReflexMatchedError(MeowCatError):
     """No registered reflex trigger matched during ``cat.perceive(input)``."""
@@ -187,3 +192,4 @@ __all__ = [
     "OrganDelegateError",
     "CircuitOpenError",
 ]
+

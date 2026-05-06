@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat Paws execution engine — match → security → execute → audit.
 
 Standard tool execution flow for every cat's paws:
@@ -8,7 +11,6 @@ Standard tool execution flow for every cat's paws:
 
 The framework layer defines this flow; the application layer can customize each stage via subclassing.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -48,6 +50,9 @@ class PawsEngine:
         self.require_confirm = require_confirm
         self.timeout_s = timeout_s
         self._audit_log: list[dict[str, Any]] = []
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     # -- Main entry point -----------------------------------------------
 
@@ -171,3 +176,4 @@ class PawsEngine:
             "[PawsEngine] tool=%s success=%s elapsed=%.1fms",
             tool.name, entry["success"], entry["elapsed_ms"],
         )
+

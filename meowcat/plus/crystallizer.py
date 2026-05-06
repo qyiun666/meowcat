@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus Crystallizer L1+L2+L3 — tool-usage detection → auto-crystallize Skills/Chains/Knowledge.
 
 Three-layer crystallisation:
@@ -34,7 +37,6 @@ Usage::
     c.plug("detector", my_custom_detector)
     c.plug("threshold", 0.8)
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -122,6 +124,9 @@ class Crystallizer:
             "detector", DefaultDetector())
         thresh = self._resolve_threshold()
         return detector(self._hits, self._total, thresh)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     # ── L2: Pattern Crystallization ─────────────────────────────────
 
@@ -130,6 +135,9 @@ class Crystallizer:
 
         When the same sequence repeats 3+ times, ``detect_patterns()``
         suggests registering a ``meowcat.chain.Chain``.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Args:
             seq: Ordered list of tool/skill/path slugs.
@@ -225,3 +233,4 @@ class Crystallizer:
         if plug is not None:
             return float(plug() if callable(plug) else plug)
         return self._threshold
+

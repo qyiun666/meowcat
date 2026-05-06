@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat Colony federation transport layer built-in implementations (v1.0.12, moved to colony/ v1.2.37).
 
 Provides two built-in transports:
@@ -6,7 +9,6 @@ Provides two built-in transports:
 
 All implement the FederationTransport protocol.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -182,6 +184,9 @@ class TCPSocketTransport:
 
         Automatically injects request_id into payload, waits for the remote
         to respond with the same request_id.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Args:
             topic: Target colony_id.
@@ -394,3 +399,4 @@ class RedisPubSubTransport:
 
 
 __all__ = ["TCPSocketTransport", "RedisPubSubTransport"]
+

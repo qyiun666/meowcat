@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v0.5.9 — Nervous 独立测试。
 
 Nervous 依赖 OrganHost + EventBus，但不依赖 CatBase / ReflexArc。
@@ -95,3 +98,4 @@ def test_nervous_freeze_locks_wiring() -> None:
     nervous.wire_default()
     nervous.freeze()
     assert nervous.wiring.frozen is True
+

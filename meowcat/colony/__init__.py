@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12) + Nameplate (v1.1.4) + Shared Area (v1.1.6) + Group Chat (v1.1.7) + Unified Entry (v1.1.8) + Task Delegation (v1.3.0).
 
 Colony manages peer-to-peer collaboration + shared storage for multiple cats.
@@ -20,7 +23,6 @@ Orthogonal to Kitten (master/slave mode):
 - Colony: multiple independent cats collaborate equally (peer ↔ peer), sharing state via SharedStorage
 - Colony Federation: cross-host Colony peer-to-peer communication (colony ↔ colony), via FederationTransport
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -444,6 +446,9 @@ class Colony(Pluggable, _FederationMixin):
         self.unmount_plug(slot, handler)
 
     # -- Factory -------------------------------------------------------
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def _inject_colony_memory(self, cat: CatBase) -> None:
         """v1.2.36: Inject colony shared memory pool after organs are mounted.
@@ -1225,3 +1230,4 @@ class Colony(Pluggable, _FederationMixin):
 
 __all__ = ["Colony", "ColonyConfig", "ColonyOwner",
            "ColonyRules", "FederationTransport", "GlobalColonyRegistry"]
+

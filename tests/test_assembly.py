@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: CatBase mount/signal/perceive/_assemble 基础流程。
 
 验证:
@@ -390,3 +393,4 @@ class TestCatBaseForbiddenMethods:
         cat.wiring.connect(("brain", "a"), ("brain", "b"))
         # 不传 forbidden_methods 时 wiring 正常
         assert cat.wiring.is_allowed(("brain", "a"), ("brain", "b"))
+

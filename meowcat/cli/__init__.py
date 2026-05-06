@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat CLI subsystem — i18n, command router, system commands, TUI app (v1.1.9+).
 
 All CLI-related components (i18n, CommandRouter, system commands, TUI, theme, etc.)
@@ -9,7 +12,9 @@ v1.1.11: System commands — /version /wiring /inject /debug /help.
 v1.1.12: Colony commands — /cats /adopt /release /switch + /health /brain.
 v1.1.13: MeowTui — Textual TUI bare-bones App skeleton.
 """
-# (c) 2025-2026 Axonant. MIT License.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 from meowcat.cli.commands import (
     register_system_commands,
@@ -28,3 +33,4 @@ except ImportError:
 __all__ = ["I18n", "Command", "CommandContext", "CommandRouter",
            "register_system_commands", "register_colony_commands", "is_debug",
            "MeowTui", "Theme"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat I18n — multi-language engine with builtin en/zh locales (v1.1.9).
 
 Pluggable design: register new languages via ``plug("language", code, data)``.
@@ -5,7 +8,6 @@ Default: ``I18n(lang="en")``. Switch at runtime via ``i18n.lang = "zh"``.
 
 Builtin locales are embedded as package data in ``meowcat/cli/locales/``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -65,10 +67,16 @@ class I18n(Pluggable):
     def lang(self) -> str:
         """Current active language code."""
         return self._lang
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     @lang.setter
     def lang(self, value: str) -> None:
         if value not in self._locales:
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
             # Try running plugins to see if one can supply the language
             for _hook, r in self._run_plugs_sync("language", value, None):
                 if isinstance(r, dict):
@@ -142,3 +150,4 @@ class I18n(Pluggable):
 
 
 __all__ = ["I18n"]
+

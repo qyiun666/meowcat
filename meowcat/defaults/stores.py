@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat default storage — pure in-memory implementation, zero external dependencies.
 
 For rapid prototyping and testing. Use meowagent SQLite/JSONL implementations for production.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -115,6 +117,9 @@ class InMemorySharedStore(SharedStore):
             if q in watchers:
                 watchers.remove(q)
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     def _notify_watchers(self, key: str, value: Any) -> None:
         """Notify matching watchers."""
         for pattern, queues in list(self._watchers.items()):
@@ -175,3 +180,4 @@ class InMemoryL6Store:
             "total_turns": len(records),
             "total_chars": self.total_chars(cat_uid),
         }
+

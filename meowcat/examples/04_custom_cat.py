@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """Example 04: Assemble a "pocket cat" from the five subsystems.
 
 Scenario: Without relying on ``create_cat`` / ``CatBase`` subclassing,
@@ -7,7 +10,6 @@ of these subsystems.
 
 Run: ``python -m meowcat.examples.04_custom_cat``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -79,3 +81,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
+

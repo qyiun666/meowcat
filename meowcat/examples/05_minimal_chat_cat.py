@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """Example 05: Minimal chat cat — using the Path/Chain/Loop four-layer system.
 
 Scenario: The simplest cat, mounting only essential organs, demonstrating
@@ -6,7 +9,6 @@ Path/Chain/Loop registration and execution. Uses CatBase directly
 
 Run: ``python -m meowcat.examples.05_minimal_chat_cat``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -115,3 +117,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
+

@@ -1,10 +1,12 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus/gateway — CliAdapter (stdin/stdout dialogue adapter).
 
 Replaces app-layer embedded CLI loop. Pure stdlib, zero external dependencies.
 
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -68,6 +70,9 @@ class CliAdapter:
     ) -> None:
         """Stdio mode: blocking stdin.readline in executor."""
         loop = asyncio.get_running_loop()
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         while self._running:
             try:
@@ -77,6 +82,9 @@ class CliAdapter:
 
             if not line:
                 break
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
             text = line.strip()
             if not text:
@@ -97,6 +105,9 @@ class CliAdapter:
                     async for chunk in stream:
                         await self.stream_chunk(chunk, ctx.session_id)
                     await self.stream_end(ctx.session_id)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def _serve_queue(
         self,
@@ -146,3 +157,4 @@ class CliAdapter:
 
 
 __all__ = ["CliAdapter"]
+

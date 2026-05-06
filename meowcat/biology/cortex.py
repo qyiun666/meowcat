@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Cortex — cerebral cortex with four-layer worldview (L0→L1→L2→L3).
 
 - **L1**: extract rules from repeated L0 patterns (``extract_rules``)
@@ -30,7 +33,6 @@ Usage::
     cortex.plug("extractor", my_ml_rule_extractor)
     cortex.plug("belief", my_belief_update_policy)
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -91,8 +93,14 @@ class Cortex(Pluggable):
             if isinstance(r, list):
                 return r
         return _default_rule_extractor(facts)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     # ── L2: Beliefs (v1.1.27) ────────────────────────────────────
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def promote_to_belief(
         self,
@@ -286,3 +294,4 @@ class DefaultRuleExtractor:
 
 
 __all__ = ["Cortex", "DefaultRuleExtractor"]
+

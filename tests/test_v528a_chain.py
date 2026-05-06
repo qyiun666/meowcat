@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat standalone tests: v0.5.28a Chain + ChainRegistry.
 
 Validates:
@@ -330,3 +333,4 @@ class TestCatBaseChainIntegration:
             chain = cat.chain_registry.get(name)
             assert chain is not None, f"Missing chain: {name}"
             assert chain.name == name
+

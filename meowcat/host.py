@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat organ container — OrganHost pure container subsystem (extracted in v0.5.9).
 
 Single responsibility: **store/retrieve organs**. Zero dependencies (no wiring/events/reflex),
@@ -13,7 +16,6 @@ no longer scattering container state across multiple classes.
 P-02 philosophy: minimal code. OrganHost does no events, no wiring, no protocol
 lookup — those are the responsibility of Nervous / assembly.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -31,6 +33,9 @@ class OrganHost:
         self._organs: dict[str, dict[str, Any]] = {}
 
     # -- Write interface ------------------------------------------------
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
     def mount(
         self,
@@ -110,3 +115,4 @@ class OrganHost:
 
 
 __all__ = ["OrganHost"]
+

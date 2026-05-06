@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.0.7 Pluggable + Noop 全补齐 + Voice Protocols 测试。
 
 覆盖:
@@ -493,3 +496,4 @@ def test_pluggable_multi_hook_list():
     a.mount_plug("assess_tool_risk", lambda n, p: {"risk": "high"})
     lst = a.list_plugs()
     assert lst == {"assess_safety": 1, "assess_tool_risk": 1}
+

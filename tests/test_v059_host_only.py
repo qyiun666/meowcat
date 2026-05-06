@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v0.5.9 — OrganHost 独立测试。
 
 子系统单飞契约：不依赖 Nervous / ReflexArc / EventBus，纯容器语义。
@@ -84,3 +87,4 @@ def test_assert_organs_mounted_raises() -> None:
     host.mount("brain", "a", _Ears())
     with pytest.raises(OrganNotMountedError):
         host.assert_organs_mounted([("brain", "missing")])
+

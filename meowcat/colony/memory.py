@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """SharedMemoryPool — colony-level shared memory for cross-cat knowledge sharing.
 
 Integrates with Colony's namespace storage and optional VectorStore for
@@ -11,7 +14,6 @@ Usage::
     results = await colony.memory.recall("Python 版本", k=5)
     await colony.memory.forget("abc123")
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -129,11 +131,17 @@ class SharedMemoryPool:
                 if raw:
                     results.append(json.loads(raw))
         return results
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def count(self) -> int:
         """Number of shared memory entries."""
         vs = await self._ensure_vector()
         return vs.count()
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def keyword_search(
         self,
@@ -208,3 +216,4 @@ class SharedMemoryPool:
             for record in await self.list_all():
                 self._vector.add(record["text"], record["metadata"])
         return self._vector
+

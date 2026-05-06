@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.2.0 CatSelf — unified self + three default closed loops."""
 
 from __future__ import annotations
@@ -424,3 +427,4 @@ class TestCatSelfWithSkills:
         cs = CatSelf(scribble_pad=pad, skills=skills)
         snap = await cs.before_act("task")
         assert "read_file" in snap.skill_names
+

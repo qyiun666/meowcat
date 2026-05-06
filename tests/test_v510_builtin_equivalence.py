@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v0.5.10 — 黄金集合等价性校验。
 
 从 v0.5.9 的 ``_make_default_allowed()`` 一次性导出的边集合固化到本文件，
@@ -154,3 +157,4 @@ def test_builtin_nervous_system_size_is_53() -> None:
 def test_forbidden_paths_size_is_6() -> None:
     """v1.2.17: 禁止边增至 6 条（新增 cerebrum→crystallizer + cerebrum→role_emergence）。"""
     assert len(FORBIDDEN_PATHS) == 6
+

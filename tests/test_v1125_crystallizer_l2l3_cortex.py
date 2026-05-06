@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.25 Crystallizer L2+L3 + Cortex worldview L1 tests."""
 
 from __future__ import annotations
@@ -337,3 +340,4 @@ class TestDefaultRuleExtractor:
         assert DefaultRuleExtractor()(
             [{"entity": "e", "attr": "a", "value": "v"}],
         ) == []
+

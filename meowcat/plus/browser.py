@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus Browser tool — Playwright-based browser automation.
 
 Provides headless (or headed) browser control for web interaction tasks:
@@ -17,7 +20,6 @@ Usage::
     async with BrowserTool(headless=True) as browser:
         content = await browser.navigate("https://example.com")
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -78,6 +80,9 @@ class BrowserTool:
         }
 
     # -- Lifecycle ---------------------------------------------------
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def start(self) -> None:
         """Start the browser and create a new page.
@@ -119,6 +124,9 @@ class BrowserTool:
     async def __aenter__(self) -> BrowserTool:
         await self.start()
         return self
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def __aexit__(self, *args: object) -> None:
         await self.close()
@@ -249,3 +257,4 @@ class BrowserTool:
             ) from None
         self._pw_func = async_playwright
         return self._pw_func
+

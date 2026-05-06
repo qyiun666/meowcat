@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat biological default neural pathway table + default reflex arc paths.
 
 Defines the default neuroanatomical structure of a "normal cat". App layer calls
@@ -25,7 +28,6 @@ and role emergence (:mod:`meowcat.biology.roles`) modules for colony-level intel
 
 This file has zero third-party dependencies, zero meowagent imports.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -147,6 +149,9 @@ class OrganSpec:
 
     Method-level permissions enforced by ``Nervous.signal()`` after wiring check:
     ``from_organ not in write_callers`` raises ``IllegalNeuralPathError``.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     Adding/migrating organs only needs one record change; ``BUILTIN_NERVOUS_SYSTEM`` and
     ``ORGAN_PROTOCOLS`` sync automatically.
@@ -160,6 +165,9 @@ class OrganSpec:
     write_methods: tuple[str, ...] = ()
     write_callers: tuple[Organ, ...] = ()
     supported_styles: tuple[ImplementationStyle, ...] = ()
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 def _build_organ_specs() -> tuple[OrganSpec, ...]:
@@ -490,3 +498,4 @@ __all__ = [
     "CatSelf", "SelfSnapshot",
     "DefaultConversationLoop", "DefaultTaskLoop", "DefaultLearnLoop",
 ]
+

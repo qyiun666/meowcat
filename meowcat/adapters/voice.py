@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat voice organ adapters — Mouth, Purr, Tail.
 
 v1.2.14: One adapter per voice Protocol.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -10,6 +12,12 @@ from typing import Any
 
 from meowcat.adapters.base import AgentOrgan
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 class MouthAgent(AgentOrgan):
     """Adapter for MouthProtocol — delegates text output to an external agent.
@@ -25,6 +33,9 @@ class MouthAgent(AgentOrgan):
         async for _name, r in self._run_plugs("speak", text, **kwargs):
             return r
         return await self._delegate("speak", text=text, **kwargs)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 
 class PurrAgent(AgentOrgan):
@@ -42,3 +53,4 @@ class TailAgent(AgentOrgan):
 
 
 __all__ = ["MouthAgent", "PurrAgent", "TailAgent"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.26 Active Growth — curiosity, tool evolution, reflex evolution tests."""
 
 from __future__ import annotations
@@ -436,3 +439,4 @@ class TestDiagnose:
         info = await hpo.diagnose()
         assert info["total_triggers"] == 1
         assert "hot_paths" in info
+

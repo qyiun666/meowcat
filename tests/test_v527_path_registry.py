@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: v0.5.27 Path 原子路径 + PathRegistry。
 
 验证:

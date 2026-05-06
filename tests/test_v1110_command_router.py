@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.1.10 — CommandRouter 命令路由注册框架 测试。
 
 覆盖:
@@ -14,7 +17,6 @@
 - Pluggable 继承验证
 - 独立测试（零 CatBase/Colony 依赖）
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -351,3 +353,4 @@ class TestIntegrationScenarios:
         await router.route("/a")
 
         assert log == ["/a", "/b", "/a"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat loops — Loop dataclass + LoopRegistry + 5 default loops.
 
 Loop = Chain + trigger event + exit event. Loop composes existing Chains, mounting them
@@ -16,7 +19,6 @@ Developer experience::
 
 This file has zero third-party dependencies, zero meowagent imports.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -183,6 +185,9 @@ class LoopRegistry:
 
     _loops: dict[str, Loop] = field(default_factory=dict, init=False)
     _loops_list: list[Loop] = field(default_factory=list, init=False)
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     def register(self, loop: Loop) -> None:
         """Register a loop. Same name overwrites old value.
@@ -487,3 +492,4 @@ def __getattr__(name: str):
             f"or: from meowcat import {name}"
         )
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+

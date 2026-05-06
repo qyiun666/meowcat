@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat atomic paths — Path dataclass + PathRegistry + built-in path table.
 
 A Path is an immutable neural signal recipe: from which organ, to which organ,
@@ -17,7 +20,6 @@ For external developers::
 
 This file has zero third-party dependencies and zero meowagent imports.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -180,6 +182,9 @@ class PathRegistry:
         # Lookup
         path = registry.get("locate")
         all_paths = registry.list_all()
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         # Execute
         result = await registry.run(cat, "locate", query="hello")
@@ -272,3 +277,4 @@ class PathRegistry:
 
 
 __all__ = ["Path", "PathRegistry", "BUILTIN_PATHS", "register_builtin_paths"]
+

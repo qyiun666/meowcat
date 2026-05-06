@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.1.6 — 猫舍共享区测试
 ========================
@@ -313,3 +316,4 @@ class TestNamespaceIsolation:
         assert await colony.ns_list_keys("owner") == ["k1"]
         assert await colony.ns_list_keys("rules") == ["k2"]
         assert await colony.ns_list_keys("knowledge") == ["k3"]
+

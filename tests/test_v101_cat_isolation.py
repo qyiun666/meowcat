@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.1 — CatBase 分身猫隔离（替代 KittenBase + _KittenParentProxy）
 ===================================================================
@@ -128,3 +131,4 @@ class TestNoParentProxy:
 # helpers -----------------------------------------------------------
 
 import pytest  # noqa: E402
+

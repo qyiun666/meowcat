@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.19 Persistent Storage — SqliteGraphStore + JsonlL6Store tests."""
 
 import pytest
@@ -143,3 +146,4 @@ class TestImportSmoke:
     def test_jsonl_l6_store_import(self):
         from meowcat import JsonlL6Store as J  # noqa: F811
         assert J is JsonlL6Store
+

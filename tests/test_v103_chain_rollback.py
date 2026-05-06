@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.3 — Chain 事务性测试
 ============================
@@ -288,3 +291,4 @@ class TestChainRunEmptyRollback:
 
         with pytest.raises(KeyError, match="not found"):
             await cat.chain_registry.run(cat, "nonexistent")
+

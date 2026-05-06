@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat standalone tests: v0.5.28b Loop + LoopRegistry + self-loop Path.
 
 Validates:
@@ -493,3 +496,4 @@ class TestNewPathsForLoop:
         cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
         assert len(all_paths) == 31
+

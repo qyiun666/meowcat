@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat Gateway protocol layer — I/O abstraction between cat and outside world.
 
 Gateway = the cat's skin, all protocol adapters plug into the same Gateway.
 1 cat : 1 Gateway : N Adapters.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -33,6 +35,9 @@ class SignalContext:
         default_factory=lambda: datetime.now(timezone.utc).isoformat())
     """ISO 8601 timestamp. Auto-generated at construction."""
 
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 @runtime_checkable
 class IoAdapterProtocol(Protocol):
@@ -107,3 +112,4 @@ HTTP_REASONS: dict[int, str] = {
     404: "Not Found",
     500: "Internal Server Error",
 }
+

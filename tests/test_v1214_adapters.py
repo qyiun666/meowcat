@@ -1,5 +1,7 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Test v1.2.14 organ adapter system — AgentOrgan / SkillOrgan delegation."""
-# (c) 2025-2026 Axonant. MIT License.
 
 import pytest
 
@@ -597,3 +599,4 @@ class TestIntegration:
             cat.organ("brain", "amygdala").assess_safety("test"))
         assert result["safe"] is False
         assert len(called) == 1
+

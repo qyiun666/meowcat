@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.1.8 — 统一对外入口 + 搜索边界测试
 =====================================
@@ -253,3 +256,4 @@ class TestHippocampusLocate:
         results_default = hippo.locate("hello")
         results_explicit = hippo.locate("hello", scope="self")
         assert results_default == results_explicit
+

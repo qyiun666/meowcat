@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.0.18 — BUILTIN_REFLEX_PATHS + SecurityPolicyProtocol."""
 
 from __future__ import annotations
@@ -66,3 +69,4 @@ class TestSecurityPolicyProtocol:
         class Empty:
             pass
         assert not isinstance(Empty(), SecurityPolicyProtocol)
+

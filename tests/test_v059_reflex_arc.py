@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v0.5.9 — ReflexArc 独立测试。
 
 ReflexArc 只依赖 EventBus，Nervous 可选传入用于 path 校验。
@@ -66,3 +69,4 @@ def test_reflex_arc_perceive_no_match_raises() -> None:
 
     with pytest.raises(NoReflexMatchedError):
         anyio.run(drive)
+

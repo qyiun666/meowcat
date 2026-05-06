@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat shared constants — extracted magic numbers (v1.2.33).
 
 Previously hardcoded across plus/ and colony/ modules.
@@ -5,7 +8,6 @@ Centralising here makes thresholds configurable and self-documenting.
 
 See :ref:`docs/架构/00-meowcat-框架架构.md` §21 for the architecture context.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 # -- Browser (meowcat.plus.browser) ----------------------------------
@@ -51,6 +53,9 @@ GATEWAY_DEFAULT_TIMEOUT: int = 30
 
 MCP_DEFAULT_TIMEOUT: float = 30.0
 """Default timeout in seconds for MCP operations (discovery, tool call)."""
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 
 # -- Colony federation transports (meowcat.colony_transports) -----------
@@ -91,3 +96,4 @@ __all__ = [
     "CALL_SIGN_RAW",
     "CALL_SIGN",
 ]
+

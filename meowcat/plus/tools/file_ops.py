@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus file operation tools — read_file / write_file.
 
 Concrete I/O implementations that depend on the local filesystem.
 Import from ``meowcat.plus.tools`` or ``meowcat.plus``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -39,6 +41,12 @@ def _resolve_path(path: str, workspace: Path | None = None) -> Path:
 
     # Resolve all symlinks via realpath
     real = Path(os.path.realpath(str(p)))
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     # Check each parent component for symlink escapes
     for parent in real.parents:
@@ -125,3 +133,4 @@ plus_write_file = Tool(
     ),
     handler=_write_file,
 )
+

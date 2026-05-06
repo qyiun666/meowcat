@@ -1,10 +1,12 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat worker scheduler — priority + dependency-aware worker orchestration (v1.2.22).
 
 Schedules :class:`BaseWorker` instances by priority (higher first), respecting
 ``depends_on`` chains. Handles retry via ``max_retries`` already baked into
 :class:`BaseWorker.run`.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -54,6 +56,9 @@ class WorkerScheduler:
             task_id: Task identifier passed to worker.run().
             steps: Steps passed to worker.run().
             resume: Whether to resume from checkpoint.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Returns:
             Job identifier string.
@@ -87,6 +92,9 @@ class WorkerScheduler:
         """
         if not self._workers:
             return {}
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
         # Build dependency tracking
         pending_deps: dict[str, set[str]] = {}
@@ -173,3 +181,4 @@ class WorkerScheduler:
 
 
 __all__ = ["WorkerScheduler"]
+

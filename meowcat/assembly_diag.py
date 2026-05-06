@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat CatBase diagnostic mixin — health check, wiring diagram, CLI facades.
 
 Extracted from assembly.py (v1.2.37) to keep CatBase under 500 lines.
 Provides ``DiagnosticMixin`` with diagnostic shortcuts and CLI facade methods.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -44,17 +46,26 @@ class DiagnosticMixin:
         """
         from meowcat.diagnose import Stethoscope  # noqa: PLC0415
         return await Stethoscope.probe_category(self, "brain")
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def wiring_diagram(self, format: str = "mermaid") -> str:
         """Generate a visualization string of the wiring diagram.
 
         Raises :class:`AttributeError` when wiring is disabled.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         Args:
             format: ``"mermaid"`` or ``"dot"``
 
         Returns:
             Diagram description string in mermaid or dot format
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         Examples:
 
@@ -123,3 +134,4 @@ class DiagnosticMixin:
 
 
 __all__ = ["DiagnosticMixin"]
+

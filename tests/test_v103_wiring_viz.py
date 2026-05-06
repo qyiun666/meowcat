@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.3 — Wiring 可视化测试
 =============================
@@ -150,3 +153,4 @@ class TestWiringDiagram:
         cat = make_cat("test", enable_wiring=False)
         with pytest.raises(AttributeError, match="wiring disabled"):
             cat.wiring_diagram()
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v0.5.1 Task 1.9e — biology 默认神经通路表契约测试
 ====================================================
@@ -115,3 +118,4 @@ class TestDefaultWiring:
         allowed_before = len(w.edges())
         apply_default_wiring(w)
         assert len(w.edges()) == allowed_before  # set 去重
+

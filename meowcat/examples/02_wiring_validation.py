@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Example 02: Wiring only — pure data structure, offline pathway validation.
 
 Scenario: The user defines a set of neural signal paths in business code
@@ -6,7 +9,6 @@ graph, no duplicates, bidirectional edges auto-symmetrized), then go live.
 
 Run: ``python -m meowcat.examples.02_wiring_validation``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -42,3 +44,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.4 — LoopSequence 测试
 ============================
@@ -452,3 +455,4 @@ class TestBuiltinLoopseq:
     def test_builtin_loopseqs_contains(self) -> None:
         """BUILTIN_LOOPSEQS 包含 DAILY_MAINTENANCE_SEQ。"""
         assert DAILY_MAINTENANCE_SEQ in BUILTIN_LOOPSEQS
+

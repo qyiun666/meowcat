@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Example 07: Custom organ + Path + Chain + Loop full example.
 
 Scenario: Add a "nose" organ to the cat, declare Paths, assemble Chains,
@@ -6,7 +9,6 @@ Organ → Path → Chain → Loop.
 
 Run: ``python -m meowcat.examples.07_custom_organ``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -132,3 +134,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
+

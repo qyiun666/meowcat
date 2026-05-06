@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat brain-area organ adapters.
 
 v1.2.14: One adapter per brain Protocol — CerebrumAgent, CerebellumAgent,
@@ -7,7 +10,6 @@ FrontalAgent, HypothalamusAgent, CortexAgent.
 Each adapter delegates every Protocol method to its backing agent/skill
 via ``self._delegate("method", **kw)``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -184,6 +186,9 @@ class HippocampusAgent(AgentOrgan):
         fn = getattr(self._agent, "from_dict", None)
         if fn:
             fn(d=d)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def get_entity(self, entity_id: str) -> Any | None:
         fn = getattr(self._agent, "get_entity", None)
@@ -248,6 +253,9 @@ class HippocampusAgent(AgentOrgan):
         fn = getattr(self._agent, "append_content", None)
         if fn:
             fn(entity_id=entity_id, text=text, max_total=max_total)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def update_importance(self, entity_id: str, importance: float) -> None:
         fn = getattr(self._agent, "update_importance", None)
@@ -465,3 +473,4 @@ __all__ = [
     "HypothalamusAgent",
     "CortexAgent",
 ]
+

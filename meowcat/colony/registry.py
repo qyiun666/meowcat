@@ -1,8 +1,10 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """GlobalColonyRegistry — process-wide multi-Colony registry.
 
 Cross-colony cat lookup by global address (``colony_id/cat_uid``).
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -54,9 +56,15 @@ class GlobalColonyRegistry(Pluggable):
         "on_unregister": {"in": "colony_id: str", "out": "None"},
     }
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     def __init__(self) -> None:
         super().__init__()
         self._colonies: dict[str, Colony] = {}
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     # -- Registration -------------------------------------------------
 
@@ -78,6 +86,9 @@ class GlobalColonyRegistry(Pluggable):
 
     def unregister(self, colony_id: str) -> bool:
         """Remove a Colony from the global registry.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Fires ``on_unregister`` hook(s) before removal.
 
@@ -186,3 +197,4 @@ class GlobalColonyRegistry(Pluggable):
     def total_cat_count(self) -> int:
         """Total number of cats across all registered colonies."""
         return sum(len(colony._cats) for colony in self._colonies.values())
+

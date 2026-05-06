@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat CatBase lifecycle mixin — start/shutdown/workflows/hooks/loop execution.
 
 Extracted from assembly.py (v1.2.37) to keep CatBase under 500 lines.
 Provides ``LifecycleMixin`` with all lifecycle-related methods.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -116,6 +118,9 @@ class LifecycleMixin:
 
         Args:
             hook: Sync callable accepting a CatBase instance.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Examples:
 
@@ -143,6 +148,9 @@ class LifecycleMixin:
             >>> cat.on_start(lambda c: c.gateway.start(c))
         """
         self._start_hooks.append(hook)  # type: ignore[attr-defined]
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def on_shutdown(self, hook: CatHook) -> None:
         """Register a shutdown hook. Called in **reverse** registration
@@ -158,6 +166,9 @@ class LifecycleMixin:
             >>> cat.on_shutdown(lambda c: c.gateway.stop())
         """
         self._shutdown_hooks.append(hook)  # type: ignore[attr-defined]
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     # -- Lifecycle -----------------------------------------------------------
 
@@ -241,3 +252,4 @@ class LifecycleMixin:
 
 
 __all__ = ["LifecycleMixin", "CatHook"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Example 01: OrganHost only — use as an organ container with Protocol validation.
 
 Scenario: The user just wants a dict that "mounts/gets objects by (category, name)",
@@ -6,7 +9,6 @@ No need for nervous system / reflex / events.
 
 Run: ``python -m meowcat.examples.01_organ_host_only``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -48,3 +50,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

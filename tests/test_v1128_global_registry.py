@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.28 GlobalColonyRegistry — multi-colony global registry tests."""
 
 from __future__ import annotations
@@ -266,3 +269,4 @@ class TestPluggableHooks:
         assert reg.list_plugs() == {"on_register": 1}
         reg.unplug("on_register", hook)
         assert reg.list_plugs() == {}
+

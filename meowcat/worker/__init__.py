@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat worker subsystem — resumable worker abstraction (v1.1.29).
 
 Provides :class:`BaseWorker` and :class:`CheckpointStore` for long-running,
@@ -7,7 +10,6 @@ that can be paused, checkpointed, and resumed across process restarts.
 Framework-layer: defines the worker lifecycle + checkpoint interface.
 App-layer: implements concrete task logic and persistence backends.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -97,6 +99,9 @@ class InMemoryCheckpointStore(CheckpointStore):
 
 class BaseWorker(ABC):
     """Abstract resumable worker.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     Workers execute tasks with checkpoint support. If a task fails or the
     process restarts, the worker can resume from the last checkpoint.
@@ -135,6 +140,9 @@ class BaseWorker(ABC):
         self.priority = priority
         self.depends_on = depends_on or []
         self.max_retries = max_retries
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
         # Pluggable hooks
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
@@ -183,6 +191,9 @@ class BaseWorker(ABC):
         max_retries times before finally failing.
         """
         remaining_retries = self.max_retries
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         while True:
             try:
@@ -286,3 +297,4 @@ __all__ = [
     "BaseWorker",
     "WorkerScheduler",
 ]
+

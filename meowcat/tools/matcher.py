@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat tool matcher — keyword-based tool matching engine (v1.1.29).
 
 Provides :class:`KeywordToolMatcher` — scores and ranks tools by keyword overlap
@@ -6,7 +9,6 @@ against user intent, with pluggable scoring strategy.
 Separated from :class:`PawsEngine` so the matcher can be reused independently
 (e.g., in command routing, reflex arc dispatch).
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -51,6 +53,9 @@ class KeywordToolMatcher:
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
 
     # -- Plugin system ---------------------------------------------------
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def plug(self, hook: str, fn: Callable[..., Any]) -> None:
         """Register a hook callback ('scorer', 'filter')."""
@@ -112,6 +117,9 @@ class KeywordToolMatcher:
         # Sort by score descending, then by name for stability
         results.sort(key=lambda x: (-x[0], x[1].name))
         return [(t, s) for s, t in results[:top_n]]
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def best_match(self, intent: str) -> Tool | None:
         """Return the single best matching tool, or None."""
@@ -165,3 +173,4 @@ def _tokenize(text: str) -> list[str]:
 
 
 __all__ = ["KeywordToolMatcher"]
+

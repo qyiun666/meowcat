@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.20 Vector Store + Shared Memory — VectorStore + SharedMemoryPool tests."""
 
 import pytest
@@ -198,3 +201,4 @@ class TestImportSmoke:
     def test_shared_memory_pool_import(self):
         from meowcat import SharedMemoryPool as SMP  # noqa: F811
         assert SMP is SharedMemoryPool
+

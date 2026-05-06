@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.9 — CLI 门面方法 + Colony 别名 + wiring 新边集成测试
 ==========================================================
@@ -385,3 +388,4 @@ class TestNewWiringEdges:
         result = await cat.signal(BRAINSTEM, HIPPOCAMPUS, "stats")
         assert isinstance(result, dict)
         assert "entities" in result
+

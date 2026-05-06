@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.17 Crystallizer L1 — tool-usage frequency detector tests."""
 
 from meowcat.plus.crystallizer import Crystallizer, DefaultDetector
@@ -141,3 +144,4 @@ class TestCrystallizer:
         c.record("a")
         c.record("a")
         assert c.hotspots() == [("a", 2), ("b", 1)]
+

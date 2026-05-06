@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 框架独立测试 — 零 meowagent 依赖。
 
 验证: Protocol 可 import、Wiring 连通/禁止/冻结、CatBase 装配、
@@ -226,3 +229,4 @@ class TestModels:
         ctx = PipelineContext(msg="hi", brainstem=bs)
         assert ctx.msg == "hi"
         assert ctx.brainstem is bs
+

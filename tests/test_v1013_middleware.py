@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.0.13 — Signal Middleware 测试。
 
 覆盖:
@@ -571,3 +574,4 @@ class TestEdgeCases:
                 )
 
         anyio.run(_run)
+

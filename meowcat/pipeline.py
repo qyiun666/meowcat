@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat Pipeline executor — skeleton for chaining Stages.
 
 Stage Protocol definition: :mod:`meowcat.protocols` (``StageProtocol``).
@@ -6,7 +9,6 @@ StageEvent / PipelineContext data shapes: :mod:`meowcat.models`.
 This module only provides :class:`Pipeline` executor: drives Stages sequentially,
 stops on ``short_circuit`` event. Not responsible for Stage implementation.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -27,6 +29,9 @@ class Pipeline:
 
     def __init__(self, stages: list[StageProtocol]) -> None:
         self.stages: list[StageProtocol] = list(stages)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def execute(self, ctx: Any) -> AsyncIterator[Any]:
         """Drive all Stages in order, yielding all events."""
@@ -52,3 +57,4 @@ class Pipeline:
 
 
 __all__ = ["Pipeline"]
+

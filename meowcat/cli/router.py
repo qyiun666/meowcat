@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat CommandRouter — command routing and registration framework (v1.1.10).
 
 Pluggable design: ``"middleware"`` slot intercepts commands before execution.
@@ -9,7 +12,6 @@ Usage::
     router.register(Command(name="/help", handler=cmd_help, group="General"))
     result = router.route(user_input="/help --verbose")
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -84,6 +86,9 @@ class CommandRouter(Pluggable):
     def unregister(self, name: str) -> None:
         """Remove a registered command by name."""
         self._commands.pop(name, None)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def get_command(self, name: str) -> Command | None:
         """Look up a command by name (exact match)."""
@@ -201,3 +206,4 @@ class CommandRouter(Pluggable):
 
 
 __all__ = ["Command", "CommandContext", "CommandRouter"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus MCP Client — multi-protocol tool client framework.
 
 Connects to MCP (Model Context Protocol) servers via stdio or HTTP transport,
@@ -14,7 +17,6 @@ Usage::
     tools = await mcp.discover("mysql")
     result = await mcp.call_tool("mysql", "query", {"sql": "SELECT 1"})
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -150,6 +152,9 @@ class MCPClient:
         if cfg.transport == "stdio":
             return await self._call_tool_stdio(cfg, tool_name, arguments)
         return await self._call_tool_http(cfg, tool_name, arguments)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     # -- Stdio transport internals -----------------------------------
 
@@ -190,6 +195,9 @@ class MCPClient:
             if "error" in resp:
                 logger.error("MCP init error: %s", resp["error"])
                 return []
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
             # Send tools/list on the same session
             req2 = _jsonrpc_request("tools/list", {})
@@ -349,3 +357,4 @@ def _jsonrpc_request(method: str, params: dict[str, Any]) -> str:
         "params": params,
         "id": 1,
     })
+

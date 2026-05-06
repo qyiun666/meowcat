@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.1 — CatBase 权限控制（替代 KittenBase 的 wiring 裁剪 + 方法黑名单）
 ========================================================================
@@ -172,3 +175,4 @@ class TestDefaultCatBase:
         except AttributeError:
             pass  # 预期
         assert cat.name == "cat1"
+

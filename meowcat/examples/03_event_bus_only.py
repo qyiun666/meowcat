@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """Example 03: EventBus only — pure async pub/sub, zero cat dependency.
 
 Scenario: The user just wants an async bus for "subscribe event name → trigger callback",
@@ -5,7 +8,6 @@ not concerned with organs / pathways / reflexes.
 
 Run: ``python -m meowcat.examples.03_event_bus_only``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -39,3 +41,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
+

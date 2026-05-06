@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat organ convenience base — OrganMixin (added in v0.5.11).
 
 **Positioning**: optional mixin providing zero-stack-frame-overhead signal/probe shortcuts for organs.
@@ -37,7 +40,9 @@ can continue explicitly writing ``self.cat.signal(...)`` with no issues.
             # new:
             wv = await self._signal_to(CORTEX, "synthesize", max_tokens=200)
 """
-# (c) 2025-2026 Axonant. MIT License.
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
 
 from __future__ import annotations
@@ -108,3 +113,4 @@ class OrganMixin:
 
 
 __all__ = ["OrganMixin"]
+

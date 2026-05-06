@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.2.18 — 事件类型安全测试.
 
 验证: payload TypedDict 可 import、EVENT_PAYLOAD_MAP 全覆盖、
 现有 emit 模式向后兼容、TypedDict 可用于 handler 类型注解。
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -259,3 +261,4 @@ class TestTypedDictAnnotation:
         fusion_self = get_type_hints(FusionSelfPayload)
         assert "insights" in fusion_self
         assert "fusion_id" in fusion_self
+

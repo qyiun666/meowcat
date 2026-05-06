@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat event payload type definitions — TypedDict for IDE type safety.
 
 This module defines TypedDict payloads for every framework-level event constant
@@ -9,7 +12,7 @@ Backward compatible: all existing handler signatures ``def h(payload: dict)``
 continue to work.  New code can annotate ``def h(payload: NerveSignalPayload)``
 for full type safety.
 
-(c) 2025-2026 Axonant. MIT License.
+Copyright (c) 2026 Axonant. SPDX-License-Identifier: MIT.
 """
 
 from __future__ import annotations
@@ -103,6 +106,9 @@ class OrchestrateStartPayload(TypedDict):
     orchestration_id: str
     plan: Any
 
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 class OrchestrateEndPayload(TypedDict):
     """Payload for ``OrchestrateEvent.END`` event."""
@@ -294,3 +300,4 @@ __all__ = [
     "TelemetrySpanPayload",
     "EVENT_PAYLOAD_MAP",
 ]
+

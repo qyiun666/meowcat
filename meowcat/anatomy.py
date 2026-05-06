@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat anatomical coordinates — single source of truth for organ positions.
 
 This module only defines "what organs are called and what category they belong to",
@@ -7,7 +10,6 @@ breaking the biology ↔ protocols circular dependency.
 
 This file has zero third-party dependencies, zero meowagent imports.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -72,6 +74,9 @@ ANOMALY_GROWTH: Final[Organ] = (GROWTH, "anomaly_growth")
 CORRECTION_GROWTH: Final[Organ] = (GROWTH, "correction_growth")
 CRYSTALLIZER: Final[Organ] = (GROWTH, "crystallizer")
 ROLE_EMERGENCE: Final[Organ] = (GROWTH, "role_emergence")
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 # -- Aggregate tuples ---------------------------------------------------
 #
@@ -137,3 +142,4 @@ __all__ = [
     # Organ name → coordinate
     "ORGAN_BY_NAME",
 ]
+

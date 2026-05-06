@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat default organ stubs — no-op implementations satisfying Protocols.
 
 Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
@@ -8,7 +11,6 @@ Three execution modes:
 - B Merge enhancement: all plugin results are merged into the default value
 - C Full replacement: first plugin completely replaces default behavior
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -681,6 +683,9 @@ class NoopThalamus(Pluggable):
 
     def decide_route(self, **kwargs: Any) -> dict[str, Any]:
         return {"route": "chat"}
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 
 class NoopHippocampus(Pluggable):
@@ -723,6 +728,9 @@ class NoopHippocampus(Pluggable):
     @entities.setter
     def entities(self, value: dict[str, dict[str, Any]]) -> None:
         self._entities = value
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     @property
     def episodes(self) -> list[dict[str, Any]]:
@@ -1125,3 +1133,4 @@ class NoopRoleEmergence(Pluggable):
             if isinstance(r, dict):
                 result.update(r)
         return result
+

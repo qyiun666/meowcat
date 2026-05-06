@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat Pluggable mixin — plug/unplug hooks onto Noop organs.
 
 v1.0.7: mount_plug / unmount_plug / _run_plugs on all 15 Noop organs,
@@ -11,7 +14,6 @@ Three execution modes (chosen by each Noop class, not enforced by Pluggable):
 - B Merge-enhance: merge all plugin results into defaults
 - C Full-replace: first plugin completely replaces default behavior
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -81,6 +83,9 @@ class Pluggable:
             if not self._plugs[hook]:
                 self._plugs.pop(hook, None)
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     # Aliases (v1.1.6) — plug/unplug for consistency with Colony and design docs
 
     def plug(self, hook: str, fn: Callable[..., Any]) -> None:
@@ -101,6 +106,9 @@ class Pluggable:
 
         Callers decide how to handle results (first-hit / merge / replace).
         Callers MUST use ``async for``.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         Args:
             hook: hook name.
@@ -182,3 +190,4 @@ class Pluggable:
 
 
 __all__ = ["Pluggable"]
+

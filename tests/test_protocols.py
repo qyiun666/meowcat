@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: 所有 Protocol 可 import + isinstance 校验。
 
 验证:
@@ -236,3 +239,4 @@ class TestProtocolRuntimeCheckable:
         class NoName:
             pass
         assert not isinstance(NoName(), OrganProtocol)
+

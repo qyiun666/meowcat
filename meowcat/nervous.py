@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat nervous system — Nervous subsystem (extracted in v0.5.9).
 
 Communication conventions (v0.5.20+):
@@ -33,7 +36,6 @@ Kitten scenario: pass ``forbidden_methods`` at construction to disable specific 
     )
     await nervous.signal(..., "spawn_kitten")  # -> IllegalNeuralPathError
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -248,6 +250,9 @@ class Nervous:
         self._circuits.pop(key, None)
         self._cb_probing.discard(key)
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     def _cb_on_failure(self, to_organ: Organ, method: str) -> None:
         """Record a failed signal call — increment failures / open circuit."""
         if not self._cb_enabled:
@@ -308,8 +313,14 @@ class Nervous:
             )
 
         self.wiring.assert_allowed(from_organ, to_organ)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         # v0.5.11 Protocol contract validation: if target coordinate has a Protocol mapping,
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
         # verify method is declared on that Protocol. Skip if no mapping (preserving flexibility).
         from meowcat.biology import ORGAN_PROTOCOLS  # noqa: PLC0415
         protocol = ORGAN_PROTOCOLS.get(to_organ)
@@ -482,3 +493,4 @@ class Nervous:
 
 
 __all__ = ["Nervous", "SignalCall", "SignalMiddleware", "CircuitState"]
+

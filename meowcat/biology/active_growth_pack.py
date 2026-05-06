@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """ActiveGrowthPack — one-line enable for all three active growth components.
 
 插座式设计: framework provides factory, app-layer calls ``install(cat)``.
@@ -12,7 +15,6 @@ Usage::
     # ToolFailureLearner → cat.paws ("on_tool_failure")
     # HotPathObserver   → cat.reflexes ("observe_hot_paths")
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -35,6 +37,9 @@ class ActiveGrowthPack:
         # ToolFailureLearner → cat.paws ("on_tool_failure")
         # HotPathObserver   → cat.reflexes ("observe_hot_paths")
     """
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     @staticmethod
     def install(
@@ -81,3 +86,4 @@ class ActiveGrowthPack:
 
 
 __all__ = ["ActiveGrowthPack"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.1.14 — MCP Client 多协议工具客户端 测试。
 
 覆盖:
@@ -11,7 +14,6 @@
 - call_tool stdio 子进程模拟（echo 服务端）
 - 独立测试（零 CatBase/Colony 依赖）
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -354,3 +356,4 @@ class TestStandalone:
         cfg = MCPServerConfig(name="x")
         client.add_server(cfg)
         assert len(client.list_servers()) == 1
+

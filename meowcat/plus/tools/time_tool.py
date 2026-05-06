@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus time tool — current_time.
 
 Returns current UTC and local time for Agent time-awareness.
 Import from ``meowcat.plus.tools`` or ``meowcat.plus``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -11,6 +13,12 @@ from datetime import datetime, timezone
 from typing import Any
 
 from meowcat.tools.tool import RiskLevel, Tool, ToolSpec
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
 
 async def _current_time(**_: Any) -> str:
@@ -26,6 +34,9 @@ async def _current_time(**_: Any) -> str:
         f"Local: {local_str} (UTC{offset_hours:+d})\n"
         f"Unix timestamp: {now_utc.timestamp():.0f}"
     )
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 plus_current_time = Tool(
@@ -40,3 +51,4 @@ plus_current_time = Tool(
 )
 
 __all__ = ["plus_current_time"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.0.12 — Colony 联邦测试
 ==============================
 
@@ -425,3 +428,4 @@ class TestRedisPubSubTransportBasic:
         t = RedisPubSubTransport(colony_id="test", client=None)
         assert t._colony_id == "test"
         assert isinstance(t, FederationTransport)
+

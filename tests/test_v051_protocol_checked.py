@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v0.5.1 Task 1.9d — Protocol @runtime_checkable mount 校验测试
 ===============================================================
@@ -320,3 +323,4 @@ class TestRuntimeCheckable:
             async def spawn_kitten(self, t, r, c=None): pass
             async def absorb_merge(self, p) -> None: pass
         assert isinstance(Dummy(), CatProtocol)
+

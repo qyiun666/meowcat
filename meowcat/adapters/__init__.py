@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat organ adapters — plug external agents / skills into organ sockets.
 
 v1.2.14: Each organ Protocol is a socket; any external agent or skill can be the plug.
@@ -11,7 +14,6 @@ Usage::
     cat.mount("brain", "cerebrum", CerebrumAgent(my_coding_agent))
     cat.mount("brain", "hippocampus", HippocampusAgent(my_memory_skill))
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from meowcat.adapters.base import AgentOrgan, SkillOrgan
 from meowcat.adapters.brain import (
@@ -36,6 +38,9 @@ from meowcat.adapters.voice import (
     PurrAgent,
     TailAgent,
 )
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 __all__ = [
     "AgentOrgan",
@@ -60,3 +65,4 @@ __all__ = [
     "PurrAgent",
     "TailAgent",
 ]
+

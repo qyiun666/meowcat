@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus/gateway — concrete protocol adapter implementations.
 
 These are optional batteries providing real I/O adapters (HTTP, WebSocket,
@@ -5,12 +8,20 @@ Webhook, CLI, IPC). Keep ``meowcat/gateway/`` for pure abstractions
 (Gateway, IoAdapterProtocol, SignalContext).
 
 Usage::
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     from meowcat.plus.gateway import HttpAdapter, CliAdapter
 """
-# (c) 2025-2026 Axonant. MIT License.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 from __future__ import annotations
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 from meowcat.plus.gateway.http_adapter import HttpAdapter
 from meowcat.plus.gateway.ws_adapter import WsAdapter
@@ -25,3 +36,4 @@ __all__ = [
     "CliAdapter",
     "IpcAdapter",
 ]
+

@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat sense organ adapters — Ears, Eyes, Whiskers, Paws.
 
 v1.2.14: One adapter per sense Protocol.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -46,6 +48,9 @@ class EyesAgent(AgentOrgan):
         self, image_data: bytes, mime_type: str = "image/png",
     ) -> dict[str, Any]:
         return await self._delegate("see", image_data=image_data, mime_type=mime_type)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 class WhiskersAgent(AgentOrgan):
@@ -67,6 +72,9 @@ class WhiskersAgent(AgentOrgan):
             result = fn(recent_outputs=recent_outputs)
             return result if isinstance(result, dict) else {"drift": False}
         return {"drift": False}
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def check_hallucination(
         self, reply: str, session_id: str | None = None,
@@ -76,6 +84,9 @@ class WhiskersAgent(AgentOrgan):
             result = fn(reply=reply, session_id=session_id)
             return result if isinstance(result, dict) else {"hallucination": False}
         return {"hallucination": False}
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     def detect_blind_spot(
         self, recent_queries: list[str], known_topics: list[str] | None = None,
@@ -140,3 +151,4 @@ class PawsAgent(AgentOrgan):
 
 
 __all__ = ["EarsAgent", "EyesAgent", "WhiskersAgent", "PawsAgent"]
+

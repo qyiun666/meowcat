@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat Skill system — framework-layer reusable skill abstraction.
 
 Difference from Tool:
@@ -6,7 +9,6 @@ Difference from Tool:
 
 A Skill is a coarser-grained capability unit than a Tool; a Skill may internally call multiple Tools.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -61,6 +63,9 @@ class Skill:
         return self.spec.name
 
     @property
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     def description(self) -> str:
         return self.spec.description
 
@@ -187,3 +192,4 @@ class SkillRegistry:
             elif any(q in t.lower() for t in skill.spec.tags):
                 results.append(skill)
         return results
+

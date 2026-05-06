@@ -1,10 +1,12 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat protocol layer — blueprint of cat anatomical structure.
 
 All typing.Protocol (duck typing), zero third-party dependencies.
 
 v1.0.5: storage/brain/sense protocols split into sub-modules; this file re-exports for compatibility.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -111,6 +113,9 @@ class SecurityPolicyProtocol(Protocol):
     an empty cat defaults to ``is_danger → False``.
     """
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     def is_danger(self, input: str) -> bool: ...
     def assess_tool_risk(
         self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
@@ -134,6 +139,9 @@ class KittenProtocol(Protocol):
 
     **Implemented by**: app layer (KittenAgent implementation)
     """
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     parent_id: str                   # parent cat_uid, string identifier only
     task: SubTaskShape
@@ -176,6 +184,9 @@ class OrchestratorProtocol(Protocol):
 @runtime_checkable
 class SettingsProtocol(Protocol):
     """Settings interface — exposes only data_dir to framework layer.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     **Position**: none (config layer, held directly by Cat)
     **Inbound**: accessed by all organs via cat.settings
@@ -261,3 +272,4 @@ class CatProtocol(Protocol):
         capability: KittenCapability | None = None,
     ) -> KittenProtocol: ...
     async def absorb_merge(self, proposal: MergeProposalShape) -> None: ...
+

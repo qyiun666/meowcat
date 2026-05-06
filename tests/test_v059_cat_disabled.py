@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v0.5.9 — 残疾猫一等公民：enable_wiring=False / enable_reflex=False 构造。"""
 
 from __future__ import annotations
@@ -55,3 +58,4 @@ def test_cat_disabled_both_subsystems_survives_init() -> None:
     assert cat.name == "c"
     cat.mount("brain", "a", object())
     assert cat.has_organ("brain", "a")
+

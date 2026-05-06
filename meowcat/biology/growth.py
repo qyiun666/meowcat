@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """CollectiveGrowth — colony-level anomaly/correction growth synced to SharedStorage.
 
 Wraps a :class:`~meowcat.colony.Colony` and pushes anomaly / correction
@@ -15,7 +18,6 @@ Usage::
     # Custom strategy via plug
     colony.growth.plug("strategy", my_custom_threshold)
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -63,6 +65,9 @@ class CollectiveGrowth(Pluggable):
         phase: str = "input",
     ) -> str:
         """Record an anomaly to the colony growth namespace.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         Args:
             cat_uid: Source cat identifier.
@@ -133,7 +138,13 @@ class CollectiveGrowth(Pluggable):
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     # -- Query ---------------------------------------------------------
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def list_anomalies(
         self, limit: int = 20, cat_uid: str | None = None,
@@ -211,3 +222,4 @@ class CollectiveGrowth(Pluggable):
 
 
 __all__ = ["CollectiveGrowth"]
+

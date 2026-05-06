@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus/gateway — HttpAdapter (HTTP POST /chat JSON protocol adapter).
 
 Non-streaming request/response: JSON body ``{"message": "..."}`` → JSON response ``{"reply": "..."}``.
@@ -5,7 +8,6 @@ Optional SSE for streaming (``Accept: text/event-stream`` → stream_chunk push 
 
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -69,6 +71,9 @@ class HttpAdapter:
                 return
             method, path = parts[0], parts[1]
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
             # read headers
             headers: dict[str, str] = {}
             while True:
@@ -104,6 +109,9 @@ class HttpAdapter:
             )
 
             accept = headers.get("accept", "")
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
             if "text/event-stream" in accept:
                 # SSE streaming response
@@ -182,3 +190,4 @@ class HttpAdapter:
 
 
 __all__ = ["HttpAdapter"]
+

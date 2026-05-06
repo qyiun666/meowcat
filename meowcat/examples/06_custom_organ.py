@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """Example 06: Custom organ — write an organ satisfying a Protocol and mount it.
 
 Scenario: The user wants to add a custom organ to a cat (e.g. special audio processing).
@@ -6,7 +9,6 @@ via wiring and the signal system.
 
 Run: ``python -m meowcat.examples.06_custom_organ``
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -60,3 +62,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
+

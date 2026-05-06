@@ -1,10 +1,12 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat keyword & prompt presets — bilingual base presets, user-customizable.
 
 二语 可挂载:
   关键词预设 → 注入 Ears/Thalamus/Amygdala/Frontal
   提示词预设 → 注入 Brainstem/Cerebrum
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -155,6 +157,9 @@ _EN_COMMANDS: dict[str, str] = {
     "web": "action", "fetch": "action", "download": "action",
     "config": "chat", "settings": "chat", "setup": "chat",
 }
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 # -- Chinese command patterns (中文指令路由) --------------------------
 
@@ -288,3 +293,4 @@ __all__ = [
     "PROMPT_DEFAULT", "PROMPT_ZH",
     "KW_PRESETS", "PROMPT_PRESETS",
 ]
+

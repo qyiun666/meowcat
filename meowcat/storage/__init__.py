@@ -1,8 +1,10 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat storage layer — shared storage abstract base + built-in backends.
 
 ``meowcat/storage/`` has zero meowagent dependency.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 from meowcat.storage.jsonl_l6_store import JsonlL6Store
@@ -31,6 +33,9 @@ class SharedStore(ABC):
 
     @abstractmethod
     async def get(self, key: str) -> Any: ...
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     @abstractmethod
     async def set(self, key: str, value: Any) -> None: ...
@@ -40,6 +45,9 @@ class SharedStore(ABC):
 
     @abstractmethod
     async def list_keys(self) -> list[str]: ...
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     @abstractmethod
     async def watch(self, pattern: str) -> AsyncIterator[tuple[str, Any]]:
@@ -67,3 +75,4 @@ class SharedStore(ABC):
 
 
 __all__ = ["SharedStore", "SqliteGraphStore", "JsonlL6Store", "VectorStore"]
+

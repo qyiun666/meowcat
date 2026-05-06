@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat perception context and modality inference.
 
 :class:`PerceptionContext` is the cross-Stage shared state container during
@@ -7,7 +10,6 @@ Reflex.trigger directly.
 
 Zero meowagent dependency.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -59,6 +61,9 @@ class PerceptionContext(BaseModel):
 
     # ── helpers for cross-Stage state (v1.0.18) ──
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     def set_state(self, key: str, value: Any) -> None:
         """Persist a named value in extras for downstream Stages."""
         self.extras[key] = value
@@ -66,6 +71,9 @@ class PerceptionContext(BaseModel):
     def get_state(self, key: str, default: Any = None) -> Any:
         """Read a named value from extras; returns default if missing."""
         return self.extras.get(key, default)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     def accumulate_reply(self, content: str) -> None:
         """Append content to the accumulated reply string."""
@@ -123,3 +131,4 @@ def infer_modality(input: Any) -> Modality:
 
 
 __all__ = ["PerceptionContext", "Modality", "infer_modality"]
+

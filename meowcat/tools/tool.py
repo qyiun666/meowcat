@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat tool base — framework-layer Tool abstraction.
 
 Every cat has paws, and paws can execute tools. The framework defines what a tool is,
 how to register, and how to execute. The application layer provides concrete tool implementations.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -84,6 +86,9 @@ class Tool:
 
     def disable(self) -> None:
         self._enabled = False
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     # -- Schema generation -------------------------------------------
 
@@ -218,3 +223,4 @@ class ToolRegistry:
             tool.disable()
             return True
         return False
+

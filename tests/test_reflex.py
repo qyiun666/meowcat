@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: ReflexRegistry 注册/匹配/校验。
 
 验证:
@@ -188,3 +191,4 @@ class TestReflexRegistryUnregister:
     def test_unregister_nonexistent(self) -> None:
         reg = ReflexRegistry()
         assert reg.unregister("no-such") is False
+

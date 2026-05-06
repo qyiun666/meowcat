@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat system commands — /version /wiring /inject /debug /help (v1.1.11).
 
 All five builtin commands with i18n support. ``register_system_commands()``
@@ -164,6 +167,9 @@ def register_colony_commands(
     active_cat_ref: list[Any],
 ) -> None:
     """Register colony management and diagnose commands on the router.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     Args:
         router: :class:`CommandRouter` to register on.
@@ -377,3 +383,4 @@ def _format_brain_results(t: Any, cat_uid: str, results: dict) -> str:
 __all__ = ["cmd_help", "cmd_version", "cmd_debug",
            "register_system_commands", "is_debug",
            "register_colony_commands"]
+

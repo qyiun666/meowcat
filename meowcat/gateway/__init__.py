@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat Gateway subsystem — the cat's skin (sole external I/O entry/exit).
 
 Gateway is the only I/O abstraction layer between the cat and the outside world.
@@ -21,7 +24,6 @@ Usage example::
     gw.mount_adapter(CliAdapter())
     await gw.start()  # blocking, all Adapters run in parallel
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -34,6 +36,9 @@ from meowcat.gateway.protocol import (
     GatewayProtocol,
     SignalContext,
 )
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 if TYPE_CHECKING:
     from meowcat.assembly import CatBase
@@ -63,6 +68,9 @@ class Gateway:
     def adapter_names(self) -> list[str]:
         """List of mounted adapter names."""
         return list(self._adapters.keys())
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     # -- Lifecycle ----------------------------------------------------
 
@@ -77,6 +85,9 @@ class Gateway:
             ))
         # all Adapters run in parallel, any exception propagates
         await asyncio.gather(*tasks)
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def stop(self) -> None:
         """Stop all Adapters."""
@@ -115,3 +126,4 @@ __all__ = [
     "IoAdapterProtocol",
     "GatewayProtocol",
 ]
+

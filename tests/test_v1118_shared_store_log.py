@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.18 SharedStore + Log — shared storage interface + structured logging tests."""
 
 import pytest
@@ -151,3 +154,4 @@ class TestImportSmoke:
     def test_meow_log_import(self) -> None:
         from meowcat import MeowLog as M  # noqa: F811
         assert M is MeowLog
+

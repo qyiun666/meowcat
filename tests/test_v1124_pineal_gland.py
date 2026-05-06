@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.24 PinealGland + FusionCycle — insight organ + fusion strategies."""
 
 from __future__ import annotations
@@ -515,3 +518,4 @@ class TestPinealGlandIntegration:
         assert gland.list_plugs() == {}
         gland.plug("merger", DefaultMerger())
         assert "merger" in gland.list_plugs()
+

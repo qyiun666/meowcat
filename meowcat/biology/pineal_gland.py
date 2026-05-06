@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """PinealGland — the cat's insight organ: scribbles → meditation → insights.
 
 插座式设计: framework provides ``meditate()`` algorithm + ``trigger()`` entry,
@@ -26,7 +29,6 @@ Usage::
     gland.trigger_if(FusionCycle.on_full(50))  # only when full
     gland.trigger_if(FusionCycle.on_event("conversation_end"))
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -152,6 +154,9 @@ class PinealGland(Pluggable):
         for _name, r in self._run_plugs_sync("contradiction", list(insights)):
             if isinstance(r, list):
                 contradiction_pairs = r
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         # Mark contradictions on insights
         for i_idx, j_idx in contradiction_pairs:
@@ -297,6 +302,9 @@ def _default_merger(
     if not scribbles:
         return []
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     def _to_keywords(item: Any) -> set[str]:
         s = str(item) if not isinstance(item, str) else item
         # Simple word tokenisation
@@ -433,3 +441,4 @@ __all__ = [
     "DefaultContradiction",
     "DefaultInsightFilter",
 ]
+

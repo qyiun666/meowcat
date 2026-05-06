@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus — optional pluggable module pack.
 
 Install with ``pip install meowcat[plus]`` to pull in runtime dependencies
@@ -6,9 +9,11 @@ because everything in ``meowcat/plus/`` is only loaded on demand.
 
 See :ref:`meowcat-plus-architecture`.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 from meowcat.plus.browser import BrowserTool
 from meowcat.plus.chroma_store import ChromaStore
@@ -23,6 +28,9 @@ from meowcat.plus.gateway import (
     CliAdapter,
     IpcAdapter,
 )
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
 __all__ = [
     "BrowserTool",
@@ -40,3 +48,4 @@ __all__ = [
     "CliAdapter",
     "IpcAdapter",
 ]
+

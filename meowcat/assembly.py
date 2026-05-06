@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat assembly skeleton — Cat base class (v0.5.9 facade pattern).
 
 meowcat defines the cat skeleton and lifecycle; meowagent subclasses choose
@@ -39,7 +42,6 @@ No: specific organ instantiation, config loading, I/O — these are meowagent's 
 can run, ``enable_reflex=False`` can also run; corresponding signal/perceive
 will raise RuntimeError clearly indicating the subsystem is disabled.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -247,6 +249,9 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
                 "wiring disabled — construct with enable_wiring=True",
             )
         return self._nervous.wiring
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     @property
     def reflexes(self) -> "ReflexRegistry":
@@ -296,6 +301,9 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         return self._current_snapshot
 
     # -- Organ container facade ---------------------------------------------
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def mount(
         self,
@@ -307,6 +315,9 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
     ) -> None:
         """Mount organ (forwards to :class:`OrganHost`)."""
         self._host.mount(category, name, organ, protocol=protocol)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def organ(self, category: str, name: str) -> Any:
         """Retrieve organ (forwards to :class:`OrganHost`)."""
@@ -683,3 +694,4 @@ def assemble_default_cat(
 
 
 __all__ = ["CatBase", "CatHook", "assemble_default_cat", "mount_known_organs"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus/gateway — IpcAdapter (Unix socket inter-process communication adapter).
 
 For desktop app IPC. The framework layer only provides Unix socket pipes;
@@ -5,7 +8,6 @@ macOS sandbox, Windows named pipes, etc. are implemented by the desktop layer.
 
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -55,6 +57,9 @@ class IpcAdapter:
 
         async with self._server:
             await self._server.serve_forever()
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
@@ -68,6 +73,9 @@ class IpcAdapter:
             platform="ipc",
             user_id="desktop-user",
         )
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         try:
             while True:
@@ -79,6 +87,9 @@ class IpcAdapter:
                     msg = json.loads(line.decode().strip())
                 except json.JSONDecodeError:
                     continue
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
                 text = msg.get("message", "") if isinstance(
                     msg, dict) else str(msg)
@@ -142,3 +153,4 @@ class IpcAdapter:
 
 
 __all__ = ["IpcAdapter"]
+

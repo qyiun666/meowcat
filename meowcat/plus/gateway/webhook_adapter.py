@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus/gateway — WebhookAdapter (callback skeleton adapter).
 
 Receives HTTP POST callbacks, supports signature verification interface (subclass implements).
@@ -6,7 +9,6 @@ The framework layer only provides the protocol pipe; platform-specific logic
 
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -61,6 +63,9 @@ class WebhookAdapter:
         return body.get("message", ""), body.get("user_id", "unknown")
 
     # -- Adapter protocol implementation --------------------------------------
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def serve(
         self,
@@ -80,6 +85,9 @@ class WebhookAdapter:
 
         async with self._server:
             await self._server.serve_forever()
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def _handle_webhook(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
@@ -122,6 +130,9 @@ class WebhookAdapter:
             if not self.verify_signature(headers, body_raw):
                 await self._respond(writer, 403)
                 return
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
             body = json.loads(body_raw.decode()) if body_raw else {}
             text, user_id = self.parse_message(body)
@@ -181,3 +192,4 @@ class WebhookAdapter:
 
 
 __all__ = ["WebhookAdapter"]
+

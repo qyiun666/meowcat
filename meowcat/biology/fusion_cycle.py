@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """FusionCycle — pre-built fusion trigger strategies for PinealGland.
 
 Provides ``on_full`` / ``on_timer`` / ``on_event`` static factories
@@ -17,7 +20,6 @@ Usage::
     # Trigger on a named event
     gland.trigger_if(FusionCycle.on_event("conversation_end"))
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -35,6 +37,9 @@ class FusionCycle:
     Each method returns a ``Callable[[ScribblePad], bool]`` suitable for
     passing to ``PinealGland.trigger_if()``.
     """
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
     @staticmethod
     def on_full(min_count: int) -> Callable[[ScribblePad], bool]:
@@ -57,6 +62,9 @@ class FusionCycle:
         return _condition
 
     @staticmethod
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     def on_timer(minutes: int) -> Callable[[ScribblePad], bool]:
         """Trigger based on elapsed time since last trigger.
 
@@ -73,6 +81,9 @@ class FusionCycle:
             raise ValueError(f"minutes must be >= 1, got {minutes}")
 
         last_trigger = [0.0]  # mutable cell
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         def _condition(pad: ScribblePad) -> bool:
             now = _time.time()
@@ -110,3 +121,4 @@ class FusionCycle:
 
 
 __all__ = ["FusionCycle"]
+

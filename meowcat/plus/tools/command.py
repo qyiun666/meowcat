@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus command execution tool — run_command.
 
 Concrete I/O implementation that executes shell commands via subprocess.
 Import from ``meowcat.plus.tools`` or ``meowcat.plus``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -25,6 +27,9 @@ _SAFE_ENV_KEYS: frozenset[str] = frozenset({
     "SHELL", "TERM",
     "VIRTUAL_ENV", "CONDA_PREFIX",  # Python env
 })
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 def _build_safe_env() -> dict[str, str]:
@@ -34,10 +39,16 @@ def _build_safe_env() -> dict[str, str]:
         value = os.environ.get(key)
         if value is not None:
             env[key] = value
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     # Always ensure PATH is present
     if "PATH" not in env:
         env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
     return env
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 
 async def _run_command(command: str, **_: Any) -> str:
@@ -73,3 +84,4 @@ plus_run_command = Tool(
     ),
     handler=_run_command,
 )
+

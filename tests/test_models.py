@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: 所有 Shape 构造 + 序列化 + 默认值。
 
 验证:
@@ -285,3 +288,4 @@ class TestKittenCapability:
         d = k.model_dump()
         assert d["inherit_memory"] == "partial"
         assert d["inherit_entity_ids"] == ["e1"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat neural pathway graph (Wiring) — cat's neuroanatomical constraints.
 
 Wiring is a **directed graph + blocklist** declaring which inter-organ calls are legal.
@@ -13,7 +16,6 @@ Design points:
 
 This file has zero third-party dependencies, pure stdlib.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -101,6 +103,9 @@ class Wiring:
                 from_organ, to_organ, reason="not connected in wiring",
             )
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     @property
     def frozen(self) -> bool:
         """Whether wiring is frozen."""
@@ -122,6 +127,9 @@ class Wiring:
         if not edges:
             return False
         return any(e not in self._forbidden for e in edges)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def snapshot(self) -> "WiringSnapshot":
         """Return an immutable view of the current graph, for frozen reads during reflex execution."""
@@ -192,3 +200,4 @@ def _validate_organ(organ: Organ, label: str) -> None:
 
 
 __all__ = ["Wiring", "WiringSnapshot", "Organ", "Edge"]
+

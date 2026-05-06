@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat public API — centralized ``__all__`` and lazy-load mapping.
 
 This module exists so ``import meowcat`` only loads this tiny file + ``__init__.py``.
 All actual modules are imported on first attribute access via :func:`__getattr__`.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -315,6 +317,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ReflexRegistry":       ("meowcat.reflex", "ReflexRegistry"),
     "Trigger":              ("meowcat.reflex", "Trigger"),
     "BUILTIN_REFLEX_PATHS": ("meowcat.reflex", "BUILTIN_REFLEX_PATHS"),
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     # — middleware —
     "SignalLogger":    ("meowcat.middleware", "SignalLogger"),
     "RateLimiter":     ("meowcat.middleware", "RateLimiter"),
@@ -325,6 +330,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "OrganMixin": ("meowcat.organ_base", "OrganMixin"),
     # — pipeline —
     "Pipeline": ("meowcat.pipeline", "Pipeline"),
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     # — perception —
     "PerceptionContext": ("meowcat.perception", "PerceptionContext"),
     "Modality":          ("meowcat.perception", "Modality"),
@@ -334,6 +342,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "render_wiring":     ("meowcat.diagnose", "render_wiring"),
     "Needle":            ("meowcat.inject", "Needle"),
     "NeedleDisabledError": ("meowcat.inject", "NeedleDisabledError"),
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
     # — path / chain / loops —
     "Path":                   ("meowcat.path", "Path"),
     "PathRegistry":           ("meowcat.path", "PathRegistry"),
@@ -582,3 +593,4 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
 
 # — Submodule names (lazy via importlib) —
 _SUBMODULES: frozenset[str] = frozenset({"anatomy", "biology", "organ_roles"})
+

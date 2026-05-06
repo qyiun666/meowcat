@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.2.19 — Signal circuit breaker tests.
 
 Tests the circuit breaker embedded in Nervous.signal():
@@ -286,3 +289,4 @@ def test_circuit_state_defaults() -> None:
     assert cs.failures == 0
     assert cs.last_failure == 0.0
     assert cs.open_until == 0.0
+

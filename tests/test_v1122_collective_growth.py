@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.22 Collective Growth — anomaly/correction shared to growth/ namespace + colony-level role emergence."""
 
 from __future__ import annotations
@@ -357,3 +360,4 @@ class TestFullLifecycle:
             assert len(patterns) >= 1
             assert patterns[0]["pattern"] == "数据库安全检查"
         _run(_test())
+

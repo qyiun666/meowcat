@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: v0.5.22 新增原语（Stethoscope / Needle）。
 
 验证:
@@ -309,4 +312,5 @@ class TestNeedle:
             cat = make_cat("test")
             with pytest.raises(NeedleDisabledError):
                 Needle(cat)
+
 

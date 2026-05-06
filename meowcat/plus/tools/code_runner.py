@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat plus code runner — sandboxed code execution.
 
 Executes Python or JavaScript code in an isolated subprocess with
@@ -23,7 +26,6 @@ Known limitations (acceptable for a framework-layer tool):
 - No network isolation — code can make outbound HTTP requests
 - No resource limits (CPU/memory) beyond timeout
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -53,6 +55,9 @@ _CODE_TIMEOUT = 10  # seconds
 
 async def _code_runner(language: str, code: str, **_: Any) -> str:
     """Execute code in a sandboxed subprocess.
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     Args:
         language: ``"python"`` or ``"javascript"``.
@@ -154,3 +159,4 @@ plus_code_runner = Tool(
 )
 
 __all__ = ["plus_code_runner"]
+

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat tool system — framework-layer Tool/Skill/Paws abstraction.
 
 Every cat has paws, and paws can execute tools. The framework defines what a tool is,
@@ -5,7 +8,6 @@ how to register, and how to execute. Concrete implementations live in ``meowcat.
 
 ``meowcat/tools/`` has zero meowagent dependency and zero concrete I/O.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -16,6 +18,9 @@ from meowcat.tools.paws import PawsEngine
 from meowcat.tools.matcher import KeywordToolMatcher
 
 # -- Re-export concrete plus/ implementations for backward compatibility -----
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 # Delegates to the central _LAZY_MAP from meowcat._exports (single source of truth).
 
 
@@ -38,6 +43,9 @@ def __getattr__(name: str):
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
 # Remove eager imports that cause circular dependency
 # (previously: from meowcat.plus.tools import BUILTIN_TOOLS; from meowcat.plus import ...)
@@ -62,3 +70,4 @@ __all__ = [
     "DefaultDetector",
     "KeywordToolMatcher",
 ]
+

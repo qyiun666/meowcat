@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat v1.0.14 — Cat Lifecycle Hooks 测试。
 
 覆盖:
@@ -289,3 +292,4 @@ class TestFullLifecycle:
 
         anyio.run(_run)
         assert log == ["s1", "s2", "d2", "d1"]  # start 顺序, shutdown 逆序
+

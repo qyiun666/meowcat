@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.0.17 — Pipeline Stage base classes and Noop* Stage stubs."""
 
 from __future__ import annotations
@@ -99,3 +102,4 @@ class TestBuildDefaultPipeline:
         pipe = build_default_pipeline()
         p = Pipeline(pipe)
         assert len(p.stages) == 5
+

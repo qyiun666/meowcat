@@ -1,11 +1,16 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus builtin tools — pre-assembled tool set.
 
 These are the concrete tool implementations every cat can use
 out of the box.  Pure-framework abstractions live in ``meowcat.tools``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
 from meowcat.tools.tool import Tool
 from meowcat.plus.tools.file_ops import plus_read_file, plus_write_file
@@ -27,3 +32,4 @@ BUILTIN_TOOLS: list[Tool] = [
 ]
 
 __all__ = ["BUILTIN_TOOLS"]
+

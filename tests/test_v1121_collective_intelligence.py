@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.1.21 Collective Intelligence — Cross-cat memory search + delegation with memory snapshot."""
 
 from __future__ import annotations
@@ -256,3 +259,4 @@ class TestKeywordSearch:
 
         results = colony.memory.keyword_search("test memory", k=3)
         assert len(results) <= 3
+

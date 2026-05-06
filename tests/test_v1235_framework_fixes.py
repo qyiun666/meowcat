@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v1.2.35 框架级修复回归测试。
 
 覆盖 T1~T6:
@@ -210,3 +213,4 @@ class Test_T6_ToolsLazyDelegation:
         import meowcat.tools as _tools
         with pytest.raises(AttributeError):
             _ = _tools.NonExistent
+

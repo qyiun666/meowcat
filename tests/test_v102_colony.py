@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.2 — Colony 猫群容器测试
 ==============================
@@ -641,3 +644,4 @@ class TestTaskDelegation:
         # 验证结果最终可用
         result = await colony.await_task(task_id, poll_interval=0.1, max_wait=5.0)
         assert result == "slow-result"
+

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 """meowcat default Stage stubs — no-op pipeline stage implementations (v1.0.17).
 
@@ -34,6 +36,9 @@ class BaseStage(Pluggable):
     HOOKS: dict[str, dict[str, str]] = {
         "run": {"in": "ctx: PipelineContext", "out": "AsyncIterator[StageEvent]"},
     }
+
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -108,3 +113,4 @@ __all__ = [
     "NoopExecuteStage", "NoopPostStage", "NoopCompressStage",
     "build_default_pipeline",
 ]
+

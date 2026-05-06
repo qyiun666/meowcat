@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat plus filesystem tools — list_dir / grep_files.
 
 Concrete I/O implementations for directory listing and file-content search.
 Import from ``meowcat.plus.tools`` or ``meowcat.plus``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -67,6 +69,9 @@ plus_list_dir = Tool(
     ),
     handler=_list_dir,
 )
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 # -- grep_files --------------------------------------------------------
 
@@ -166,3 +171,4 @@ def _fmt_size(size: int) -> str:
 
 
 __all__ = ["plus_list_dir", "plus_grep_files"]
+

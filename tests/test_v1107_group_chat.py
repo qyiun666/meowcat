@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """
 v1.1.7 — 群聊通信测试
 =====================
@@ -308,3 +311,4 @@ class TestGroupChatIntegration:
         results = await colony.broadcast_request("assess_safety")
         assert results[a.cat_uid]["safe"] is True
         assert results[b.cat_uid]["safe"] is False
+

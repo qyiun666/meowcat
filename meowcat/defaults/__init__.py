@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat built-in default implementations — ready-to-use reference implementations.
 
 All zero external dependencies (pure Python dict/list), for rapid prototyping and testing.
 For production, replace with meowagent or custom real organ implementations.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from meowcat.defaults.factory import _UNSET, create_cat
@@ -108,3 +110,4 @@ __all__ = [
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
 ]
+

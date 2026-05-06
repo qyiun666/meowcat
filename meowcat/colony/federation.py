@@ -1,9 +1,11 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """Federation mixin — cross-host Colony peer-to-peer communication.
 
 Provides federate / unfederate / signal_remote for Colony instances.
 Imported into :class:`~meowcat.colony.Colony` as a mixin base class.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -82,6 +84,9 @@ class _FederationMixin:
             await self._transport.stop()
             self._transport = None
 
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
         # Cancel all pending remote requests
         for fut in self._pending_remote.values():
             if not fut.done():
@@ -106,6 +111,9 @@ class _FederationMixin:
         Requires this Colony to have called federate() to enable federation.
         The remote Colony wiring still applies — the remote cat's own wiring
         validates whether the target organ and method are accessible.
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
         Args:
             target_colony: Remote colony_id.
@@ -145,6 +153,9 @@ class _FederationMixin:
 
         fut: asyncio.Future = asyncio.get_event_loop().create_future()
         self._pending_remote[request_id] = fut
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         try:
             await self._transport.publish(target_colony, payload)
@@ -234,3 +245,4 @@ class _FederationMixin:
         fut = self._pending_remote.get(request_id)
         if fut and not fut.done():
             fut.set_result(msg)
+

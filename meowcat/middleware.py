@@ -1,9 +1,11 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat built-in signal middleware — logging, tracing, rate limiting, timeout.
 
 All middleware implements :class:`SignalMiddleware` Protocol, can be registered
 directly via ``cat.use_middleware(...)``.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -80,6 +82,9 @@ class RateLimiter:
         return ctx
 
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 class TimeoutGuard:
     """Auto-abort on timeout.
 
@@ -91,6 +96,9 @@ class TimeoutGuard:
         on_timeout: optional callback invoked when timeout occurs.
             Receives :class:`SignalCall` ctx. Can be sync or async.
             Use to notify organs (e.g. Amygdala recording anomaly).
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     Example:
 
@@ -151,3 +159,4 @@ class ContextInjector:
 
 
 __all__ = ["SignalLogger", "RateLimiter", "TimeoutGuard", "ContextInjector"]
+

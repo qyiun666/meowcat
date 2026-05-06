@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v1.1.29 skeleton abstraction tests — coordination, matcher, model config, theme, worker."""
 
 from __future__ import annotations
@@ -422,3 +425,4 @@ class TestBaseWorker:
         state = await worker.run("t1", [{"n": 1}, {"fail": True}])
         assert state.status == WorkerStatus.FAILED
         assert "boom" in state.error
+

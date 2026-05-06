@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """v0.5.9 — 向后兼容契约：v0.5.0~v0.5.8 旧 API 保持一字不改。
 
 锚点：meowagent/cat/agent.py#L75 ``super().__init__(cat_uid)``
@@ -102,3 +105,4 @@ def test_catbase_allowed_organs_blocks_access():
     # 禁止属性抛 IllegalNeuralPathError
     with pytest.raises(IllegalNeuralPathError):
         _ = cat.hippocampus
+

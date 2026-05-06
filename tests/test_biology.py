@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat 独立测试: 默认 wiring 表合法性 + 生物常数。
 
 验证:
@@ -100,3 +103,4 @@ class TestApplyDefaultWiring:
         w = Wiring()
         apply_default_wiring(w)
         assert not w.frozen
+

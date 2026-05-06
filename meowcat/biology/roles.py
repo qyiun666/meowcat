@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """CollectiveEmergence — colony-level role detection from behavior patterns.
 
 Observers the colony's ``growth/`` namespace and records per-cat behavior
@@ -13,7 +16,6 @@ Usage::
     # Custom detector via plug
     colony.emergence.plug("detector", my_ml_detector)
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -83,9 +85,15 @@ class CollectiveEmergence(Pluggable):
         async for _name, r in self._run_plugs("detector", events):
             if isinstance(r, list):
                 return r
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
         # Default detector: keyword-based role clustering
         return self._default_detect(events, min_events)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     @staticmethod
     def _default_detect(
@@ -140,6 +148,9 @@ class CollectiveEmergence(Pluggable):
         }, ensure_ascii=False)
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     async def list_patterns(
         self, limit: int = 50, cat_uid: str | None = None,
@@ -211,3 +222,4 @@ def _infer_role(reason: str) -> str:
 
 
 __all__ = ["CollectiveEmergence"]
+

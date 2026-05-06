@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat renovated organs — 简装修 (light-renovation) default implementations.
 
 Each Renovated* class extends the Noop*毛坯 (bare) stub, adding minimal but
@@ -7,7 +10,6 @@ useful default behavior. Developers get a working cat out of the box with
 The renovated organs bridge the gap between pure stubs and full app-layer
 implementations — enough to run simple flows, test wiring, and prototype.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -483,6 +485,9 @@ class RenovatedCerebrum(NoopCerebrum):
     :class:`PromptPreset` for system prompt templates.
     Without ``llm_fn``, returns a helpful message.
     """
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     name: str = "renovated_cerebrum"
     impl_style: ImplementationStyle = ImplementationStyle.MODEL
@@ -783,6 +788,9 @@ class RenovatedWhiskers(NoopWhiskers):
             if marker.lower() in lower:
                 return True
         return False
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
     def is_negation(self, text: str) -> bool:
         """Check if user is negating/correcting the agent.
@@ -1163,3 +1171,4 @@ __all__ = [
     # Mappings
     "RENOVATED_ORGAN_MAP",
 ]
+

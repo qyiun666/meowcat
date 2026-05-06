@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """python -m meowcat new <name> -- cat project scaffolding.
 
 Comparable to Flask ``flask new`` / FastAPI ``fastapi new`` -- minimal.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -22,6 +24,9 @@ class EchoCerebrum:
 
     async def generate(self, prompt, system_prompt=None, temperature=0.7, max_tokens=None):
         return f"[Echo] Received: {prompt[:200]}"
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 
     async def stream_generate(self, prompt, system_prompt=None, temperature=0.7, max_tokens=None):
         yield f"[Echo] {prompt[:200]}"
@@ -31,6 +36,9 @@ class EchoCerebrum:
 
     def diagnose(self):
         return {"echo": True}
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 
 async def main() -> None:
@@ -49,6 +57,9 @@ if __name__ == "__main__":
     asyncio.run(main())
 ''',
 }
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
 
 def new_project(name: str, target_dir: Path | None = None) -> Path:
@@ -80,3 +91,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

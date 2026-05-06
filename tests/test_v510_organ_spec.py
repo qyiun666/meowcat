@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """v0.5.10 — OrganSpec 结构单测 + 聚合函数覆盖。
 
 验证 ORGAN_SPECS 的结构性约束：坐标唯一、protocol 合法、聚合函数
@@ -173,3 +176,4 @@ def test_hypothalamus_self_loop_exists() -> None:
     """下丘脑有自环（稳态维护）。"""
     spec = next(s for s in ORGAN_SPECS if s.coord == HYPOTHALAMUS)
     assert HYPOTHALAMUS in spec.out_edges
+

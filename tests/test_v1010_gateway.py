@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """
 v1.0.10 — Gateway 体系测试
 ===========================
@@ -999,3 +1002,4 @@ class TestSignalContextInjection:
         assert isinstance(ctx.timestamp, str)
         # timestamp 是 ISO 8601 格式
         assert "T" in ctx.timestamp
+

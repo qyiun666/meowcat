@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """meowcat standalone tests: v1.0.11 synthesize Path (worldview synthesis).
 
 Validates:
@@ -150,3 +153,4 @@ class TestSynthesizePathRun:
         assert p.from_organ == BRAINSTEM
         assert p.to_organ == CORTEX
         assert p.method == "synthesize"
+

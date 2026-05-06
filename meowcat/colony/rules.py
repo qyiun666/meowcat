@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 """ColonyRules — safety policy, approval, rate limiting for a Colony.
 
 Extends Pluggable for custom rule checking via ``on_check`` hook.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 from __future__ import annotations
 
@@ -20,6 +22,9 @@ class ColonyRules(Pluggable):
 
         ColonyRules(safety_policy="strict", approval_required=True, rate_limit_per_min=20)
         ColonyRules(extra={"custom_policy": "block_external_domains"})
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
         # Custom rule checker
         colony.rules.plug("on_check", my_multi_tenant_checker)
@@ -56,3 +61,4 @@ class ColonyRules(Pluggable):
             if isinstance(r, dict) and not r.get("allowed", True):
                 return r
         return {"allowed": True}
+

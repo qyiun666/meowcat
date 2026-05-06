@@ -1,3 +1,6 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat reflex arcs — stimulus→response execution contract.
 
 :class:`Reflex` three elements:
@@ -13,7 +16,6 @@
 At startup, ``cat.freeze_nervous_system()`` calls ``validate(wiring)`` to check each Reflex's
 path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvalidError`.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -96,6 +98,9 @@ class ReflexRegistry:
             self._by_priority.remove(old)
         self._by_name[reflex.name] = reflex
         bisect.insort(self._by_priority, reflex, key=lambda r: -r.priority)
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def unregister(self, name: str) -> bool:
         """Remove by name, returns False if not found."""
@@ -160,6 +165,9 @@ class ReflexRegistry:
         """Return per-reflex trigger counts (read-only copy)."""
         return dict(self._trigger_counts)
 
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
     # -- Validation --------------------------------------------------------
 
     def validate(self, wiring: Wiring) -> None:
@@ -190,6 +198,9 @@ class ReflexArc:
         async for ev in arc.perceive("hi", cat=None):
             ...
     """
+
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
 
     def __init__(
         self,
@@ -305,3 +316,4 @@ is always supplied by the application layer."""
 
 __all__ = ["Reflex", "ReflexRegistry",
            "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]
+

@@ -1,8 +1,10 @@
+# Copyright (c) 2026 qyiun666
+# SPDX-License-Identifier: MIT
+
 """meowcat storage protocols — persistence storage interfaces.
 
 All typing.Protocol (duck typing), zero third-party dependencies.
 """
-# (c) 2025-2026 Axonant. MIT License.
 
 
 from __future__ import annotations
@@ -45,6 +47,9 @@ class L6StorageProtocol(Protocol):
 
     def append(self, cat_uid: str, turn: int,
                user_msg: str, ai_reply: str) -> None: ...
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]: ...
     def load_recent(self, cat_uid: str,
@@ -129,3 +134,4 @@ class FederationTransport(Protocol):
     async def stop(self) -> None:
         """Stop the transport layer (e.g. close port)."""
         ...
+
