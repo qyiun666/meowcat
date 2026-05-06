@@ -208,7 +208,10 @@ class OpenAICerebrum:
     async def stream_generate(self, prompt, system_prompt=None,
                               temperature=0.7, max_tokens=None):
         result = await self.generate(prompt, system_prompt=system_prompt)
-        yield result
+
+        async def _stream():
+            yield result
+        return _stream()
 
     def reload_config(self) -> None:
         pass
@@ -224,22 +227,24 @@ cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
 #     async def stream_generate(self, prompt, system_prompt=None,
 #                               temperature=0.7, max_tokens=None):
 #         result = await self.generate(prompt, system_prompt=system_prompt)
-#         yield result
+#
+#         async def _stream():
+#             yield result
+#         return _stream()
 #     def reload_config(self) -> None:
 #         pass
 # cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="Kitty")
 
 # Unified perception entry — input enters, reply comes out
-reply = await cat.perceive("What's the weather today?")
+async for event in cat.perceive("What's the weather today?"):
+    # process pipeline events one by one
+    pass
 
 # Path: atomic organ-to-organ signal
-result = await cat.path_registry.run("locate", query="weather in Tokyo")
+result = await cat.path_registry.run(cat, "locate", msg="weather in Tokyo", session_id="default")
 
 # Chain: named path sequence
-result = await cat.chain_registry.run("full_reasoning", prompt="Why is the sky blue?")
-
-# Loop: closed-loop execution with trigger/exit events
-await cat.run_loop("conversation", message="Hello, cat!")
+result = await cat.path_registry.run(cat, "deep_reason", prompt="Why is the sky blue?")
 ```
 
 ---
@@ -264,7 +269,10 @@ class MockBrain:
     async def stream_generate(self, prompt, system_prompt=None,
                               temperature=0.7, max_tokens=None):
         result = await self.generate(prompt, system_prompt=system_prompt)
-        yield result
+
+        async def _stream():
+            yield result
+        return _stream()
 
     def reload_config(self) -> None:
         pass
@@ -397,7 +405,10 @@ class TaskBrain:
     async def stream_generate(self, prompt, system_prompt=None,
                               temperature=0.7, max_tokens=None):
         result = await self.generate(prompt, system_prompt=system_prompt)
-        yield result
+
+        async def _stream():
+            yield result
+        return _stream()
 
     def reload_config(self) -> None:
         pass
@@ -407,7 +418,7 @@ analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
 executor = create_cat(container=colony, cerebrum=TaskBrain(), name="executor")
 
 # 1:1 inter-cat communication (use cat_uid)
-data = {"sql": "DELETE FROM orders"}
+data = "DELETE FROM orders"
 await colony.signal_between(analyst.cat_uid, executor.cat_uid,
     "brain", "amygdala", "assess_safety", user_input=data)
 
