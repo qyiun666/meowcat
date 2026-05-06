@@ -254,16 +254,21 @@ cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="小喵")
 #         pass
 # cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="小喵")
 
-# 统一感知入口 — 输入进入，回复出来
-async for event in cat.perceive("今天天气怎么样？"):
-    # 逐个处理管道事件
-    pass
+# 直接调用器官 — 最简单的工作方式
+async def main():
+    # Chain: 深度推理（大脑直接生成回复）
+    result = await cat.path_registry.run(cat, "deep_reason", prompt="天为什么是蓝的？")
+    print(result)
 
-# Path: 原子器官间信号
-result = await cat.path_registry.run(cat, "locate", msg="东京天气", session_id="default")
+    # Path: 记忆检索
+    result = await cat.path_registry.run(cat, "locate", msg="东京天气", session_id="default")
 
-# Chain: 命名路径序列
-result = await cat.path_registry.run(cat, "deep_reason", prompt="天为什么是蓝的？")
+    # perceive(): 统一感知入口（需自定义 Stage 实现才能输出）
+    async for event in cat.perceive("今天天气怎么样？"):
+        pass
+
+import asyncio
+asyncio.run(main())
 ```
 
 ---

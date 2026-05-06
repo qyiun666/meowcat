@@ -135,6 +135,7 @@ def create_cat(
     # ━━ Reflex arcs ━━
     reflexes: list[Reflex] | None = None,
     # ━━ Assembly hooks ━━
+    on_before_mount: CatHook | None = None,
     on_before_freeze: CatHook | None = None,
     on_assembled: CatHook | None = None,
     # ━━ Default registration switches (v1.2.10) ━━
@@ -167,6 +168,9 @@ def create_cat(
         renovate_organs: Organ names to upgrade to简装修 when renovated=False.
         brainstem: Brainstem dispatcher, not mounted when None.
         reflexes: Reflex arc list.
+        on_before_mount: Sync hook called after organ defaults are set,
+            before ``mount_known_organs()``. Use for replacing default organs
+            with custom implementations (e.g. cross-organ dependency injection).
         on_before_freeze: Sync hook called after wiring + reflex registration,
             before freeze. Use for injecting extra organs / wiring paths.
         on_assembled: Sync hook called after freeze, before return.
@@ -292,6 +296,10 @@ def create_cat(
     # type: ignore[attr-defined]
     cat._shared_store = shared_store or InMemorySharedStore()
 
+    # -- Assembly hook: before mount (override default organs) --
+    if on_before_mount:
+        on_before_mount(cat)
+
     # -- Auto-assembly ---------------------------------------------------
     mount_known_organs(cat)
 
@@ -304,10 +312,24 @@ def create_cat(
         for t in BUILTIN_TOOLS:
             cat.tool_registry.register(t)
 
-    # Reflex arcs (caller injects)
-    if reflexes:
+    # Reflex arcs
+    if reflexes is not None:
         for ref in reflexes:
             cat.register_reflex(ref)
+    else:
+        # v1.3.3: auto-register default text_dialogue reflex so perceive()
+        # works out of the box with create_cat (renovated=True).
+        # Stages are noop stubs — emit correct lifecycle events;
+        # applications override with real Stage implementations.
+        from meowcat.defaults.stages import build_default_pipeline  # noqa: PLC0415
+        from meowcat.reflex import BUILTIN_REFLEX_PATHS  # noqa: PLC0415
+        cat.register_reflex(Reflex(
+            name="text_dialogue",
+            trigger=lambda x: isinstance(x, str),
+            path=BUILTIN_REFLEX_PATHS["text_dialogue"],
+            stages=build_default_pipeline(),
+            priority=0,
+        ))
 
     # -- Assembly hook: before freeze (inject extra organs / wiring) --
     if on_before_freeze:

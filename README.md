@@ -253,16 +253,21 @@ cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
 #         pass
 # cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="Kitty")
 
-# Unified perception entry — input enters, reply comes out
-async for event in cat.perceive("What's the weather today?"):
-    # process pipeline events one by one
-    pass
+# Direct organ invocation — simplest working path
+async def main():
+    # Chain: deep reasoning (brain generates reply directly)
+    result = await cat.path_registry.run(cat, "deep_reason", prompt="Why is the sky blue?")
+    print(result)
 
-# Path: atomic organ-to-organ signal
-result = await cat.path_registry.run(cat, "locate", msg="weather in Tokyo", session_id="default")
+    # Path: memory retrieval
+    result = await cat.path_registry.run(cat, "locate", msg="weather in Tokyo", session_id="default")
 
-# Chain: named path sequence
-result = await cat.path_registry.run(cat, "deep_reason", prompt="Why is the sky blue?")
+    # perceive(): unified perception entry (needs custom Stage impl to produce output)
+    async for event in cat.perceive("What's the weather today?"):
+        pass
+
+import asyncio
+asyncio.run(main())
 ```
 
 ---
