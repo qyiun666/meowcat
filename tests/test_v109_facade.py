@@ -34,7 +34,7 @@ from meowcat.loops import DAILY_MAINTENANCE_SEQ
 # -- 辅助 ---------------------------------------------------------
 
 class _MockGrowth:
-    """模拟生长器官 — 实现 record + diagnose 用于 wiring 边测试。"""
+    """模拟生长器官 — 实现 record + crystallize + diagnose 用于 wiring 边测试。"""
 
     def __init__(self) -> None:
         self.records: list[dict] = []
@@ -42,6 +42,9 @@ class _MockGrowth:
     def record(self, **kwargs: object) -> dict:
         self.records.append(dict(kwargs))
         return {"recorded": True}
+
+    def crystallize(self, **kwargs: object) -> dict:
+        return {"crystallized": True}
 
     def diagnose(self) -> dict:
         return {"records": len(self.records)}
@@ -84,11 +87,12 @@ class _MaintenanceMockHippocampus:
 
 
 def _make_maintenance_cat(cat_uid: str = "maint-cat") -> CatBase:
-    """创建维护专用猫 — 挂载维护链需要的 hypothalamus + brainstem + hippocampus。"""
+    """创建维护专用猫 — 挂载维护链需要的 hypothalamus + brainstem + hippocampus + crystallizer。"""
     cat = make_cat(cat_uid)
     cat.mount("brain", "hippocampus", _MaintenanceMockHippocampus())
     cat.mount("brain", "hypothalamus", NoopHypothalamus())
     cat.mount("brain", "brainstem", NoopBrainstem())
+    cat.mount("growth", "crystallizer", _MockGrowth())
     cat.wire_default_nervous_system()
     return cat
 

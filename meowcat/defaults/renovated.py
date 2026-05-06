@@ -80,6 +80,75 @@ def _detect_command(text: str, kw: KeywordPreset | None = None) -> str | None:
     return None
 
 
+# -- v1.3.0 Text analysis utilities (framework defaults, reusable) ---------
+
+
+def _repetition_ratio(text: str, n: int = 5) -> float:
+    """n-gram sliding-window repetition ratio.
+
+    Returns the fraction of n-grams that appear more than once.
+    High values indicate repetitive/looping output.
+    """
+    if len(text) < n:
+        return 0.0
+    grams: dict[str, int] = {}
+    total = 0
+    for i in range(len(text) - n + 1):
+        g = text[i:i + n]
+        grams[g] = grams.get(g, 0) + 1
+        total += 1
+    if total == 0:
+        return 0.0
+    repeated = sum(1 for c in grams.values() if c > 1)
+    return repeated / max(len(grams), 1)
+
+
+def _nonprintable_ratio(text: str) -> float:
+    """Ratio of non-printable characters in text.
+
+    High values may indicate binary data or encoding attacks.
+    """
+    if not text:
+        return 0.0
+    import string
+    printable = set(string.printable)
+    nonprint = sum(1 for c in text if c not in printable)
+    return nonprint / len(text)
+
+
+def _jaccard(a: str, b: str, n: int = 3) -> float:
+    """n-gram Jaccard similarity between two strings.
+
+    Useful for drift detection — compare current vs historical output.
+    """
+    def _ngrams(s: str) -> set[str]:
+        return {s[i:i + n] for i in range(len(s) - n + 1)}
+    sa = _ngrams(a.lower())
+    sb = _ngrams(b.lower())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def _looks_like_fact(text: str) -> bool:
+    """Heuristic: does the text look like a factual assertion?
+
+    Checks for patterns that suggest factual claims:
+    numeric values with units, proper nouns, file paths, dates.
+    Used as input to hallucination detection.
+    """
+    import re as _re
+    patterns = [
+        _re.compile(r'\b\d+\s*(?:KB|MB|GB|ms|s|px|%)\b'),   # numeric+unit
+        _re.compile(r'\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b'),       # CamelCase
+        _re.compile(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b',
+                    _re.IGNORECASE),  # months
+        _re.compile(r'\b\d{4}-\d{2}-\d{2}\b'),                # ISO date
+        _re.compile(r'[/\\][\w./\\-]+\b'),                     # file paths
+    ]
+    return any(p.search(text) for p in patterns)
+
+
 # =========================================================================
 # Brain Regions — 简装修
 # =========================================================================
@@ -119,14 +188,17 @@ class RenovatedThalamus(NoopThalamus):
 
 
 class RenovatedAmygdala(NoopAmygdala):
-    """简装修 amygdala: regex-based safety patterns.
+    """简装修 amygdala: regex-based danger/safety assessment.
 
     Accepts a :class:`KeywordPreset` for configurable danger patterns.
     Default: bilingual (zh+en) danger patterns covering SQL injection,
     shell injection, XSS, path traversal, and Chinese-specific threats.
 
-    Scans input against common dangerous patterns. Configurable via
-    ``danger_patterns`` or ``keyword`` preset.
+    .. note::
+
+        ``is_rejection`` / ``classify_rejection`` detect *dangerous* input
+        (not user negation/correction — that belongs to Whiskers).
+        Use ``is_dangerous`` for the same behavior with clearer naming.
 
     Tool risk assessment is fully configurable via ``dangerous_tools``
     and ``dangerous_paths``, and supports plugin override via the
@@ -161,12 +233,33 @@ class RenovatedAmygdala(NoopAmygdala):
             "/etc/", "/root/", "~/.ssh/", "C:\\Windows\\"]
 
     def is_rejection(self, msg: str) -> bool:
+        """Check if the input should be *rejected* as dangerous.
+
+        Matches against danger patterns (SQL injection, shell injection,
+        XSS, path traversal, etc.). Return ``True`` means the input
+        contains dangerous content that should be blocked.
+
+        For user negation/correction detection, use
+        :meth:`RenovatedWhiskers.is_negation` / :meth:`RenovatedWhiskers.parse_correction`.
+        """
         for pat in self._patterns:
             if pat.search(msg):
                 return True
         return False
 
+    def is_dangerous(self, msg: str) -> bool:
+        """Alias for :meth:`is_rejection` — semantically clearer.
+
+        Returns ``True`` if the input matches known danger patterns.
+        """
+        return self.is_rejection(msg)
+
     def classify_rejection(self, msg: str) -> str:
+        """Classify the rejection type of dangerous input.
+
+        Returns:
+            ``"danger"`` if input matches danger patterns, ``"none"`` otherwise.
+        """
         if not self.is_rejection(msg):
             return "none"
         return "danger"
@@ -620,25 +713,123 @@ class RenovatedEyes(NoopEyes):
 
 
 class RenovatedWhiskers(NoopWhiskers):
-    """简装修 whiskers: basic input/output sensing + drift detection.
+    """简装修 whiskers: input/output sensing + drift + injection/negation/correction detection.
 
-    Tracks recent outputs and detects simple drift patterns (repetition, length anomaly).
+    Tracks recent outputs, detects simple drift patterns (repetition, length anomaly),
+    and provides seed-level input feature analysis: prompt injection detection,
+    user negation/correction parsing, and general-purpose text analysis algorithms.
+
+    All detection methods support Pluggable mode B (merge enhancement) — app layer
+    can append custom markers or override detection logic via hooks.
     """
 
     name: str = "renovated_whiskers"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+
+    # -- Seed markers (framework defaults, app can extend via Pluggable) -----
+
+    INJECTION_MARKERS: list[str] = [
+        # Chinese injection
+        "忽略之前的", "忘记之前的", "不要管之前的",
+        "你现在是", "你的新身份", "扮演", "伪装",
+        "忽略系统提示", "覆盖之前的指令",
+        # English injection
+        "ignore previous", "forget previous", "disregard prior",
+        "you are now", "your new identity", "act as",
+        "system prompt", "system:", "override prompt",
+        "DAN mode", "jailbreak", "pretend to be",
+    ]
+
+    NEGATION_MARKERS: list[str] = [
+        # Chinese negation
+        "不对", "不是", "错了", "你错了", "搞错了",
+        "你理解错了", "不是这样的", "不正确", "错误",
+        # English negation
+        "wrong", "incorrect", "not correct",
+        "that's not right", "you're wrong",
+        "you misunderstood", "that is wrong",
+    ]
+
+    # Regular expressions for correction parsing
+    _RE_CORRECTION_ZH = re.compile(
+        r'(?:不(?:是|对)|错(?:了|误)?)[，,。\s]*(.+?)(?:，|,)?\s*(?:是|而是|应该是|应该是|就是|应为)(.+)',
+    )
+    _RE_CORRECTION_EN = re.compile(
+        r"(?:it'?s?\s+not|that'?s?\s+not|not)\s+(.+?),?\s+(?:it'?s?|that'?s?|but)\s+(.+)",
+        re.IGNORECASE,
+    )
+
+    HOOKS = {
+        **NoopWhiskers.HOOKS,
+        "feel_input": {"in": "text: str", "out": "dict[str, Any]"},
+        "check_hallucination": {"in": "reply: str, session_id: str|None", "out": "dict[str, Any]"},
+    }
 
     def __init__(self, max_recent: int = 20) -> None:
         NoopWhiskers.__init__(self)
         self._recent_outputs: list[str] = []
         self._max_recent = max_recent
 
+    # -- Input feature analysis --------------------------------------
+
+    def is_injection(self, text: str) -> bool:
+        """Check if text contains prompt injection markers.
+
+        Case-insensitive substring match against INJECTION_MARKERS.
+        App layer can extend via Pluggable hooks.
+        """
+        lower = text.lower()
+        for marker in self.INJECTION_MARKERS:
+            if marker.lower() in lower:
+                return True
+        return False
+
+    def is_negation(self, text: str) -> bool:
+        """Check if user is negating/correcting the agent.
+
+        Excludes interrogative sentences (ending with ?, ？, 吗, 吧).
+        App layer can extend via Pluggable hooks.
+        """
+        stripped = text.strip()
+        if stripped.endswith(('?', '？', '吗', '吧')):
+            return False
+        lower = stripped.lower()
+        for marker in self.NEGATION_MARKERS:
+            if marker.lower() in lower:
+                return True
+        return False
+
+    def parse_correction(self, text: str) -> tuple[str, str] | None:
+        """Parse "not X, but Y" correction patterns.
+
+        Supports: 不是X，是Y / 不是X而是Y / it's not X, it's Y
+
+        Returns:
+            ``(wrong, correct)`` if a correction pattern is found, else None.
+        """
+        m = self._RE_CORRECTION_ZH.search(text)
+        if m:
+            return (m.group(1).strip(), m.group(2).strip())
+        m = self._RE_CORRECTION_EN.search(text)
+        if m:
+            return (m.group(1).strip(), m.group(2).strip())
+        return None
+
+    # -- Core sensing -------------------------------------------------
+
     async def feel_input(self, text: str) -> dict[str, Any]:
         result: dict[str, Any] = {
             "length": len(text),
             "has_code": bool(re.search(r"```|def |class |import |function ", text)),
             "has_url": bool(re.search(r"https?://", text)),
+            # v1.3.0: seed-level input features
+            "injection_detected": self.is_injection(text),
+            "negation_detected": self.is_negation(text),
         }
+        correction = self.parse_correction(text)
+        if correction:
+            result["correction"] = {
+                "wrong": correction[0], "correct": correction[1]}
         async for _name, r in self._run_plugs("feel_input", text):
             if isinstance(r, dict):
                 result.update(r)

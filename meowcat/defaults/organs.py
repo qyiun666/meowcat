@@ -192,6 +192,7 @@ class NoopBrainstem(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "build_system_prompt": {"in": "route: str", "out": "str"},
+        "compress_context": {"in": "messages: list[dict], max_tokens: int", "out": "list[dict]"},
     }
 
     name: str = "noop_brainstem"
@@ -209,6 +210,43 @@ class NoopBrainstem(Pluggable):
             if isinstance(r, str) and r:
                 parts.append(r)
         return "\n".join(parts) if parts else ""
+
+    async def compress_context(
+        self, messages: list[dict], max_tokens: int = 4000,
+    ) -> list[dict]:
+        """Compress conversation context to fit token budget.
+
+        Framework default: keep first message + last N messages
+        (simple truncation). App layer can override via Pluggable
+        ``compress_context`` hook for LLM-based summarization.
+
+        Args:
+            messages: List of message dicts (role, content).
+            max_tokens: Target token budget (approximate).
+
+        Returns:
+            Compressed message list.
+        """
+        async for _name, r in self._run_plugs(
+            "compress_context", messages, max_tokens,
+        ):
+            if isinstance(r, list):
+                return r
+        # Default: keep first + estimate token count, trim from end
+        if not messages:
+            return messages
+        # Rough estimate: 1 token ≈ 4 chars
+        budget_chars = max_tokens * 4
+        result: list[dict] = [dict(messages[0])]
+        used = len(str(messages[0]))
+        for msg in reversed(messages[1:]):
+            chars = len(str(msg))
+            if used + chars <= budget_chars:
+                result.insert(1, dict(msg))
+                used += chars
+            else:
+                break
+        return result
 
     def cancel_current(self) -> bool:
         return False
@@ -666,12 +704,35 @@ class NoopHippocampus(Pluggable):
     name: str = "noop_hippocampus"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
+    _entities: dict[str, dict[str, Any]] | None = None
+    _episodes: list[dict[str, Any]] | None = None
+
     def __init__(self) -> None:
         Pluggable.__init__(self)
-        self._store = InMemoryGraphStore()
-        self.entities: dict[str, dict[str, Any]] = {}
-        self.episodes: list[dict[str, Any]] = []
         self._colony_memory: Any = None  # v1.1.21: SharedMemoryPool for scope=colony
+
+    # -- Lazy-init properties (subclasses that super().__init__()
+    #    avoid creating unused InMemoryGraphStore) -------------------
+
+    @property
+    def entities(self) -> dict[str, dict[str, Any]]:
+        if self._entities is None:
+            self._entities = {}
+        return self._entities
+
+    @entities.setter
+    def entities(self, value: dict[str, dict[str, Any]]) -> None:
+        self._entities = value
+
+    @property
+    def episodes(self) -> list[dict[str, Any]]:
+        if self._episodes is None:
+            self._episodes = []
+        return self._episodes
+
+    @episodes.setter
+    def episodes(self, value: list[dict[str, Any]]) -> None:
+        self._episodes = value
 
     # -- v1.1.21 Colony memory injection -----------------------------
 

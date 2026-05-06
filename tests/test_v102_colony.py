@@ -390,3 +390,254 @@ class TestHealthCheckAll:
         # 每只猫的 hippocampus 都在
         assert "brain:hippocampus" in results[cat_a.cat_uid]
         assert "brain:hippocampus" in results[cat_b.cat_uid]
+
+
+# -- 10. signal_between timeout (v1.3.0) ----------------------------
+
+class TestSignalBetweenTimeout:
+    """signal_between 超时防护。"""
+
+    @pytest.mark.asyncio
+    async def test_signal_between_with_timeout_fast(self) -> None:
+        """快速完成时不触发 timeout。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        result = await colony.signal_between(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            query="hello", timeout=5.0,
+        )
+        assert result == {"results": [], "query": "hello"}
+
+    @pytest.mark.asyncio
+    async def test_signal_between_timeout_triggered(self) -> None:
+        """超时时抛出 asyncio.TimeoutError。"""
+        import asyncio as _asyncio
+
+        class _SlowOrgan:
+            async def think(self) -> str:
+                await _asyncio.sleep(2.0)
+                return "done"
+
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = make_cat("b")
+        cat_b.mount("brain", "cerebrum", _SlowOrgan())
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        with pytest.raises(_asyncio.TimeoutError):
+            await colony.signal_between(
+                cat_a.cat_uid, cat_b.cat_uid, "brain", "cerebrum", "think",
+                timeout=0.1,
+            )
+
+    @pytest.mark.asyncio
+    async def test_signal_between_no_timeout_by_default(self) -> None:
+        """不传 timeout 时保持原有行为（无限等待）。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        # 不传 timeout, 应该正常工作
+        result = await colony.signal_between(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            query="test",
+        )
+        assert "query" in result
+
+
+# -- 11. Task Delegation (v1.3.0) ------------------------------------
+
+class _SlowCerebrum:
+    """模拟慢速大脑，用于超时测试。"""
+
+    def __init__(self, delay: float = 0.5, result: str = "slow-done") -> None:
+        self.delay = delay
+        self._result = result
+        self.called = False
+
+    async def generate(self, prompt: str) -> str:
+        self.called = True
+        await asyncio.sleep(self.delay)
+        return self._result
+
+
+class _CrashingOrgan:
+    """模拟崩溃器官。"""
+
+    async def crash(self) -> str:
+        raise RuntimeError("boom!")
+
+
+class TestTaskDelegation:
+    """delegate_async + task_status + await_task + check_cat。"""
+
+    @pytest.mark.asyncio
+    async def test_delegate_async_returns_task_id(self) -> None:
+        """delegate_async 立即返回 task_id, 不阻塞。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            query="delegated", timeout=10.0,
+        )
+        assert isinstance(task_id, str)
+        assert cat_a.cat_uid in task_id
+        assert cat_b.cat_uid in task_id
+
+    @pytest.mark.asyncio
+    async def test_task_status_pending_to_done(self) -> None:
+        """task_status 从 pending → running → done。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            query="delegated", timeout=10.0,
+        )
+
+        # 初始状态
+        s = await colony.task_status(task_id)
+        assert s["status"] in ("pending", "running")
+
+        # 等待完成
+        await asyncio.sleep(0.2)
+        s = await colony.task_status(task_id)
+        assert s["status"] == "done"
+
+    @pytest.mark.asyncio
+    async def test_await_task_returns_result(self) -> None:
+        """await_task 等待完成并返回结果。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            query="hello", timeout=10.0,
+        )
+
+        result = await colony.await_task(task_id, poll_interval=0.05, max_wait=10.0)
+        assert result == {"results": [], "query": "hello"}
+
+    @pytest.mark.asyncio
+    async def test_await_task_timeout(self) -> None:
+        """await_task 在 max_wait 后超时。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = make_cat("b")
+        cat_b.mount("brain", "cerebrum", _SlowCerebrum(delay=5.0))
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "cerebrum", "generate",
+            prompt="slow", timeout=60.0,
+        )
+
+        # 等一小段确保 running
+        await asyncio.sleep(0.1)
+
+        with pytest.raises(asyncio.TimeoutError, match="exceeded max_wait"):
+            await colony.await_task(task_id, poll_interval=0.05, max_wait=0.2)
+
+    @pytest.mark.asyncio
+    async def test_await_task_kitten_errored(self) -> None:
+        """await_task 在分身猫报错时抛出 RuntimeError。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = make_cat("b")
+        cat_b.mount("brain", "cerebrum", _CrashingOrgan())
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "cerebrum", "crash",
+            timeout=10.0,
+        )
+
+        # 等后台任务完成
+        await asyncio.sleep(0.2)
+
+        with pytest.raises(RuntimeError, match="errored"):
+            await colony.await_task(task_id, poll_interval=0.05, max_wait=1.0)
+
+    @pytest.mark.asyncio
+    async def test_delegate_async_kitten_timeout_status(self) -> None:
+        """delegate_async 小猫超时 → 状态变为 timed_out。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = make_cat("b")
+        cat_b.mount("brain", "cerebrum", _SlowCerebrum(delay=5.0))
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "cerebrum", "generate",
+            prompt="slow", timeout=0.1,  # 比 delay 短，会触发 timeout
+        )
+
+        # 等待 timeout 触发
+        await asyncio.sleep(0.5)
+
+        s = await colony.task_status(task_id)
+        assert s["status"] == "timed_out"
+
+    @pytest.mark.asyncio
+    async def test_check_cat_alive(self) -> None:
+        """check_cat 返回 alive。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat = _Helper.make_cat("a")
+        colony.register(cat)
+
+        assert await colony.check_cat(cat.cat_uid) == "alive"
+
+    @pytest.mark.asyncio
+    async def test_check_cat_dead(self) -> None:
+        """check_cat 对不存在的猫返回 dead。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+
+        assert await colony.check_cat("nonexistent") == "dead"
+
+    @pytest.mark.asyncio
+    async def test_delegate_async_non_blocking(self) -> None:
+        """delegate_async 不阻塞调用方 — 主猫可以继续做其他事。"""
+        colony = Colony("test", storage=InMemorySharedStore())
+        cat_a = _Helper.make_cat("a")
+        cat_b = make_cat("b")
+        cat_b.mount("brain", "cerebrum", _SlowCerebrum(
+            delay=1.0, result="slow-result"))
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        # delegate_async 应立即返回，不等 kitten 完成
+        t0 = asyncio.get_event_loop().time() if hasattr(asyncio.get_event_loop(),
+                                                        'time') else __import__('time').monotonic()
+        import time as _time
+        t0 = _time.monotonic()
+        task_id = await colony.delegate_async(
+            cat_a.cat_uid, cat_b.cat_uid, "brain", "cerebrum", "generate",
+            prompt="slow", timeout=30.0,
+        )
+        elapsed = _time.monotonic() - t0
+        # delegate_async 应该几乎立即返回（< 0.5s），不应等待 1s 的慢任务
+        assert elapsed < 0.5, f"delegate_async took {elapsed:.2f}s, expected < 0.5s"
+
+        # 验证结果最终可用
+        result = await colony.await_task(task_id, poll_interval=0.1, max_wait=5.0)
+        assert result == "slow-result"

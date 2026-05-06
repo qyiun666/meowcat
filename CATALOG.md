@@ -1,6 +1,6 @@
-# meowcat v1.2.36 · Default Configuration & Execution Catalog
+# meowcat v1.3.0 · Default Configuration & Execution Catalog
 
-> **开箱即用的一切**：20 器官 + 26 路径 + 6 链条 + 5 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
+> **开箱即用的一切**：20 器官 + 31 路径 + 8 链条 + 7 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
 
 `create_cat()` 一行代码做了什么？出厂自带了哪些默认执行流？这里就是答案。
 
@@ -63,9 +63,9 @@
 | `renovate_organs`         | `None` | 毛坯模式下升级简装修的器官名集合                      |
 | `keyword`                 | `None` | `KeywordPreset` — 注入 Ears/Thalamus/Amygdala/Frontal |
 | `prompt`                  | `None` | `PromptPreset` — 注入 Brainstem/Cerebrum              |
-| `register_default_paths`  | `True` | 自动注册 26 条内置路径                                |
-| `register_default_chains` | `True` | 自动注册 6 条内置链条                                 |
-| `register_default_loops`  | `True` | 自动注册 5 条内置循环                                 |
+| `register_default_paths`  | `True` | 自动注册 31 条内置路径                                |
+| `register_default_chains` | `True` | 自动注册 8 条内置链条                                 |
+| `register_default_loops`  | `True` | 自动注册 7 条内置循环                                 |
 | `register_default_tools`  | `True` | 自动注册内置工具集                                    |
 | `on_before_freeze`        | `None` | 冻结前钩子 — 注入额外器官/接线                        |
 | `on_assembled`            | `None` | 冻结后钩子 — 设置运行时属性                           |
@@ -74,7 +74,7 @@
 
 ## II. Built-in Execution Flows
 
-### L1 — Path 路径 (26 built-in)
+### L1 — Path 路径 (31 built-in)
 
 原子信号：`源器官 → 目标器官.方法`。无 rollback，无 trigger。
 
@@ -125,37 +125,44 @@
 | `weaken_connections` | HYPOTHALAMUS → HIPPOCAMPUS.weaken_connections         | write | 弱化连接     |
 | `cleanup_orphans`    | HYPOTHALAMUS → HIPPOCAMPUS.cleanup_orphan_connections | write | 清理孤立连接 |
 
-#### 合成 + 工作流域
+#### 合成 + 生长 + 工作流域
 
-| 路径                  | 信号                                   | 模式  | 说明       |
-| :-------------------- | :------------------------------------- | :---- | :--------- |
-| `synthesize`          | BRAINSTEM → CORTEX.synthesize          | read  | 世界观合成 |
-| `workflow_create`     | BRAINSTEM → HIPPOCAMPUS.add_entity     | write | 创建工作流 |
-| `workflow_checkpoint` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 写入检查点 |
-| `workflow_resume`     | BRAINSTEM → HIPPOCAMPUS.get_entity     | read  | 恢复工作流 |
+| 路径                  | 信号                                   | 模式  | 说明         |
+| :-------------------- | :------------------------------------- | :---- | :----------- |
+| `synthesize`          | BRAINSTEM → CORTEX.synthesize          | read  | 世界观合成   |
+| `compress_context`    | BRAINSTEM → BRAINSTEM.compress_context | read  | 上下文压缩   |
+| `record_anomaly`      | BRAINSTEM → ANOMALY_GROWTH.record      | write | 记录异常模式 |
+| `record_correction`   | BRAINSTEM → CORRECTION_GROWTH.record   | write | 记录纠正固化 |
+| `crystallize`         | BRAINSTEM → CRYSTALLIZER.crystallize   | write | 技能结晶     |
+| `record_pattern`      | BRAINSTEM → ROLE_EMERGENCE.record      | write | 记录角色模式 |
+| `workflow_create`     | BRAINSTEM → HIPPOCAMPUS.add_entity     | write | 创建工作流   |
+| `workflow_checkpoint` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 写入检查点   |
+| `workflow_resume`     | BRAINSTEM → HIPPOCAMPUS.get_entity     | read  | 恢复工作流   |
 
 ---
 
-### L2 — Chain 链条 (6 built-in)
+### L2 — Chain 链条 (8 built-in)
 
 命名路径序列。上一步结果作为 `**kwargs` 传入下一步。支持 rollback。
 
-| #   | 链条                  | 路径序列                                                                  | 说明       |
-| :-- | :-------------------- | :------------------------------------------------------------------------ | :--------- |
-| C1  | `memory_search_chain` | `locate`                                                                  | 记忆搜索   |
-| C2  | `conversation_chain`  | `hear` → `decide_route` → `locate` → `deep_reason` → `speak` → `remember` | 完整对话流 |
-| C3  | `tool_loop_chain`     | `hear` → `decide_route` → `execute_tool` → `speak` → `remember`           | 工具执行流 |
-| C4  | `danger_chain`        | `assess_safety`                                                           | 安全评估   |
-| C5  | `maintenance_chain`   | `decay` → `cleanup_orphans`                                               | 记忆维护   |
-| C6  | `diagnostic_chain`    | (空 — 听诊器扫描)                                                         | 健康检查   |
+| #   | 链条                  | 路径序列                                                                  | 说明          |
+| :-- | :-------------------- | :------------------------------------------------------------------------ | :------------ |
+| C1  | `memory_search_chain` | `locate`                                                                  | 记忆搜索      |
+| C2  | `conversation_chain`  | `hear` → `decide_route` → `locate` → `deep_reason` → `speak` → `remember` | 完整对话流    |
+| C3  | `tool_loop_chain`     | `hear` → `decide_route` → `execute_tool` → `speak` → `remember`           | 工具执行流    |
+| C4  | `danger_chain`        | `assess_safety`                                                           | 安全评估      |
+| C5  | `maintenance_chain`   | `decay` → `cleanup_orphans`                                               | 记忆维护      |
+| C6  | `diagnostic_chain`    | `crystallize`                                                             | 技能结晶诊断  |
+| C7  | `growth_chain`        | `record_anomaly` → `crystallize`                                          | 异常学习→结晶 |
+| C8  | `reflection_chain`    | `record_correction` → `record_pattern`                                    | 纠错→角色涌现 |
 
 ---
 
-### L3 — Loop 循环 (5 built-in + 3 CatSelf)
+### L3 — Loop 循环 (7 built-in + 3 CatSelf)
 
 > 链条 + 触发事件 + 退出事件 = 自主闭环执行
 
-#### LoopRegistry 循环 (5) — 器官间信号编排
+#### LoopRegistry 循环 (7) — 器官间信号编排
 
 ```
 ★ conversation (Loop A: 感知→推理→输出)
@@ -164,13 +171,15 @@
   path:    EARS → THALAMUS → CEREBRUM → CEREBELLUM → MOUTH → HIPPOCAMPUS
 ```
 
-| #   | 循环              | 链条               | 触发器              | 说明         |
-| :-- | :---------------- | :----------------- | :------------------ | :----------- |
-| L1  | `conversation`    | conversation_chain | `perceive.start`    | 对话闭环     |
-| L2  | `tool_execution`  | tool_loop_chain    | `orchestrate.start` | 工具执行闭环 |
-| L3  | `danger_response` | danger_chain       | `amygdala.alert`    | 紧急安全闭环 |
-| L4  | `maintenance`     | maintenance_chain  | `heartbeat.tick`    | 体内稳态闭环 |
-| L5  | `diagnostic`      | diagnostic_chain   | (手动触发)          | 健康检查     |
+| #   | 循环              | 链条               | 触发器              | 说明            |
+| :-- | :---------------- | :----------------- | :------------------ | :-------------- |
+| L1  | `conversation`    | conversation_chain | `perceive.start`    | 对话闭环        |
+| L2  | `tool_execution`  | tool_loop_chain    | `orchestrate.start` | 工具执行闭环    |
+| L3  | `danger_response` | danger_chain       | `amygdala.alert`    | 紧急安全闭环    |
+| L4  | `maintenance`     | maintenance_chain  | `heartbeat.tick`    | 体内稳态闭环    |
+| L5  | `diagnostic`      | diagnostic_chain   | (手动触发)          | 技能结晶 + 诊断 |
+| L6  | `growth`          | growth_chain       | `post_action`       | 异常学习→结晶   |
+| L7  | `reflection`      | reflection_chain   | `tool_executed`     | 纠错→角色涌现   |
 
 #### CatSelf 默认循环 (3) — 自意识成长
 
@@ -329,7 +338,27 @@ cat = create_cat(container=colony, cerebrum=MyLLM(), prompt=PROMPT_ZH)
 
 ---
 
-## VI. Assembly Recipes
+## VI. Plus Built-in Tools (8)
+
+> 注册到 `cat.tool_registry`，LLM 可直接调用。
+
+| #   | 工具           | 风险 | 类别   | 说明                           |
+| :-- | :------------- | :--- | :----- | :----------------------------- |
+| T1  | `read_file`    | LOW  | file   | 读取文件内容                   |
+| T2  | `write_file`   | HIGH | file   | 写入文件                       |
+| T3  | `run_command`  | HIGH | system | 执行 Shell 命令                |
+| T4  | `http_get`     | LOW  | web    | HTTP GET 请求                  |
+| T5  | `list_dir`     | LOW  | file   | 列出目录（限 200 条）          |
+| T6  | `grep_files`   | LOW  | file   | 正则搜索文件（限 300 文件）    |
+| T7  | `current_time` | LOW  | util   | 获取当前 UTC/本地时间          |
+| T8  | `code_runner`  | HIGH | system | 沙箱执行 Python/JS（10s 超时） |
+
+- **T5-T8** 为 v1.3.0 新增
+- `code_runner` 沙箱安全设计：子进程隔离 + `-I` 模式 + 环境变量剥离 + 超时 + 非阻塞 asyncio
+
+---
+
+## VII. Assembly Recipes
 
 ```python
 from meowcat import create_cat, ImplementationStyle
@@ -409,7 +438,7 @@ print(cat.wiring.describe())                        # 接线图描述
 
 ---
 
-## VII. File Index
+## VIII. File Index
 
 | 内容                                        | 文件路径                                      |
 | :------------------------------------------ | :-------------------------------------------- |
@@ -425,9 +454,9 @@ print(cat.wiring.describe())                        # 接线图描述
 | 事件总线                                    | `meowcat/events.py`                           |
 | 事件载荷类型 (v1.2.18)                      | `meowcat/events_payloads.py`                  |
 | 遥测 (Tracer+Metrics, v1.2.21)              | `meowcat/telemetry.py`                        |
-| Path / BUILTIN_PATHS (26)                   | `meowcat/path.py`                             |
-| Chain / BUILTIN_CHAINS (6)                  | `meowcat/chain.py`                            |
-| Loop / BUILTIN_LOOPS (5) + LoopSequence (1) | `meowcat/loops.py`                            |
+| Path / BUILTIN_PATHS (31)                   | `meowcat/path.py`                             |
+| Chain / BUILTIN_CHAINS (8)                  | `meowcat/chain.py`                            |
+| Loop / BUILTIN_LOOPS (7) + LoopSequence (1) | `meowcat/loops.py`                            |
 | Reflex / 反射弧 (2)                         | `meowcat/reflex.py`                           |
 | CatSelf 统一自我 + 3 默认循环               | `meowcat/biology/cat_self.py`                 |
 | PinealGland 顿悟融合                        | `meowcat/biology/pineal_gland.py`             |
@@ -441,6 +470,7 @@ print(cat.wiring.describe())                        # 接线图描述
 | create_cat 工厂                             | `meowcat/defaults/factory.py`                 |
 | 工具/技能/Paws 核心                         | `meowcat/tools/`                              |
 | 可选 I/O: 浏览器/ChromaDB/MCP/网关          | `meowcat/plus/`                               |
+| Plus 内置工具 (8)                           | `meowcat/plus/tools/`                         |
 | Colony 多猫容器 + 联邦                      | `meowcat/colony/`                             |
 | Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
 | Gateway 协议                                | `meowcat/gateway/`                            |

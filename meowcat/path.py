@@ -28,16 +28,20 @@ from typing import Any
 
 from meowcat.anatomy import (
     AMYGDALA,
+    ANOMALY_GROWTH,
     BRAINSTEM,
     CEREBELLUM,
     CEREBRUM,
+    CORRECTION_GROWTH,
     CORTEX,
+    CRYSTALLIZER,
     EARS,
     FRONTAL,
     HIPPOCAMPUS,
     HYPOTHALAMUS,
     MOUTH,
     PAWS,
+    ROLE_EMERGENCE,
     THALAMUS,
 )
 from meowcat.errors import IllegalNeuralPathError
@@ -137,6 +141,18 @@ BUILTIN_PATHS: tuple[Path, ...] = (
          "append_content",      "write", "Write checkpoint"),
     Path("workflow_resume",     BRAINSTEM,   HIPPOCAMPUS,
          "get_entity",          "read",  "Resume workflow"),
+    # -- Context compression (v1.3.0) --
+    Path("compress_context",    BRAINSTEM,   BRAINSTEM,
+         "compress_context",    "write", "Compress conversation context"),
+    # -- Growth domain (v1.3.0) --
+    Path("record_anomaly",      BRAINSTEM,   ANOMALY_GROWTH,
+         "record",              "write", "Record anomaly pattern"),
+    Path("record_correction",   BRAINSTEM,   CORRECTION_GROWTH,
+         "record",              "write", "Record user correction"),
+    Path("crystallize",         BRAINSTEM,   CRYSTALLIZER,
+         "crystallize",          "write", "Crystallize skill from usage"),
+    Path("record_pattern",      BRAINSTEM,   ROLE_EMERGENCE,
+         "record",              "write", "Record role behavior pattern"),
 )
 
 

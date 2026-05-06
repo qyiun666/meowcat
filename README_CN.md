@@ -7,7 +7,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.2.36-lightgrey.svg)]()
+[![version](https://img.shields.io/badge/version-1.3.0-lightgrey.svg)]()
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -19,7 +19,21 @@
 >
 > **框架定义骨架。你来选择材质。**
 >
-> 20 个器官 · 26 条路径 · 6 条链条 · 5 个循环 · 完整默认配置速查 → **[CATALOG.md](CATALOG.md)**
+> 20 个器官 · 31 条路径 · 8 条链条 · 7 个循环 · 完整默认配置速查 → **[CATALOG.md](CATALOG.md)**
+
+---
+
+## 💭 Agent 应该是什么样子？
+
+未来的 AI Agent 应该是什么样的？
+
+它不应该只是一条接 prompt、吐回复的管线。它应该像一个生物——有感知、有记忆、有安全意识、能自我进化、能与同类协作。
+
+人处理一件事时，大脑不同区域各司其职：**丘脑**路由信息，**海马体**存取记忆，**杏仁核**在危险时绕过理性直接接管决策，**皮层**从经验中蒸馏世界观。如果 Agent 要真正融入人类社会——或者某一天，建造自己的社会——它需要的远不止推理能力。
+
+它需要**本能**（反射弧，不经思考的快速响应）、**恐惧**（安全旁路，危险时跳过推理直接行动）、**直觉**（小脑模式匹配，高频场景零 LLM 开销）、**自知**（元认知，知道自己会什么、不会什么）。它需要知道什么能做、什么不能做，需要从错误中学习，需要在群体中自然形成分工。
+
+这些思考最终凝结成了 meowcat——不是又一个 LLM 包装器，而是一套仿生神经架构。
 
 ---
 
@@ -63,6 +77,27 @@ meowcat 将 AI Agent 建模为**猫的生物神经系统** — 一套经过亿�
 | 反射弧绕过大脑         | `ReflexArc` — 刺激→响应，零 LLM 依赖        |
 
 **20 个器官。5 大类别。1 套统一神经系统。** 猫架构提供了扁平的 LLM 管线永远无法拥有的生物级防御层（杏仁核安全旁路、熔断器、禁止边）。
+
+---
+
+## 🧬 不只是 Harness
+
+大多数 Agent 框架的思路是：**你有 LLM → 给它接工具 → 编排成 workflow → 多 agent 协作**。框架负责"套上缰绳"（harness）——路由消息、管理状态、串起工具调用。
+
+meowcat 的思路是：**生物有器官 → 器官有分工和约束 → 神经信号在约束内流动 → 整体涌现行为**。框架定义的是解剖结构和神经规则，不是 workflow。
+
+|                  | Harness 模式                     | meowcat                                       |
+| :--------------- | :------------------------------- | :-------------------------------------------- |
+| **隐喻**         | 工坊 / 流水线                    | 生物体 / 神经系统                             |
+| **Agent 是什么** | 功能性单元（planner / executor） | 完整生命体（20 器官 + 自我 + 生长）           |
+| **通信**         | 消息路由 / topic / queue         | 神经信号（Path → Chain → Loop 四层）          |
+| **约束**         | prompt guard / output validator  | 架构级禁止边（大脑不能直连爪子）              |
+| **安全**         | 事后校验 / guardrail             | 杏仁核旁路（危险时跳过推理直接行动）          |
+| **记忆**         | vector store + chat history      | 海马体实体图谱 + 皮层 L0→L3 世界观蒸馏        |
+| **生长**         | fine-tune / prompt 优化          | 内环（自我进化）+ 外环（集体智慧）            |
+| **多 agent**     | group chat / router→worker       | Colony 猫舍（共享存储 + 集体生长 + 角色涌现） |
+
+Harness 解决的是**"怎么让 LLM 干活"**，meowcat 回答的是**"Agent 应该长什么样"**。你完全可以用 meowcat 实现 Harness 模式——但反过来不行。meowcat 是 Harness 的上一级抽象。
 
 ---
 
@@ -220,9 +255,9 @@ cat = create_cat("小喵", cerebrum=MyLLM(), amygdala=MyAmygdala())
 
 | 层                  | 原语                                 | 说明                                           |
 | :------------------ | :----------------------------------- | :--------------------------------------------- |
-| **L1 Path**         | `源器官 → 目标器官.方法`             | 原子器官间信号。26 条内置路径。                |
-| **L2 Chain**        | `[path1, path2, ...] + rollback`     | 命名路径序列。前步结果传给后步。6 条内置链条。 |
-| **L3 Loop**         | `Chain + trigger_event + exit_event` | 自治闭环。5 条内置循环。                       |
+| **L1 Path**         | `源器官 → 目标器官.方法`             | 原子器官间信号。31 条内置路径。                |
+| **L2 Chain**        | `[path1, path2, ...] + rollback`     | 命名路径序列。前步结果传给后步。8 条内置链条。 |
+| **L3 Loop**         | `Chain + trigger_event + exit_event` | 自治闭环。7 条内置循环。                       |
 | **L4 LoopSequence** | `[loop1, loop2, ...]`                | 顺序或并行的多循环编排。                       |
 
 ```python
@@ -344,18 +379,28 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 🛠️ 基于 meowcat 的应用
 
-基于 meowcat 框架的完整 AI Agent 实现 → **[MeowAgent](https://github.com/Axonant/MeowAgent)** — 真实器官、SQLite 生产级存储、Discord/Telegram 适配器，一行 `Cat(CatBase)` 继承即可运行。
+基于 meowcat 框架的完整 AI Agent 实现 → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([官网](http://www.meowagent.top)) — 真实器官、SQLite 生产级存储、Discord/Telegram 适配器，一行 `Cat(CatBase)` 继承即可运行。
+
+---
+
+## 📬 联系我们
+
+- **官网：** http://www.meowagent.top（待上线）
+- **邮箱：** qyiun666@163.com
+- **GitHub：** https://github.com/Axonant/MeowAgent — 基于 meowcat 的应用层 Agent 实现（待公开）
+
+有什么功能建议、想法，或寻求合作？欢迎联系 — PR、功能需求、合作洽谈都欢迎。
 
 ---
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本       | 亮点                                                                                                                                               |
-| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.2.x** | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                      |
-| **v1.1.x** | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件 |
-| **v1.0.x** | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                 |
-| **v0.5.x** | CatBase 外观模式、双脑架构、OrganHost/Wiring/Nervous 子系统拆分、ReflexArc 反射弧、Slot-Plug 模型、ImplementationStyle、20 器官蓝图                |
+| 版本       | 亮点                                                                                                                                                                    |
+| :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.2.x** | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
+| **v1.1.x** | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
+| **v1.0.x** | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                      |
+| **v0.5.x** | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图 |
 
 ---
 

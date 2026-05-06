@@ -1,4 +1,4 @@
-"""meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12) + Nameplate (v1.1.4) + Shared Area (v1.1.6) + Group Chat (v1.1.7) + Unified Entry (v1.1.8).
+"""meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12) + Nameplate (v1.1.4) + Shared Area (v1.1.6) + Group Chat (v1.1.7) + Unified Entry (v1.1.8) + Task Delegation (v1.3.0).
 
 Colony manages peer-to-peer collaboration + shared storage for multiple cats.
 Cats created in a colony are automatically registered and share storage.
@@ -13,6 +13,7 @@ v1.1.21: Collective Intelligence — Cross-cat memory search (Hippocampus.locate
 v1.1.22: Collective Growth — anomaly/correction shared to growth/ namespace + colony-level role emergence.
 v1.2.11: File split — ColonyConfig/ColonyOwner → config.py, ColonyRules → rules.py, Federation → federation.py, GlobalColonyRegistry → registry.py.
 v1.2.37: File split — Colony federation transports moved from meowcat.colony_transports to colony/transports.py.
+v1.3.0: Task Delegation — delegate_async (fire-and-forget, non-blocking) + await_task (poll with kitten health check) + check_cat (alive/stuck/dead) + signal_between timeout.
 
 Orthogonal to Kitten (master/slave mode):
 - Kitten: master cat spawns kitten → result delivered back (parent → child)
@@ -25,7 +26,10 @@ Orthogonal to Kitten (master/slave mode):
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import time
+import uuid
 from typing import Any, TYPE_CHECKING
 
 from meowcat.assembly import CatBase
@@ -147,7 +151,7 @@ class Colony(Pluggable, _FederationMixin):
         self._owner = owner or ColonyOwner()
         self._rules = rules or ColonyRules()
         self._registered_ns: set[str] = {
-            "owner", "rules", "knowledge", "growth", "cats"}
+            "owner", "rules", "knowledge", "growth", "cats", "__tasks__"}
         # -- Federation state (initialized here, used by _FederationMixin) --
         self._transport: FederationTransport | None = None
         self._federation_task: asyncio.Task | None = None
@@ -158,6 +162,9 @@ class Colony(Pluggable, _FederationMixin):
         # -- Collective Growth + Emergence (v1.1.22) -------------------------
         self._growth = None     # lazily created on first access
         self._emergence = None   # lazily created on first access
+        # -- Task delegation (v1.3.0) -----------------------------------
+        # actual task results (non-serialized)
+        self._task_results: dict[str, Any] = {}
 
     # -- UID generation -----------------------------------------------
 
@@ -881,6 +888,7 @@ class Colony(Pluggable, _FederationMixin):
         to_name: str,
         method: str,
         *args: Any,
+        timeout: float | None = None,
         **kw: Any,
     ) -> Any:
         """Inter-cat signal communication.
@@ -899,6 +907,7 @@ class Colony(Pluggable, _FederationMixin):
             to_name: Target organ name (e.g. "hippocampus").
             method: Target method name.
             *args, **kw: Forwarded to target method.
+            timeout: Optional timeout in seconds.  None = no timeout.
 
         Returns:
             Return value of target method.
@@ -907,6 +916,7 @@ class Colony(Pluggable, _FederationMixin):
             KeyError: Sender or receiver cat does not exist.
             IllegalNeuralPathError: Cross-cat edge is not allowed.
             OrganNotMountedError: Target organ does not exist.
+            asyncio.TimeoutError: If timeout is set and exceeded.
         """
         # 1. Cross-cat wiring validation
         self._assert_cross_allowed(from_id, to_id)
@@ -922,8 +932,206 @@ class Colony(Pluggable, _FederationMixin):
         import inspect as _inspect
         result = fn(*args, **kw)
         if _inspect.isawaitable(result):
-            result = await result
+            if timeout is not None:
+                result = await asyncio.wait_for(result, timeout=timeout)
+            else:
+                result = await result
         return result
+
+    # -- Task Delegation (v1.3.0) -------------------------------------
+
+    _TASKS_NS = "__tasks__"
+
+    async def delegate_async(
+        self,
+        from_id: str,
+        to_id: str,
+        to_category: str,
+        to_name: str,
+        method: str,
+        *args: Any,
+        timeout: float = 60.0,
+        **kw: Any,
+    ) -> str:
+        """Fire-and-forget task delegation to a kitten. Returns task_id immediately.
+
+        The task runs in background as an :class:`asyncio.Task`.  The main
+        cat's conversation loop is NOT blocked — the main cat can keep
+        talking to the user while the kitten works.  Use :meth:`await_task`
+        to poll for results.
+
+        Status is tracked in colony shared storage (``__tasks__/task_id``).
+
+        Usage::
+
+            # Main cat delegates, continues talking to user
+            task_id = await colony.delegate_async(
+                "01", "02", "brain", "cerebrum", "generate",
+                prompt="检查数据库表结构", timeout=120.0,
+            )
+            reply = f"已派发任务（{task_id}），后台执行中..."
+
+            # ... main cat handles user messages normally ...
+
+            # Later, check result
+            result = await colony.await_task(task_id, poll_interval=10)
+
+        Args:
+            from_id: Delegating cat ID.
+            to_id: Kitten cat ID.
+            to_category: Target organ category.
+            to_name: Target organ name.
+            method: Target method name.
+            *args, **kw: Forwarded to target method.
+            timeout: Max seconds per single signal_between attempt.
+
+        Returns:
+            Task ID string for status tracking.
+        """
+        task_id = f"{from_id}-{to_id}-{uuid.uuid4().hex[:8]}"
+        started_at = time.monotonic()
+        payload: dict[str, object] = {
+            "status": "pending",
+            "from_id": from_id,
+            "to_id": to_id,
+            "to_category": to_category,
+            "to_name": to_name,
+            "method": method,
+            "started_at": started_at,
+        }
+        await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))
+
+        async def _runner() -> None:
+            try:
+                payload["status"] = "running"
+                await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))
+                result = await self.signal_between(
+                    from_id, to_id, to_category, to_name, method,
+                    *args, timeout=timeout, **kw,
+                )
+                # Store actual result in memory (non-serialized)
+                self._task_results[task_id] = result
+                payload["status"] = "done"
+                payload["result"] = repr(result)
+                payload["finished_at"] = time.monotonic()
+                await self.ns_set(
+                    self._TASKS_NS, task_id, json.dumps(payload, default=str),
+                )
+            except asyncio.TimeoutError:
+                payload["status"] = "timed_out"
+                payload["finished_at"] = time.monotonic()
+                await self.ns_set(
+                    self._TASKS_NS, task_id, json.dumps(payload),
+                )
+            except Exception as exc:
+                payload["status"] = "errored"
+                payload["error"] = repr(exc)
+                payload["finished_at"] = time.monotonic()
+                await self.ns_set(
+                    self._TASKS_NS, task_id, json.dumps(payload, default=str),
+                )
+
+        asyncio.create_task(_runner())
+        return task_id
+
+    async def task_status(self, task_id: str) -> dict[str, object]:
+        """Query the status of a delegated task.
+
+        Args:
+            task_id: Task ID from :meth:`delegate_async`.
+
+        Returns:
+            Dict with keys: ``status`` (pending|running|done|errored|
+            timed_out|unknown), and optionally ``result``, ``error``,
+            ``started_at``, ``finished_at``, ``from_id``, ``to_id``.
+        """
+        raw = await self.ns_get(self._TASKS_NS, task_id)
+        if raw is None:
+            return {"status": "unknown"}
+        return json.loads(raw) if isinstance(raw, str) else raw
+
+    async def await_task(
+        self,
+        task_id: str,
+        *,
+        poll_interval: float = 10.0,
+        max_wait: float = 600.0,
+    ) -> Any:
+        """Wait for a delegated task with intelligent status checking.
+
+        Polls every ``poll_interval`` seconds.  If the kitten hasn't
+        responded:
+
+        - Checks kitten health via :meth:`check_cat`
+        - If still alive → keeps waiting
+        - If stuck or dead → raises immediately
+
+        The event loop is NOT blocked — ``asyncio.sleep`` yields to other
+        tasks (including user conversations with other cats).
+
+        Args:
+            task_id: Task ID from :meth:`delegate_async`.
+            poll_interval: Seconds between status checks (default 10s).
+            max_wait: Maximum total wait time (default 600s).
+
+        Returns:
+            Task result on success (the actual Python object, not
+            serialized).
+
+        Raises:
+            asyncio.TimeoutError: Total wait time exceeded.
+            RuntimeError: Kitten cat is dead or stuck.
+        """
+        start = time.monotonic()
+
+        while True:
+            status = await self.task_status(task_id)
+            st = status.get("status", "unknown")
+
+            if st == "done":
+                # Return actual result from memory, fallback to serialized
+                return self._task_results.pop(
+                    task_id, status.get("result"),
+                )
+            if st in ("errored", "timed_out"):
+                raise RuntimeError(
+                    f"Task {task_id} {st}: "
+                    f"{status.get('error', 'no detail')}"
+                )
+
+            elapsed = time.monotonic() - start
+            if elapsed >= max_wait:
+                raise asyncio.TimeoutError(
+                    f"Task {task_id} exceeded max_wait {max_wait}s "
+                    f"(current status: {st})"
+                )
+
+            # Check kitten health if we know who the kitten is
+            to_id = status.get("to_id", "")
+            if to_id and st == "running":
+                cat_health = await self.check_cat(str(to_id))
+                if cat_health == "dead":
+                    raise RuntimeError(
+                        f"Kitten cat '{to_id}' is dead (task {task_id})"
+                    )
+
+            await asyncio.sleep(poll_interval)
+
+    async def check_cat(self, cat_uid: str) -> str:
+        """Check if a cat is alive and responsive.
+
+        Args:
+            cat_uid: Cat unique identifier.
+
+        Returns:
+            ``"alive"`` — cat exists in colony.
+            ``"dead"`` — cat does not exist in colony.
+        """
+        cat = self._cats.get(cat_uid)
+        if cat is None:
+            return "dead"
+
+        return "alive"
 
     # -- Convenience methods ------------------------------------------
 

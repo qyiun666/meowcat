@@ -133,28 +133,28 @@ meowcat 是 **纯抽象的 AI Agent 骨架**。它只定义"猫有什么器官�
 
 猫的身体由器官组成，通过 Path/Chain/Loop 编排：
 
-| 类别 | 器官                   | 做什么                      |
-| ---- | ---------------------- | --------------------------- |
-| 输入 | Ears（耳朵）           | 听声音 / 看文字             |
-| 输入 | Eyes（眼睛）           | 看图像                      |
-| 输入 | Whiskers（胡须）       | 感知环境上下文              |
-| 脑区 | Thalamus（丘脑）       | 路由决策 — 消息来了分发给谁 |
-| 脑区 | Hippocampus（海马体）  | 记忆存储 + 实体图谱         |
-| 脑区 | Cortex（皮层）         | 世界观蒸馏 L0→L3            |
-| 脑区 | Cerebrum（大脑）       | 深度思考 / LLM 推理         |
-| 脑区 | Cerebellum（小脑）     | 快速响应 / 模式匹配         |
-| 脑区 | Amygdala（杏仁核）     | 安全检查 / 拒绝 / 风险评估  |
-| 脑区 | BrainStem（脑干）      | 提示词构建 + 生命周期管理   |
-| 脑区 | Frontal（额叶）        | 专注 / 任务拆解             |
-| 脑区 | Hypothalamus（下丘脑） | 记忆衰减 / 压缩 / 自维护    |
-| 输出 | Mouth（嘴巴）          | 说话                        |
-| 输出 | Purr（呼噜）           | 流式输出                    |
-| 输出 | Tail（尾巴）           | 状态显示                    |
-| 工具 | Paws（爪子）           | **唯一**工具执行入口        |
-| 生长 | AnomalyGrowth          | 异常模式学习                |
-| 生长 | CorrectionGrowth       | 纠正固化                    |
-| 生长 | Crystallizer           | 技能结晶                    |
-| 生长 | RoleEmergence          | 角色涌现                    |
+| 类别 | 器官                   | 做什么                                    |
+| ---- | ---------------------- | ----------------------------------------- |
+| 输入 | Ears（耳朵）           | 听声音 / 看文字                           |
+| 输入 | Eyes（眼睛）           | 看图像                                    |
+| 输入 | Whiskers（胡须）       | 感知环境上下文 + 注入/否定/纠正检测       |
+| 脑区 | Thalamus（丘脑）       | 路由决策 — 消息来了分发给谁               |
+| 脑区 | Hippocampus（海马体）  | 记忆存储 + 实体图谱                       |
+| 脑区 | Cortex（皮层）         | 世界观蒸馏 L0→L3                          |
+| 脑区 | Cerebrum（大脑）       | 深度思考 / LLM 推理                       |
+| 脑区 | Cerebellum（小脑）     | 快速响应 / 模式匹配                       |
+| 脑区 | Amygdala（杏仁核）     | 安全检查 / 拒绝 / 风险评估 / is_dangerous |
+| 脑区 | BrainStem（脑干）      | 提示词构建 + 生命周期管理 + 上下文压缩    |
+| 脑区 | Frontal（额叶）        | 专注 / 任务拆解                           |
+| 脑区 | Hypothalamus（下丘脑） | 记忆衰减 / 压缩 / 自维护                  |
+| 输出 | Mouth（嘴巴）          | 说话                                      |
+| 输出 | Purr（呼噜）           | 流式输出                                  |
+| 输出 | Tail（尾巴）           | 状态显示                                  |
+| 工具 | Paws（爪子）           | **唯一**工具执行入口                      |
+| 生长 | AnomalyGrowth          | 异常模式学习                              |
+| 生长 | CorrectionGrowth       | 纠正固化                                  |
+| 生长 | Crystallizer           | 技能结晶                                  |
+| 生长 | RoleEmergence          | 角色涌现                                  |
 
 > **禁区**：大脑 → 爪子（`cerebrum → paws`）禁止直连。工具执行必须走 大脑 → 小脑 → 爪子。
 
@@ -177,7 +177,7 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 
 ## 5. 内置通路（Paths）— 单步：从哪 → 到哪.方法 → 做什么
 
-一条 Path = 一次 `signal(from器官, to器官, "方法")`。代码 `path.py` `BUILTIN_PATHS` 共 26 条。
+一条 Path = 一次 `signal(from器官, to器官, "方法")`。代码 `path.py` `BUILTIN_PATHS` 共 31 条。
 
 ### 5.1 记忆域（Memory）— 13 条
 
@@ -226,13 +226,23 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 | `weaken_connections` | Hypothalamus | Hippocampus.weaken_connections()         | 弱化连接     |
 | `cleanup_orphans`    | Hypothalamus | Hippocampus.cleanup_orphan_connections() | 清理孤立连接 |
 
-### 5.6 合成域（Synthesis）— 1 条
+### 5.6 合成域（Synthesis）— 2 条
 
-| Path         | 从        | 到                  | 做什么         |
-| ------------ | --------- | ------------------- | -------------- |
-| `synthesize` | Brainstem | Cortex.synthesize() | 世界观蒸馏合成 |
+| Path               | 从        | 到                           | 做什么             |
+| ------------------ | --------- | ---------------------------- | ------------------ |
+| `synthesize`       | Brainstem | Cortex.synthesize()          | 世界观蒸馏合成     |
+| `compress_context` | Brainstem | Brainstem.compress_context() | 上下文压缩（自环） |
 
-### 5.7 工作流域（Orchestration）— 3 条
+### 5.7 生长域（Growth）— 4 条
+
+| Path                | 从        | 到                         | 做什么       |
+| ------------------- | --------- | -------------------------- | ------------ |
+| `record_anomaly`    | Brainstem | AnomalyGrowth.record()     | 记录异常模式 |
+| `record_correction` | Brainstem | CorrectionGrowth.record()  | 记录纠正固化 |
+| `crystallize`       | Brainstem | Crystallizer.crystallize() | 技能结晶     |
+| `record_pattern`    | Brainstem | RoleEmergence.record()     | 记录角色模式 |
+
+### 5.8 工作流域（Orchestration）— 3 条
 
 | Path                  | 从        | 到                           | 做什么         |
 | --------------------- | --------- | ---------------------------- | -------------- |
@@ -246,7 +256,7 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 
 ## 6. 内置链路（Chains）— 多步序列
 
-一条 Chain = 一组命名 Path 按序执行。框架 `chain.py` 有 6 条 BUILTIN_CHAINS，另有 3 条在 `loops.py` 的 Loop 对象中内联定义。以下列出实际运行中存在的 6 条链（合并两处）：
+一条 Chain = 一组命名 Path 按序执行。框架 `chain.py` 有 8 条 BUILTIN_CHAINS，另有 3 条在 `loops.py` 的 Loop 对象中内联定义。以下列出实际运行中存在的 8 条链（合并两处）：
 
 | Chain                | 由哪些 Path 组成                                              | 定义位置      | 做什么            |
 | -------------------- | ------------------------------------------------------------- | ------------- | ----------------- |
@@ -255,7 +265,9 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 | `tool_loop_chain`    | hear → decide_route → execute_tool → speak → remember         | loops.py 内联 | 工具执行流        |
 | `danger_chain`       | assess_safety                                                 | loops.py 内联 | 安全评估          |
 | `maintenance`        | decay → cleanup_orphans                                       | chain.py      | 记忆衰减+清理孤立 |
-| `diagnostic`         | （空链路，走 Stethoscope 诊断）                               | chain.py      | 全身体检          |
+| `diagnostic`         | crystallize                                                   | chain.py      | 技能结晶 + 诊断   |
+| `growth_chain`       | record_anomaly → crystallize                                  | chain.py      | 异常学习→结晶     |
+| `reflection_chain`   | record_correction → record_pattern                            | chain.py      | 纠错固化→角色涌现 |
 
 > `chain.py` 的 BUILTIN_CHAINS 还有 `full_reasoning`（deep_reason→speak）、`tool_exec`（execute_tool）、`workflow_chain`（workflow_create→execute_tool→workflow_checkpoint），它们是可复用的原子链，但不在 Loop 中使用。
 
@@ -265,15 +277,17 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 
 ## 7. 内置闭环（Loops）— Chain + 触发条件 + 退出条件
 
-一条 Loop = 指定一条 Chain，加上什么时候触发、什么时候算完成。框架内置 5 条。
+一条 Loop = 指定一条 Chain，加上什么时候触发、什么时候算完成。框架内置 7 条。
 
-| Loop              | 触发条件            | 走哪条 Chain       | 退出条件     | 做什么       |
-| ----------------- | ------------------- | ------------------ | ------------ | ------------ |
-| `conversation`    | `perceive.start`    | conversation_chain | 回复完成     | 一次完整对话 |
-| `tool_execution`  | `orchestrate.start` | tool_loop_chain    | 工具结果返回 | 一次工具执行 |
-| `danger_response` | `amygdala.alert`    | danger_chain       | 安全确认     | 危险快速响应 |
-| `maintenance`     | `heartbeat.tick`    | maintenance        | 维护完成     | 定期记忆清理 |
-| `diagnostic`      | 手动触发            | diagnostic         | 诊断完成     | 全身体检     |
+| Loop              | 触发条件            | 走哪条 Chain       | 退出条件     | 做什么            |
+| ----------------- | ------------------- | ------------------ | ------------ | ----------------- |
+| `conversation`    | `perceive.start`    | conversation_chain | 回复完成     | 一次完整对话      |
+| `tool_execution`  | `orchestrate.start` | tool_loop_chain    | 工具结果返回 | 一次工具执行      |
+| `danger_response` | `amygdala.alert`    | danger_chain       | 安全确认     | 危险快速响应      |
+| `maintenance`     | `heartbeat.tick`    | maintenance        | 维护完成     | 定期记忆清理      |
+| `diagnostic`      | 手动触发            | diagnostic         | 诊断完成     | 结晶热点 + 诊断   |
+| `growth`          | `post_action`       | growth_chain       | 生长完成     | 异常学习→技能结晶 |
+| `reflection`      | `tool_executed`     | reflection_chain   | 反思完成     | 纠错固化→角色涌现 |
 
 用法：`await cat.run_loop("conversation", message="你好")` — 一行代码走完整条器官链路。
 
@@ -381,7 +395,7 @@ cat.cat_self.after_act("回答了用户问题", {"topic": "天气"})
 
 ```bash
 pip install meowcat          # 核心框架
-pip install meowcat[plus]    # 含可选扩展（浏览器、ChromaDB、MCP）
+pip install meowcat[plus]    # 含可选扩展（浏览器、ChromaDB、MCP）+ 8 内置工具
 pip install -e ".[dev]"      # 开发模式
 pytest tests/ -v              # 运行测试
 ```

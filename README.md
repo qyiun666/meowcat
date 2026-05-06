@@ -7,8 +7,10 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.2.36-lightgrey.svg)]()
+[![version](https://img.shields.io/badge/version-1.3.0-lightgrey.svg)]()
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
+
+> 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
 
 An AI agent framework built on a cat's biological blueprint. Define your organs, wire their nerves, and the cat comes alive.
 
@@ -16,7 +18,21 @@ An AI agent framework built on a cat's biological blueprint. Define your organs,
 >
 > **Framework defines the skeleton. You choose the materials.**
 >
-> 20 organs · 26 paths · 6 chains · 5 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
+> 20 organs · 31 paths · 8 chains · 7 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
+
+---
+
+## 💭 What Should an Agent Be?
+
+What should an AI agent of the future look like?
+
+It shouldn't be just a prompt-in, reply-out pipeline. It should feel alive — with perception, memory, safety instincts, the capacity to evolve, and the ability to collaborate with its own kind.
+
+When a human processes a situation, different brain regions handle different jobs: the **thalamus** routes information, the **hippocampus** stores and retrieves memories, the **amygdala** bypasses reason to seize control under threat, the **cortex** distills a worldview from experience. If agents are to truly integrate into human society — or one day build their own — they need far more than reasoning.
+
+They need **instinct** (reflex arcs — acting without thinking), **fear** (safety bypass — skipping reason when danger strikes), **intuition** (cerebellar pattern matching — zero LLM overhead for common cases), **self-awareness** (metacognition — knowing what they can and cannot do). They need to understand boundaries, learn from mistakes, and naturally form roles within a collective.
+
+These questions led to meowcat — not another LLM wrapper, but a bio-neural architecture.
 
 ---
 
@@ -60,6 +76,27 @@ meowcat models an AI agent after a **cat's biological nervous system** — a pro
 | Reflex arcs bypass the brain            | `ReflexArc` — stimulus→response with zero LLM          |
 
 **20 organs. 5 categories. 1 unified nervous system.** The cat architecture gives you biological defense layers (amygdala safety bypass, circuit breakers, forbidden edges) that a flat LLM pipeline can never have.
+
+---
+
+## 🧬 Beyond the Harness
+
+Most agent frameworks follow this pattern: **take an LLM → attach tools → orchestrate into workflows → multi-agent collaboration**. The framework "puts on the harness" — routing messages, managing state, chaining tool calls.
+
+meowcat follows a different path: **a living organism has organs → organs have roles and constraints → neural signals flow within constraints → behavior emerges**. The framework defines anatomy and neural rules, not workflows.
+
+|                       | Harness Pattern                      | meowcat                                                                |
+| :-------------------- | :----------------------------------- | :--------------------------------------------------------------------- |
+| **Metaphor**          | Workshop / assembly line             | Living organism / nervous system                                       |
+| **What is an agent?** | Functional unit (planner / executor) | Complete lifeform (20 organs + self + growth)                          |
+| **Communication**     | Message routing / topic / queue      | Neural signals (Path → Chain → Loop, 4 layers)                         |
+| **Constraints**       | Prompt guard / output validator      | Architecture-level forbidden edges (brain can't control paws directly) |
+| **Safety**            | Post-hoc guardrail / validator       | Amygdala bypass (skip reasoning, act on danger instantly)              |
+| **Memory**            | Vector store + chat history          | Hippocampus entity graph + Cortex L0→L3 worldview distillation         |
+| **Growth**            | Fine-tuning / prompt optimization    | Inner loop (self-evolution) + Outer loop (collective intelligence)     |
+| **Multi-agent**       | Group chat / router→worker           | Colony (shared storage + collective growth + role emergence)           |
+
+Harness-style frameworks answer **"how to make LLMs work"**. meowcat answers **"what should an agent be"**. You can absolutely implement harness patterns on top of meowcat — but not the other way around. meowcat is one level of abstraction above.
 
 ---
 
@@ -341,18 +378,28 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 🛠️ Apps Built on meowcat
 
-Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.com/Axonant/MeowAgent)** — real organs, SQLite production storage, Discord/Telegram adapters. One `Cat(CatBase)` inheritance and it runs.
+Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([Website](http://www.meowagent.top)) — real organs, SQLite production storage, Discord/Telegram adapters. One `Cat(CatBase)` inheritance and it runs.
+
+---
+
+## 📬 Contact
+
+- **Website:** http://www.meowagent.top (coming soon)
+- **Email:** qyiun666@163.com
+- **GitHub:** https://github.com/Axonant/MeowAgent — production Agent built on meowcat (coming soon)
+
+Have feature ideas or want to collaborate? We'd love to hear from you — pull requests, feature suggestions, and partnership inquiries are all welcome.
 
 ---
 
 ## 📊 Version History (Key Milestones)
 
-| Version    | Highlights                                                                                                                                              |
-| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **v1.2.x** | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                        |
-| **v1.1.x** | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                  |
-| **v1.0.x** | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                    |
-| **v0.5.x** | CatBase facade, Dual brain architecture, OrganHost/Wiring/Nervous subsystem split, Reflex arc, Slot-Plug model, ImplementationStyle, 20-organ blueprint |
+| Version    | Highlights                                                                                                                                                                                                       |
+| :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.2.x** | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
+| **v1.1.x** | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |
+| **v1.0.x** | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                             |
+| **v0.5.x** | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
 
 ---
 

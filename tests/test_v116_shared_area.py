@@ -249,14 +249,14 @@ class TestCustomNamespace:
     def test_registered_namespaces_default(self) -> None:
         c = Colony("test")
         assert c.registered_namespaces == frozenset(
-            {"owner", "rules", "knowledge", "growth", "cats"})
+            {"owner", "rules", "knowledge", "growth", "cats", "__tasks__"})
 
     def test_register_custom_namespace(self) -> None:
         c = Colony("test")
         c.storage_plug("namespace", "audit")
         assert "audit" in c.registered_namespaces
         assert c.registered_namespaces == frozenset(
-            {"owner", "rules", "knowledge", "growth", "cats", "audit"})
+            {"owner", "rules", "knowledge", "growth", "cats", "__tasks__", "audit"})
 
     def test_register_multiple_custom(self) -> None:
         c = Colony("test")

@@ -64,7 +64,7 @@ class TestBuiltinChains:
     """Built-in chain table."""
 
     def test_not_empty(self):
-        assert len(BUILTIN_CHAINS) == 6
+        assert len(BUILTIN_CHAINS) == 8
 
     def test_no_duplicate_names(self):
         names = [c.name for c in BUILTIN_CHAINS]
@@ -75,13 +75,13 @@ class TestBuiltinChains:
         expected = {
             "memory_search", "full_reasoning",
             "tool_exec", "maintenance", "diagnostic",
-            "workflow_chain",
+            "workflow_chain", "growth_chain", "reflection_chain",
         }
         assert names == expected
 
-    def test_diagnostic_is_empty(self):
+    def test_diagnostic_has_crystallize(self):
         diag = [c for c in BUILTIN_CHAINS if c.name == "diagnostic"][0]
-        assert diag.path_names == ()
+        assert diag.path_names == ("crystallize",)
 
     def test_memory_search_is_single(self):
         ms = [c for c in BUILTIN_CHAINS if c.name == "memory_search"][0]
@@ -246,12 +246,13 @@ class TestChainRegistryRun:
         anyio.run(_run)
 
     def test_run_empty_chain(self):
-        """Empty diagnostic chain returns initial input."""
+        """Empty chain returns initial input (custom, not diagnostic)."""
         cat, _ = self._setup_cat()
+        cat.chain_registry.register(Chain("empty_test", (), "empty"))
 
         async def _run():
             result = await cat.chain_registry.run(
-                cat, "diagnostic", status="ok",
+                cat, "empty_test", status="ok",
             )
             assert result == {"status": "ok"}
 
@@ -312,15 +313,15 @@ class TestChainRegistryRun:
 
 
 class TestCatBaseChainIntegration:
-    """CatBase auto-registers 6 built-in chains."""
+    """CatBase auto-registers 8 built-in chains."""
 
     def test_cat_has_chain_registry(self):
         cat = make_cat("test")
         assert hasattr(cat, "chain_registry")
         chains = cat.chain_registry.list_all()
         # v0.5.28b: +3 inline chains from register_default_loops (conversation_chain,
-        # tool_loop_chain, danger_chain)
-        assert len(chains) == 9
+        # tool_loop_chain, danger_chain) + 2 growth chains → total 11
+        assert len(chains) == 11
 
     def test_cat_has_builtin_chains(self):
         cat = make_cat("test")

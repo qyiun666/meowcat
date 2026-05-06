@@ -24,7 +24,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from meowcat.chain import BUILTIN_CHAINS, Chain, MAINTENANCE_CHAIN as _MC, DIAGNOSTIC_CHAIN as _DC
+from meowcat.chain import (
+    BUILTIN_CHAINS, Chain,
+    MAINTENANCE_CHAIN as _MC,
+    DIAGNOSTIC_CHAIN as _DC,
+    GROWTH_CHAIN as _GC,
+    REFLECTION_CHAIN as _RC,
+)
 from meowcat.events import Lifecycle
 
 
@@ -32,6 +38,8 @@ from meowcat.events import Lifecycle
 
 _MAINTENANCE_CHAIN: Chain = _MC
 _DIAGNOSTIC_CHAIN: Chain = _DC
+_GROWTH_CHAIN: Chain = _GC
+_REFLECTION_CHAIN: Chain = _RC
 
 
 # -- Loop dataclass -------------------------------------------------
@@ -102,9 +110,25 @@ MAINTENANCE_LOOP: Loop = Loop(
 
 DIAGNOSTIC_LOOP: Loop = Loop(
     "diagnostic",
-    "Diagnostic loop — run Stethoscope checkup",
+    "Diagnostic loop — run crystallizer hotspots + usage stats",
     chain=_DIAGNOSTIC_CHAIN,
     trigger=None,  # manual trigger
+)
+
+# -- v1.3.0 Growth loops ---------------------------------------------------
+
+GROWTH_LOOP: Loop = Loop(
+    "growth",
+    "Growth loop — learn from anomalies → crystallize",
+    chain=_GROWTH_CHAIN,
+    trigger="post_action",
+)
+
+REFLECTION_LOOP: Loop = Loop(
+    "reflection",
+    "Reflection loop — post-execution skill review",
+    chain=_REFLECTION_CHAIN,
+    trigger="tool_executed",
 )
 
 BUILTIN_LOOPS: tuple[Loop, ...] = (
@@ -113,6 +137,8 @@ BUILTIN_LOOPS: tuple[Loop, ...] = (
     DANGER_RESPONSE_LOOP,
     MAINTENANCE_LOOP,
     DIAGNOSTIC_LOOP,
+    GROWTH_LOOP,
+    REFLECTION_LOOP,
 )
 
 
@@ -437,6 +463,7 @@ __all__ = [
     "Loop", "LoopRegistry",
     "CONVERSATION_LOOP", "TOOL_EXECUTION_LOOP",
     "DANGER_RESPONSE_LOOP", "MAINTENANCE_LOOP", "DIAGNOSTIC_LOOP",
+    "GROWTH_LOOP", "REFLECTION_LOOP",
     "BUILTIN_LOOPS", "register_default_loops",
     "LoopSequence", "LoopSequenceRegistry",
     "DAILY_MAINTENANCE_SEQ", "BUILTIN_LOOPSEQS",

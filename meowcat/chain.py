@@ -67,13 +67,22 @@ MAINTENANCE_CHAIN: Chain = Chain(
     "Self-maintenance — decay memories + cleanup orphan connections",
 )
 DIAGNOSTIC_CHAIN: Chain = Chain(
-    "diagnostic", (),
-    "Diagnostic — empty chain, routes through Stethoscope checkup",
+    "diagnostic", ("crystallize",),
+    "Diagnostic — surface crystallizer hotspots + usage stats",
 )
 WORKFLOW_CHAIN: Chain = Chain(
     "workflow_chain", ("workflow_create", "execute_tool",
                        "workflow_checkpoint"),
     "Workflow single-step — create → execute → archive",
+)
+# -- v1.3.0 Growth chains --------------------------------------------------
+GROWTH_CHAIN: Chain = Chain(
+    "growth_chain", ("record_anomaly", "crystallize"),
+    "Growth chain — record anomaly pattern, then crystallize skills",
+)
+REFLECTION_CHAIN: Chain = Chain(
+    "reflection_chain", ("crystallize",),
+    "Reflection chain — post-execution skill review",
 )
 
 BUILTIN_CHAINS: tuple[Chain, ...] = (
@@ -83,6 +92,8 @@ BUILTIN_CHAINS: tuple[Chain, ...] = (
     MAINTENANCE_CHAIN,
     DIAGNOSTIC_CHAIN,
     WORKFLOW_CHAIN,
+    GROWTH_CHAIN,
+    REFLECTION_CHAIN,
 )
 
 
@@ -210,5 +221,6 @@ __all__ = [
     "MEMORY_SEARCH_CHAIN", "FULL_REASONING_CHAIN",
     "TOOL_EXEC_CHAIN", "MAINTENANCE_CHAIN", "DIAGNOSTIC_CHAIN",
     "WORKFLOW_CHAIN",
+    "GROWTH_CHAIN", "REFLECTION_CHAIN",
     "BUILTIN_CHAINS", "register_builtin_chains",
 ]

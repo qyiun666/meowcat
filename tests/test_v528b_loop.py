@@ -74,7 +74,7 @@ class TestBuiltinLoops:
     """Built-in loop table."""
 
     def test_not_empty(self):
-        assert len(BUILTIN_LOOPS) == 5
+        assert len(BUILTIN_LOOPS) == 7
 
     def test_no_duplicate_names(self):
         names = [lp.name for lp in BUILTIN_LOOPS]
@@ -85,6 +85,7 @@ class TestBuiltinLoops:
         expected = {
             "conversation", "tool_execution",
             "danger_response", "maintenance", "diagnostic",
+            "growth", "reflection",
         }
         assert names == expected
 
@@ -99,7 +100,7 @@ class TestBuiltinLoops:
     def test_diagnostic_loop_no_trigger(self):
         lp = next(lp for lp in BUILTIN_LOOPS if lp.name == "diagnostic")
         assert lp.trigger is None
-        assert lp.chain.path_names == ()  # empty chain
+        assert lp.chain.path_names == ("crystallize",)
 
     def test_maintenance_loop_reuses_builtin_chain(self):
         lp = next(lp for lp in BUILTIN_LOOPS if lp.name == "maintenance")
@@ -328,12 +329,16 @@ class TestLoopRegistryRun:
         anyio.run(_run)
 
     def test_run_diagnostic_loop_empty_chain(self):
-        """Diagnostic loop (empty chain) returns initial input."""
+        """Empty-chain loop returns initial input (custom, not diagnostic)."""
         cat, _ = self._setup_cat()
+        cat.chain_registry.register(Chain("empty_test", (), "empty"))
+        cat.loop_registry.register(
+            Loop("empty_loop", "test", Chain("empty_test", ()))
+        )
 
         async def _run():
             result = await cat.loop_registry.run(
-                cat, "diagnostic", status="ok",
+                cat, "empty_loop", status="ok",
             )
             assert result == {"status": "ok"}
 
@@ -392,18 +397,18 @@ class TestSelfLoopPath:
 
 
 class TestCatBaseLoopIntegration:
-    """CatBase auto-registers 5 built-in loops + run_loop() facade."""
+    """CatBase auto-registers 7 built-in loops + run_loop() facade."""
 
     def test_cat_has_loop_registry(self):
         cat = make_cat("test")
         assert hasattr(cat, "loop_registry")
         loops = cat.loop_registry.list_all()
-        assert len(loops) == 5
+        assert len(loops) == 7
 
     def test_cat_has_builtin_loops(self):
         cat = make_cat("test")
         for name in ("conversation", "tool_execution", "danger_response",
-                     "maintenance", "diagnostic"):
+                     "maintenance", "diagnostic", "growth", "reflection"):
             lp = cat.loop_registry.get(name)
             assert lp is not None, f"Missing loop: {name}"
             assert lp.name == name
@@ -414,12 +419,16 @@ class TestCatBaseLoopIntegration:
         assert callable(cat.run_loop)
 
     def test_cat_run_loop_diagnostic(self):
-        """cat.run_loop("diagnostic") executes correctly."""
+        """cat.run_loop("diagnostic") runs crystallize path and returns result."""
         cat = make_cat("test")
+        from meowcat.defaults.organs import NoopBrainstem, NoopCrystallizer
+        cat.mount("brain", "brainstem", NoopBrainstem())
+        cat.mount("growth", "crystallizer", NoopCrystallizer())
+        cat.wire_default_nervous_system()
 
         async def _run():
-            result = await cat.run_loop("diagnostic", x=1)
-            assert result == {"x": 1}
+            result = await cat.run_loop("diagnostic", slug="test", hit_count=1)
+            assert isinstance(result, bool) or isinstance(result, dict)
 
         anyio.run(_run)
 
@@ -446,7 +455,7 @@ class TestCatBaseLoopIntegration:
     def test_from_meowcat_import_loops(self):
         """Externally importable via from meowcat import Loop/LoopRegistry/BUILTIN_LOOPS."""
         from meowcat import BUILTIN_LOOPS as L, Loop as LP, LoopRegistry as LR
-        assert len(L) == 5
+        assert len(L) == 7
         assert hasattr(LP, "__dataclass_fields__")
         assert hasattr(LR, "register")
 
@@ -480,7 +489,7 @@ class TestNewPathsForLoop:
         assert p.from_organ == p.to_organ
 
     def test_total_path_count(self):
-        """BUILTIN_PATHS currently 26 (v1.0.15 +3 orchestration; v1.2.36 removed 2 cat_self)."""
+        """BUILTIN_PATHS currently 31 (v1.3.0 +4 growth +1 compress_context)."""
         cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
-        assert len(all_paths) == 26
+        assert len(all_paths) == 31

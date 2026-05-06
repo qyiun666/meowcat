@@ -11,12 +11,19 @@ from meowcat.tools.tool import Tool
 from meowcat.plus.tools.file_ops import plus_read_file, plus_write_file
 from meowcat.plus.tools.command import plus_run_command
 from meowcat.plus.tools.http_client import plus_http_get
+from meowcat.plus.tools.fs_tools import plus_list_dir, plus_grep_files
+from meowcat.plus.tools.time_tool import plus_current_time
+from meowcat.plus.tools.code_runner import plus_code_runner
 
 BUILTIN_TOOLS: list[Tool] = [
     plus_read_file,
     plus_write_file,
     plus_run_command,
     plus_http_get,
+    plus_list_dir,
+    plus_grep_files,
+    plus_current_time,
+    plus_code_runner,
 ]
 
 __all__ = ["BUILTIN_TOOLS"]
