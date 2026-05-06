@@ -9,11 +9,17 @@ import re
 
 from meowcat._exports import __all__, _LAZY_MAP, _SUBMODULES
 
-# -- Version (eager — tiny and universally accessed) ----------------------
-_pyproject = pathlib.Path(__file__).resolve().parent.parent / "pyproject.toml"
-_match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']',
-                   _pyproject.read_text(encoding="utf-8"), re.MULTILINE)
-__version__ = _match.group(1) if _match else "0.0.0"
+# -- Version -----------------------------------------------------------
+# Use importlib.metadata for pip-installed packages;
+# fall back to pyproject.toml for editable/dev installs.
+try:
+    from importlib.metadata import version as _pkg_version
+    __version__ = _pkg_version("meowcat")
+except Exception:
+    _pyproject = pathlib.Path(__file__).resolve().parent.parent / "pyproject.toml"
+    _match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']',
+                       _pyproject.read_text(encoding="utf-8"), re.MULTILINE)
+    __version__ = _match.group(1) if _match else "0.0.0"
 
 
 def __getattr__(name: str):
