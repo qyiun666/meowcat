@@ -12,6 +12,7 @@ v1.1.20: Shared Memory — SharedMemoryPool for colony-wide knowledge sharing + 
 v1.1.21: Collective Intelligence — Cross-cat memory search (Hippocampus.locate scope=colony) + delegation with memory snapshot (snapshot + spawn_cat).
 v1.1.22: Collective Growth — anomaly/correction shared to growth/ namespace + colony-level role emergence.
 v1.2.11: File split — ColonyConfig/ColonyOwner → config.py, ColonyRules → rules.py, Federation → federation.py, GlobalColonyRegistry → registry.py.
+v1.2.37: File split — Colony federation transports moved from meowcat.colony_transports to colony/transports.py.
 
 Orthogonal to Kitten (master/slave mode):
 - Kitten: master cat spawns kitten → result delivered back (parent → child)

@@ -23,7 +23,7 @@ import pytest
 from meowcat.assembly import CatBase
 from meowcat.testing import make_cat
 from meowcat.colony import Colony
-from meowcat.colony_transports import TCPSocketTransport, RedisPubSubTransport
+from meowcat.colony.transports import TCPSocketTransport, RedisPubSubTransport
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.protocols_storage import FederationTransport

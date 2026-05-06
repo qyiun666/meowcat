@@ -1,4 +1,4 @@
-"""meowcat Colony federation transport layer built-in implementations (v1.0.12).
+"""meowcat Colony federation transport layer built-in implementations (v1.0.12, moved to colony/ v1.2.37).
 
 Provides two built-in transports:
 - TCPSocketTransport: stdlib asyncio TCP, for two hosts on the same network

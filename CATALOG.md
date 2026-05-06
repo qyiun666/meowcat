@@ -56,19 +56,19 @@
 
 ### 装配开关一览
 
-| 参数 | 默认 | 作用 |
-|:---|:---|:---|
-| `renovated` | `True` | `True` = 简装修 / `False` = 毛坯 |
-| `bare_organs` | `None` | 简装修模式下保留毛坯的器官名集合 |
-| `renovate_organs` | `None` | 毛坯模式下升级简装修的器官名集合 |
-| `keyword` | `None` | `KeywordPreset` — 注入 Ears/Thalamus/Amygdala/Frontal |
-| `prompt` | `None` | `PromptPreset` — 注入 Brainstem/Cerebrum |
-| `register_default_paths` | `True` | 自动注册 26 条内置路径 |
-| `register_default_chains` | `True` | 自动注册 6 条内置链条 |
-| `register_default_loops` | `True` | 自动注册 5 条内置循环 |
-| `register_default_tools` | `True` | 自动注册内置工具集 |
-| `on_before_freeze` | `None` | 冻结前钩子 — 注入额外器官/接线 |
-| `on_assembled` | `None` | 冻结后钩子 — 设置运行时属性 |
+| 参数                      | 默认   | 作用                                                  |
+| :------------------------ | :----- | :---------------------------------------------------- |
+| `renovated`               | `True` | `True` = 简装修 / `False` = 毛坯                      |
+| `bare_organs`             | `None` | 简装修模式下保留毛坯的器官名集合                      |
+| `renovate_organs`         | `None` | 毛坯模式下升级简装修的器官名集合                      |
+| `keyword`                 | `None` | `KeywordPreset` — 注入 Ears/Thalamus/Amygdala/Frontal |
+| `prompt`                  | `None` | `PromptPreset` — 注入 Brainstem/Cerebrum              |
+| `register_default_paths`  | `True` | 自动注册 26 条内置路径                                |
+| `register_default_chains` | `True` | 自动注册 6 条内置链条                                 |
+| `register_default_loops`  | `True` | 自动注册 5 条内置循环                                 |
+| `register_default_tools`  | `True` | 自动注册内置工具集                                    |
+| `on_before_freeze`        | `None` | 冻结前钩子 — 注入额外器官/接线                        |
+| `on_assembled`            | `None` | 冻结后钩子 — 设置运行时属性                           |
 
 ---
 
@@ -80,59 +80,59 @@
 
 #### 记忆域 (Memory)
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
-| `locate` | THALAMUS → THALAMUS.locate | read | 记忆搜索（丘脑自环） |
-| `remember` | BRAINSTEM → HIPPOCAMPUS.remember | write | 存储记忆 |
-| `get_entity` | THALAMUS → HIPPOCAMPUS.get_entity | read | 读取单个实体 |
-| `get_all` | THALAMUS → HIPPOCAMPUS.get_all | read | 读取全部实体 |
-| `fts_search` | THALAMUS → HIPPOCAMPUS.fts_search | read | 全文搜索 |
-| `add_entity` | BRAINSTEM → HIPPOCAMPUS.add_entity | write | 添加实体 |
-| `add_episode` | BRAINSTEM → HIPPOCAMPUS.add_episode | write | 添加情节 |
-| `connect` | BRAINSTEM → HIPPOCAMPUS.connect | write | 连接实体 |
-| `record_access` | BRAINSTEM → HIPPOCAMPUS.record_access | write | 记录访问 |
-| `set_dormant` | BRAINSTEM → HIPPOCAMPUS.set_dormant | write | 设为休眠 |
-| `append_content` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 追加内容 |
-| `update_importance` | BRAINSTEM → HIPPOCAMPUS.update_importance | write | 更新重要性 |
-| `set_last_seen` | BRAINSTEM → HIPPOCAMPUS.set_last_seen | write | 设置最后可见时间 |
+| 路径                | 信号                                      | 模式  | 说明                 |
+| :------------------ | :---------------------------------------- | :---- | :------------------- |
+| `locate`            | THALAMUS → THALAMUS.locate                | read  | 记忆搜索（丘脑自环） |
+| `remember`          | BRAINSTEM → HIPPOCAMPUS.remember          | write | 存储记忆             |
+| `get_entity`        | THALAMUS → HIPPOCAMPUS.get_entity         | read  | 读取单个实体         |
+| `get_all`           | THALAMUS → HIPPOCAMPUS.get_all            | read  | 读取全部实体         |
+| `fts_search`        | THALAMUS → HIPPOCAMPUS.fts_search         | read  | 全文搜索             |
+| `add_entity`        | BRAINSTEM → HIPPOCAMPUS.add_entity        | write | 添加实体             |
+| `add_episode`       | BRAINSTEM → HIPPOCAMPUS.add_episode       | write | 添加情节             |
+| `connect`           | BRAINSTEM → HIPPOCAMPUS.connect           | write | 连接实体             |
+| `record_access`     | BRAINSTEM → HIPPOCAMPUS.record_access     | write | 记录访问             |
+| `set_dormant`       | BRAINSTEM → HIPPOCAMPUS.set_dormant       | write | 设为休眠             |
+| `append_content`    | BRAINSTEM → HIPPOCAMPUS.append_content    | write | 追加内容             |
+| `update_importance` | BRAINSTEM → HIPPOCAMPUS.update_importance | write | 更新重要性           |
+| `set_last_seen`     | BRAINSTEM → HIPPOCAMPUS.set_last_seen     | write | 设置最后可见时间     |
 
 #### 推理域 (Reasoning)
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
-| `deep_reason` | THALAMUS → CEREBRUM.generate | read | 深度推理 |
-| `decide_route` | THALAMUS → THALAMUS.decide_route | read | 路由决策（自环） |
+| 路径            | 信号                              | 模式 | 说明             |
+| :-------------- | :-------------------------------- | :--- | :--------------- |
+| `deep_reason`   | THALAMUS → CEREBRUM.generate      | read | 深度推理         |
+| `decide_route`  | THALAMUS → THALAMUS.decide_route  | read | 路由决策（自环） |
 | `assess_safety` | AMYGDALA → AMYGDALA.assess_safety | read | 安全评估（自环） |
 
 #### 输出域 (Output)
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
+| 路径    | 信号                     | 模式  | 说明     |
+| :------ | :----------------------- | :---- | :------- |
 | `speak` | CEREBELLUM → MOUTH.speak | write | 输出回复 |
-| `hear` | EARS → THALAMUS.hear | read | 接收输入 |
+| `hear`  | EARS → THALAMUS.hear     | read  | 接收输入 |
 
 #### 工具域 (Tool)
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
+| 路径           | 信号                      | 模式  | 说明     |
+| :------------- | :------------------------ | :---- | :------- |
 | `execute_tool` | CEREBELLUM → PAWS.execute | write | 执行工具 |
 
 #### 维护域 (Maintenance)
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
-| `decay` | HYPOTHALAMUS → HIPPOCAMPUS.decay | write | 记忆衰减 |
-| `weaken_connections` | HYPOTHALAMUS → HIPPOCAMPUS.weaken_connections | write | 弱化连接 |
-| `cleanup_orphans` | HYPOTHALAMUS → HIPPOCAMPUS.cleanup_orphan_connections | write | 清理孤立连接 |
+| 路径                 | 信号                                                  | 模式  | 说明         |
+| :------------------- | :---------------------------------------------------- | :---- | :----------- |
+| `decay`              | HYPOTHALAMUS → HIPPOCAMPUS.decay                      | write | 记忆衰减     |
+| `weaken_connections` | HYPOTHALAMUS → HIPPOCAMPUS.weaken_connections         | write | 弱化连接     |
+| `cleanup_orphans`    | HYPOTHALAMUS → HIPPOCAMPUS.cleanup_orphan_connections | write | 清理孤立连接 |
 
 #### 合成 + 工作流域
 
-| 路径 | 信号 | 模式 | 说明 |
-|:---|:---|:---|:---|
-| `synthesize` | BRAINSTEM → CORTEX.synthesize | read | 世界观合成 |
-| `workflow_create` | BRAINSTEM → HIPPOCAMPUS.add_entity | write | 创建工作流 |
+| 路径                  | 信号                                   | 模式  | 说明       |
+| :-------------------- | :------------------------------------- | :---- | :--------- |
+| `synthesize`          | BRAINSTEM → CORTEX.synthesize          | read  | 世界观合成 |
+| `workflow_create`     | BRAINSTEM → HIPPOCAMPUS.add_entity     | write | 创建工作流 |
 | `workflow_checkpoint` | BRAINSTEM → HIPPOCAMPUS.append_content | write | 写入检查点 |
-| `workflow_resume` | BRAINSTEM → HIPPOCAMPUS.get_entity | read | 恢复工作流 |
+| `workflow_resume`     | BRAINSTEM → HIPPOCAMPUS.get_entity     | read  | 恢复工作流 |
 
 ---
 
@@ -140,14 +140,14 @@
 
 命名路径序列。上一步结果作为 `**kwargs` 传入下一步。支持 rollback。
 
-| # | 链条 | 路径序列 | 说明 |
-|:---|:---|:---|:---|
-| C1 | `memory_search_chain` | `locate` | 记忆搜索 |
-| C2 | `conversation_chain` | `hear` → `decide_route` → `locate` → `deep_reason` → `speak` → `remember` | 完整对话流 |
-| C3 | `tool_loop_chain` | `hear` → `decide_route` → `execute_tool` → `speak` → `remember` | 工具执行流 |
-| C4 | `danger_chain` | `assess_safety` | 安全评估 |
-| C5 | `maintenance_chain` | `decay` → `cleanup_orphans` | 记忆维护 |
-| C6 | `diagnostic_chain` | (空 — 听诊器扫描) | 健康检查 |
+| #   | 链条                  | 路径序列                                                                  | 说明       |
+| :-- | :-------------------- | :------------------------------------------------------------------------ | :--------- |
+| C1  | `memory_search_chain` | `locate`                                                                  | 记忆搜索   |
+| C2  | `conversation_chain`  | `hear` → `decide_route` → `locate` → `deep_reason` → `speak` → `remember` | 完整对话流 |
+| C3  | `tool_loop_chain`     | `hear` → `decide_route` → `execute_tool` → `speak` → `remember`           | 工具执行流 |
+| C4  | `danger_chain`        | `assess_safety`                                                           | 安全评估   |
+| C5  | `maintenance_chain`   | `decay` → `cleanup_orphans`                                               | 记忆维护   |
+| C6  | `diagnostic_chain`    | (空 — 听诊器扫描)                                                         | 健康检查   |
 
 ---
 
@@ -164,13 +164,13 @@
   path:    EARS → THALAMUS → CEREBRUM → CEREBELLUM → MOUTH → HIPPOCAMPUS
 ```
 
-| # | 循环 | 链条 | 触发器 | 说明 |
-|:---|:---|:---|:---|:---|
-| L1 | `conversation` | conversation_chain | `perceive.start` | 对话闭环 |
-| L2 | `tool_execution` | tool_loop_chain | `orchestrate.start` | 工具执行闭环 |
-| L3 | `danger_response` | danger_chain | `amygdala.alert` | 紧急安全闭环 |
-| L4 | `maintenance` | maintenance_chain | `heartbeat.tick` | 体内稳态闭环 |
-| L5 | `diagnostic` | diagnostic_chain | (手动触发) | 健康检查 |
+| #   | 循环              | 链条               | 触发器              | 说明         |
+| :-- | :---------------- | :----------------- | :------------------ | :----------- |
+| L1  | `conversation`    | conversation_chain | `perceive.start`    | 对话闭环     |
+| L2  | `tool_execution`  | tool_loop_chain    | `orchestrate.start` | 工具执行闭环 |
+| L3  | `danger_response` | danger_chain       | `amygdala.alert`    | 紧急安全闭环 |
+| L4  | `maintenance`     | maintenance_chain  | `heartbeat.tick`    | 体内稳态闭环 |
+| L5  | `diagnostic`      | diagnostic_chain   | (手动触发)          | 健康检查     |
 
 #### CatSelf 默认循环 (3) — 自意识成长
 
@@ -182,18 +182,18 @@
   ScribblePad → PinealGland.trigger_if(on_full/on_timer) → fuse_to_colony → SharedStorage → 其他猫
 ```
 
-| 循环 | 流程 | 融合触发 | 说明 |
-|:---|:---|:---|:---|
+| 循环           | 流程                           | 融合触发                       | 说明                 |
+| :------------- | :----------------------------- | :----------------------------- | :------------------- |
 | `conversation` | 读自我→聊天→回复→scribble→反思 | `on_event("conversation_end")` | 对话中进化（最常用） |
-| `task` | 读自我→分析→执行→观察→scribble | `on_full(50)` | 任务驱动进化 |
-| `learn` | 读自我→盲点→探索→验证→scribble | `trigger()` 即时 | 好奇心驱动学习 |
+| `task`         | 读自我→分析→执行→观察→scribble | `on_full(50)`                  | 任务驱动进化         |
+| `learn`        | 读自我→盲点→探索→验证→scribble | `trigger()` 即时               | 好奇心驱动学习       |
 
 ---
 
 ### L4 — LoopSequence 循环序列 (1 built-in)
 
-| # | 名称 | 循环序列 | 模式 | 说明 |
-|:---|:---|:---|:---|:---|
+| #   | 名称                | 循环序列                 | 模式       | 说明          |
+| :-- | :------------------ | :----------------------- | :--------- | :------------ |
 | LS1 | `daily_maintenance` | maintenance → diagnostic | sequential | 日常维护→检查 |
 
 ---
@@ -202,10 +202,10 @@
 
 > 刺激→响应，零 LLM 依赖。触发时跳过推理直接执行。
 
-| # | 名称 | 触发器 | 路径 | 跳数 | 说明 |
-|:---|:---|:---|:---|:---|:---|
-| R1 | `text_dialogue` | `modality == "text"` | EARS → THALAMUS → BRAINSTEM → CEREBRUM → CEREBELLUM → MOUTH | 5 | 标准文本对话全路径 |
-| R2 | `danger` | 内容匹配危险模式 | EARS → THALAMUS → AMYGDALA → MOUTH | 3 | 杏仁核紧急反射 — 绕过大脑直接输出 |
+| #   | 名称            | 触发器               | 路径                                                        | 跳数 | 说明                              |
+| :-- | :-------------- | :------------------- | :---------------------------------------------------------- | :--- | :-------------------------------- |
+| R1  | `text_dialogue` | `modality == "text"` | EARS → THALAMUS → BRAINSTEM → CEREBRUM → CEREBELLUM → MOUTH | 5    | 标准文本对话全路径                |
+| R2  | `danger`        | 内容匹配危险模式     | EARS → THALAMUS → AMYGDALA → MOUTH                          | 3    | 杏仁核紧急反射 — 绕过大脑直接输出 |
 
 ---
 
@@ -213,39 +213,39 @@
 
 ### 9 大脑区域
 
-| 器官 | 角色 | 核心特征 | 支持 Plug | 简装修类型 |
-|:---|:---|:---|:---|:---|
-| **Thalamus** | 感觉中继枢纽 | 所有输入必经此地 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
-| **Cerebrum** | 深度推理 | LLM 驱动，仅 MODEL/HYBRID | MODEL / HYBRID | — (用户提供) |
-| **Cerebellum** | 快速响应 | 所有效应器唯一入口 | MODEL / ALGO / HYBRID | — (默认同 Cerebrum) |
-| **Hippocampus** | 记忆图谱 | 实体-关联存储 | ALGO / MODEL / HYBRID | ALGORITHM |
-| **Amygdala** | 安全旁路 | 可无推理直接输出 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
-| **Frontal** | 专注与规划 | 话题跟踪、任务分解 | ALGO / MODEL / HYBRID | ALGORITHM |
-| **Hypothalamus** | 体内稳态 | 记忆衰减、孤立清理 | ALGO / RULE | ALGORITHM |
-| **Cortex** | 世界观蒸馏 | L0→L3 认知管线 | ALGO / MODEL / HYBRID | ALGORITHM |
-| **Brainstem** | 总调度 | 协调所有脑区 | ALGO / RULE / MODEL / HYBRID | ALGORITHM |
+| 器官             | 角色         | 核心特征                  | 支持 Plug                    | 简装修类型          |
+| :--------------- | :----------- | :------------------------ | :--------------------------- | :------------------ |
+| **Thalamus**     | 感觉中继枢纽 | 所有输入必经此地          | ALGO / RULE / MODEL / HYBRID | ALGORITHM           |
+| **Cerebrum**     | 深度推理     | LLM 驱动，仅 MODEL/HYBRID | MODEL / HYBRID               | — (用户提供)        |
+| **Cerebellum**   | 快速响应     | 所有效应器唯一入口        | MODEL / ALGO / HYBRID        | — (默认同 Cerebrum) |
+| **Hippocampus**  | 记忆图谱     | 实体-关联存储             | ALGO / MODEL / HYBRID        | ALGORITHM           |
+| **Amygdala**     | 安全旁路     | 可无推理直接输出          | ALGO / RULE / MODEL / HYBRID | ALGORITHM           |
+| **Frontal**      | 专注与规划   | 话题跟踪、任务分解        | ALGO / MODEL / HYBRID        | ALGORITHM           |
+| **Hypothalamus** | 体内稳态     | 记忆衰减、孤立清理        | ALGO / RULE                  | ALGORITHM           |
+| **Cortex**       | 世界观蒸馏   | L0→L3 认知管线            | ALGO / MODEL / HYBRID        | ALGORITHM           |
+| **Brainstem**    | 总调度       | 协调所有脑区              | ALGO / RULE / MODEL / HYBRID | ALGORITHM           |
 
 ### 4 感觉 (SENSE) + 4 效应器
 
-| 器官 | 类别 | 角色 | 简装修类型 |
-|:---|:---|:---|:---|
-| **Ears** | SENSE | 文本输入 (CLI/API/Discord/Telegram) | ALGORITHM |
-| **Eyes** | SENSE | 视觉输入 (图片/视频) | ALGORITHM |
-| **Whiskers** | SENSE | 环境感知 (I/O 异常检测) | ALGORITHM |
-| **Paws** | SENSE + 效应器 | 工具执行 (Skill/MCP/命令) | ALGORITHM |
-| **Mouth** | VOICE | 语音/文本输出 | ALGORITHM |
-| **Purr** | VOICE | 流式状态指示 | ALGORITHM |
-| **Tail** | VOICE | 状态栏 (CLI/TUI 健康信号) | ALGORITHM |
+| 器官         | 类别           | 角色                                | 简装修类型 |
+| :----------- | :------------- | :---------------------------------- | :--------- |
+| **Ears**     | SENSE          | 文本输入 (CLI/API/Discord/Telegram) | ALGORITHM  |
+| **Eyes**     | SENSE          | 视觉输入 (图片/视频)                | ALGORITHM  |
+| **Whiskers** | SENSE          | 环境感知 (I/O 异常检测)             | ALGORITHM  |
+| **Paws**     | SENSE + 效应器 | 工具执行 (Skill/MCP/命令)           | ALGORITHM  |
+| **Mouth**    | VOICE          | 语音/文本输出                       | ALGORITHM  |
+| **Purr**     | VOICE          | 流式状态指示                        | ALGORITHM  |
+| **Tail**     | VOICE          | 状态栏 (CLI/TUI 健康信号)           | ALGORITHM  |
 
 ### 5 成长 (GROWTH)
 
-| 器官 | 角色 | 简装修类型 |
-|:---|:---|:---|
-| **PinealGland** | 顿悟融合枢纽 — 碎片→洞察，双向融合 | Pluggable (不在 OrganHost) |
-| **AnomalyGrowth** | 异常沉淀 — 用户标记→持久化 | ALGORITHM |
-| **CorrectionGrowth** | 纠错固化 — 用户纠正→永久修复 | ALGORITHM |
-| **Crystallizer** | 技能晶化 — 高频操作→可复用技能 | ALGORITHM |
-| **RoleEmergence** | 角色涌现 — 行为模式→隐式角色 | ALGORITHM |
+| 器官                 | 角色                               | 简装修类型                 |
+| :------------------- | :--------------------------------- | :------------------------- |
+| **PinealGland**      | 顿悟融合枢纽 — 碎片→洞察，双向融合 | Pluggable (不在 OrganHost) |
+| **AnomalyGrowth**    | 异常沉淀 — 用户标记→持久化         | ALGORITHM                  |
+| **CorrectionGrowth** | 纠错固化 — 用户纠正→永久修复       | ALGORITHM                  |
+| **Crystallizer**     | 技能晶化 — 高频操作→可复用技能     | ALGORITHM                  |
+| **RoleEmergence**    | 角色涌现 — 行为模式→隐式角色       | ALGORITHM                  |
 
 ---
 
@@ -255,22 +255,22 @@
 
 > 生物学合理接线约束 — 允许边开放，禁止边硬阻断。禁止优先于允许。
 
-| 禁止边 | 原因 |
-|:---|:---|
-| CEREBRUM → PAWS | 大脑不直接控制肢体 |
-| CEREBRUM → MOUTH | 大脑不直接驱动语言 |
-| CEREBRUM → ANOMALY_GROWTH | 大脑不直接触发成长 |
-| CEREBRUM → CORRECTION_GROWTH | 大脑不直接触发纠错 |
-| CEREBRUM → CRYSTALLIZER | 大脑不直接结晶技能 (v1.2.17) |
-| CEREBRUM → ROLE_EMERGENCE | 大脑不直接触发角色涌现 (v1.2.17) |
-| CEREBELLUM → CEREBRUM | 小脑不反馈至大脑 |
-| AMYGDALA → HIPPOCAMPUS | 杏仁核不直接访问记忆 |
-| THALAMUS → CEREBELLUM | 丘脑不绕行大脑 |
+| 禁止边                       | 原因                             |
+| :--------------------------- | :------------------------------- |
+| CEREBRUM → PAWS              | 大脑不直接控制肢体               |
+| CEREBRUM → MOUTH             | 大脑不直接驱动语言               |
+| CEREBRUM → ANOMALY_GROWTH    | 大脑不直接触发成长               |
+| CEREBRUM → CORRECTION_GROWTH | 大脑不直接触发纠错               |
+| CEREBRUM → CRYSTALLIZER      | 大脑不直接结晶技能 (v1.2.17)     |
+| CEREBRUM → ROLE_EMERGENCE    | 大脑不直接触发角色涌现 (v1.2.17) |
+| CEREBELLUM → CEREBRUM        | 小脑不反馈至大脑                 |
+| AMYGDALA → HIPPOCAMPUS       | 杏仁核不直接访问记忆             |
+| THALAMUS → CEREBELLUM        | 丘脑不绕行大脑                   |
 
 ### 写权限约束
 
-| 目标器官 | 允许写入方 |
-|:---|:---|
+| 目标器官    | 允许写入方                             |
+| :---------- | :------------------------------------- |
 | HIPPOCAMPUS | BRAINSTEM, HYPOTHALAMUS (仅此二者可写) |
 
 ### 默认接线架构
@@ -296,11 +296,11 @@ SENSE 输入 → THALAMUS (唯一中继)
 
 > 注入 Ears / Thalamus / Amygdala / Frontal。每个器官选取自己需要的子集。
 
-| 预设 | 停用词 | 命令 | 危险规则 | 话题词 | 说明 |
-|:---|:---|:---|:---|:---|:---|
-| `KW_EN` | 70 英文词 | 28 | 8 regex | — | 英文基础 |
-| `KW_ZH` | 70 中文词 | 36 | 9 regex | — | 中文基础 |
-| `KW_BILINGUAL` | 中英合并 | 64 | 17 regex | — | 双语合并（推荐） |
+| 预设           | 停用词    | 命令 | 危险规则 | 话题词 | 说明             |
+| :------------- | :-------- | :--- | :------- | :----- | :--------------- |
+| `KW_EN`        | 70 英文词 | 28   | 8 regex  | —      | 英文基础         |
+| `KW_ZH`        | 70 中文词 | 36   | 9 regex  | —      | 中文基础         |
+| `KW_BILINGUAL` | 中英合并  | 64   | 17 regex | —      | 双语合并（推荐） |
 
 ```python
 from meowcat.defaults import KW_BILINGUAL, KW_EN, KW_ZH
@@ -316,10 +316,10 @@ custom = KW_ZH.merge(KW_EN)
 
 > 注入 Brainstem / Cerebrum。7 条路由模板。
 
-| 预设 | 模板数 | 说明 |
-|:---|:---|:---|
+| 预设             | 模板数      | 说明     |
+| :--------------- | :---------- | :------- |
 | `PROMPT_DEFAULT` | 7 路由 (EN) | 英文默认 |
-| `PROMPT_ZH` | 7 路由 (CN) | 中文默认 |
+| `PROMPT_ZH`      | 7 路由 (CN) | 中文默认 |
 
 ```python
 from meowcat.defaults import PROMPT_DEFAULT, PROMPT_ZH
@@ -411,43 +411,42 @@ print(cat.wiring.describe())                        # 接线图描述
 
 ## VII. File Index
 
-| 内容 | 文件路径 |
-|:---|:---|
-| 公共 API (延迟加载) | `meowcat/__init__.py` + `meowcat/_exports.py` |
-| 器官坐标 / 类别 / PlugStyle | `meowcat/anatomy.py` |
-| 器官规约 (Slot SSOT) | `meowcat/biology.py` |
-| 器官角色描述 | `meowcat/organ_roles.py` |
-| CatBase 装配逻辑 | `meowcat/assembly.py` |
-| OrganHost 挂载/校验 | `meowcat/host.py` |
-| Wiring 神经接线图 | `meowcat/wiring.py` |
-| Nervous 信号调度 + 断路器 | `meowcat/nervous.py` |
-| 中间件 | `meowcat/middleware.py` |
-| 事件总线 | `meowcat/events.py` |
-| 事件载荷类型 (v1.2.18) | `meowcat/events_payloads.py` |
-| 遥测 (Tracer+Metrics, v1.2.21) | `meowcat/telemetry.py` |
-| Path / BUILTIN_PATHS (26) | `meowcat/path.py` |
-| Chain / BUILTIN_CHAINS (6) | `meowcat/chain.py` |
-| Loop / BUILTIN_LOOPS (5) + LoopSequence (1) | `meowcat/loops.py` |
-| Reflex / 反射弧 (2) | `meowcat/reflex.py` |
-| CatSelf 统一自我 + 3 默认循环 | `meowcat/biology/cat_self.py` |
-| PinealGland 顿悟融合 | `meowcat/biology/pineal_gland.py` |
-| Cortex L0-L3 世界观 | `meowcat/biology/cortex.py` |
-| ScribblePad 草稿纸 | `meowcat/biology/scribble_pad.py` |
-| Fusion + ActiveGrowth | `meowcat/biology/` |
-| 简装修实现 (Renovated*) | `meowcat/defaults/renovated.py` |
-| 毛坯桩 (Noop*) | `meowcat/defaults/organs.py` |
-| 关键词 + 提示词预设 | `meowcat/defaults/presets.py` |
-| 存储参考实现 | `meowcat/defaults/stores.py` |
-| create_cat 工厂 | `meowcat/defaults/factory.py` |
-| 工具/技能/Paws 核心 | `meowcat/tools/` |
-| 可选 I/O: 浏览器/ChromaDB/MCP/网关 | `meowcat/plus/` |
-| Colony 多猫容器 + 联邦 | `meowcat/colony/` |
-| Worker / Scheduler (v1.2.22) | `meowcat/worker/` |
-| Gateway 协议 | `meowcat/gateway/` |
-| 测试 (60+ 用例) | `tests/` |
+| 内容                                        | 文件路径                                      |
+| :------------------------------------------ | :-------------------------------------------- |
+| 公共 API (延迟加载)                         | `meowcat/__init__.py` + `meowcat/_exports.py` |
+| 器官坐标 / 类别 / PlugStyle                 | `meowcat/anatomy.py`                          |
+| 器官规约 (Slot SSOT)                        | `meowcat/biology.py`                          |
+| 器官角色描述                                | `meowcat/organ_roles.py`                      |
+| CatBase 装配逻辑                            | `meowcat/assembly.py`                         |
+| OrganHost 挂载/校验                         | `meowcat/host.py`                             |
+| Wiring 神经接线图                           | `meowcat/wiring.py`                           |
+| Nervous 信号调度 + 断路器                   | `meowcat/nervous.py`                          |
+| 中间件                                      | `meowcat/middleware.py`                       |
+| 事件总线                                    | `meowcat/events.py`                           |
+| 事件载荷类型 (v1.2.18)                      | `meowcat/events_payloads.py`                  |
+| 遥测 (Tracer+Metrics, v1.2.21)              | `meowcat/telemetry.py`                        |
+| Path / BUILTIN_PATHS (26)                   | `meowcat/path.py`                             |
+| Chain / BUILTIN_CHAINS (6)                  | `meowcat/chain.py`                            |
+| Loop / BUILTIN_LOOPS (5) + LoopSequence (1) | `meowcat/loops.py`                            |
+| Reflex / 反射弧 (2)                         | `meowcat/reflex.py`                           |
+| CatSelf 统一自我 + 3 默认循环               | `meowcat/biology/cat_self.py`                 |
+| PinealGland 顿悟融合                        | `meowcat/biology/pineal_gland.py`             |
+| Cortex L0-L3 世界观                         | `meowcat/biology/cortex.py`                   |
+| ScribblePad 草稿纸                          | `meowcat/biology/scribble_pad.py`             |
+| Fusion + ActiveGrowth                       | `meowcat/biology/`                            |
+| 简装修实现 (Renovated\*)                    | `meowcat/defaults/renovated.py`               |
+| 毛坯桩 (Noop\*)                             | `meowcat/defaults/organs.py`                  |
+| 关键词 + 提示词预设                         | `meowcat/defaults/presets.py`                 |
+| 存储参考实现                                | `meowcat/defaults/stores.py`                  |
+| create_cat 工厂                             | `meowcat/defaults/factory.py`                 |
+| 工具/技能/Paws 核心                         | `meowcat/tools/`                              |
+| 可选 I/O: 浏览器/ChromaDB/MCP/网关          | `meowcat/plus/`                               |
+| Colony 多猫容器 + 联邦                      | `meowcat/colony/`                             |
+| Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
+| Gateway 协议                                | `meowcat/gateway/`                            |
+| 测试 (60+ 用例)                             | `tests/`                                      |
 
 ---
 
-> **README** = 门面：亮点 + 生态 + 快速开始  
-> **CATALOG** = 配置手册：默认装配 + 执行流 + 预设 + 接线  
-> **CODE_WIKI** = 深度文档：完整架构 + 类与函数 + 依赖关系
+> **README** = 门面：亮点 + 生态 + 快速开始
+> **CATALOG** = 配置手册：默认装配 + 执行流 + 预设 + 接线

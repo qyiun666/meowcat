@@ -15,6 +15,8 @@
 
 以猫的生物蓝图构建的 AI Agent 框架。定义器官、接通神经，猫便活了过来。
 
+> 📖 **[AGENTS.md](AGENTS.md)** — 应用开发者入口（3 分钟建立心智模型）
+>
 > **框架定义骨架。你来选择材质。**
 >
 > 20 个器官 · 26 条路径 · 6 条链条 · 5 个循环 · 完整默认配置速查 → **[CATALOG.md](CATALOG.md)**
@@ -49,16 +51,16 @@ meowcat 之于 AI Agent，如同骨骼之于身体 — 它定义结构、连接�
 
 meowcat 将 AI Agent 建模为**猫的生物神经系统** — 一套经过亿万年进化验证的架构：
 
-| 生物学事实 | meowcat 等价 |
-|:---|:---|
-| 丘脑路由所有感觉输入 | `Thalamus` — 唯一感觉中继枢纽 |
-| 大脑负责深度推理 | `Cerebrum` — LLM 驱动的深度思考 |
-| 小脑协调快速动作 | `Cerebellum` — 所有效应器的唯一入口 |
-| 杏仁核触发恐惧反应 | `Amygdala` — 安全旁路（可绕过推理直接输出） |
-| 海马体存储记忆 | `Hippocampus` — 实体图谱记忆 |
-| 下丘脑维持体内稳态 | `Hypothalamus` — 记忆衰减 + 清理 |
-| 皮层从经验中构建世界观 | `Cortex` — L0→L3 认知管线 |
-| 反射弧绕过大脑 | `ReflexArc` — 刺激→响应，零 LLM 依赖 |
+| 生物学事实             | meowcat 等价                                |
+| :--------------------- | :------------------------------------------ |
+| 丘脑路由所有感觉输入   | `Thalamus` — 唯一感觉中继枢纽               |
+| 大脑负责深度推理       | `Cerebrum` — LLM 驱动的深度思考             |
+| 小脑协调快速动作       | `Cerebellum` — 所有效应器的唯一入口         |
+| 杏仁核触发恐惧反应     | `Amygdala` — 安全旁路（可绕过推理直接输出） |
+| 海马体存储记忆         | `Hippocampus` — 实体图谱记忆                |
+| 下丘脑维持体内稳态     | `Hypothalamus` — 记忆衰减 + 清理            |
+| 皮层从经验中构建世界观 | `Cortex` — L0→L3 认知管线                   |
+| 反射弧绕过大脑         | `ReflexArc` — 刺激→响应，零 LLM 依赖        |
 
 **20 个器官。5 大类别。1 套统一神经系统。** 猫架构提供了扁平的 LLM 管线永远无法拥有的生物级防御层（杏仁核安全旁路、熔断器、禁止边）。
 
@@ -71,28 +73,34 @@ meowcat 将 AI Agent 建模为**猫的生物神经系统** — 一套经过亿�
 <td width="50%">
 
 ### 🧬 仿生神经蓝图
+
 仿照真实神经解剖学建模。20 个器官，5 大类别（大脑 / 感官 / 声音 / 存储 / 生长）。每个器官都有入口/出口规则、读写权限和支持的实现风格 — 如同真实的生物约束。
 
 ### 🔌 插槽-插头架构
+
 框架定义**插槽**（Protocol 接口 + OrganSpec 契约）。你来提供**插头**（具体实现）。4 种插头风格：`ALGORITHM` | `RULE` | `MODEL` | `HYBRID`。按器官混合搭配。
 
 ### 🧠 四层执行模型
+
 `Path`（原子信号）→ `Chain`（序列 + 回滚）→ `Loop`（触发 + 退出 + 事件）→ `LoopSequence`（编排）。从微观到宏观，层层可组合。
 
 </td>
 <td width="50%">
 
 ### 🛡️ 生物级防御层
+
 - **杏仁核安全旁路** — 检测到危险 → 直接输出，零 LLM 推理
 - **熔断器** — 按 (器官, 方法) 粒度独立熔断，连续失败 → 断路
 - **禁止边** — 生物合理的接线约束（大脑不能直接控制爪子）
 - **Kittens** — 细粒度权限视图（允许器官白名单 + 禁止方法）
 
 ### 🔄 两大闭环
+
 - **内环（CatSelf）**：冻结快照 → 行动 → 反思 → 融合洞察 → 进化世界观
 - **外环（Colony）**：共享存储 → 跨猫信号 → 集体生长 → 角色涌现
 
 ### 📦 零 I/O 核心 + 可选电池包
+
 `pip install meowcat` → 纯框架，零文件/网络 I/O。`pip install meowcat[plus]` → 浏览器、ChromaDB、MCP、网关适配器、晶化器 — 所有 I/O 在可选的 `plus/` 包中。
 
 </td>
@@ -199,23 +207,23 @@ cat = create_cat("小喵", cerebrum=MyLLM(), amygdala=MyAmygdala())
 
 **各器官的插头风格** — 框架自动校验兼容性：
 
-| 风格 | 说明 | 典型器官 |
-|:---|:---|:---|
-| `ALGORITHM` | 确定性，无 LLM | Ears, Mouth, Purr, Tail, Brainstem |
-| `RULE` | 基于规则决策 | Amygdala, Cortex |
-| `MODEL` | LLM 驱动 | Cerebrum, Cerebellum |
-| `HYBRID` | 算法 + LLM 结合 | Hippocampus, Frontal |
+| 风格        | 说明            | 典型器官                           |
+| :---------- | :-------------- | :--------------------------------- |
+| `ALGORITHM` | 确定性，无 LLM  | Ears, Mouth, Purr, Tail, Brainstem |
+| `RULE`      | 基于规则决策    | Amygdala, Cortex                   |
+| `MODEL`     | LLM 驱动        | Cerebrum, Cerebellum               |
+| `HYBRID`    | 算法 + LLM 结合 | Hippocampus, Frontal               |
 
 ---
 
 ## 🔗 四层执行模型
 
-| 层 | 原语 | 说明 |
-|:---|:---|:---|
-| **L1 Path** | `源器官 → 目标器官.方法` | 原子器官间信号。26 条内置路径。 |
-| **L2 Chain** | `[path1, path2, ...] + rollback` | 命名路径序列。前步结果传给后步。6 条内置链条。 |
-| **L3 Loop** | `Chain + trigger_event + exit_event` | 自治闭环。5 条内置循环。 |
-| **L4 LoopSequence** | `[loop1, loop2, ...]` | 顺序或并行的多循环编排。 |
+| 层                  | 原语                                 | 说明                                           |
+| :------------------ | :----------------------------------- | :--------------------------------------------- |
+| **L1 Path**         | `源器官 → 目标器官.方法`             | 原子器官间信号。26 条内置路径。                |
+| **L2 Chain**        | `[path1, path2, ...] + rollback`     | 命名路径序列。前步结果传给后步。6 条内置链条。 |
+| **L3 Loop**         | `Chain + trigger_event + exit_event` | 自治闭环。5 条内置循环。                       |
+| **L4 LoopSequence** | `[loop1, loop2, ...]`                | 顺序或并行的多循环编排。                       |
 
 ```python
 # L1: Path
@@ -265,6 +273,7 @@ await cat.loopseq_registry.run("daily_maintenance")
 ```
 
 **每次输入都有两条通路：**
+
 1. **推理通路**：EARS → THALAMUS → CEREBRUM → CEREBELLUM → MOUTH（完整推理）
 2. **紧急通路**：EARS → THALAMUS → AMYGDALA → MOUTH（绕过大脑，即时安全响应）
 
@@ -273,24 +282,26 @@ await cat.loopseq_registry.run("daily_maintenance")
 ## 📦 器官目录
 
 ### 9 大脑区域
-| 器官 | 角色 | 核心特征 |
-|:---|:---|:---|
-| **Thalamus** | 感觉中继枢纽 | 所有输入必经此地 |
-| **Cerebrum** | 深度推理 | LLM 驱动，仅支持 MODEL/HYBRID |
-| **Cerebellum** | 快速响应 | 所有效应器的唯一入口 |
-| **Hippocampus** | 记忆图谱 | 实体-关联存储 |
-| **Amygdala** | 安全旁路 | 可绕过推理直接触发输出 |
-| **Frontal** | 专注与规划 | 话题追踪、任务分解 |
-| **Hypothalamus** | 体内稳态 | 记忆衰减、孤立清理 |
-| **Cortex** | 世界观蒸馏 | L0→L3 认知管线 |
-| **Brainstem** | 总调度 | 协调所有脑区 |
+
+| 器官             | 角色         | 核心特征                      |
+| :--------------- | :----------- | :---------------------------- |
+| **Thalamus**     | 感觉中继枢纽 | 所有输入必经此地              |
+| **Cerebrum**     | 深度推理     | LLM 驱动，仅支持 MODEL/HYBRID |
+| **Cerebellum**   | 快速响应     | 所有效应器的唯一入口          |
+| **Hippocampus**  | 记忆图谱     | 实体-关联存储                 |
+| **Amygdala**     | 安全旁路     | 可绕过推理直接触发输出        |
+| **Frontal**      | 专注与规划   | 话题追踪、任务分解            |
+| **Hypothalamus** | 体内稳态     | 记忆衰减、孤立清理            |
+| **Cortex**       | 世界观蒸馏   | L0→L3 认知管线                |
+| **Brainstem**    | 总调度       | 协调所有脑区                  |
 
 ### 4 感官 + 3 声音 + 5 生长
-| 类别 | 器官 |
-|:---|:---|
-| **感官 SENSE** | Ears（文本）、Eyes（视觉）、Whiskers（异常检测）、Paws（工具 — 兼效应器）|
-| **声音 VOICE** | Mouth（说话）、Purr（流式状态）、Tail（状态栏）|
-| **生长 GROWTH** | PinealGland（顿悟融合）、AnomalyGrowth（异常沉淀）、CorrectionGrowth（纠错固化）、Crystallizer（技能结晶）、RoleEmergence（角色涌现）|
+
+| 类别            | 器官                                                                                                                                  |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| **感官 SENSE**  | Ears（文本）、Eyes（视觉）、Whiskers（异常检测）、Paws（工具 — 兼效应器）                                                             |
+| **声音 VOICE**  | Mouth（说话）、Purr（流式状态）、Tail（状态栏）                                                                                       |
+| **生长 GROWTH** | PinealGland（顿悟融合）、AnomalyGrowth（异常沉淀）、CorrectionGrowth（纠错固化）、Crystallizer（技能结晶）、RoleEmergence（角色涌现） |
 
 ---
 
@@ -321,13 +332,13 @@ await colony.federate(transport)
 await colony.signal_remote("other-colony", "cat-3", ...)
 ```
 
-| 功能 | 说明 |
-|:---|:---|
+| 功能         | 说明                                                                 |
+| :----------- | :------------------------------------------------------------------- |
 | **跨猫信号** | 1:1 (`signal_between`)、1:N (`broadcast_request`)、N:N (`broadcast`) |
-| **共享存储** | 命名空间：`owner/` `rules/` `knowledge/` `growth/` `cats/` |
-| **联邦** | 跨主机猫舍 P2P 通信（请求-响应，30s 超时）|
-| **集体生长** | 猫之间互相学习异常和纠错 |
-| **角色涌现** | 行为模式 → 隐式角色分工 |
+| **共享存储** | 命名空间：`owner/` `rules/` `knowledge/` `growth/` `cats/`           |
+| **联邦**     | 跨主机猫舍 P2P 通信（请求-响应，30s 超时）                           |
+| **集体生长** | 猫之间互相学习异常和纠错                                             |
+| **角色涌现** | 行为模式 → 隐式角色分工                                              |
 
 ---
 
@@ -339,12 +350,12 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本 | 亮点 |
-|:---|:---|
-| **v1.2.x** | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构 |
+| 版本       | 亮点                                                                                                                                               |
+| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.2.x** | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                      |
 | **v1.1.x** | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件 |
-| **v1.0.x** | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）|
-| **v0.5.x** | CatBase 外观模式、双脑架构、OrganHost/Wiring/Nervous 子系统拆分、ReflexArc 反射弧、Slot-Plug 模型、ImplementationStyle、20 器官蓝图 |
+| **v1.0.x** | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                 |
+| **v0.5.x** | CatBase 外观模式、双脑架构、OrganHost/Wiring/Nervous 子系统拆分、ReflexArc 反射弧、Slot-Plug 模型、ImplementationStyle、20 器官蓝图                |
 
 ---
 
@@ -368,19 +379,19 @@ pytest tests/
 
 ## 📂 包结构速查
 
-| 模块 | 用途 |
-|:---|:---|
-| `meowcat/anatomy.py` | 器官坐标、类别、ImplementationStyle |
-| `meowcat/biology/` | OrganSpec SSOT、CatSelf、Cortex、PinealGland、Fusion、Growth |
-| `meowcat/assembly.py` | CatBase — 将 5 个子系统组合为一只活的猫 |
-| `meowcat/host.py` | OrganHost — 挂载/卸载/查找器官，Protocol 校验 |
-| `meowcat/wiring.py` | Wiring — 有向神经图（允许 + 禁止）|
-| `meowcat/nervous.py` | Nervous — 信号调度 + 中间件 + 熔断器 |
-| `meowcat/reflex.py` | ReflexArc — 刺激→响应，零 LLM 路径 |
-| `meowcat/tools/` | Tool/Skill/Paws 核心（零 I/O 抽象）|
-| `meowcat/plus/` | 可选 I/O：浏览器、ChromaDB、MCP、网关、晶化器 |
-| `meowcat/colony/` | Colony 多猫容器 + 联邦 |
-| `meowcat/defaults/` | Noop 空桩、Renovated 简装实现、预设、工厂 |
+| 模块                  | 用途                                                         |
+| :-------------------- | :----------------------------------------------------------- |
+| `meowcat/anatomy.py`  | 器官坐标、类别、ImplementationStyle                          |
+| `meowcat/biology/`    | OrganSpec SSOT、CatSelf、Cortex、PinealGland、Fusion、Growth |
+| `meowcat/assembly.py` | CatBase — 将 5 个子系统组合为一只活的猫                      |
+| `meowcat/host.py`     | OrganHost — 挂载/卸载/查找器官，Protocol 校验                |
+| `meowcat/wiring.py`   | Wiring — 有向神经图（允许 + 禁止）                           |
+| `meowcat/nervous.py`  | Nervous — 信号调度 + 中间件 + 熔断器                         |
+| `meowcat/reflex.py`   | ReflexArc — 刺激→响应，零 LLM 路径                           |
+| `meowcat/tools/`      | Tool/Skill/Paws 核心（零 I/O 抽象）                          |
+| `meowcat/plus/`       | 可选 I/O：浏览器、ChromaDB、MCP、网关、晶化器                |
+| `meowcat/colony/`     | Colony 多猫容器 + 联邦                                       |
+| `meowcat/defaults/`   | Noop 空桩、Renovated 简装实现、预设、工厂                    |
 
 ---
 

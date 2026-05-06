@@ -286,8 +286,8 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "GlobalColonyRegistry": ("meowcat.colony", "GlobalColonyRegistry"),
     "SharedMemoryPool":     ("meowcat.colony.memory", "SharedMemoryPool"),
     # — colony transports —
-    "TCPSocketTransport":   ("meowcat.colony_transports", "TCPSocketTransport"),
-    "RedisPubSubTransport": ("meowcat.colony_transports", "RedisPubSubTransport"),
+    "TCPSocketTransport":   ("meowcat.colony.transports", "TCPSocketTransport"),
+    "RedisPubSubTransport": ("meowcat.colony.transports", "RedisPubSubTransport"),
     # — events —
     "EventBus":          ("meowcat.events", "EventBus"),
     "ALL_EVENTS":        ("meowcat.events", "ALL_EVENTS"),
