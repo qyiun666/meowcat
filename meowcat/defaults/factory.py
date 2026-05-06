@@ -87,7 +87,9 @@ VOICE = "voice"
 
 def create_cat(
     *,
-    container: "Colony",  # Colony instance (mandatory since v1.1.3)
+    cat: CatBase | None = None,
+    # Required when cat=None; inferred from cat otherwise
+    container: "Colony | None" = None,
     # ━━ Required: LLM organs ━━
     cerebrum: LLMBrainProtocol,
     cerebellum: LLMBrainProtocol | None = _UNSET,  # type: ignore[assignment]
@@ -161,6 +163,13 @@ def create_cat(
       - ``renovated=False``: add organ names to ``renovate_organs`` to upgrade
 
     Args:
+        cat: Pre-existing CatBase subclass instance. When provided, skips
+            ``container.create_cat()`` and assembles directly on ``cat``.
+            ``container`` is inferred from ``cat.container``, and
+            ``register_default_*`` flags are taken from the instance.
+            Default ``None`` (create new CatBase).
+        container: Colony instance. Required when ``cat=None``; inferred
+            from ``cat.container`` otherwise.
         cerebrum: **Required** A-brain instance (satisfying LLMBrainProtocol).
         cerebellum: B-brain instance, defaults to same instance as cerebrum.
         renovated: Use简装修 (True) or毛坯 (False). Default True.
@@ -212,13 +221,23 @@ def create_cat(
         else:
             return reno_cls(**reno_kw) if organ_name in _reno else bare_cls()
 
-    cat = container.create_cat(
-        name=name,
-        register_default_paths=register_default_paths,
-        register_default_chains=register_default_chains,
-        register_default_loops=register_default_loops,
-        register_default_tools=register_default_tools,
-    )
+    if cat is None:
+        if container is None:
+            raise TypeError(
+                "create_cat() requires 'container' when 'cat' is None")
+        cat = container.create_cat(
+            name=name,
+            register_default_paths=register_default_paths,
+            register_default_chains=register_default_chains,
+            register_default_loops=register_default_loops,
+            register_default_tools=register_default_tools,
+        )
+    else:
+        # Pre-existing instance (CatBase subclass): register in colony
+        # and set up colony memory hook (normally done by Colony.create_cat)
+        container = cat.container
+        container.register(cat)
+        cat.on_organs_mounted(lambda c: container._inject_colony_memory(c))
 
     # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]
