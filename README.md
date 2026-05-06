@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![version](https://img.shields.io/badge/version-1.3.1-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
-![visitors](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https://github.com/qyiun666/meowcat&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23FFFFFF&title=visitors&edge_flat=false)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
 
@@ -424,11 +423,11 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 | Version    | Date    | Highlights                                                                                                                                                                                                       |
 | :--------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.3.x** | 2026.05 | Task delegation delegate_async / await_task, auto-generated colony UID with CALL_SIGN watermark, Growth +4 Paths +2 Chains +2 Loops                                                                              |
-| **v1.2.x** | 2026.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
-| **v1.1.x** | 2026.05 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |
-| **v1.0.x** | 2026.05 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                             |
-| **v0.5.x** | 2026.05 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
+| **v1.3.x** | 2026.05.06 | Task delegation delegate_async / await_task, auto-generated colony UID with CALL_SIGN watermark, Growth +4 Paths +2 Chains +2 Loops                                                                              |
+| **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
+| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |
+| **v1.0.x** | 2026.05.02 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                             |
+| **v0.5.x** | 2026.05.01 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
 
 ---
 
