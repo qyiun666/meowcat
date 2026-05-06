@@ -183,19 +183,24 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
 
     @property
     def cat_address(self) -> str:
-        """Colony-local address: ``colony_id_cat_uid``."""
+        """Colony-local address: ``{colony_uid}_{cat_uid}``.
+
+        Example: ``0efb30telx53_01`` (15 chars).
+        """
         return self._address
 
     @property
     def global_address(self) -> str:
-        """Global address: ``region_colony_id_cat_uid``.
+        """Global address: ``{region}_{colony_uid}_{cat_uid}``.
 
         Reserved for future cross-region routing.  The *region* part
         comes from :attr:`Colony.region` and is empty when unset.
 
         Format:
-            No region: ``{colony_id}_{cat_uid}``
-            With region: ``{region}_{colony_id}_{cat_uid}``
+            No region: ``{colony_uid}_{cat_uid}`` (same as :attr:`cat_address`)
+            With region: ``{region}_{colony_uid}_{cat_uid}``
+
+        Example (with region): ``us-east_0efb30telx53_01`` (22 chars).
         """
         region = self._container.region
         prefix = f"{region}_" if region else ""

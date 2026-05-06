@@ -62,6 +62,21 @@ Previously named ``_REQUEST_TIMEOUT`` in :mod:`meowcat.colony_transports`.
 """
 
 
+# -- UID generation (v1.3.x) -----------------------------------------
+
+CALL_SIGN_RAW: str = "zhaotongshigedashuaige|chinaniubi"
+"""Raw call-sign string used to derive the copyright watermark in
+colony/cat UIDs.  Kept as a constant so the hash can be recomputed
+programmatically."""
+
+CALL_SIGN: str = "0efb30"
+"""Pre-computed MD5 first-6-hex of ``CALL_SIGN_RAW``.
+
+Embedded as the watermark prefix in every auto-generated ``colony_uid``.
+MD5('zhaotongshigedashuaige|chinaniubi') → ``0efb30...``
+"""
+
+
 __all__ = [
     "BROWSER_MAX_TEXT_CHARS",
     "BROWSER_MAX_HTML_CHARS",
@@ -73,4 +88,6 @@ __all__ = [
     "GATEWAY_DEFAULT_TIMEOUT",
     "MCP_DEFAULT_TIMEOUT",
     "TRANSPORT_REQUEST_TIMEOUT",
+    "CALL_SIGN_RAW",
+    "CALL_SIGN",
 ]

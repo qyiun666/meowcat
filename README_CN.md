@@ -5,8 +5,7 @@
 
 # 🐱 meowcat · 仿生神经 AI Agent 框架
 
-[📖 English](README.md)
-
+[![English]](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![version](https://img.shields.io/badge/version-1.3.0-lightgrey.svg)]()

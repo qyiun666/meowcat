@@ -26,6 +26,7 @@ Orthogonal to Kitten (master/slave mode):
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import time
@@ -99,7 +100,7 @@ class Colony(Pluggable, _FederationMixin):
 
     def __init__(
         self,
-        colony_id: str,
+        colony_id: str | None = None,
         storage: SharedStore | None = None,
         *,
         name: str | None = None,
@@ -116,6 +117,8 @@ class Colony(Pluggable, _FederationMixin):
 
         Args:
             colony_id: Unique identifier for the colony.
+                ``None`` = auto-generate (``CALL_SIGN + base36(timestamp)``,
+                12 chars).  Pass a string to override.
             storage: Shared storage instance (satisfying SharedStore).
                 None = auto-create InMemorySharedStore (for Colony.default() usage).
             name: Human-readable colony name. Defaults to colony_id.
@@ -131,6 +134,8 @@ class Colony(Pluggable, _FederationMixin):
             cross_wiring_forbidden: Cross-cat blocklist edges (higher priority than allowlist).
         """
         Pluggable.__init__(self)  # Pluggable init
+        if colony_id is None:
+            colony_id = Colony._generate_colony_uid()
         self.colony_id = colony_id
         self._name = name or colony_id
         self._description = description
@@ -168,6 +173,30 @@ class Colony(Pluggable, _FederationMixin):
 
     # -- UID generation -----------------------------------------------
 
+    @staticmethod
+    def _base36(n: int) -> str:
+        """Encode integer to base36 (0-9a-z)."""
+        chars = "0123456789abcdefghijklmnopqrstuvwxyz"
+        if n == 0:
+            return "0"
+        result = ""
+        while n:
+            n, m = divmod(n, 36)
+            result = chars[m] + result
+        return result
+
+    @staticmethod
+    def _generate_colony_uid() -> str:
+        """Generate globally-unique colony UID.
+
+        Format: ``{CALL_SIGN}{base36(timestamp)}``
+        - CALL_SIGN (6 chars): MD5 first-6 of call-sign string (watermark)
+        - base36 timestamp (6 chars): second-level Unix time in base36
+        → 12 chars total, e.g. ``0efb30telx53``
+        """
+        from meowcat.constants import CALL_SIGN  # noqa: PLC0415
+        return f"{CALL_SIGN}{Colony._base36(int(time.time()))}"
+
     def _next_cat_uid(self) -> str:
         """Generate cat_uid: 2-digit increment."""
         self._cat_counter += 1
@@ -203,7 +232,11 @@ class Colony(Pluggable, _FederationMixin):
 
     @property
     def colony_uid(self) -> str:
-        """Colony unique identifier: ``colony_id + 6-char MD5``."""
+        """Colony unique identifier: ``CALL_SIGN + base36(timestamp)``, 12 chars.
+
+        Auto-generated when ``colony_id`` is not explicitly passed.
+        Same value as :attr:`colony_id`.
+        """
         return self._colony_uid
 
     @property
