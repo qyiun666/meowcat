@@ -207,6 +207,8 @@ __all__ = [
     "CompressionManager", "CompressionConfig",
     # v1.3.6 Remember policy
     "RememberPolicy", "RememberConfig",
+    # v1.3.6 Clarify manager
+    "ClarifyManager", "ClarifyConfig", "ClarifyResult",
 ]
 # fmt: on
 
@@ -608,6 +610,10 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — remember (v1.3.6) —
     "RememberPolicy": ("meowcat.remember", "RememberPolicy"),
     "RememberConfig": ("meowcat.remember", "RememberConfig"),
+    # — clarify (v1.3.6) —
+    "ClarifyManager": ("meowcat.clarify", "ClarifyManager"),
+    "ClarifyConfig":  ("meowcat.clarify", "ClarifyConfig"),
+    "ClarifyResult":  ("meowcat.clarify", "ClarifyResult"),
 }
 
 # — Submodule names (lazy via importlib) —
