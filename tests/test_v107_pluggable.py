@@ -223,10 +223,11 @@ async def test_cortex_mode_b():
 @pytest.mark.asyncio
 async def test_brainstem_mode_b():
     b = NoopBrainstem()
-    r = await b.build_system_prompt("chat")
+    r = await b.build_system_prompt("cerebrum", "chat")
     assert r == ""
-    b.mount_plug("build_system_prompt", lambda route: f"prompt for {route}")
-    r = await b.build_system_prompt("chat")
+    b.mount_plug("build_system_prompt", lambda organ, route,
+                 snapshot=None: f"prompt for {route}")
+    r = await b.build_system_prompt("cerebrum", "chat")
     assert r == "prompt for chat"
 
 
@@ -496,4 +497,3 @@ def test_pluggable_multi_hook_list():
     a.mount_plug("assess_tool_risk", lambda n, p: {"risk": "high"})
     lst = a.list_plugs()
     assert lst == {"assess_safety": 1, "assess_tool_risk": 1}
-

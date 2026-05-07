@@ -252,7 +252,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-
     @property
     def reflexes(self) -> "ReflexRegistry":
         """Reflex registry (raises :class:`AttributeError` when ReflexArc
@@ -304,7 +303,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-
     def mount(
         self,
         category: str,
@@ -317,7 +315,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         self._host.mount(category, name, organ, protocol=protocol)
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
-
 
     def organ(self, category: str, name: str) -> Any:
         """Retrieve organ (forwards to :class:`OrganHost`)."""
@@ -481,6 +478,56 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
         for t in BUILTIN_TOOLS:
             self.tool_registry.register(t)
+
+    # -- Telemetry / CircuitBreaker facade (v1.3.6) -----------------------
+
+    def enable_telemetry(self) -> None:
+        """Enable observability tracing at runtime. Delegates to :class:`Nervous`.
+
+        Raises:
+            RuntimeError: Subsystem not enabled when ``enable_wiring=False``.
+        """
+        if self._nervous is None:
+            raise RuntimeError(
+                "telemetry unavailable — cat was constructed with enable_wiring=False",
+            )
+        self._nervous.enable_telemetry()
+
+    def disable_telemetry(self) -> None:
+        """Disable observability tracing at runtime. Delegates to :class:`Nervous`.
+
+        Raises:
+            RuntimeError: Subsystem not enabled when ``enable_wiring=False``.
+        """
+        if self._nervous is None:
+            raise RuntimeError(
+                "telemetry unavailable — cat was constructed with enable_wiring=False",
+            )
+        self._nervous.disable_telemetry()
+
+    def enable_circuit_breaker(self) -> None:
+        """Enable signal-level circuit breaker at runtime. Delegates to :class:`Nervous`.
+
+        Raises:
+            RuntimeError: Subsystem not enabled when ``enable_wiring=False``.
+        """
+        if self._nervous is None:
+            raise RuntimeError(
+                "circuit breaker unavailable — cat was constructed with enable_wiring=False",
+            )
+        self._nervous.enable_circuit_breaker()
+
+    def disable_circuit_breaker(self) -> None:
+        """Disable signal-level circuit breaker at runtime. Delegates to :class:`Nervous`.
+
+        Raises:
+            RuntimeError: Subsystem not enabled when ``enable_wiring=False``.
+        """
+        if self._nervous is None:
+            raise RuntimeError(
+                "circuit breaker unavailable — cat was constructed with enable_wiring=False",
+            )
+        self._nervous.disable_circuit_breaker()
 
     async def signal(
         self,
@@ -694,4 +741,3 @@ def assemble_default_cat(
 
 
 __all__ = ["CatBase", "CatHook", "assemble_default_cat", "mount_known_organs"]
-

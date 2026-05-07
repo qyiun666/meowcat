@@ -7,48 +7,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: pytest tests/ -q --tb=short
-
-  purity:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e .
-      - name: 零 meowagent 依赖检查
-        run: |
-          python -c "import meowcat; print('meowcat', meowcat.__version__)"
-          python -c "
-          import ast, os, pathlib
-          bad = []
-          for f in pathlib.Path('meowcat').rglob('*.py'):
-              try:
-                  tree = ast.parse(f.read_text())
-              except SyntaxError:
-                  continue
-              for node in ast.walk(tree):
-                  if isinstance(node, ast.Import) and any('meowagent' in a.name for a in node.names):
-                      bad.append(str(f))
-                  elif isinstance(node, ast.ImportFrom) and node.module and 'meowagent' in node.module:
-                      bad.append(str(f))
-          if bad:
-              raise SystemExit(f'FATAL: meowcat imports meowagent in: {bad}')
-          print('Purity check PASSED')
-          "
+  call-test:
+    uses: ./.github/workflows/_test.yml

@@ -328,11 +328,11 @@ class TestAmygdalaAgent:
 class TestBrainstemAgent:
     def test_build_system_prompt(self):
         class PromptAgent:
-            async def build_system_prompt(self, route):
+            async def build_system_prompt(self, organ, route, cat_self_snapshot=None):
                 return f"system: {route}"
         a = BrainstemAgent(PromptAgent())
         import asyncio
-        result = asyncio.run(a.build_system_prompt("chat"))
+        result = asyncio.run(a.build_system_prompt("cerebrum", "chat"))
         assert result == "system: chat"
 
     def test_cancel_current(self):
@@ -599,4 +599,3 @@ class TestIntegration:
             cat.organ("brain", "amygdala").assess_safety("test"))
         assert result["safe"] is False
         assert len(called) == 1
-

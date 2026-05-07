@@ -30,7 +30,7 @@ from meowcat.defaults.organs import (
 )
 from meowcat.defaults.presets import (
     KW_BILINGUAL, PROMPT_DEFAULT, PROMPT_ZH,
-    KeywordPreset, PromptPreset,
+    KeywordPreset, OrganPrompt, PromptPreset,
 )
 
 _logger = logging.getLogger("meowcat.renovated")
@@ -428,15 +428,30 @@ class RenovatedCortex(NoopCortex):
 class RenovatedBrainstem(NoopBrainstem):
     """简装修 brainstem: customizable system prompt builder + lifecycle logging.
 
-    Accepts a :class:`PromptPreset` for route-specific prompt templates,
-    pre/post prompts, and variable substitution. Default: bilingual-aware.
+    v1.3.6: 新增 per-organ prompt 拼装链路 + CatSelf 自动注入。
 
-    Constructs system prompts from templates with variable interpolation
-    ({name}, {language}, {domain}, {route}).
+    Accepts a :class:`PromptPreset` for route-specific prompt templates,
+    pre/post prompts, and variable substitution. Accepts
+    ``organ_prompts`` dict mapping organ name → :class:`OrganPrompt`
+    for per-organ identity/perspective/output_format injection.
+
+    7-step assembly chain:
+        1. Plugin override (full replacement)
+        2. PromptPreset.pre_prompt
+        3. OrganPrompt.identity + perspective
+        4. Route template (OrganPrompt → PromptPreset → fallback)
+        5. CatSelf injection (personality + beliefs + capabilities)
+        6. OrganPrompt.output_format
+        7. PromptPreset.post_prompt
+
+    Variable substitution: {name}, {language}, {domain}, {route}, {organ}, {tone}
     """
 
     name: str = "renovated_brainstem"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+
+    # ── v1.3.6: CatSelf injection control ──
+    inject_cat_self: bool = True
 
     def __init__(
         self,
@@ -444,13 +459,20 @@ class RenovatedBrainstem(NoopBrainstem):
         cat_name: str = "MeowCat",
         language: str = "zh/en",
         domain: str = "general",
+        organ_prompts: dict[str, OrganPrompt] | None = None,
     ) -> None:
         NoopBrainstem.__init__(self)
         self._prompt = prompt or PROMPT_DEFAULT
         self._cat_name = cat_name
         self._language = language
         self._domain = domain
+        self._organ_prompts = organ_prompts or {}
         self._start_time: float = _time.time()
+
+    @property
+    def organ_prompts(self) -> dict[str, OrganPrompt]:
+        """Per-organ prompt slot map (v1.3.6)."""
+        return self._organ_prompts
 
     def diagnose(self) -> dict[str, Any]:
         return {
@@ -458,36 +480,139 @@ class RenovatedBrainstem(NoopBrainstem):
             "organ": "brainstem",
             "renovated": True,
             "prompt_preset": self._prompt.name,
+            "organ_prompts": list(self._organ_prompts.keys()),
+            "inject_cat_self": self.inject_cat_self,
         }
 
-    async def build_system_prompt(self, route: str) -> str:
+    async def build_system_prompt(
+        self,
+        organ: str,
+        route: str,
+        cat_self_snapshot: Any | None = None,
+    ) -> str:
+        """Build system prompt with 7-step assembly chain (v1.3.6).
+
+        Args:
+            organ: Organ name, e.g. ``"cerebrum"``, ``"cerebellum"``.
+            route: Route name, e.g. ``"chat"``, ``"tool"``.
+            cat_self_snapshot: Optional :class:`SelfSnapshot` for
+                CatSelf injection. ``None`` skips injection.
+
+        Returns:
+            Assembled system prompt string.
+        """
         parts: list[str] = []
-        async for _name, r in self._run_plugs("build_system_prompt", route):
+
+        # 1. Plugin chain (allow full override)
+        async for _name, r in self._run_plugs(
+            "build_system_prompt", organ, route, cat_self_snapshot,
+        ):
             if isinstance(r, str) and r:
                 parts.append(r)
-        if not parts:
-            parts.append(
-                self._prompt.build(
-                    route,
-                    name=self._cat_name,
-                    language=self._language,
-                    domain=self._domain,
-                    route=route,
-                )
-            )
-        return "\n".join(parts)
+        if parts:
+            return "\n".join(parts)
+
+        # 2. PromptPreset.pre_prompt
+        if self._prompt.pre_prompt:
+            parts.append(self._fill_vars(self._prompt.pre_prompt))
+
+        # 3. OrganPrompt identity + perspective
+        op = self._organ_prompts.get(organ)
+        if op is not None:
+            if op.identity:
+                parts.append(self._fill_vars(op.identity))
+            if op.perspective:
+                parts.append(self._fill_vars(op.perspective))
+
+        # 4. Route template (OrganPrompt override → PromptPreset → fallback)
+        route_tmpl: str = ""
+        if op is not None:
+            route_tmpl = op.route_templates.get(route, "")
+        if not route_tmpl:
+            route_tmpl = self._prompt.templates.get(
+                route, self._prompt.fallback)
+        if not route_tmpl:
+            route_tmpl = "You are MeowCat, a helpful AI assistant."
+        parts.append(self._fill_vars(route_tmpl))
+
+        # 5. CatSelf injection
+        if self.inject_cat_self and cat_self_snapshot is not None:
+            parts.append(self._inject_cat_self(cat_self_snapshot))
+
+        # 6. OrganPrompt.output_format
+        if op is not None and op.output_format:
+            parts.append(self._fill_vars(op.output_format))
+
+        # 7. PromptPreset.post_prompt
+        if self._prompt.post_prompt:
+            parts.append(self._fill_vars(self._prompt.post_prompt))
+
+        return "\n\n".join(parts)
+
+    # ── Helpers ────────────────────────────────────────────────────
+
+    def _fill_vars(self, template: str) -> str:
+        """Substitute {name} {language} {domain} {route} {organ} variables."""
+        return (
+            template
+            .replace("{name}", self._cat_name)
+            .replace("{language}", self._language)
+            .replace("{domain}", self._domain)
+        )
+
+    def _inject_cat_self(self, snap: Any) -> str:
+        """Generate CatSelf injection block from snapshot.
+
+        Reads personality, beliefs (Cortex L2), and capabilities
+        (Metacognition L3) from the snapshot and formats them
+        as a self-awareness block.
+        """
+        lines: list[str] = ["## 自我认知", ""]
+
+        # Personality
+        personality = getattr(snap, "personality", None) or {}
+        tone = personality.get("tone", "")
+        lang = personality.get("language", "")
+        if tone and lang:
+            lines.append(f"性格：{tone} 的语气，使用 {lang} 交流。")
+        elif tone:
+            lines.append(f"性格：{tone} 的语气。")
+
+        # Beliefs (Cortex L2)
+        beliefs = getattr(snap, "beliefs", None) or []
+        if beliefs:
+            lines.append("")
+            lines.append("坚信的法则：")
+            for item in beliefs[:10]:
+                if isinstance(item, (tuple, list)) and len(item) >= 2:
+                    value = str(item[1])
+                    conf = item[2] if len(item) >= 3 else 1.0
+                    lines.append(f"- {value} (确信度: {conf:.0%})")
+
+        # Capable domains (Metacognition L3)
+        capable = getattr(snap, "capable_domains", None) or []
+        if capable:
+            lines.append("")
+            lines.append(f"擅长的领域：{', '.join(str(d) for d in capable[:10])}")
+
+        # Incapable domains
+        incapable = getattr(snap, "incapable_domains", None) or []
+        if incapable:
+            lines.append(f"不擅长的领域：{', '.join(str(d) for d in incapable[:10])}")
+
+        return "\n".join(lines)
 
 
 class RenovatedCerebrum(NoopCerebrum):
     """简装修 cerebrum: callable-based LLM adapter with prompt preset support.
 
-    Accepts an optional ``llm_fn`` callable (sync or async) and a
-    :class:`PromptPreset` for system prompt templates.
+    Accepts an optional ``llm_fn`` callable (sync or async), a
+    :class:`PromptPreset` for system prompt templates, and an
+    :class:`OrganPrompt` for per-organ identity/perspective/output_format.
     Without ``llm_fn``, returns a helpful message.
     """
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
-
 
     name: str = "renovated_cerebrum"
     impl_style: ImplementationStyle = ImplementationStyle.MODEL
@@ -498,14 +623,21 @@ class RenovatedCerebrum(NoopCerebrum):
                          ] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
+        organ_prompt: OrganPrompt | None = None,
     ) -> None:
         NoopCerebrum.__init__(self)
         self._llm_fn = llm_fn
         self._model = default_model
         self._prompt = prompt
+        self._organ_prompt = organ_prompt
+
+    @property
+    def organ_prompt(self) -> OrganPrompt | None:
+        """Per-organ prompt slot (v1.3.6)."""
+        return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none"}
+        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none", "organ_prompt": self._organ_prompt is not None}
 
     async def generate(
         self, prompt: str, system_prompt: str | None = None,
@@ -539,8 +671,8 @@ class RenovatedCerebrum(NoopCerebrum):
 class RenovatedCerebellum(NoopCerebellum):
     """简装修 cerebellum: callable-based fast-response adapter with prompt preset.
 
-    Same pattern as RenovatedCerebrum — accepts optional ``llm_fn`` and
-    :class:`PromptPreset`.
+    Same pattern as RenovatedCerebrum — accepts optional ``llm_fn``,
+    :class:`PromptPreset`, and :class:`OrganPrompt`.
     """
 
     name: str = "renovated_cerebellum"
@@ -552,14 +684,21 @@ class RenovatedCerebellum(NoopCerebellum):
                          ] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
+        organ_prompt: OrganPrompt | None = None,
     ) -> None:
         NoopCerebellum.__init__(self)
         self._llm_fn = llm_fn
         self._model = default_model
         self._prompt = prompt
+        self._organ_prompt = organ_prompt
+
+    @property
+    def organ_prompt(self) -> OrganPrompt | None:
+        """Per-organ prompt slot (v1.3.6)."""
+        return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none"}
+        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none", "organ_prompt": self._organ_prompt is not None}
 
     async def generate(
         self, prompt: str, system_prompt: str | None = None,
@@ -595,14 +734,26 @@ class RenovatedHippocampus(NoopHippocampus):
 
     Builds on NoopHippocampus (which already wraps InMemoryGraphStore) and adds
     automatic keyword indexing on ``remember()``.
+
+    v1.3.6: Accepts optional ``episode_store`` (:class:`~meowcat.storage.JsonlEpisodeStore`)
+    for persistent episode storage.  Lifecycle methods ``_load_from_store()``
+    and ``_flush_to_store()`` are called by the cat's ``on_start`` / ``on_shutdown``
+    hooks registered during assembly.
     """
 
     name: str = "renovated_hippocampus"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
-    def __init__(self) -> None:
+    # Instance-only: set by factory lifecycle hook before on_start
+    cat_uid: str = ""
+
+    def __init__(
+        self,
+        episode_store: Any | None = None,
+    ) -> None:
         NoopHippocampus.__init__(self)
         self._keyword_index: dict[str, set[str]] = {}
+        self._episode_store = episode_store
 
     async def remember(
         self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
@@ -625,6 +776,61 @@ class RenovatedHippocampus(NoopHippocampus):
                         results.append(
                             {"keyword_match": kw, "snippet": snippet})
         return results[:limit]
+
+    # -- v1.3.6: Episode persistence + lifecycle -----------------------
+
+    async def _load_from_store(self) -> None:
+        """Load all persisted episodes from store into in-memory list.
+
+        Called by the cat's ``on_start`` hook registered during assembly.
+        Safe to call when ``_episode_store`` is None (no-op).
+        """
+        if self._episode_store is None or not self.cat_uid:
+            return
+        try:
+            records = self._episode_store.load_all(self.cat_uid)
+            for ep in records:
+                if ep.get("id") not in {e.get("id") for e in self.episodes}:
+                    self.episodes.append(ep)
+        except Exception:
+            pass  # best-effort load; never crash on IO error
+
+    async def _flush_to_store(self) -> None:
+        """Ensure all in-memory episodes are persisted.
+
+        Called by the cat's ``on_shutdown`` hook registered during assembly.
+        Since :meth:`add_episode` already writes-through to the store,
+        this is a no-op for the default JSONL store.  Custom stores that
+        buffer writes can override.
+        """
+        pass  # write-through: add_episode already persists immediately
+
+    def add_episode(self, episode: dict[str, Any]) -> str:
+        """Add episode, persist to store if available."""
+        eid = NoopHippocampus.add_episode(self, episode)
+        if self._episode_store is not None:
+            try:
+                store_cat_uid = self.cat_uid or episode.get(
+                    "cat_uid", "unknown")
+                self._episode_store.append(store_cat_uid, dict(episode))
+            except Exception:
+                pass  # persistence is best-effort; never crash on IO error
+        return eid
+
+    def get_episode(self, episode_id: str) -> dict[str, Any] | None:
+        """Get episode, in-memory lookup."""
+        if self._episode_store is not None:
+            try:
+                ep = NoopHippocampus.get_episode(self, episode_id)
+                if ep is not None:
+                    return ep
+            except Exception:
+                pass
+        return NoopHippocampus.get_episode(self, episode_id)
+
+    def get_episodes(self, ids: list[str]) -> list[dict[str, Any]]:
+        """Batch get episodes, in-memory only."""
+        return NoopHippocampus.get_episodes(self, ids)
 
 
 # =========================================================================
@@ -1171,4 +1377,3 @@ __all__ = [
     # Mappings
     "RENOVATED_ORGAN_MAP",
 ]
-

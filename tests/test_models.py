@@ -207,11 +207,16 @@ class TestStageEvent:
 class TestPipelineContext:
     def test_construction(self) -> None:
         class FakeBS:
+            inject_cat_self: bool = True
             async def process(self, msg: str) -> str: return msg
+
             async def process_stream(self, msg: str):
                 yield {"content": msg}
                 return
-            def build_system_prompt(self, route: str) -> str: return ""
+
+            def build_system_prompt(
+                self, organ: str, route: str, cat_self_snapshot=None) -> str: return ""
+
             def cancel_current(self) -> bool: return False
 
         bs = FakeBS()
@@ -263,7 +268,8 @@ class TestKittenCapability:
 
     def test_iron_laws_enforced(self) -> None:
         """铁律静默强制：can_spawn/can_promote 永远 False，has_paws 永远 True。"""
-        k = KittenCapability(can_spawn=True, can_promote=True, has_paws=False)  # type: ignore[arg-type]
+        k = KittenCapability(can_spawn=True, can_promote=True,
+                             has_paws=False)  # type: ignore[arg-type]
         assert k.can_spawn is False
         assert k.can_promote is False
         assert k.has_paws is True
@@ -288,4 +294,3 @@ class TestKittenCapability:
         d = k.model_dump()
         assert d["inherit_memory"] == "partial"
         assert d["inherit_entity_ids"] == ["e1"]
-

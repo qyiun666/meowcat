@@ -189,16 +189,22 @@ class NoopCortex(Pluggable):
 class NoopBrainstem(Pluggable):
     """Default brainstem: does not build system prompt, does not cancel current task.
 
+    v1.3.6: ``build_system_prompt`` signature updated to match
+    :class:`BrainStemProtocol` — accepts ``organ``, ``route``, and
+    optional ``cat_self_snapshot``.
+
     Mode B — build_system_prompt merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "build_system_prompt": {"in": "route: str", "out": "str"},
+        "build_system_prompt": {"in": "organ: str, route: str, snapshot: Any|None", "out": "str"},
         "compress_context": {"in": "messages: list[dict], max_tokens: int", "out": "list[dict]"},
     }
 
     name: str = "noop_brainstem"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+
+    inject_cat_self: bool = True
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
@@ -206,9 +212,12 @@ class NoopBrainstem(Pluggable):
     def diagnose(self) -> dict[str, Any]:
         return {}
 
-    async def build_system_prompt(self, route: str) -> str:
+    async def build_system_prompt(
+        self, organ: str, route: str,
+        cat_self_snapshot: Any | None = None,
+    ) -> str:
         parts: list[str] = []
-        async for _name, r in self._run_plugs("build_system_prompt", route):
+        async for _name, r in self._run_plugs("build_system_prompt", organ, route, cat_self_snapshot):
             if isinstance(r, str) and r:
                 parts.append(r)
         return "\n".join(parts) if parts else ""
@@ -687,7 +696,6 @@ class NoopThalamus(Pluggable):
 # SPDX-License-Identifier: MIT
 
 
-
 class NoopHippocampus(Pluggable):
     """Default hippocampus: pure in-memory graph store, lost on process restart.
 
@@ -731,7 +739,6 @@ class NoopHippocampus(Pluggable):
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-
     @property
     def episodes(self) -> list[dict[str, Any]]:
         if self._episodes is None:
@@ -765,8 +772,25 @@ class NoopHippocampus(Pluggable):
                 result.update(r)
         return result
 
-    def add_episode(self, episode: dict[str, Any]) -> None:
+    def add_episode(self, episode: dict[str, Any]) -> str:
+        """Add an episode, auto-assign id if missing, return episode_id."""
+        eid = episode.get("id") or f"ep_{len(self.episodes)}"
+        if "id" not in episode:
+            episode["id"] = eid
         self.episodes.append(episode)
+        return eid
+
+    def get_episode(self, episode_id: str) -> dict[str, Any] | None:
+        """Get a single episode by id."""
+        for ep in self.episodes:
+            if ep.get("id") == episode_id:
+                return ep
+        return None
+
+    def get_episodes(self, ids: list[str]) -> list[dict[str, Any]]:
+        """Batch get episodes by ids."""
+        id_set = set(ids)
+        return [ep for ep in self.episodes if ep.get("id") in id_set]
 
     def add_entity(self, entity: dict[str, Any]) -> None:
         eid = entity.get("id", entity.get(
@@ -1133,4 +1157,3 @@ class NoopRoleEmergence(Pluggable):
             if isinstance(r, dict):
                 result.update(r)
         return result
-

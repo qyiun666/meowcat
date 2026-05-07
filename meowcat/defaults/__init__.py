@@ -34,7 +34,7 @@ from meowcat.defaults.organs import (
 from meowcat.defaults.presets import (
     KW_BILINGUAL, KW_EN, KW_ZH,
     KW_PRESETS,
-    KeywordPreset,
+    KeywordPreset, OrganPrompt,
     PROMPT_DEFAULT, PROMPT_ZH,
     PROMPT_PRESETS,
     PromptPreset,
@@ -98,7 +98,7 @@ __all__ = [
     "RenovatedCrystallizer", "RenovatedRoleEmergence",
     "RENOVATED_ORGAN_MAP",
     # Keyword & Prompt presets (二语 可挂载)
-    "KeywordPreset", "PromptPreset",
+    "KeywordPreset", "PromptPreset", "OrganPrompt",
     "KW_EN", "KW_ZH", "KW_BILINGUAL",
     "PROMPT_DEFAULT", "PROMPT_ZH",
     "KW_PRESETS", "PROMPT_PRESETS",
@@ -110,4 +110,3 @@ __all__ = [
     "InMemoryGraphStore", "InMemoryL6Store",
     "InMemoryVectorStore", "InMemorySharedStore",
 ]
-

@@ -316,7 +316,6 @@ class Nervous:
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-
         # v0.5.11 Protocol contract validation: if target coordinate has a Protocol mapping,
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
@@ -491,6 +490,49 @@ class Nervous:
         """
         self.wiring.freeze()
 
+    # -- Telemetry / CircuitBreaker public API (v1.3.6) -------------------
+
+    def enable_telemetry(self) -> None:
+        """Enable observability tracing at runtime.
+
+        Creates :class:`~meowcat.telemetry.Tracer` and
+        :class:`~meowcat.telemetry.Metrics` if not already present.
+        Safe to call multiple times — subsequent calls are no-ops.
+        """
+        if not self._telemetry_enabled:
+            self._telemetry_enabled = True
+            if self.tracer is None:
+                self.tracer = Tracer(event_bus=self.events)
+            if self.metrics is None:
+                self.metrics = Metrics()
+
+    def disable_telemetry(self) -> None:
+        """Disable observability tracing at runtime.
+
+        Clears tracer and metrics. Subsequent ``signal()`` calls
+        will not produce spans or collect metrics.
+        """
+        self._telemetry_enabled = False
+        self.tracer = None
+        self.metrics = None
+
+    def enable_circuit_breaker(self) -> None:
+        """Enable signal-level circuit breaker at runtime.
+
+        Uses existing ``cb_threshold`` / ``cb_timeout`` values.
+        Safe to call multiple times.
+        """
+        self._cb_enabled = True
+
+    def disable_circuit_breaker(self) -> None:
+        """Disable signal-level circuit breaker at runtime.
+
+        Resets all circuit states. Subsequent ``signal()`` calls
+        will not be blocked by circuit breaker.
+        """
+        self._cb_enabled = False
+        self._circuits.clear()
+        self._cb_probing.clear()
+
 
 __all__ = ["Nervous", "SignalCall", "SignalMiddleware", "CircuitState"]
-

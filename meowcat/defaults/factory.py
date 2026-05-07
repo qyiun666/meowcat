@@ -87,6 +87,30 @@ SENSE = "sense"
 VOICE = "voice"
 
 
+def _maybe_register_hippo_lifecycle(cat: CatBase) -> None:
+    """Register hippocampus lifecycle hooks when episode_store is configured.
+
+    v1.3.6: Called by ``create_cat()`` after mounting hippocampus.
+    Registers ``on_start`` (load episodes from store) and ``on_shutdown``
+    (flush buffered episodes) hooks on the cat, reusing the async hook
+    support added in D14/T-02.
+    """
+    hippo = cat.hippocampus
+    episode_store = getattr(hippo, '_episode_store', None)
+    if episode_store is None:
+        return
+
+    async def _hippo_on_start(c: CatBase) -> None:
+        c.hippocampus.cat_uid = c.cat_uid
+        await c.hippocampus._load_from_store()
+
+    async def _hippo_on_shutdown(c: CatBase) -> None:
+        await c.hippocampus._flush_to_store()
+
+    cat.on_start(_hippo_on_start)
+    cat.on_shutdown(_hippo_on_shutdown)
+
+
 def create_cat(
     *,
     cat: CatBase | None = None,
@@ -248,6 +272,8 @@ def create_cat(
     # type: ignore[attr-defined]
     cat.hippocampus = hippocampus or _pick_no_init(
         NoopHippocampus, RenovatedHippocampus, "hippocampus")
+    # v1.3.6: Register hippocampus lifecycle hooks (on_start load, on_shutdown flush)
+    _maybe_register_hippo_lifecycle(cat)
     cat.thalamus = thalamus or _pick_no_init(
         # type: ignore[attr-defined]
         NoopThalamus, RenovatedThalamus, "thalamus", keyword=keyword)
@@ -367,4 +393,3 @@ def create_cat(
         on_assembled(cat)
 
     return cat
-

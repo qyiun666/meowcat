@@ -216,17 +216,19 @@ class TestModels:
 
     def test_pipeline_context_with_brainstem(self) -> None:
         class FakeBS:
+            inject_cat_self: bool = True
             async def process(self, msg: str) -> str: return msg
 
             async def process_stream(self, msg: str):
                 yield {"content": msg}
                 return
 
-            def build_system_prompt(self, route: str) -> str: return ""
+            def build_system_prompt(
+                self, organ: str, route: str, cat_self_snapshot=None) -> str: return ""
+
             def cancel_current(self) -> bool: return False
 
         bs = FakeBS()
         ctx = PipelineContext(msg="hi", brainstem=bs)
         assert ctx.msg == "hi"
         assert ctx.brainstem is bs
-

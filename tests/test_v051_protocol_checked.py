@@ -135,9 +135,12 @@ class TestRuntimeCheckable:
 
     def test_brainstem_checkable(self) -> None:
         class Dummy:
+            inject_cat_self: bool = True
             async def process(self, msg: str) -> str: return ""
             async def process_stream(self, msg: str): yield {}
-            def build_system_prompt(self, route: str) -> str: return ""
+            def build_system_prompt(
+                self, organ: str, route: str, cat_self_snapshot=None) -> str: return ""
+
             def cancel_current(self) -> bool: return False
         assert isinstance(Dummy(), BrainStemProtocol)
 
@@ -147,7 +150,9 @@ class TestRuntimeCheckable:
             episodes: list = []
             async def remember(self, u, a, c, m): pass
             def decay(self, now=None) -> int: return 0
-            def add_episode(self, ep) -> None: pass
+            def add_episode(self, ep) -> str: return ""
+            def get_episode(self, eid): pass
+            def get_episodes(self, ids) -> list: return []
             def add_entity(self, e) -> None: pass
             def fts_search(self, c, k, l) -> list: return []
             def get_entity(self, eid): pass
@@ -323,4 +328,3 @@ class TestRuntimeCheckable:
             async def spawn_kitten(self, t, r, c=None): pass
             async def absorb_merge(self, p) -> None: pass
         assert isinstance(Dummy(), CatProtocol)
-

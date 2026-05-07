@@ -109,6 +109,34 @@ class PromptPreset:
 
 
 # =========================================================================
+# OrganPrompt — per-organ 提示词插槽 (v1.3.6 挂载到 Cerebrum/Cerebellum)
+# =========================================================================
+
+@dataclass
+class OrganPrompt:
+    """Per-organ prompt slot — 每个 LLM 器官的提示词配置.
+
+    v1.3.6: 框架层定义插槽形状。应用层填充内容。
+    每个 LLM-bearing 器官（cerebrum/cerebellum）挂一个 OrganPrompt 实例。
+
+    Attributes:
+        identity: 身份描述，这个器官是谁、承担什么角色.
+            e.g. ``"你是 {name} 的大脑皮层，负责深度推理和决策。"``
+        perspective: 视角声明，这个器官以什么视角看世界.
+            e.g. ``"你可以访问所有工具和记忆。"``
+        output_format: 输出格式约束，期望的输出结构.
+            e.g. ``"<thinking>...</thinking>\\n<response>...</response>"``
+        route_templates: per-route 模板覆盖（可选），覆盖 PromptPreset 的路由模板.
+            e.g. ``{"chat": "...", "tool": "..."}``
+    """
+
+    identity: str = ""
+    perspective: str = ""
+    output_format: str = ""
+    route_templates: dict[str, str] = field(default_factory=dict)
+
+
+# =========================================================================
 # ══════════════════  Bilingual Presets  二语预设 ═══════════════════════
 # =========================================================================
 
@@ -288,9 +316,8 @@ PROMPT_PRESETS: dict[str, PromptPreset] = {
 
 
 __all__ = [
-    "KeywordPreset", "PromptPreset",
+    "KeywordPreset", "PromptPreset", "OrganPrompt",
     "KW_EN", "KW_ZH", "KW_BILINGUAL",
     "PROMPT_DEFAULT", "PROMPT_ZH",
     "KW_PRESETS", "PROMPT_PRESETS",
 ]
-

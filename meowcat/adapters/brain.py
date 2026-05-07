@@ -151,10 +151,25 @@ class HippocampusAgent(AgentOrgan):
 
     # -- Optional delegation: only call agent if method exists ---------
 
-    def add_episode(self, episode: Any) -> None:
+    def add_episode(self, episode: Any) -> str:
         fn = getattr(self._agent, "add_episode", None)
         if fn:
-            fn(episode=episode)
+            result = fn(episode=episode)
+            return result if isinstance(result, str) else ""
+        return ""
+
+    def get_episode(self, episode_id: str) -> Any | None:
+        fn = getattr(self._agent, "get_episode", None)
+        if fn:
+            return fn(episode_id=episode_id)
+        return None
+
+    def get_episodes(self, ids: list[str]) -> list[Any]:
+        fn = getattr(self._agent, "get_episodes", None)
+        if fn:
+            result = fn(ids=ids)
+            return result if isinstance(result, list) else []
+        return []
 
     def add_entity(self, entity: Any) -> None:
         fn = getattr(self._agent, "add_entity", None)
@@ -188,7 +203,6 @@ class HippocampusAgent(AgentOrgan):
             fn(d=d)
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
-
 
     def get_entity(self, entity_id: str) -> Any | None:
         fn = getattr(self._agent, "get_entity", None)
@@ -255,7 +269,6 @@ class HippocampusAgent(AgentOrgan):
             fn(entity_id=entity_id, text=text, max_total=max_total)
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
-
 
     def update_importance(self, entity_id: str, importance: float) -> None:
         fn = getattr(self._agent, "update_importance", None)
@@ -364,10 +377,17 @@ class AmygdalaAgent(AgentOrgan):
 
 
 class BrainstemAgent(AgentOrgan):
-    """Adapter for BrainStemProtocol — delegates prompt building to an external agent."""
+    """Adapter for BrainStemProtocol — delegates prompt building to an external agent.
 
-    async def build_system_prompt(self, route: str) -> str:
-        return await self._delegate("build_system_prompt", route=route)
+    v1.3.6: ``build_system_prompt`` signature updated to match
+    :class:`BrainStemProtocol`.
+    """
+
+    async def build_system_prompt(
+        self, organ: str, route: str,
+        cat_self_snapshot: Any | None = None,
+    ) -> str:
+        return await self._delegate("build_system_prompt", organ=organ, route=route, cat_self_snapshot=cat_self_snapshot)
 
     def cancel_current(self) -> bool:
         fn = getattr(self._agent, "cancel_current", None)
@@ -473,4 +493,3 @@ __all__ = [
     "HypothalamusAgent",
     "CortexAgent",
 ]
-

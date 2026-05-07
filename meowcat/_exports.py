@@ -128,7 +128,7 @@ __all__ = [
     # v1.1.18 SharedStore + Log
     "SharedStore", "MeowLog",
     # v1.1.19 Persistent Storage
-    "SqliteGraphStore", "JsonlL6Store",
+    "SqliteGraphStore", "JsonlL6Store", "JsonlEpisodeStore",
     # v1.1.20 Vector Store + Shared Memory
     "VectorStore", "SharedMemoryPool",
     # v1.1.22 Collective Growth + Emergence
@@ -169,7 +169,7 @@ __all__ = [
     "RenovatedAnomalyGrowth", "RenovatedCorrectionGrowth",
     "RenovatedCrystallizer", "RenovatedRoleEmergence",
     # v1.2.8 Presets
-    "KeywordPreset", "PromptPreset",
+    "KeywordPreset", "PromptPreset", "OrganPrompt",
     "KW_EN", "KW_ZH", "KW_BILINGUAL",
     "PROMPT_DEFAULT", "PROMPT_ZH",
     "KW_PRESETS", "PROMPT_PRESETS",
@@ -317,8 +317,8 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ReflexRegistry":       ("meowcat.reflex", "ReflexRegistry"),
     "Trigger":              ("meowcat.reflex", "Trigger"),
     "BUILTIN_REFLEX_PATHS": ("meowcat.reflex", "BUILTIN_REFLEX_PATHS"),
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
+    # Copyright (c) 2026 Axonant
+    # SPDX-License-Identifier: MIT
 
     # — middleware —
     "SignalLogger":    ("meowcat.middleware", "SignalLogger"),
@@ -330,8 +330,8 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "OrganMixin": ("meowcat.organ_base", "OrganMixin"),
     # — pipeline —
     "Pipeline": ("meowcat.pipeline", "Pipeline"),
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
+    # Copyright (c) 2026 Axonant
+    # SPDX-License-Identifier: MIT
 
     # — perception —
     "PerceptionContext": ("meowcat.perception", "PerceptionContext"),
@@ -342,8 +342,8 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "render_wiring":     ("meowcat.diagnose", "render_wiring"),
     "Needle":            ("meowcat.inject", "Needle"),
     "NeedleDisabledError": ("meowcat.inject", "NeedleDisabledError"),
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
+    # Copyright (c) 2026 Axonant
+    # SPDX-License-Identifier: MIT
 
     # — path / chain / loops —
     "Path":                   ("meowcat.path", "Path"),
@@ -396,6 +396,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "SharedStore":      ("meowcat.storage", "SharedStore"),
     "SqliteGraphStore": ("meowcat.storage", "SqliteGraphStore"),
     "JsonlL6Store":     ("meowcat.storage", "JsonlL6Store"),
+    "JsonlEpisodeStore": ("meowcat.storage", "JsonlEpisodeStore"),
     "VectorStore":      ("meowcat.storage", "VectorStore"),
     # — biology —
     "CollectiveGrowth":    ("meowcat.biology", "CollectiveGrowth"),
@@ -508,6 +509,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "RenovatedCrystallizer":    ("meowcat.defaults", "RenovatedCrystallizer"),
     "RenovatedRoleEmergence":   ("meowcat.defaults", "RenovatedRoleEmergence"),
     "KeywordPreset":  ("meowcat.defaults", "KeywordPreset"),
+    "OrganPrompt":   ("meowcat.defaults", "OrganPrompt"),
     "PromptPreset":   ("meowcat.defaults", "PromptPreset"),
     "KW_EN":          ("meowcat.defaults", "KW_EN"),
     "KW_ZH":          ("meowcat.defaults", "KW_ZH"),
@@ -593,4 +595,3 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
 
 # — Submodule names (lazy via importlib) —
 _SUBMODULES: frozenset[str] = frozenset({"anatomy", "biology", "organ_roles"})
-

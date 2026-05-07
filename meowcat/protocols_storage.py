@@ -38,6 +38,13 @@ class GraphStorageProtocol(Protocol):
 class L6StorageProtocol(Protocol):
     """L6 raw dialogue persistence storage interface.
 
+    .. deprecated:: 1.3.6
+        ``L6StorageProtocol`` is superseded by episode persistence via
+        :class:`~meowcat.storage.JsonlEpisodeStore` integrated into the
+        Hippocampus lifecycle (``on_start`` load, ``on_shutdown`` flush).
+        See :class:`~meowcat.defaults.renovated.RenovatedHippocampus`
+        for the new approach.
+
     **Position**: none (storage layer, no organ coordinate)
     **Inbound**: held directly by BrainStem, not called via wiring
     **Outbound**: none
@@ -45,11 +52,18 @@ class L6StorageProtocol(Protocol):
     **Implemented by**: app layer (storage backend)
     """
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        warnings.warn(
+            "L6StorageProtocol is deprecated since v1.3.6. "
+            "Use JsonlEpisodeStore with RenovatedHippocampus instead.",
+            DeprecationWarning, stacklevel=2,
+        )
+        super().__init_subclass__(**kwargs)
+
     def append(self, cat_uid: str, turn: int,
                user_msg: str, ai_reply: str) -> None: ...
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
-
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]: ...
     def load_recent(self, cat_uid: str,
@@ -134,4 +148,3 @@ class FederationTransport(Protocol):
     async def stop(self) -> None:
         """Stop the transport layer (e.g. close port)."""
         ...
-

@@ -7,6 +7,7 @@
 """
 
 from __future__ import annotations
+from meowcat.storage.jsonl_episode_store import JsonlEpisodeStore
 from meowcat.storage.jsonl_l6_store import JsonlL6Store
 from meowcat.storage.sqlite_graph_store import SqliteGraphStore
 from meowcat.storage.vector_store import VectorStore
@@ -35,7 +36,6 @@ class SharedStore(ABC):
     async def get(self, key: str) -> Any: ...
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
-
 
     @abstractmethod
     async def set(self, key: str, value: Any) -> None: ...
@@ -74,5 +74,5 @@ class SharedStore(ABC):
         return await self.load()
 
 
-__all__ = ["SharedStore", "SqliteGraphStore", "JsonlL6Store", "VectorStore"]
-
+__all__ = ["SharedStore", "SqliteGraphStore",
+           "JsonlL6Store", "JsonlEpisodeStore", "VectorStore"]

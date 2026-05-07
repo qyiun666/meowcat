@@ -9,19 +9,21 @@ Provides ``LifecycleMixin`` with all lifecycle-related methods.
 
 from __future__ import annotations
 
+import inspect as _inspect
 import json as _json
 import logging as _logging
 import time as _time
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Awaitable, Callable
+from typing import Any, Union
 
 from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS
 from meowcat.events import Lifecycle
 
 _log = _logging.getLogger(__name__)
 
-# v1.0.14: Lifecycle hook type — sync callable accepting a CatBase instance
-CatHook = Callable[[Any], None]
+# v1.0.14: Lifecycle hook type — sync or async callable accepting a CatBase instance
+# v1.3.6: extended to support async hooks (D14)
+CatHook = Union[Callable[[Any], None], Callable[[Any], Awaitable[None]]]
 
 
 class LifecycleMixin:
@@ -31,6 +33,18 @@ class LifecycleMixin:
     This mixin has no ``__init__`` — CatBase is responsible for initialising
     the attributes these methods depend on.
     """
+
+    @staticmethod
+    async def _call_hook(hook: CatHook, cat: Any) -> None:
+        """Call a lifecycle hook, supporting both sync and async.
+
+        v1.3.6: auto-detects ``iscoroutinefunction`` so app layers
+        can register ``async def`` hooks without manual await wrapping.
+        """
+        if _inspect.iscoroutinefunction(hook):
+            await hook(cat)  # type: ignore[misc]
+        else:
+            hook(cat)  # type: ignore[call-arg]
 
     # -- Workflow tracking (v1.0.15) ----------------------------------------
 
@@ -116,6 +130,12 @@ class LifecycleMixin:
         memory into hippocampus) — at this point ``has_organ()`` and
         ``organ()`` are guaranteed to work.
 
+        .. note::
+
+            v1.3.6: ``on_organs_mounted`` hooks are always called
+            **synchronously** during assembly.  For async initialisation
+            that requires awaiting, register an ``on_start`` hook instead.
+
         Args:
             hook: Sync callable accepting a CatBase instance.
 # Copyright (c) 2026 qyiun666
@@ -131,7 +151,9 @@ class LifecycleMixin:
     def _notify_organs_mounted(self) -> None:
         """Internal: fire all on_organs_mounted hooks in registration order."""
         for hook in self._organs_mounted_hooks:  # type: ignore[attr-defined]
-            hook(self)
+            # v1.3.6: sync-only hooks for organs_mounted (called during
+            # sync assembly flow). For async needs, use on_start() instead.
+            hook(self)  # type: ignore[call-arg]
 
     # -- Lifecycle hooks (v1.0.14) -----------------------------------------
 
@@ -139,9 +161,13 @@ class LifecycleMixin:
         """Register a start hook. Called in registration order after
         assembly completes.
 
+        .. versionchanged:: 1.3.6
+            Hooks may now be ``async def`` — the framework auto-detects
+            coroutine functions and ``await``s them.
+
         Args:
-            hook: Sync callable accepting a CatBase instance, called after
-                  ``start()`` emits the lifecycle.start event.
+            hook: Sync or async callable accepting a CatBase instance,
+                  called after ``start()`` emits the lifecycle.start event.
 
         Examples:
 
@@ -151,14 +177,17 @@ class LifecycleMixin:
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-
     def on_shutdown(self, hook: CatHook) -> None:
         """Register a shutdown hook. Called in **reverse** registration
         order before shutdown.
 
+        .. versionchanged:: 1.3.6
+            Hooks may now be ``async def`` — the framework auto-detects
+            coroutine functions and ``await``s them.
+
         Args:
-            hook: Sync callable accepting a CatBase instance, called in
-                  reverse order before ``shutdown()`` emits the
+            hook: Sync or async callable accepting a CatBase instance,
+                  called in reverse order before ``shutdown()`` emits the
                   lifecycle.shutdown event.
 
         Examples:
@@ -168,7 +197,6 @@ class LifecycleMixin:
         self._shutdown_hooks.append(hook)  # type: ignore[attr-defined]
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
-
 
     # -- Lifecycle -----------------------------------------------------------
 
@@ -183,7 +211,7 @@ class LifecycleMixin:
         # type: ignore[attr-defined]
         await self._events.emit(Lifecycle.START, {"cat": self})
         for hook in self._start_hooks:  # type: ignore[attr-defined]
-            hook(self)
+            await self._call_hook(hook, self)
 
     async def shutdown(self) -> None:
         """Shut down the cat. Save active Workflows → call on_shutdown hooks
@@ -195,7 +223,7 @@ class LifecycleMixin:
         await self._checkpoint_workflows()
         # type: ignore[attr-defined]
         for hook in reversed(self._shutdown_hooks):
-            hook(self)
+            await self._call_hook(hook, self)
         # type: ignore[attr-defined]
         await self._events.emit(Lifecycle.SHUTDOWN, {"cat": self})
 
@@ -252,4 +280,3 @@ class LifecycleMixin:
 
 
 __all__ = ["LifecycleMixin", "CatHook"]
-

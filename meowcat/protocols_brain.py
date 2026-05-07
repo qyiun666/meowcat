@@ -93,6 +93,11 @@ class BrainStemProtocol(Protocol):
     no longer serving as the main loop entry point. Retains
     build_system_prompt and cancel_current as the minimal external contract.
 
+    v1.3.6: ``build_system_prompt`` signature extended to accept ``organ``
+    (per-organ prompt assembly) and optional ``cat_self_snapshot``
+    (CatSelf personality/beliefs/capabilities injection).
+    ``inject_cat_self`` controls whether CatSelf injection is enabled.
+
     **Coordinate**: ``("brain", "brainstem")``
     **Inbound**: THALAMUS
     **Outbound**: THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM, AMYGDALA,
@@ -101,7 +106,12 @@ class BrainStemProtocol(Protocol):
     **Implementor**: Application layer (brain-area organ)
     """
 
-    async def build_system_prompt(self, route: str) -> str: ...
+    inject_cat_self: bool
+
+    async def build_system_prompt(
+        self, organ: str, route: str,
+        cat_self_snapshot: Any | None = None,
+    ) -> str: ...
     def cancel_current(self) -> bool: ...
 
 
@@ -122,7 +132,15 @@ class HippocampusProtocol(Protocol):
                        cat_uid: str, model: str) -> Any: ...
 
     def decay(self, now: Any | None = None) -> int: ...
-    def add_episode(self, episode: Any) -> None: ...  # EpisodeShape
+
+    def add_episode(
+        self, episode: Any) -> str: ...  # EpisodeShape, returns episode_id
+
+    def get_episode(
+        self, episode_id: str) -> Any | None: ...  # EpisodeShape | None
+    def get_episodes(self, ids: list[str]
+                     ) -> list[Any]: ...  # list[EpisodeShape]
+
     def add_entity(self, entity: Any) -> None: ...  # EntityShape
     def fts_search(self, cat_uid: str, keywords: str,
                    limit: int) -> list[dict[str, Any]]: ...
@@ -156,8 +174,8 @@ class HippocampusProtocol(Protocol):
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-
     # v1.1.21: Cross-cat memory search + delegation snapshot
+
     def set_colony_memory(self, memory_pool: Any) -> None: ...
 
     def snapshot(self, *topics: str,
@@ -213,7 +231,6 @@ class LLMBrainProtocol(Protocol):
 @runtime_checkable
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
-
 class AmygdalaProtocol(Protocol):
     """Amygdala — rejection correction and safety fallback.
     Can bypass the cerebrum to directly trigger effectors (stress reflex).
@@ -370,4 +387,3 @@ class RoleEmergenceProtocol(OrganProtocol, Protocol):
 
     def record(self, pattern: str, evidence: str) -> Any: ...
     def diagnose(self) -> dict[str, Any]: ...
-
