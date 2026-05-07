@@ -205,6 +205,8 @@ __all__ = [
     "ProviderEntry", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain",
     # v1.3.6 Compression manager
     "CompressionManager", "CompressionConfig",
+    # v1.3.6 Remember policy
+    "RememberPolicy", "RememberConfig",
 ]
 # fmt: on
 
@@ -603,6 +605,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — compression (v1.3.6) —
     "CompressionManager": ("meowcat.compression", "CompressionManager"),
     "CompressionConfig":  ("meowcat.compression", "CompressionConfig"),
+    # — remember (v1.3.6) —
+    "RememberPolicy": ("meowcat.remember", "RememberPolicy"),
+    "RememberConfig": ("meowcat.remember", "RememberConfig"),
 }
 
 # — Submodule names (lazy via importlib) —
