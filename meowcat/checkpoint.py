@@ -144,6 +144,7 @@ class JsonCheckpointStore(CheckpointStore):
     async def save(self, key: str, data: dict[str, Any]) -> None:
         """Persist *data* for *key* with atomic file replacement."""
         fp = self._file_path(key)
+        fp.parent.mkdir(parents=True, exist_ok=True)
         tmp = fp.with_suffix(fp.suffix + ".tmp")
         with open(tmp, "w", encoding="utf-8") as fh:
             _json.dump(data, fh, ensure_ascii=False, default=str, indent=2)
@@ -170,10 +171,10 @@ class JsonCheckpointStore(CheckpointStore):
     async def list_keys(self) -> list[str]:
         """List all checkpoint keys, sorted."""
         keys: list[str] = []
-        for fp in self._dir.glob(f"*{self._SUFFIX}"):
-            stem = fp.stem  # e.g. "task-001.checkpoint"
-            key = stem.rsplit(".checkpoint", 1)[0]
-            keys.append(key)
+        for fp in self._dir.rglob(f"*{self._SUFFIX}"):
+            rel = fp.relative_to(self._dir)
+            stem = str(rel)[:-len(self._SUFFIX)]  # strip suffix to get key
+            keys.append(stem)
         return sorted(keys)
 
     async def load_all(self) -> dict[str, dict[str, Any]]:
