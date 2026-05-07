@@ -213,6 +213,12 @@ __all__ = [
     "BudgetTracker", "BudgetConfig",
     # v1.3.6 Noise filter
     "NoiseFilter", "NoiseFilterConfig",
+    # v1.3.6 Topic closure detector
+    "TopicClosureDetector", "TopicClosureConfig", "TopicClosureResult",
+    # v1.3.6 Checkpoint store
+    "CheckpointConfig", "JsonCheckpointStore",
+    # v1.3.6 Focus store
+    "FocusStore", "JsonFocusStore", "FocusState",
 ]
 # fmt: on
 
@@ -624,6 +630,21 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — noise (v1.3.6) —
     "NoiseFilter":       ("meowcat.noise", "NoiseFilter"),
     "NoiseFilterConfig": ("meowcat.noise", "NoiseFilterConfig"),
+    # — scheduler (v1.3.6) —
+    "PeriodicScheduler": ("meowcat.scheduler", "PeriodicScheduler"),
+    "PeriodicConfig":    ("meowcat.scheduler", "PeriodicConfig"),
+    "PeriodicTask":      ("meowcat.scheduler", "PeriodicTask"),
+    # — topic closure (v1.3.6) —
+    "TopicClosureDetector": ("meowcat.topic_closure", "TopicClosureDetector"),
+    "TopicClosureConfig":   ("meowcat.topic_closure", "TopicClosureConfig"),
+    "TopicClosureResult":   ("meowcat.topic_closure", "TopicClosureResult"),
+    # — checkpoint (v1.3.6) —
+    "CheckpointConfig":    ("meowcat.checkpoint", "CheckpointConfig"),
+    "JsonCheckpointStore": ("meowcat.checkpoint", "JsonCheckpointStore"),
+    # — focus (v1.3.6) —
+    "FocusStore":     ("meowcat.focus", "FocusStore"),
+    "JsonFocusStore": ("meowcat.focus", "JsonFocusStore"),
+    "FocusState":     ("meowcat.focus", "FocusState"),
 }
 
 # — Submodule names (lazy via importlib) —

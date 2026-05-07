@@ -168,13 +168,15 @@ class BudgetTracker:
             cat_limit = self._config.category_budgets[category]
             cat_used = self._category_used.get(category, 0)
             if cat_used + tokens > cat_limit:
-                freed += self._evict_for_category(category, cat_used + tokens - cat_limit)
+                freed += self._evict_for_category(category,
+                                                  cat_used + tokens - cat_limit)
 
         # Check total budget
         needed = self._total_used + tokens - self._config.total_budget
         if needed > 0:
             # Add min_free_ratio headroom
-            headroom = int(self._config.total_budget * self._config.min_free_ratio)
+            headroom = int(self._config.total_budget *
+                           self._config.min_free_ratio)
             freed += self._evict_for_total(needed + headroom)
 
         # Update tracking

@@ -111,6 +111,29 @@ def _maybe_register_hippo_lifecycle(cat: CatBase) -> None:
     cat.on_shutdown(_hippo_on_shutdown)
 
 
+def _maybe_register_frontal_lifecycle(cat: CatBase) -> None:
+    """Register frontal lifecycle hooks when focus_store is configured.
+
+    v1.3.6: Called by ``create_cat()`` after mounting frontal.
+    Registers ``on_start`` (load focus from store) and ``on_shutdown``
+    (save focus to store) hooks on the cat, reusing the async hook
+    support added in D14/T-02.
+    """
+    frontal = cat.frontal
+    focus_store = getattr(frontal, '_focus_store', None)
+    if focus_store is None:
+        return
+
+    async def _frontal_on_start(c: CatBase) -> None:
+        await c.frontal._load_from_store()
+
+    async def _frontal_on_shutdown(c: CatBase) -> None:
+        await c.frontal._save_to_store()
+
+    cat.on_start(_frontal_on_start)
+    cat.on_shutdown(_frontal_on_shutdown)
+
+
 def create_cat(
     *,
     cat: CatBase | None = None,
@@ -132,6 +155,7 @@ def create_cat(
     thalamus: ThalamusProtocol | None = None,
     amygdala: AmygdalaProtocol | None = None,
     frontal: FrontalCortexProtocol | None = None,
+    focus_store: Any | None = None,  # FocusStore | None (lazy import)
     hypothalamus: HypothalamusProtocol | None = None,
     cortex: CortexProtocol | None = None,
     brainstem: BrainStemProtocol | None = None,
@@ -284,7 +308,9 @@ def create_cat(
     cat.frontal = frontal or _pick_no_init(
         # type: ignore[attr-defined]
         NoopFrontal, RenovatedFrontal, "frontal", keyword=keyword,
-        threshold=frontal_threshold)
+        threshold=frontal_threshold, focus_store=focus_store)
+    # v1.3.6 T-22: Register frontal lifecycle hooks (on_start load, on_shutdown save)
+    _maybe_register_frontal_lifecycle(cat)
     # type: ignore[attr-defined]
     cat.hypothalamus = hypothalamus or _pick_no_init(
         NoopHypothalamus, RenovatedHypothalamus, "hypothalamus")

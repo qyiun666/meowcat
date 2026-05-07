@@ -134,7 +134,8 @@ class TestCompressionMedium:
 
     @pytest.mark.anyio
     async def test_three_messages_trim_if_over_budget(self) -> None:
-        cm = CompressionManager(light_threshold=2, medium_threshold=5, max_tokens=10)
+        cm = CompressionManager(
+            light_threshold=2, medium_threshold=5, max_tokens=10)
         msgs = _make_msgs(3)
         result = await cm.compress(msgs)
         # First message always kept
@@ -144,7 +145,8 @@ class TestCompressionMedium:
 
     @pytest.mark.anyio
     async def test_keeps_first_message_always(self) -> None:
-        cm = CompressionManager(light_threshold=2, medium_threshold=5, max_tokens=10)
+        cm = CompressionManager(
+            light_threshold=2, medium_threshold=5, max_tokens=10)
         msgs = _make_msgs(3)
         result = await cm.compress(msgs)
         assert result[0] == msgs[0]
@@ -178,7 +180,8 @@ class TestCompressionHeavy:
 
     @pytest.mark.anyio
     async def test_heavy_falls_back_to_medium(self) -> None:
-        cm = CompressionManager(light_threshold=2, medium_threshold=5, max_tokens=500)
+        cm = CompressionManager(
+            light_threshold=2, medium_threshold=5, max_tokens=500)
         msgs = _make_msgs(6)
         result = await cm.compress(msgs)
         # Falls back to medium; first message always kept
@@ -189,7 +192,8 @@ class TestCompressionHeavy:
 
     @pytest.mark.anyio
     async def test_heavy_many_messages(self) -> None:
-        cm = CompressionManager(light_threshold=2, medium_threshold=5, max_tokens=500)
+        cm = CompressionManager(
+            light_threshold=2, medium_threshold=5, max_tokens=500)
         msgs = _make_msgs(20)
         result = await cm.compress(msgs)
         assert len(result) >= 1
@@ -198,7 +202,8 @@ class TestCompressionHeavy:
 
     @pytest.mark.anyio
     async def test_heavy_messages_order_preserved(self) -> None:
-        cm = CompressionManager(light_threshold=2, medium_threshold=5, max_tokens=500)
+        cm = CompressionManager(
+            light_threshold=2, medium_threshold=5, max_tokens=500)
         msgs = _make_msgs(6)
         result = await cm.compress(msgs)
         # First message is msgs[0]
@@ -271,7 +276,8 @@ class TestCompressionHeavySummarizer:
             calls.append(1)
             return msgs
 
-        cm = CompressionManager(summarizer=fake_summarizer, medium_threshold=10)
+        cm = CompressionManager(
+            summarizer=fake_summarizer, medium_threshold=10)
         msgs = _make_msgs(5)  # 6 total, ≤ medium_threshold(10)
         await cm.compress(msgs)
         assert len(calls) == 0  # medium tier, no summarizer call

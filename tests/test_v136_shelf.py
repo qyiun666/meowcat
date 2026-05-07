@@ -125,7 +125,8 @@ class TestBuiltinProviders:
 
     def test_all_entries_are_provider_entry(self) -> None:
         for key, entry in BUILTIN_PROVIDERS.items():
-            assert isinstance(entry, ProviderEntry), f"{key} is not ProviderEntry"
+            assert isinstance(
+                entry, ProviderEntry), f"{key} is not ProviderEntry"
 
     def test_all_have_display_name(self) -> None:
         for key, entry in BUILTIN_PROVIDERS.items():
@@ -177,7 +178,8 @@ class TestModelShelfCatalog:
         assert "fake" not in shelf.providers
 
     def test_custom_providers_in_init(self) -> None:
-        custom = {"test": ProviderEntry("Test", "none", "http://localhost:8080")}
+        custom = {"test": ProviderEntry(
+            "Test", "none", "http://localhost:8080")}
         shelf = ModelShelf(providers=custom)
         assert shelf.list_entries() == ["test"]
         assert shelf.get_entry("openai") is None

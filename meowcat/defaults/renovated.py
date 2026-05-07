@@ -302,17 +302,28 @@ class RenovatedFrontal(NoopFrontal):
     and priority keywords. Default: bilingual.
 
     Tracks recent topics and detects significant shifts via keyword overlap.
+
+    v1.3.6: Accepts an optional :class:`~meowcat.focus.FocusStore` for
+    persistence.  ``save()`` / ``load()`` delegate to the store when
+    configured; ``_export_state()`` / ``_import_state()`` support
+    lifecycle-driven save/restore without path parameters.
     """
 
     name: str = "renovated_frontal"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
-    def __init__(self, keyword: KeywordPreset | None = None, threshold: float = 0.3) -> None:
+    def __init__(
+        self,
+        keyword: KeywordPreset | None = None,
+        threshold: float = 0.3,
+        focus_store: Any | None = None,  # FocusStore | None (lazy import to avoid circular)
+    ) -> None:
         NoopFrontal.__init__(self)
         self._keyword = keyword or KW_BILINGUAL
         self._topics: list[str] = []
         self._current_keywords: set[str] = set()
         self._threshold: float = threshold
+        self._focus_store = focus_store
 
     def is_continue(self, msg: str) -> bool:
         for _name, r in self._run_plugs_sync("is_continue", msg):
@@ -345,10 +356,74 @@ class RenovatedFrontal(NoopFrontal):
         self._current_keywords.clear()
 
     def save(self, path: Any | None = None) -> None:
-        pass
+        """Save focus state via the configured store (sync wrapper).
+
+        v1.3.6: When ``_focus_store`` is set, delegates to the store.
+        Otherwise no-op (backward-compatible).
+        """
+        if self._focus_store is None:
+            return
+        import anyio
+        state = self._export_state()
+        anyio.run(self._focus_store.save, state)
 
     def load(self, path: Any | None = None) -> None:
-        pass
+        """Load focus state via the configured store (sync wrapper).
+
+        v1.3.6: When ``_focus_store`` is set, delegates to the store.
+        Otherwise no-op (backward-compatible).
+        """
+        if self._focus_store is None:
+            return
+        import anyio
+        state = anyio.run(self._focus_store.load)
+        if state is not None:
+            self._import_state(state)
+
+    # ── Lifecycle helpers (used by factory.py) ────────────────────
+
+    async def _load_from_store(self) -> None:
+        """Async load focus state from the configured store.
+
+        Called by lifecycle hook on ``on_start``.
+        """
+        if self._focus_store is None:
+            return
+        state = await self._focus_store.load()
+        if state is not None:
+            self._import_state(state)
+
+    async def _save_to_store(self) -> None:
+        """Async save focus state to the configured store.
+
+        Called by lifecycle hook on ``on_shutdown``.
+        """
+        if self._focus_store is None:
+            return
+        await self._focus_store.save(self._export_state())
+
+    def _export_state(self) -> Any:
+        """Export current focus state as a :class:`~meowcat.focus.FocusState`.
+
+        Returns a plain dataclass suitable for serialization.
+        """
+        from meowcat.focus import FocusState
+        return FocusState(
+            topics=list(self._topics),
+            current_keywords=sorted(self._current_keywords),
+            threshold=self._threshold,
+        )
+
+    def _import_state(self, state: Any) -> None:
+        """Import focus state from a :class:`~meowcat.focus.FocusState`.
+
+        Args:
+            state: A ``FocusState`` instance previously returned by
+                   ``_export_state()``.
+        """
+        self._topics = list(state.topics)
+        self._current_keywords = set(state.current_keywords)
+        self._threshold = state.threshold
 
 
 class RenovatedHypothalamus(NoopHypothalamus):
