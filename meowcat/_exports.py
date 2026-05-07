@@ -219,6 +219,10 @@ __all__ = [
     "CheckpointConfig", "JsonCheckpointStore",
     # v1.3.6 Focus store
     "FocusStore", "JsonFocusStore", "FocusState",
+    # v1.3.6 Plan reviser
+    "PlanReviser", "PlanReviserConfig", "RevisionStrategy", "RevisionContext", "RevisionResult",
+    # v1.3.6 Task orchestrator
+    "TaskOrchestrator", "TaskNode", "TaskStatus", "TaskResult", "TaskExecutor",
 ]
 # fmt: on
 
@@ -645,6 +649,18 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "FocusStore":     ("meowcat.focus", "FocusStore"),
     "JsonFocusStore": ("meowcat.focus", "JsonFocusStore"),
     "FocusState":     ("meowcat.focus", "FocusState"),
+    # — plan_reviser (v1.3.6) —
+    "PlanReviser":       ("meowcat.plan_reviser", "PlanReviser"),
+    "PlanReviserConfig": ("meowcat.plan_reviser", "PlanReviserConfig"),
+    "RevisionStrategy":  ("meowcat.plan_reviser", "RevisionStrategy"),
+    "RevisionContext":   ("meowcat.plan_reviser", "RevisionContext"),
+    "RevisionResult":    ("meowcat.plan_reviser", "RevisionResult"),
+    # — task_orchestrator (v1.3.6) —
+    "TaskOrchestrator": ("meowcat.task_orchestrator", "TaskOrchestrator"),
+    "TaskNode":         ("meowcat.task_orchestrator", "TaskNode"),
+    "TaskStatus":       ("meowcat.task_orchestrator", "TaskStatus"),
+    "TaskResult":       ("meowcat.task_orchestrator", "TaskResult"),
+    "TaskExecutor":     ("meowcat.task_orchestrator", "TaskExecutor"),
 }
 
 # — Submodule names (lazy via importlib) —

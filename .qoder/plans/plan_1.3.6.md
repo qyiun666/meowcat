@@ -64,48 +64,48 @@
 | T-08   | 代码生成 | T-02 | [∥]  | [x] `HippocampusProtocol` 新增 `get_episode(id)` / `get_episodes([ids])` 方法，`add_episode` 返回 `episode_id: str`                 |
 | T-09   | 代码生成 | T-08 | —    | [x] 新增 `JsonlEpisodeStore` 默认实现（JSONL 追加 + 行号索引），集成到 RenovatedHippocampus                                         |
 | T-10   | 代码生成 | T-09 | —    | [x] Hippocampus lifecycle：`on_start` 加载存储，`on_shutdown` 自动 flush（复用 T-02 async hook），移除独立的 L6StorageProtocol 概念 |
-| T-11   | 测试编写 | T-10 | —    | episode CRUD + 批量查询 + 持久化恢复全覆盖测试                                                                                      |
+| T-11   | 测试编写 | T-10 | —    | [x] episode CRUD + 批量查询 + 持久化恢复全覆盖测试                                                                                  |
 
 ### Phase 4: LLM 模型货架（供应商目录 → 探测 → 入架 → 降级）
 
-| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                                                                                                                                                                                                                                            |
-| ------ | -------- | ---- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-12   | 代码生成 | 无   | —    | 内置供应商目录 12 入口：openai / deepseek / anthropic / minimax-api / minimax-token / aliyun-api / aliyun-token / moonshot / zhipu / baidu / ollama / custom-openai。每条含 display_name + auth_type（api-key / token / none）+ default_base_url。ollama 无 key 走本地，custom 需用户填 key+url |
-| T-13   | 代码生成 | T-12 | —    | `ModelShelf.discover(entry, api_key, base_url?)` → 按入口类型调对应模型列表接口（OpenAI 兼容走 `/models`，ollama 走本地 `/api/tags`），返回模型名列表；`ModelConfig` 封装 api_key（`__repr__` 脱敏为 `sk-***`，不序列化）                                                                       |
-| T-14   | 代码生成 | T-13 | —    | `ModelShelf.register(name, config)` 入架 + `list()` 列出 + `FallbackChain` 降级链执行器（应用层配置顺序）                                                                                                                                                                                       |
-| T-15   | 测试编写 | T-14 | —    | [x] 供应商目录查询 + 探测 mock + 入架/查找/降级链 + key 脱敏全覆盖测试                                                                                                                                                                                                                          |
+| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                                                                                                                                                                                                                                                |
+| ------ | -------- | ---- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-12   | 代码生成 | 无   | —    | [x] 内置供应商目录 12 入口：openai / deepseek / anthropic / minimax-api / minimax-token / aliyun-api / aliyun-token / moonshot / zhipu / baidu / ollama / custom-openai。每条含 display_name + auth_type（api-key / token / none）+ default_base_url。ollama 无 key 走本地，custom 需用户填 key+url |
+| T-13   | 代码生成 | T-12 | —    | [x] `ModelShelf.discover(entry, api_key, base_url?)` → 按入口类型调对应模型列表接口（OpenAI 兼容走 `/models`，ollama 走本地 `/api/tags`），返回模型名列表；`ModelConfig` 封装 api_key（`__repr__` 脱敏为 `sk-***`，不序列化）                                                                       |
+| T-14   | 代码生成 | T-13 | —    | [x] `ModelShelf.register(name, config)` 入架 + `list()` 列出 + `FallbackChain` 降级链执行器（应用层配置顺序）                                                                                                                                                                                       |
+| T-15   | 测试编写 | T-14 | —    | [x] 供应商目录查询 + 探测 mock + 入架/查找/降级链 + key 脱敏全覆盖测试                                                                                                                                                                                                                              |
 
 ### Phase 5: 通用 Manager 基类（5 个，可并发）
 
 | 子任务 | 能力域   | 依赖 | 并发 | 内容                                                        |
 | ------ | -------- | ---- | ---- | ----------------------------------------------------------- |
 | T-16   | 代码生成 | 无   | [∥]  | [x] D2 `CompressionManager` 基类 — 分层压缩策略，阈值可配置 |
-| T-17   | 代码生成 | 无   | [∥]  | D3 `RememberPolicy` 基类 — 三级退避，写入前置过滤           |
-| T-18   | 代码生成 | 无   | [∥]  | D4 `ClarifyManager` 基类 — 歧义反问，模糊阈值               |
-| T-19   | 代码生成 | 无   | [∥]  | D5 `BudgetTracker` 基类 — 压缩预算 + LRU                    |
-| T-20   | 代码生成 | 无   | [∥]  | D12 `NoiseFilter` 基类 — worth_remembering 正则过滤         |
+| T-17   | 代码生成 | 无   | [∥]  | [x] D3 `RememberPolicy` 基类 — 三级退避，写入前置过滤       |
+| T-18   | 代码生成 | 无   | [∥]  | [x] D4 `ClarifyManager` 基类 — 歧义反问，模糊阈值           |
+| T-19   | 代码生成 | 无   | [∥]  | [x] D5 `BudgetTracker` 基类 — 压缩预算 + LRU                |
+| T-20   | 代码生成 | 无   | [∥]  | [x] D12 `NoiseFilter` 基类 — worth_remembering 正则过滤     |
 
 ### Phase 6: 调度与持久化（4 个，可并发）
 
-| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                             |
-| ------ | -------- | ---- | ---- | -------------------------------------------------------------------------------- |
-| T-21   | 代码生成 | T-02 | [∥]  | D8 `PeriodicScheduler` 基类 — interval/cron 注册                                 |
+| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                                 |
+| ------ | -------- | ---- | ---- | ------------------------------------------------------------------------------------ |
+| T-21   | 代码生成 | T-02 | [∥]  | [x] D8 `PeriodicScheduler` 基类 — interval/cron 注册                                 |
 | T-22   | 代码生成 | T-02 | [∥]  | [x] D9 `FocusStore` 协议 + 默认 JSON 实现，挂 lifecycle                              |
 | T-23   | 代码生成 | 无   | [∥]  | [x] D15 `TopicClosureDetector` 基类 — detect/summarize/decay/inject 钩子，信号词注册 |
 | T-24   | 代码生成 | T-10 | —    | [x] D16 `CheckpointStore` 协议 + 默认 JSON 实现                                      |
 
 ### Phase 7: 编排与容错（2 个）
 
-| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                             |
-| ------ | -------- | ---- | ---- | -------------------------------------------------------------------------------- |
-| T-25   | 代码生成 | T-14 | [∥]  | D10 `PlanReviser` — 策略链框架，可插拔策略注册，不给具体 5 策略                  |
-| T-26   | 代码生成 | T-25 | —    | D11 `TaskOrchestrator` 基类 — DAG + 拓扑排序 + 并行派发核心，不给 SubTask/Kitten |
+| 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                                 |
+| ------ | -------- | ---- | ---- | ------------------------------------------------------------------------------------ |
+| T-25   | 代码生成 | T-14 | [∥]  | [x] D10 `PlanReviser` — 策略链框架，可插拔策略注册，不给具体 5 策略                  |
+| T-26   | 代码生成 | T-25 | —    | [x] D11 `TaskOrchestrator` 基类 — DAG + 拓扑排序 + 并行派发核心，不给 SubTask/Kitten |
 
 ### Phase 8: 收尾
 
 | 子任务 | 能力域   | 依赖                | 并发 | 内容                                                                                             |
 | ------ | -------- | ------------------- | ---- | ------------------------------------------------------------------------------------------------ |
-| T-27   | 测试编写 | T-07,T-11,T-15~T-26 | —    | 全量回归 `pytest tests/ -v`，确保无遗漏                                                          |
+| T-27   | 测试编写 | T-07,T-11,T-15~T-26 | —    | [x] 全量回归 `pytest tests/ -v`，确保无遗漏（+92 tests，1996 passed）                            |
 | T-28   | 文档更新 | T-27                | —    | 更新 AGENTS.md / CATALOG.md / README_CN.md；在 `../docs/CHANGES.md` 写变更公告；需求文档回写状态 |
 | T-29   | 代码审查 | T-27                | —    | 全量 review，输出 `../docs/meowcat/v1.3.6/review.md`                                             |
 

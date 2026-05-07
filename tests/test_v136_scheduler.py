@@ -70,7 +70,8 @@ class TestPeriodicTaskInit:
         assert t.run_count == 0
 
     def test_cron_task(self) -> None:
-        t = PeriodicTask(name="daily", loop_name="diagnostic", cron="0 3 * * *")
+        t = PeriodicTask(name="daily", loop_name="diagnostic",
+                         cron="0 3 * * *")
         assert t.interval is None
         assert t.cron == "0 3 * * *"
 

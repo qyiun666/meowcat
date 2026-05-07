@@ -316,7 +316,8 @@ class RenovatedFrontal(NoopFrontal):
         self,
         keyword: KeywordPreset | None = None,
         threshold: float = 0.3,
-        focus_store: Any | None = None,  # FocusStore | None (lazy import to avoid circular)
+        # FocusStore | None (lazy import to avoid circular)
+        focus_store: Any | None = None,
     ) -> None:
         NoopFrontal.__init__(self)
         self._keyword = keyword or KW_BILINGUAL
