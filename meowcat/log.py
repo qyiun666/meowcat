@@ -50,9 +50,6 @@ class MeowLog:
     def plug_handler(cls, handler: Callable[[dict[str, Any]], None]) -> None:
         """Register a custom handler. Receives ``{level, message, timestamp, logger, data}``."""
         _handlers.append(handler)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     @classmethod
     def clear_handlers(cls) -> None:

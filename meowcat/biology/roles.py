@@ -85,15 +85,9 @@ class CollectiveEmergence(Pluggable):
         async for _name, r in self._run_plugs("detector", events):
             if isinstance(r, list):
                 return r
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         # Default detector: keyword-based role clustering
         return self._default_detect(events, min_events)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     @staticmethod
     def _default_detect(
@@ -148,9 +142,6 @@ class CollectiveEmergence(Pluggable):
         }, ensure_ascii=False)
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     async def list_patterns(
         self, limit: int = 50, cat_uid: str | None = None,

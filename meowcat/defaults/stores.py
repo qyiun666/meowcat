@@ -117,9 +117,6 @@ class InMemorySharedStore(SharedStore):
             if q in watchers:
                 watchers.remove(q)
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def _notify_watchers(self, key: str, value: Any) -> None:
         """Notify matching watchers."""
         for pattern, queues in list(self._watchers.items()):

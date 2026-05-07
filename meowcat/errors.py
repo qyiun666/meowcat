@@ -92,9 +92,6 @@ class ReflexPathInvalidError(MeowCatError):
         )
 
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 class NoReflexMatchedError(MeowCatError):
     """No registered reflex trigger matched during ``cat.perceive(input)``."""
 

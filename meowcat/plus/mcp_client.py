@@ -152,9 +152,6 @@ class MCPClient:
         if cfg.transport == "stdio":
             return await self._call_tool_stdio(cfg, tool_name, arguments)
         return await self._call_tool_http(cfg, tool_name, arguments)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # -- Stdio transport internals -----------------------------------
 
@@ -195,9 +192,6 @@ class MCPClient:
             if "error" in resp:
                 logger.error("MCP init error: %s", resp["error"])
                 return []
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
             # Send tools/list on the same session
             req2 = _jsonrpc_request("tools/list", {})

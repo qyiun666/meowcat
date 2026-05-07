@@ -27,7 +27,7 @@ Usage::
         min_content_length=10,
     )
 
-    if await policy.should_remember(user_msg, ai_reply):
+    if policy.should_remember(user_msg, ai_reply):
         await hippocampus.remember(user_msg, ai_reply, cat_uid, model)
         policy.record(user_msg, ai_reply)
 """
@@ -131,7 +131,7 @@ class RememberPolicy:
 
     # ── Main entry ─────────────────────────────────────────────────
 
-    async def should_remember(self, user_msg: str, ai_reply: str) -> bool:
+    def should_remember(self, user_msg: str, ai_reply: str) -> bool:
         """Decide whether to write this exchange to hippocampus.
 
         Args:

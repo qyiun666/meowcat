@@ -110,7 +110,7 @@ class TestPayloadMapCoverage:
 class TestBackwardCompatibility:
     """框架 emit 代码正常执行，payload TypedDict 不影响运行时."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_nerve_signal_emit_works(self) -> None:
         """nervous.py 的 NerveEvent.SIGNAL emit 正常触发 handler."""
         bus = EventBus()
@@ -128,7 +128,7 @@ class TestBackwardCompatibility:
         assert received[0]["to"] == ("brain", "cerebrum")
         assert received[0]["method"] == "locate"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_perceive_events_emit_work(self) -> None:
         """reflex.py 的 PERCEIVE_START/END emit 正常触发 handler."""
         bus = EventBus()
@@ -148,7 +148,7 @@ class TestBackwardCompatibility:
         assert len(events) == 2
         assert payloads[1]["reply"] == "meow"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_lifecycle_events_emit_work(self) -> None:
         """assembly.py 的 Lifecycle START/SHUTDOWN emit 正常触发."""
         bus = EventBus()
@@ -165,7 +165,7 @@ class TestBackwardCompatibility:
 
         assert len(received) == 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_handler_without_payload_still_works(self) -> None:
         """无参 handler 仍然工作（向后兼容）."""
         bus = EventBus()
@@ -178,7 +178,7 @@ class TestBackwardCompatibility:
         await bus.emit(Lifecycle.START, {"cat": "me"})
         assert received == ["fired"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_off_then_emit_no_error(self) -> None:
         """取消订阅后 emit 不会报错."""
         bus = EventBus()
@@ -192,7 +192,7 @@ class TestBackwardCompatibility:
         await bus.emit(KittenEvent.SPAWNED, {"kitten_id": "k1", "parent_id": "p1", "task": {}, "role": "worker"})
         assert hits == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_all_event_names_emit_without_error(self) -> None:
         """每个 ALL_EVENTS 事件名都可以 emit（不注册 handler 也无异常）."""
         bus = EventBus()
@@ -261,4 +261,3 @@ class TestTypedDictAnnotation:
         fusion_self = get_type_hints(FusionSelfPayload)
         assert "insights" in fusion_self
         assert "fusion_id" in fusion_self
-

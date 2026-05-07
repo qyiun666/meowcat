@@ -36,9 +36,6 @@ from meowcat.gateway.protocol import (
     GatewayProtocol,
     SignalContext,
 )
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 if TYPE_CHECKING:
     from meowcat.assembly import CatBase
@@ -68,9 +65,6 @@ class Gateway:
     def adapter_names(self) -> list[str]:
         """List of mounted adapter names."""
         return list(self._adapters.keys())
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     # -- Lifecycle ----------------------------------------------------
 
@@ -85,9 +79,6 @@ class Gateway:
             ))
         # all Adapters run in parallel, any exception propagates
         await asyncio.gather(*tasks)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def stop(self) -> None:
         """Stop all Adapters."""

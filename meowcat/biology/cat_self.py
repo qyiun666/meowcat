@@ -325,9 +325,6 @@ class CatSelf(Pluggable):
         }
 
     @classmethod
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def with_defaults(
         cls,
         *,
@@ -371,9 +368,6 @@ class DefaultConversationLoop:
     Flow: read self → perceive dialogue → respond → scribble → reflect.
 
     Fusion trigger: ``on_event("conversation_end")`` by default.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     When ``use_organ_pipeline=True`` (v1.2.20), the loop bridges into
     the physical LoopRegistry layer via ``cat.perceive()``, executing
@@ -475,9 +469,6 @@ class DefaultConversationLoop:
         except Exception as e:
             _log.debug("organ_pipeline: perceive failed, falling back",
                        error=str(e)[:120])
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
         # Fallback: use LoopRegistry's conversation loop
         try:

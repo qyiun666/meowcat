@@ -37,9 +37,6 @@ class ActiveGrowthPack:
         # ToolFailureLearner → cat.paws ("on_tool_failure")
         # HotPathObserver   → cat.reflexes ("observe_hot_paths")
     """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     @staticmethod
     def install(

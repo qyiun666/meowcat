@@ -80,9 +80,6 @@ class BrowserTool:
         }
 
     # -- Lifecycle ---------------------------------------------------
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def start(self) -> None:
         """Start the browser and create a new page.
@@ -124,9 +121,6 @@ class BrowserTool:
     async def __aenter__(self) -> BrowserTool:
         await self.start()
         return self
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     async def __aexit__(self, *args: object) -> None:
         await self.close()

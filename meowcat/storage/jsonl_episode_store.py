@@ -47,7 +47,10 @@ class JsonlEpisodeStore:
             episode["id"] = eid
 
         fp = self._file_path(cat_uid)
-        offset = fp.stat().st_size if fp.exists() else 0
+        try:
+            offset = fp.stat().st_size
+        except FileNotFoundError:
+            offset = 0
 
         line = json.dumps(episode, ensure_ascii=False) + "\n"
         with open(fp, "a", encoding="utf-8") as fh:

@@ -74,9 +74,6 @@ ANOMALY_GROWTH: Final[Organ] = (GROWTH, "anomaly_growth")
 CORRECTION_GROWTH: Final[Organ] = (GROWTH, "correction_growth")
 CRYSTALLIZER: Final[Organ] = (GROWTH, "crystallizer")
 ROLE_EMERGENCE: Final[Organ] = (GROWTH, "role_emergence")
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 # -- Aggregate tuples ---------------------------------------------------
 #

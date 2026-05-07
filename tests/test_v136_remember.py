@@ -37,13 +37,13 @@ def _make_exchange(
     return user_msg, ai_reply
 
 
-async def _record_and_check(
+def _record_and_check(
     policy: RememberPolicy,
     user_msg: str,
     ai_reply: str,
 ) -> bool:
     """Convenience: check then record."""
-    ok = await policy.should_remember(user_msg, ai_reply)
+    ok = policy.should_remember(user_msg, ai_reply)
     if ok:
         policy.record(user_msg, ai_reply)
     return ok
@@ -127,12 +127,12 @@ class TestRememberPreFilter:
 
     async def test_too_short_rejected(self) -> None:
         policy = RememberPolicy(min_content_length=10)
-        ok = await policy.should_remember("Hi", "Hey")
+        ok = policy.should_remember("Hi", "Hey")
         assert ok is False
 
     async def test_just_enough_length_passes(self) -> None:
         policy = RememberPolicy(min_content_length=5)
-        ok = await policy.should_remember("Hello", "Hi there")
+        ok = policy.should_remember("Hello", "Hi there")
         assert ok is True
 
     async def test_noise_pattern_rejected(self) -> None:
@@ -140,7 +140,7 @@ class TestRememberPreFilter:
             noise_patterns=[r"^OK$", r"nothing"],
             min_content_length=0,
         )
-        ok = await policy.should_remember("nothing special here", "OK")
+        ok = policy.should_remember("nothing special here", "OK")
         assert ok is False
 
     async def test_no_noise_match_passes(self) -> None:
@@ -149,7 +149,7 @@ class TestRememberPreFilter:
             min_content_length=0,
         )
         # "OK then" should not match ^OK$ pattern
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "What is the weather?", "It is sunny today."
         )
         assert ok is True
@@ -162,12 +162,12 @@ class TestRememberPreFilter:
                 return "important" in user_msg.lower()
 
         policy = CustomPolicy(min_content_length=0)
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "This is an important question", "Reply"
         )
         assert ok is True
 
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "Just a casual chat", "Reply"
         )
         assert ok is False
@@ -180,7 +180,7 @@ class TestRememberLevel1:
 
     async def test_first_exchange_always_remembered(self) -> None:
         policy = RememberPolicy()
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "Tell me about Python", "Python is a programming language."
         )
         assert ok is True
@@ -189,12 +189,12 @@ class TestRememberLevel1:
         policy = RememberPolicy()
 
         # Record first exchange
-        await _record_and_check(
+        _record_and_check(
             policy, "What is Python?", "Python is a language."
         )
 
         # Second exchange is completely different
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "How to cook pasta?",
             "Boil water, add salt, cook for 8 minutes.",
         )
@@ -211,7 +211,7 @@ class TestRememberLevel1:
         ]
 
         for u, a in exchanges:
-            ok = await _record_and_check(policy, u, a)
+            ok = _record_and_check(policy, u, a)
             assert ok is True
 
 
@@ -227,14 +227,14 @@ class TestRememberLevel2:
         )
 
         # Record first
-        await _record_and_check(
+        _record_and_check(
             policy,
             "What is the weather today?",
             "The weather is sunny.",
         )
 
         # Similar — should be blocked (cooldown)
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "What is the weather like today?",
             "It is sunny and warm today.",
         )
@@ -246,14 +246,14 @@ class TestRememberLevel2:
             similarity_threshold=0.3,
         )
 
-        await _record_and_check(
+        _record_and_check(
             policy,
             "What is the weather today?",
             "The weather is sunny.",
         )
 
         # Zero cooldown → passes despite similarity
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "What is the weather today?",
             "Still sunny.",
         )
@@ -274,11 +274,11 @@ class TestRememberLevel2:
             similarity_threshold=0.3,
         )
 
-        await _record_and_check(
+        _record_and_check(
             policy, "Weather today?", "Sunny."
         )
 
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "Weather today again?", "Still sunny."
         )
         assert ok is True
@@ -297,19 +297,19 @@ class TestRememberLevel3:
         )
 
         # Record 2 similar exchanges (reaches cap)
-        await _record_and_check(
+        _record_and_check(
             policy,
             "What is the weather today?",
             "The weather is sunny today.",
         )
-        await _record_and_check(
+        _record_and_check(
             policy,
             "What is the weather?",
             "It is sunny.",
         )
 
         # Third similar → Level 3 skip
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "Weather report please",
             "Today is sunny.",
         )
@@ -323,12 +323,12 @@ class TestRememberLevel3:
         )
 
         # Fill with weather exchanges
-        await _record_and_check(
+        _record_and_check(
             policy, "Weather today?", "It is sunny."
         )
 
         # Completely different topic → Level 1
-        ok = await policy.should_remember(
+        ok = policy.should_remember(
             "Explain quantum entanglement",
             "Quantum entanglement is a physical phenomenon...",
         )
@@ -352,10 +352,10 @@ class TestRememberLevel3:
             cooldown_seconds=0.0,
         )
 
-        await _record_and_check(policy, "Weather?", "Sunny.")
+        _record_and_check(policy, "Weather?", "Sunny.")
 
         # Even though cap is 1, custom Level 3 allows it
-        ok = await policy.should_remember("Weather again?", "Still sunny.")
+        ok = policy.should_remember("Weather again?", "Still sunny.")
         assert ok is True
 
 
@@ -391,19 +391,19 @@ class TestRememberRecord:
         )
 
         # First: Level 1
-        ok1 = await _record_and_check(
+        ok1 = _record_and_check(
             policy, "What is the weather today", "It is sunny outside."
         )
         assert ok1 is True
 
         # Second similar: Level 2 (cooldown 0 → passes)
-        ok2 = await _record_and_check(
+        ok2 = _record_and_check(
             policy, "What is the weather like", "It is sunny today."
         )
         assert ok2 is True
 
         # Third similar: Level 3 (cap=2 reached)
-        ok3 = await policy.should_remember(
+        ok3 = policy.should_remember(
             "Weather is what today", "Sunny it is outside today."
         )
         assert ok3 is False
@@ -416,24 +416,24 @@ class TestRememberEdge:
 
     async def test_empty_messages_rejected(self) -> None:
         policy = RememberPolicy(min_content_length=1)
-        ok = await policy.should_remember("", "")
+        ok = policy.should_remember("", "")
         assert ok is False
 
     async def test_whitespace_only_rejected(self) -> None:
         policy = RememberPolicy(min_content_length=1)
-        ok = await policy.should_remember("   ", "\t\n")
+        ok = policy.should_remember("   ", "\t\n")
         assert ok is False
 
     async def test_very_long_content_accepted(self) -> None:
         policy = RememberPolicy(min_content_length=10)
         long_msg = "x" * 10000
-        ok = await policy.should_remember(long_msg, "y" * 5000)
+        ok = policy.should_remember(long_msg, "y" * 5000)
         assert ok is True
 
     async def test_min_content_length_zero(self) -> None:
         """min_content_length=0 means no length check."""
         policy = RememberPolicy(min_content_length=0)
-        ok = await policy.should_remember("x", "y")
+        ok = policy.should_remember("x", "y")
         assert ok is True
 
     async def test_punctuation_only_similarity(self) -> None:
@@ -445,10 +445,10 @@ class TestRememberEdge:
             max_recent_duplicates=10,
         )
 
-        await _record_and_check(policy, "Hello world", "Hi there")
+        _record_and_check(policy, "Hello world", "Hi there")
 
         # "!!!" and "..." both normalize to empty → not similar to "hello world"
-        ok = await policy.should_remember("!!!", "...")
+        ok = policy.should_remember("!!!", "...")
         assert ok is True
 
 
@@ -549,10 +549,10 @@ class TestRememberCustomTiers:
         )
 
         # Record first
-        await _record_and_check(policy, "weather", "sunny")
+        _record_and_check(policy, "weather", "sunny")
 
         # Same topic → should normally be blocked, but custom tier allows
-        ok = await policy.should_remember("weather again", "still sunny")
+        ok = policy.should_remember("weather again", "still sunny")
         assert ok is True
 
     async def test_override_is_similar(self) -> None:
@@ -577,10 +577,10 @@ class TestRememberCustomTiers:
             min_content_length=0,
         )
 
-        await _record_and_check(
+        _record_and_check(
             policy, "a" * 100, "b" * 100,
         )
 
         # Similar length → Level 2 (cooldown 0 → passes)
-        ok = await policy.should_remember("c" * 105, "d" * 95)
+        ok = policy.should_remember("c" * 105, "d" * 95)
         assert ok is True

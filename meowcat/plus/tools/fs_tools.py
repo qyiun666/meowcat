@@ -70,9 +70,6 @@ plus_list_dir = Tool(
     handler=_list_dir,
 )
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 # -- grep_files --------------------------------------------------------
 
 

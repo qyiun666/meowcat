@@ -129,6 +129,7 @@ class PeriodicScheduler:
         self._running: bool = False
         self._task: asyncio.Task[Any] | None = None
         self._sem: asyncio.Semaphore | None = None
+        self._inflight: set[asyncio.Task[Any]] = set()
 
     # ── Properties ─────────────────────────────────────────────────
 
@@ -251,6 +252,12 @@ class PeriodicScheduler:
             except asyncio.CancelledError:
                 pass
             self._task = None
+
+        # Wait for all in-flight dispatches to complete
+        if self._inflight:
+            await asyncio.gather(*self._inflight, return_exceptions=True)
+            self._inflight.clear()
+
         self._sem = None
 
     # ── Background tick loop ───────────────────────────────────────
@@ -267,10 +274,13 @@ class PeriodicScheduler:
                         task.last_run = now
                         task.run_count += 1
                         # Dispatch asynchronously (fire-and-forget
-                        # with concurrency limit)
-                        asyncio.ensure_future(
+                        # with concurrency limit); keep reference
+                        # for clean shutdown
+                        t = asyncio.ensure_future(
                             self._dispatch(task, cat)
                         )
+                        self._inflight.add(t)
+                        t.add_done_callback(self._inflight.discard)
             except Exception:
                 _log.debug(
                     "PeriodicScheduler tick error", exc_info=True,

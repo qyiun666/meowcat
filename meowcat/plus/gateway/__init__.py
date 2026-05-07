@@ -8,20 +8,11 @@ Webhook, CLI, IPC). Keep ``meowcat/gateway/`` for pure abstractions
 (Gateway, IoAdapterProtocol, SignalContext).
 
 Usage::
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     from meowcat.plus.gateway import HttpAdapter, CliAdapter
 """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 from __future__ import annotations
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 from meowcat.plus.gateway.http_adapter import HttpAdapter
 from meowcat.plus.gateway.ws_adapter import WsAdapter

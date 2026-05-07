@@ -186,9 +186,6 @@ class TelemetryEvent:
 
     SPAN: Final[str] = "telemetry.span"
     """Emitted when a signal span completes, payload :class:`~meowcat.events_payloads.TelemetrySpanPayload`."""
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 
 # -- Summary (for CI / doc auto-generation) --------------------------
@@ -240,9 +237,6 @@ class EventBus:
         self._handlers: dict[str, list[Handler]] = defaultdict(list)
         # v1.2.15: precomputed handler info cache — id(handler) → {takes_payload, is_async}
         self._handler_info: dict[int, dict[str, bool]] = {}
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
         # v1.2.25: lock to protect handler list during concurrent emit
         self._lock = asyncio.Lock()
 

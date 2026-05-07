@@ -14,17 +14,11 @@ from typing import Any
 
 
 @dataclass
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 class ColonyConfig:
     """Colony configuration — nameplate snapshot for serialization/restore."""
     name: str | None = None
     description: str = ""
     max_cats: int | None = None
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 
 @dataclass

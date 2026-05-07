@@ -23,9 +23,6 @@ class MouthProtocol(Protocol):
     **Reflex Arc**: text_dialogue, danger
     **Implemented by**: app layer (output organ)
     """
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     name: str
 
@@ -33,9 +30,6 @@ class MouthProtocol(Protocol):
 
     def diagnose(self) -> dict[str, Any]: ...
 
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
 @runtime_checkable
 class PurrProtocol(Protocol):
@@ -74,4 +68,3 @@ class TailProtocol(Protocol):
 
 
 __all__ = ["MouthProtocol", "PurrProtocol", "TailProtocol"]
-

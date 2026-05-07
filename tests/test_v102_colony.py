@@ -148,7 +148,7 @@ class TestRegisterUnregister:
 class TestDeliverResult:
     """deliver_result 分身旁回传结果给父猫。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_deliver_result(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -160,7 +160,7 @@ class TestDeliverResult:
         val = await colony.storage_get(cat.cat_uid, f"kitten:{kitten.cat_uid}/result")
         assert val == {"done": True}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_deliver_result_multiple_kittens(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -180,7 +180,7 @@ class TestDeliverResult:
 class TestBroadcast:
     """broadcast 向所有猫广播事件。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat_a = colony.create_cat(name="a")
@@ -203,7 +203,7 @@ class TestBroadcast:
 class TestSignalBetween:
     """signal_between 猫间通信。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
@@ -218,7 +218,7 @@ class TestSignalBetween:
         )
         assert result == {"results": [], "query": "hello"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between_cat_not_found(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat = colony.create_cat(name="a")
@@ -275,7 +275,7 @@ class TestCrossWiring:
         with pytest.raises(IllegalNeuralPathError, match="forbidden"):
             colony._assert_cross_allowed("c", "d")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between_rejected_by_cross_wiring(self) -> None:
         cat_a = _Helper.make_cat("a")
         cat_b = _Helper.make_cat("b")
@@ -297,7 +297,7 @@ class TestCrossWiring:
 class TestSharedStorage:
     """共享存储的命名空间隔离。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_namespace_isolation(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -309,7 +309,7 @@ class TestSharedStorage:
         assert await colony.storage_get("cat-a", "memories/hello") == "world"
         assert await colony.storage_get("cat-b", "memories/hello") == "bonjour"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_storage_delete(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -318,7 +318,7 @@ class TestSharedStorage:
         await colony.storage_delete("cat-a", "temp")
         assert await colony.storage_get("cat-a", "temp") is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_storage_list_keys(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -333,7 +333,7 @@ class TestSharedStorage:
         keys_b = await colony.storage_list_keys("cat-b")
         assert keys_b == ["key3"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_storage_watch(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test", storage=store)
@@ -380,7 +380,7 @@ class TestCatCount:
 class TestHealthCheckAll:
     """health_check_all 全猫体检。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_health_check_all(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
@@ -400,7 +400,7 @@ class TestHealthCheckAll:
 class TestSignalBetweenTimeout:
     """signal_between 超时防护。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between_with_timeout_fast(self) -> None:
         """快速完成时不触发 timeout。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -415,7 +415,7 @@ class TestSignalBetweenTimeout:
         )
         assert result == {"results": [], "query": "hello"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between_timeout_triggered(self) -> None:
         """超时时抛出 asyncio.TimeoutError。"""
         import asyncio as _asyncio
@@ -438,7 +438,7 @@ class TestSignalBetweenTimeout:
                 timeout=0.1,
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_between_no_timeout_by_default(self) -> None:
         """不传 timeout 时保持原有行为（无限等待）。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -481,7 +481,7 @@ class _CrashingOrgan:
 class TestTaskDelegation:
     """delegate_async + task_status + await_task + check_cat。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delegate_async_returns_task_id(self) -> None:
         """delegate_async 立即返回 task_id, 不阻塞。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -498,7 +498,7 @@ class TestTaskDelegation:
         assert cat_a.cat_uid in task_id
         assert cat_b.cat_uid in task_id
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_task_status_pending_to_done(self) -> None:
         """task_status 从 pending → running → done。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -521,7 +521,7 @@ class TestTaskDelegation:
         s = await colony.task_status(task_id)
         assert s["status"] == "done"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_await_task_returns_result(self) -> None:
         """await_task 等待完成并返回结果。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -538,7 +538,7 @@ class TestTaskDelegation:
         result = await colony.await_task(task_id, poll_interval=0.05, max_wait=10.0)
         assert result == {"results": [], "query": "hello"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_await_task_timeout(self) -> None:
         """await_task 在 max_wait 后超时。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -559,7 +559,7 @@ class TestTaskDelegation:
         with pytest.raises(asyncio.TimeoutError, match="exceeded max_wait"):
             await colony.await_task(task_id, poll_interval=0.05, max_wait=0.2)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_await_task_kitten_errored(self) -> None:
         """await_task 在分身猫报错时抛出 RuntimeError。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -580,7 +580,7 @@ class TestTaskDelegation:
         with pytest.raises(RuntimeError, match="errored"):
             await colony.await_task(task_id, poll_interval=0.05, max_wait=1.0)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delegate_async_kitten_timeout_status(self) -> None:
         """delegate_async 小猫超时 → 状态变为 timed_out。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -601,7 +601,7 @@ class TestTaskDelegation:
         s = await colony.task_status(task_id)
         assert s["status"] == "timed_out"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_cat_alive(self) -> None:
         """check_cat 返回 alive。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -610,14 +610,14 @@ class TestTaskDelegation:
 
         assert await colony.check_cat(cat.cat_uid) == "alive"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_cat_dead(self) -> None:
         """check_cat 对不存在的猫返回 dead。"""
         colony = Colony("test", storage=InMemorySharedStore())
 
         assert await colony.check_cat("nonexistent") == "dead"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delegate_async_non_blocking(self) -> None:
         """delegate_async 不阻塞调用方 — 主猫可以继续做其他事。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -644,4 +644,3 @@ class TestTaskDelegation:
         # 验证结果最终可用
         result = await colony.await_task(task_id, poll_interval=0.1, max_wait=5.0)
         assert result == "slow-result"
-

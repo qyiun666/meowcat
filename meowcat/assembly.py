@@ -249,8 +249,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
                 "wiring disabled — construct with enable_wiring=True",
             )
         return self._nervous.wiring
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     @property
     def reflexes(self) -> "ReflexRegistry":
@@ -300,8 +298,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         return self._current_snapshot
 
     # -- Organ container facade ---------------------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def mount(
         self,
@@ -313,8 +309,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
     ) -> None:
         """Mount organ (forwards to :class:`OrganHost`)."""
         self._host.mount(category, name, organ, protocol=protocol)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def organ(self, category: str, name: str) -> Any:
         """Retrieve organ (forwards to :class:`OrganHost`)."""

@@ -71,9 +71,6 @@ class HttpAdapter:
                 return
             method, path = parts[0], parts[1]
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
             # read headers
             headers: dict[str, str] = {}
             while True:
@@ -109,9 +106,6 @@ class HttpAdapter:
             )
 
             accept = headers.get("accept", "")
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
             if "text/event-stream" in accept:
                 # SSE streaming response

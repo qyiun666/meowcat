@@ -58,9 +58,6 @@ class ChromaStore:
         self._collection: Any = None
 
     # -- Diagnosable interface ---------------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def diagnose(self) -> dict[str, object]:
         """Read-only snapshot for Stethoscope probing."""
@@ -95,9 +92,6 @@ class ChromaStore:
 
     def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         """Semantic search for similar documents.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Args:
             query: Search query text.
@@ -139,9 +133,6 @@ class ChromaStore:
         except Exception as exc:
             logger.warning("ChromaStore delete failed: %s", exc)
             return False
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     # -- Additional API ----------------------------------------------
 

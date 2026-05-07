@@ -108,9 +108,6 @@ def register_builtin_chains(registry: "ChainRegistry") -> None:
     for c in BUILTIN_CHAINS:
         registry.register(c)
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 # -- ChainRegistry -------------------------------------------------
 
@@ -130,9 +127,6 @@ class ChainRegistry:
         # Execute
         result = await registry.run(cat, "full_reasoning", prompt="hello")
     """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     _chains: dict[str, Chain] = field(default_factory=dict, init=False)
     _chains_list: list[Chain] = field(default_factory=list, init=False)

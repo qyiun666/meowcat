@@ -446,9 +446,6 @@ class Colony(Pluggable, _FederationMixin):
         self.unmount_plug(slot, handler)
 
     # -- Factory -------------------------------------------------------
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def _inject_colony_memory(self, cat: CatBase) -> None:
         """v1.2.36: Inject colony shared memory pool after organs are mounted.

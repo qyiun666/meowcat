@@ -109,21 +109,21 @@ class TestSearchMemory:
     调用 Thalamus.locate(msg, session_id)。
     """
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_search_memory_empty(self) -> None:
         """空记忆搜索返回 dict。"""
         cat = _make_wired_cat()
         result = await cat.search_memory("hello")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_search_memory_with_limit(self) -> None:
         """limit 参数传递。"""
         cat = _make_wired_cat()
         result = await cat.search_memory("test", limit=10)
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_search_memory_returns_dict(self) -> None:
         """返回值是 dict。"""
         cat = _make_wired_cat()
@@ -139,7 +139,7 @@ class TestMemoryStats:
     通过 signal(BRAINSTEM, HIPPOCAMPUS, "stats") 调用海马体统计。
     """
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_memory_stats_empty(self) -> None:
         """空记忆统计。"""
         cat = _make_wired_cat()
@@ -148,7 +148,7 @@ class TestMemoryStats:
         assert result["entities"] == 0
         assert result["episodes"] == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_memory_stats_after_episode(self) -> None:
         """记忆后统计反映变化。"""
         cat = _make_wired_cat()
@@ -158,7 +158,7 @@ class TestMemoryStats:
         result = await cat.memory_stats()
         assert result["episodes"] == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_memory_stats_returns_dict(self) -> None:
         """返回值是 dict。"""
         cat = _make_wired_cat()
@@ -176,7 +176,7 @@ class TestRunMaintenance:
     因此 mock 器官方法需接受 **kwargs。
     """
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_maintenance_no_country(self) -> None:
         """不带 country_code 运行维护。"""
         cat = _make_maintenance_cat()
@@ -184,7 +184,7 @@ class TestRunMaintenance:
         result = await cat.run_maintenance()
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_maintenance_with_country(self) -> None:
         """带 country_code 运行维护（参数被 facade 忽略，不影响执行）。"""
         cat = _make_maintenance_cat()
@@ -192,7 +192,7 @@ class TestRunMaintenance:
         result = await cat.run_maintenance(country_code="CN")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_maintenance_missing_seq(self) -> None:
         """未注册 DAILY_MAINTENANCE_SEQ 时抛 KeyError。"""
         cat = _make_maintenance_cat()
@@ -274,7 +274,7 @@ class TestNewWiringEdges:
 
     # -- 新增允许边 --------------------------------------------------
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ears_to_amygdala_allowed(self) -> None:
         """EARS → AMYGDALA 应激反射边允许。"""
         cat = _make_wired_cat()
@@ -282,7 +282,7 @@ class TestNewWiringEdges:
                                   user_input="hello")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_eyes_to_amygdala_allowed(self) -> None:
         """EYES → AMYGDALA 应激反射边允许。"""
         cat = _make_wired_cat()
@@ -290,7 +290,7 @@ class TestNewWiringEdges:
                                   user_input="test")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_whiskers_to_amygdala_allowed(self) -> None:
         """WHISKERS → AMYGDALA 注入检测边允许。"""
         cat = _make_wired_cat()
@@ -298,7 +298,7 @@ class TestNewWiringEdges:
                                   user_input="test injection")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_amygdala_to_anomaly_allowed(self) -> None:
         """AMYGDALA → ANOMALY_GROWTH 安全事件记录边允许。"""
         cat = self._make_full_cat()
@@ -307,7 +307,7 @@ class TestNewWiringEdges:
         assert isinstance(result, dict)
         assert result["recorded"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_amygdala_to_correction_allowed(self) -> None:
         """AMYGDALA → CORRECTION_GROWTH 纠正记录边允许。"""
         cat = self._make_full_cat()
@@ -316,7 +316,7 @@ class TestNewWiringEdges:
         assert isinstance(result, dict)
         assert result["recorded"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_whiskers_to_anomaly_allowed(self) -> None:
         """WHISKERS → ANOMALY_GROWTH 异常检测记录边允许。"""
         cat = self._make_full_cat()
@@ -327,7 +327,7 @@ class TestNewWiringEdges:
 
     # -- 新增禁止边 --------------------------------------------------
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cerebrum_to_anomaly_forbidden(self) -> None:
         """CEREBRUM → ANOMALY_GROWTH 禁止边生效。"""
         from meowcat.anatomy import CEREBRUM
@@ -348,7 +348,7 @@ class TestNewWiringEdges:
             await cat.signal(CEREBRUM, ANOMALY_GROWTH, "record",
                              reason="test", snippet="test")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cerebrum_to_correction_forbidden(self) -> None:
         """CEREBRUM → CORRECTION_GROWTH 禁止边生效。"""
         from meowcat.anatomy import CEREBRUM
@@ -370,7 +370,7 @@ class TestNewWiringEdges:
 
     # -- 已有边不受影响 ----------------------------------------------
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ears_to_thalamus_hearing_edge(self) -> None:
         """EARS → THALAMUS wiring edge exists (hearing through Path system)."""
         from meowcat.path import PathRegistry, Path as PathObj
@@ -381,11 +381,10 @@ class TestNewWiringEdges:
         assert hear_path.from_organ == EARS
         assert hear_path.to_organ == THALAMUS
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_brainstem_to_hippocampus_stats_works(self) -> None:
         """BrainStem → Hippocampus stats 不受影响。"""
         cat = _make_wired_cat()
         result = await cat.signal(BRAINSTEM, HIPPOCAMPUS, "stats")
         assert isinstance(result, dict)
         assert "entities" in result
-

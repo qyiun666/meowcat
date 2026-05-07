@@ -171,7 +171,7 @@ class TestCatSelfProperties:
 class TestCatSelfBeforeAfter:
     """before_act and after_act loop nodes."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_before_act_basic(self, basic_cat_self, cortex):
         """before_act returns SelfSnapshot."""
         cortex.promote_to_belief("test", "always_test", 0.95)
@@ -180,7 +180,7 @@ class TestCatSelfBeforeAfter:
         assert snap.personality == {"tone": "friendly", "language": "zh"}
         assert ("test", "always_test", 0.95, True) in snap.beliefs
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_before_act_empty(self, pad):
         """before_act works with minimal CatSelf."""
         cs = CatSelf(scribble_pad=pad)
@@ -190,7 +190,7 @@ class TestCatSelfBeforeAfter:
         assert snap.beliefs == []
         assert snap.scribble_count == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_before_act_snapshot_scribble_count(self, pad):
         """before_act captures scribble count."""
         pad.scribble("a")
@@ -199,7 +199,7 @@ class TestCatSelfBeforeAfter:
         snap = await cs.before_act("learn")
         assert snap.scribble_count == 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_after_act_writes_to_pad(self, pad):
         """after_act scribbles a summary entry."""
         cs = CatSelf(scribble_pad=pad)
@@ -209,14 +209,14 @@ class TestCatSelfBeforeAfter:
         assert entry["summary"] == "did something"
         assert entry["impact"] == {"key": "val"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_after_act_without_pad(self):
         """after_act is safe when no scribble_pad."""
         cs = CatSelf()
         await cs.after_act("no pad", {})
         # Should not raise
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_after_act_empty_impact(self, pad):
         """after_act defaults impact to {} when None."""
         cs = CatSelf(scribble_pad=pad)
@@ -231,7 +231,7 @@ class TestCatSelfBeforeAfter:
 class TestCatSelfPlugs:
     """Pluggable hooks on CatSelf."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_before_act_override(self, pad):
         """before_act plugin can override snapshot."""
         cs = CatSelf(scribble_pad=pad)
@@ -242,7 +242,7 @@ class TestCatSelfPlugs:
         assert snap is custom
         assert snap.personality == {"custom": True}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_after_act_plugin_fires(self, pad):
         """after_act plugin receives summary and impact."""
         cs = CatSelf(scribble_pad=pad)
@@ -256,7 +256,7 @@ class TestCatSelfPlugs:
         assert len(received) == 1
         assert received[0] == ("test summary", {"a": 1})
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unplug(self, pad):
         """unplug removes a plugin."""
         cs = CatSelf(scribble_pad=pad)
@@ -314,7 +314,7 @@ class TestCatSelfLoop:
 class TestDefaultConversationLoop:
     """Default conversation closed loop."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_basic(self, pad):
         """Conversation loop fires before_act/after_act. PinealGland drains pad on trigger."""
         cs = CatSelf(scribble_pad=pad, pineal_gland=PinealGland(pad))
@@ -325,7 +325,7 @@ class TestDefaultConversationLoop:
         # Pad is drained by PinealGland trigger_if(on_event) → 0 entries remain
         assert pad.count() == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_without_pineal(self, pad):
         """Works without pineal gland."""
         cs = CatSelf(scribble_pad=pad)
@@ -334,7 +334,7 @@ class TestDefaultConversationLoop:
         response = await loop.run(cat, "hi")
         assert isinstance(response, str)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_without_pad(self):
         """Works without scribble pad."""
         cs = CatSelf()
@@ -350,7 +350,7 @@ class TestDefaultConversationLoop:
 class TestDefaultTaskLoop:
     """Default task closed loop."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_basic(self, pad):
         cs = CatSelf(scribble_pad=pad)
         cat = MockCat(cs)
@@ -360,7 +360,7 @@ class TestDefaultTaskLoop:
         assert result["status"] == "planned"
         assert pad.count() >= 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_without_pad(self):
         cs = CatSelf()
         cat = MockCat(cs)
@@ -375,7 +375,7 @@ class TestDefaultTaskLoop:
 class TestDefaultLearnLoop:
     """Default learn closed loop."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_basic(self, pad):
         """Learn loop fires before_act/after_act. PinealGland trigger() drains pad."""
         cs = CatSelf(scribble_pad=pad, pineal_gland=PinealGland(pad))
@@ -387,7 +387,7 @@ class TestDefaultLearnLoop:
         # Pad is drained by PinealGland trigger() → 0 entries remain
         assert pad.count() == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_without_pineal(self, pad):
         """Works without pineal gland."""
         cs = CatSelf(scribble_pad=pad)
@@ -403,7 +403,7 @@ class TestDefaultLearnLoop:
 class TestCatSelfWithMetacognition:
     """CatSelf snapshots include metacognition data."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_snapshot_includes_capable_domains(self, pad, metacog):
         metacog.record_capability("sql", True, "has mysql tool")
         metacog.record_capability("frontend", False, "no js engine")
@@ -419,7 +419,7 @@ class TestCatSelfWithMetacognition:
 class TestCatSelfWithSkills:
     """CatSelf snapshots include skill names."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_snapshot_includes_skill_names(self, pad, skills):
         from meowcat.tools.skill import Skill, SkillSpec
         skills.register(
@@ -427,4 +427,3 @@ class TestCatSelfWithSkills:
         cs = CatSelf(scribble_pad=pad, skills=skills)
         snap = await cs.before_act("task")
         assert "read_file" in snap.skill_names
-

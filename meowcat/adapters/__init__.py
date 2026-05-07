@@ -38,9 +38,6 @@ from meowcat.adapters.voice import (
     PurrAgent,
     TailAgent,
 )
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 __all__ = [
     "AgentOrgan",

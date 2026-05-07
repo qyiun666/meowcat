@@ -184,9 +184,6 @@ class TCPSocketTransport:
 
         Automatically injects request_id into payload, waits for the remote
         to respond with the same request_id.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Args:
             topic: Target colony_id.

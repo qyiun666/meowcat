@@ -201,7 +201,7 @@ class TestModelShelfDiscovery:
             ]
         }).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)) as mock_http:
             models = await shelf.discover("openai", api_key="sk-test")
             assert models == ["gpt-4o", "gpt-4o-mini"]
@@ -220,7 +220,7 @@ class TestModelShelfDiscovery:
             ]
         }).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)) as mock_http:
             models = await shelf.discover("ollama")
             assert models == ["llama3.2:latest", "mistral:7b"]
@@ -236,7 +236,7 @@ class TestModelShelfDiscovery:
             "data": [{"id": "custom-model"}]
         }).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)):
             models = await shelf.discover(entry, api_key="sk-xxx")
             assert models == ["custom-model"]
@@ -249,7 +249,7 @@ class TestModelShelfDiscovery:
             "data": [{"id": "proxy-model"}]
         }).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)) as mock_http:
             models = await shelf.discover(
                 "openai", api_key="sk-test",
@@ -273,7 +273,7 @@ class TestModelShelfDiscovery:
             "data": [{"id": "my-model"}]
         }).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)):
             models = await shelf.discover(
                 "custom-openai", api_key="sk-test",
@@ -292,7 +292,7 @@ class TestModelShelfDiscovery:
     async def test_discover_http_error(self) -> None:
         """HTTP 错误时应抛 RuntimeError。"""
         shelf = ModelShelf()
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           side_effect=RuntimeError("HTTP 401 from ...: Unauthorized")):
             with pytest.raises(RuntimeError, match="HTTP 401"):
                 await shelf.discover("openai", api_key="bad-key")
@@ -303,7 +303,7 @@ class TestModelShelfDiscovery:
         shelf = ModelShelf()
         mock_data = json.dumps({"data": []}).encode()
 
-        with patch.object(shelf, "_http_get_json",
+        with patch.object(ModelShelf, "_http_get_json",
                           return_value=json.loads(mock_data)):
             models = await shelf.discover("openai", api_key="sk-test")
             assert models == []
@@ -312,7 +312,7 @@ class TestModelShelfDiscovery:
     async def test_discover_missing_data_key(self) -> None:
         """响应缺少 'data' 键时返回 []。"""
         shelf = ModelShelf()
-        with patch.object(shelf, "_http_get_json", return_value={"other": "value"}):
+        with patch.object(ModelShelf, "_http_get_json", return_value={"other": "value"}):
             models = await shelf.discover("openai", api_key="sk-test")
             assert models == []
 

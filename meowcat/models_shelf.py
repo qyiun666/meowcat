@@ -265,9 +265,12 @@ class ModelShelf:
         if resolved.auth_type != "none" and api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
-        # Ollama special case
-        if resolved.default_base_url.startswith("http://localhost") or \
-                resolved.auth_type == "none":
+        # Ollama special case — detect by auth_type (none) or provider key
+        is_ollama = (
+            resolved.auth_type == "none"
+            or (isinstance(entry, str) and entry == "ollama")
+        )
+        if is_ollama:
             url = f"{base_url}/api/tags"
             data = await anyio.to_thread.run_sync(
                 self._http_get_json, url, headers, timeout,

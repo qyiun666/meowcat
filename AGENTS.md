@@ -440,24 +440,24 @@ result = await chain.run(shelf, prompt="...")
 
 ### 管理器基类 5 件套
 
-| 模块                 | 导入                                         | 用途           |
-| -------------------- | -------------------------------------------- | -------------- |
-| CompressionManager   | `from meowcat.compression import ...`         | 分层压缩策略   |
-| RememberPolicy       | `from meowcat.remember_policy import ...`     | 三级退避过滤   |
-| ClarifyManager       | `from meowcat.clarify import ...`             | 歧义反问检测   |
-| BudgetTracker        | `from meowcat.budget import ...`              | 压缩预算 + LRU |
-| NoiseFilter          | `from meowcat.noise_filter import ...`        | 噪音正则过滤   |
+| 模块               | 导入                                      | 用途           |
+| ------------------ | ----------------------------------------- | -------------- |
+| CompressionManager | `from meowcat.compression import ...`     | 分层压缩策略   |
+| RememberPolicy     | `from meowcat.remember_policy import ...` | 三级退避过滤   |
+| ClarifyManager     | `from meowcat.clarify import ...`         | 歧义反问检测   |
+| BudgetTracker      | `from meowcat.budget import ...`          | 压缩预算 + LRU |
+| NoiseFilter        | `from meowcat.noise_filter import ...`    | 噪音正则过滤   |
 
 ### 调度/存储/编排
 
-| 模块                  | 导入                                        | 用途             |
-| --------------------- | ------------------------------------------- | ---------------- |
-| PeriodicScheduler     | `from meowcat.scheduler import ...`          | interval/cron 调度 |
-| FocusStore            | `from meowcat.focus import ...`             | Frontal 专注持久化 |
-| TopicClosureDetector  | `from meowcat.topic_closure import ...`     | 话题闭包检测     |
-| CheckpointStore       | `from meowcat.checkpoint import ...`        | 检查点存储       |
-| PlanReviser           | `from meowcat.plan_reviser import ...`      | 策略链框架       |
-| TaskOrchestrator      | `from meowcat.task_orchestrator import ...` | DAG 拓扑调度     |
+| 模块                 | 导入                                        | 用途               |
+| -------------------- | ------------------------------------------- | ------------------ |
+| PeriodicScheduler    | `from meowcat.scheduler import ...`         | interval/cron 调度 |
+| FocusStore           | `from meowcat.focus import ...`             | Frontal 专注持久化 |
+| TopicClosureDetector | `from meowcat.topic_closure import ...`     | 话题闭包检测       |
+| CheckpointStore      | `from meowcat.checkpoint import ...`        | 检查点存储         |
+| PlanReviser          | `from meowcat.plan_reviser import ...`      | 策略链框架         |
+| TaskOrchestrator     | `from meowcat.task_orchestrator import ...` | DAG 拓扑调度       |
 
 ### Async 生命周期钩子
 

@@ -50,9 +50,6 @@ class PawsEngine:
         self.require_confirm = require_confirm
         self.timeout_s = timeout_s
         self._audit_log: list[dict[str, Any]] = []
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     # -- Main entry point -----------------------------------------------
 

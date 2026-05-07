@@ -5,9 +5,6 @@
 
 ``meowcat/utils/`` has zero meowagent dependency.
 """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 from __future__ import annotations
 

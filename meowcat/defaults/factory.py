@@ -265,9 +265,6 @@ def create_cat(
     _bare = bare_organs or set()
     _reno = renovate_organs or set()
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def _pick_no_init(bare_cls: type, reno_cls: type, organ_name: str, **reno_kw: Any) -> Any:
         if renovated:
             return reno_cls(**reno_kw) if organ_name not in _bare else bare_cls()

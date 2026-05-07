@@ -292,7 +292,7 @@ class TestIsDueCronDisabled:
 class TestSchedulerLifecycle:
     """start() / stop() 生命周期。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_start_sets_running(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
@@ -303,13 +303,13 @@ class TestSchedulerLifecycle:
         await s.stop()
         assert s.running is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_stop_when_not_running(self) -> None:
         s = PeriodicScheduler()
         await s.stop()  # Should not raise
         assert s.running is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_start_idempotent(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
@@ -324,7 +324,7 @@ class TestSchedulerLifecycle:
 class TestSchedulerIdempotent:
     """start/stop 幂等。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_multiple_stop_safe(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
@@ -334,7 +334,7 @@ class TestSchedulerIdempotent:
         await s.stop()
         assert s.running is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_start_stop_start(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
@@ -350,32 +350,32 @@ class TestSchedulerIdempotent:
 class TestTaskExecution:
     """任务实际执行。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_task_runs(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FakeCat()
         s.register("test", "maintenance", interval=0.05)
 
         await s.start(cat)
-        await asyncio.sleep(0.2)
+        await cat.wait_for_runs(1, timeout=1.0)
         await s.stop()
 
         assert cat.call_count >= 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_task_runs_multiple_times(self) -> None:
         s = PeriodicScheduler(tick_interval=0.02)
         cat = _FakeCat()
         s.register("t", "loop", interval=0.04)
 
         await s.start(cat)
-        await asyncio.sleep(0.15)
+        await cat.wait_for_runs(2, timeout=1.0)
         await s.stop()
 
         # Should have run at least 2 times
         assert cat.call_count >= 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_correct_loop_called(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FakeCat()
@@ -383,7 +383,7 @@ class TestTaskExecution:
         s.register("diag", "diagnostic", interval=0.06)
 
         await s.start(cat)
-        await asyncio.sleep(0.2)
+        await cat.wait_for_runs(2, timeout=1.0)
         await s.stop()
 
         assert "maintenance" in cat.called_loops
@@ -395,19 +395,19 @@ class TestTaskExecution:
 class TestTaskDisabled:
     """禁用的任务不执行。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_disabled_task_not_run(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FakeCat()
         s.register("off", "loop", interval=0.05, enabled=False)
 
         await s.start(cat)
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.15)  # brief wait to confirm nothing fires
         await s.stop()
 
         assert cat.call_count == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_enable_after_registration(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FakeCat()
@@ -416,7 +416,7 @@ class TestTaskDisabled:
         # Enable and start
         t.enabled = True
         await s.start(cat)
-        await asyncio.sleep(0.15)
+        await cat.wait_for_runs(1, timeout=1.0)
         await s.stop()
 
         assert cat.call_count >= 1
@@ -427,23 +427,24 @@ class TestTaskDisabled:
 class TestTaskErrorHandling:
     """异常处理不崩溃。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_failing_task_does_not_crash_scheduler(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FailingCat()
         s.register("bad", "loop", interval=0.05)
 
         await s.start(cat)
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.2)  # brief wait for scheduler cycles
         # Scheduler should still be running
         assert s.running is True
         await s.stop()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_one_failing_does_not_block_others(self) -> None:
         """One task failing should not prevent other tasks from running."""
         s = PeriodicScheduler(tick_interval=0.03)
         exec_count = 0
+        event = asyncio.Event()
 
         class MixedCat:
             async def run_loop(self, name):
@@ -451,13 +452,17 @@ class TestTaskErrorHandling:
                 if name == "bad":
                     raise RuntimeError("boom")
                 exec_count += 1
+                event.set()
 
         cat = MixedCat()
         s.register("bad", "bad", interval=0.03)
         s.register("good", "good", interval=0.03)
 
         await s.start(cat)
-        await asyncio.sleep(0.15)
+        try:
+            await asyncio.wait_for(event.wait(), timeout=1.0)
+        except asyncio.TimeoutError:
+            pass
         await s.stop()
 
         assert exec_count >= 1  # good task ran despite bad task errors
@@ -468,7 +473,7 @@ class TestTaskErrorHandling:
 class TestConcurrencyLimit:
     """max_concurrent 并发限制。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_semaphore_limits_concurrency(self) -> None:
         s = PeriodicScheduler(tick_interval=0.02, max_concurrent=2)
         concurrent = 0
@@ -500,28 +505,28 @@ class TestConcurrencyLimit:
 class TestRunCountIncrement:
     """run_count 递增。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_count_increments(self) -> None:
         s = PeriodicScheduler(tick_interval=0.02)
         cat = _FakeCat()
         s.register("t", "loop", interval=0.03)
 
         await s.start(cat)
-        await asyncio.sleep(0.12)
+        await cat.wait_for_runs(2, timeout=1.0)
         await s.stop()
 
         task = s.get("t")
         assert task is not None
         assert task.run_count >= 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_last_run_updated(self) -> None:
         s = PeriodicScheduler(tick_interval=0.05)
         cat = _FakeCat()
         s.register("t", "loop", interval=0.05)
 
         await s.start(cat)
-        await asyncio.sleep(0.15)
+        await cat.wait_for_runs(1, timeout=1.0)
         await s.stop()
 
         task = s.get("t")
@@ -554,7 +559,7 @@ class TestDiagnose:
         names = {t["name"] for t in d["tasks"]}
         assert names == {"a", "b"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_diagnose_shows_running(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
@@ -563,13 +568,13 @@ class TestDiagnose:
         assert d["running"] is True
         await s.stop()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_diagnose_task_fields(self) -> None:
         s = PeriodicScheduler()
         cat = _FakeCat()
         s.register("t", "loop", interval=0.03)
         await s.start(cat)
-        await asyncio.sleep(0.08)
+        await cat.wait_for_runs(1, timeout=1.0)
         await s.stop()
 
         d = s.diagnose()
@@ -588,7 +593,7 @@ class TestDiagnose:
 class TestOverrideIsDue:
     """子类覆盖 _is_due()。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_custom_is_due(self) -> None:
         call_log: list[str] = []
 
@@ -603,7 +608,7 @@ class TestOverrideIsDue:
         s.register("t", "loop", interval=0.0)  # interval ignored
 
         await s.start(cat)
-        await asyncio.sleep(0.12)
+        await cat.wait_for_runs(3, timeout=1.0)
         await s.stop()
 
         # _is_due was called (at least a few times)
@@ -619,7 +624,7 @@ class TestOverrideIsDue:
 class TestOverrideExecute:
     """子类覆盖 _execute()。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_custom_execute(self) -> None:
         exec_log: list[str] = []
 
@@ -632,7 +637,7 @@ class TestOverrideExecute:
         s.register("test", "maintenance", interval=0.03)
 
         await s.start(cat)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)  # brief wait for scheduler tick
         await s.stop()
 
         assert len(exec_log) >= 1
@@ -650,11 +655,26 @@ class _FakeCat:
     def __init__(self) -> None:
         self.call_count = 0
         self.called_loops: list[str] = []
+        self.event: asyncio.Event = asyncio.Event()
 
     async def run_loop(self, name: str, **kwargs: object) -> dict[str, object]:
         self.call_count += 1
         self.called_loops.append(name)
+        self.event.set()
         return {"ok": True}
+
+    async def wait_for_runs(self, n: int = 1, *, timeout: float = 1.0) -> None:
+        """Wait for at least n run_loop calls, with timeout."""
+        deadline = time.monotonic() + timeout
+        while self.call_count < n:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return  # timeout — test assertions will catch insufficient calls
+            self.event.clear()
+            try:
+                await asyncio.wait_for(self.event.wait(), timeout=remaining)
+            except asyncio.TimeoutError:
+                return
 
 
 class _FailingCat:

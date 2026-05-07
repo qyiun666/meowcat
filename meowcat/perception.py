@@ -61,9 +61,6 @@ class PerceptionContext(BaseModel):
 
     # ── helpers for cross-Stage state (v1.0.18) ──
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def set_state(self, key: str, value: Any) -> None:
         """Persist a named value in extras for downstream Stages."""
         self.extras[key] = value
@@ -71,9 +68,6 @@ class PerceptionContext(BaseModel):
     def get_state(self, key: str, default: Any = None) -> Any:
         """Read a named value from extras; returns default if missing."""
         return self.extras.get(key, default)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def accumulate_reply(self, content: str) -> None:
         """Append content to the accumulated reply string."""

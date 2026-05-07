@@ -130,14 +130,14 @@ class Test_T3_StorageProtocolMigration:
 class Test_T4_InMemoryVectorStore:
     """T4: InMemoryVectorStore.add() 抛 NotImplementedError。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_add_raises_not_implemented(self):
         vs = InMemoryVectorStore()
         with pytest.raises(NotImplementedError) as exc:
             await vs.add("hello", {})
         assert "InMemoryVectorStore.add()" in str(exc.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_store_and_search_still_works(self):
         """store/search/delete 正常功能不受影响。"""
         vs = InMemoryVectorStore()
@@ -146,7 +146,7 @@ class Test_T4_InMemoryVectorStore:
         results = await vs.search([1.0, 0.0], top_k=1)
         assert results == ["e1"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delete_returns_true_for_existing(self):
         vs = InMemoryVectorStore()
         await vs.store("e1", [1.0, 0.0])
@@ -213,4 +213,3 @@ class Test_T6_ToolsLazyDelegation:
         import meowcat.tools as _tools
         with pytest.raises(AttributeError):
             _ = _tools.NonExistent
-

@@ -67,16 +67,10 @@ class I18n(Pluggable):
     def lang(self) -> str:
         """Current active language code."""
         return self._lang
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     @lang.setter
     def lang(self, value: str) -> None:
         if value not in self._locales:
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
             # Try running plugins to see if one can supply the language
             for _hook, r in self._run_plugs_sync("language", value, None):
                 if isinstance(r, dict):

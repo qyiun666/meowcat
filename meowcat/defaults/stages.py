@@ -37,9 +37,6 @@ class BaseStage(Pluggable):
         "run": {"in": "ctx: PipelineContext", "out": "AsyncIterator[StageEvent]"},
     }
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def __init__(self) -> None:
         Pluggable.__init__(self)
         cls_name = type(self).__name__

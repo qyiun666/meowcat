@@ -30,9 +30,12 @@ Usage::
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 # ── Configuration ─────────────────────────────────────────────────────
@@ -189,7 +192,11 @@ class CompressionManager:
             try:
                 return await self._summarizer(messages, max_tokens)
             except Exception:
-                pass  # graceful fallback
+                logger.warning(
+                    "_heavy_compress: summarizer failed, "
+                    "falling back to medium compression",
+                    exc_info=True,
+                )
         return self._medium_compress(messages, max_tokens)
 
     # ── Diagnostics ────────────────────────────────────────────────

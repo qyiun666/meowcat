@@ -12,9 +12,6 @@ v1.1.11: System commands — /version /wiring /inject /debug /help.
 v1.1.12: Colony commands — /cats /adopt /release /switch + /health /brain.
 v1.1.13: MeowTui — Textual TUI bare-bones App skeleton.
 """
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 from meowcat.cli.commands import (
     register_system_commands,

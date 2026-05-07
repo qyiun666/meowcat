@@ -34,9 +34,6 @@ class SharedStore(ABC):
 
     @abstractmethod
     async def get(self, key: str) -> Any: ...
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     @abstractmethod
     async def set(self, key: str, value: Any) -> None: ...
 
@@ -45,9 +42,6 @@ class SharedStore(ABC):
 
     @abstractmethod
     async def list_keys(self) -> list[str]: ...
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     @abstractmethod
     async def watch(self, pattern: str) -> AsyncIterator[tuple[str, Any]]:

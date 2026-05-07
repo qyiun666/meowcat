@@ -11,9 +11,6 @@ See :ref:`meowcat-plus-architecture`.
 """
 
 from __future__ import annotations
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 from meowcat.plus.browser import BrowserTool
 from meowcat.plus.chroma_store import ChromaStore
@@ -28,9 +25,6 @@ from meowcat.plus.gateway import (
     CliAdapter,
     IpcAdapter,
 )
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 __all__ = [
     "BrowserTool",

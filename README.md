@@ -469,13 +469,13 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 🛠️ Apps Built on meowcat
 
-Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([Website](http://www.meowagent.top)) — real organs, SQLite production storage, Discord/Telegram adapters. One `Cat(CatBase)` inheritance and it runs.
+Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([Website](https://qyiun666.github.io/meowagent.github.io/)) — real organs, SQLite production storage, Discord/Telegram adapters. One `Cat(CatBase)` inheritance and it runs.
 
 ---
 
 ## 📬 Contact
 
-- **Website:** http://www.meowagent.top (coming soon)
+- **Website:** https://qyiun666.github.io/meowagent.github.io/
 - **Email:** qyiun666@163.com
 - **GitHub:** https://github.com/Axonant/MeowAgent — production Agent built on meowcat (coming soon)
 

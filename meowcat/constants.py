@@ -53,9 +53,6 @@ GATEWAY_DEFAULT_TIMEOUT: int = 30
 
 MCP_DEFAULT_TIMEOUT: float = 30.0
 """Default timeout in seconds for MCP operations (discovery, tool call)."""
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 
 # -- Colony federation transports (meowcat.colony_transports) -----------

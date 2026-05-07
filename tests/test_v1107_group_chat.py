@@ -85,7 +85,7 @@ def _make_cat_with_brain(name: str, safe: bool = True, prefix: str = "echo") -> 
 class TestBroadcastRequest:
     """broadcast_request 向所有猫广播请求并收集结果。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast_single_cat(self) -> None:
         """单猫 broadcast_request 返回单结果。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -98,7 +98,7 @@ class TestBroadcastRequest:
         assert results == {planner.cat_uid: {"safe": True,
                                              "input": {"sql": "DROP TABLE users"}}}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast_multiple_cats(self) -> None:
         """多猫 broadcast_request 返回所有猫的结果。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -120,7 +120,7 @@ class TestBroadcastRequest:
         assert results[executor.cat_uid]["safe"] is False
         assert results[reviewer.cat_uid]["safe"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast_returns_cat_uid_keys(self) -> None:
         """确保键是 cat_uid 字符串。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -138,7 +138,7 @@ class TestBroadcastRequest:
 class TestBroadcastRequestCustom:
     """broadcast_request 支持自定义 to_category/to_name。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_custom_organ_target(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         cat_a = colony.create_cat(name="cat-a")
@@ -159,7 +159,7 @@ class TestBroadcastRequestCustom:
             cat_b.cat_uid: "cat-b: hello",
         }
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_async_method_support(self) -> None:
         """broadcast_request 支持异步方法。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -181,7 +181,7 @@ class TestBroadcastRequestCustom:
 class TestBroadcastRequestErrors:
     """broadcast_request 错误处理。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ignore_errors_default(self) -> None:
         """默认 ignore_errors=True，猫异常变成错误字典。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -198,7 +198,7 @@ class TestBroadcastRequestErrors:
         assert "error" in results[broken.cat_uid]
         assert "oops" in results[broken.cat_uid]["error"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ignore_errors_false(self) -> None:
         """ignore_errors=False 时第一只猫异常即抛出。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -209,7 +209,7 @@ class TestBroadcastRequestErrors:
         with pytest.raises(RuntimeError, match="boom"):
             await colony.broadcast_request("boom", ignore_errors=False)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_organ_not_mounted(self) -> None:
         """器官未挂载时返回错误。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -225,7 +225,7 @@ class TestBroadcastRequestErrors:
 class TestBroadcastRequestEmpty:
     """broadcast_request 空猫群行为。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_colony(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
         results = await colony.broadcast_request("assess_safety")
@@ -237,7 +237,7 @@ class TestBroadcastRequestEmpty:
 class TestGroupChatIntegration:
     """broadcast_request (群聊) + signal_between (私聊) 打通。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast_then_private(self) -> None:
         """群聊获取全局视图 → 私聊对特定猫深入追问。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -265,7 +265,7 @@ class TestGroupChatIntegration:
         )
         assert worker2_result["safe"] is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_private_then_broadcast(self) -> None:
         """私聊确认某猫状态 → 群聊广播最新结论。"""
         colony = Colony("test", storage=InMemorySharedStore())
@@ -293,7 +293,7 @@ class TestGroupChatIntegration:
         assert results[alice.cat_uid]["safe"] is True
         assert results[bob.cat_uid]["safe"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_broadcast_bypasses_cross_wiring(self) -> None:
         """broadcast_request 绕过 cross_wiring (colony 级操作)。"""
         colony = Colony(
@@ -311,4 +311,3 @@ class TestGroupChatIntegration:
         results = await colony.broadcast_request("assess_safety")
         assert results[a.cat_uid]["safe"] is True
         assert results[b.cat_uid]["safe"] is False
-

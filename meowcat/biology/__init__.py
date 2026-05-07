@@ -149,9 +149,6 @@ class OrganSpec:
 
     Method-level permissions enforced by ``Nervous.signal()`` after wiring check:
     ``from_organ not in write_callers`` raises ``IllegalNeuralPathError``.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     Adding/migrating organs only needs one record change; ``BUILTIN_NERVOUS_SYSTEM`` and
     ``ORGAN_PROTOCOLS`` sync automatically.
@@ -165,9 +162,6 @@ class OrganSpec:
     write_methods: tuple[str, ...] = ()
     write_callers: tuple[Organ, ...] = ()
     supported_styles: tuple[ImplementationStyle, ...] = ()
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 
 def _build_organ_specs() -> tuple[OrganSpec, ...]:

@@ -185,9 +185,6 @@ _EN_COMMANDS: dict[str, str] = {
     "web": "action", "fetch": "action", "download": "action",
     "config": "chat", "settings": "chat", "setup": "chat",
 }
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 # -- Chinese command patterns (中文指令路由) --------------------------
 

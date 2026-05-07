@@ -189,9 +189,6 @@ class ToolFailureLearner(Pluggable):
     }
 
     __slots__ = ("_records", "_max_records")
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def __init__(self, max_records: int = 200) -> None:
         super().__init__()
@@ -215,9 +212,6 @@ class ToolFailureLearner(Pluggable):
             error: Error message or exception string.
             elapsed_ms: Execution time before failure.
         """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
         # Plugin hook — fire-and-forget
         async for _name, _r in self._run_plugs(
             "on_failure", tool_name, params, error, elapsed_ms,
@@ -257,9 +251,6 @@ class ToolFailureLearner(Pluggable):
             if count >= min_failures
         ]
         return result
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     def fail_count(self, tool_name: str | None = None) -> int:
         """Count failures for a specific tool or all tools.

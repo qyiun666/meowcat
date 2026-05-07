@@ -171,8 +171,6 @@ class HippocampusProtocol(Protocol):
 
     # v1.0.15: Long-running workflow queries
     def list_active_workflows(self, cat_uid: str) -> list[dict[str, Any]]: ...
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     # v1.1.21: Cross-cat memory search + delegation snapshot
 
@@ -180,8 +178,6 @@ class HippocampusProtocol(Protocol):
 
     def snapshot(self, *topics: str,
                  scope: str = "colony") -> dict[str, Any]: ...
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def locate(self, query: str,
                scope: str = "self") -> list[dict[str, Any]]: ...
@@ -229,8 +225,6 @@ class LLMBrainProtocol(Protocol):
 
 
 @runtime_checkable
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 class AmygdalaProtocol(Protocol):
     """Amygdala — rejection correction and safety fallback.
     Can bypass the cerebrum to directly trigger effectors (stress reflex).

@@ -285,13 +285,12 @@ class TestNoiseCustomFilter:
 class TestNoiseEdge:
     """边界: 空 / 纯空白 / 极长。"""
 
-    def test_very_long_content_passes(self) -> None:
+    def test_very_long_content_is_noise(self) -> None:
         nf = NoiseFilter()
         long_msg = "x" * 1000
         ok = nf.worth_remembering(long_msg, "y" * 500)
-        # Repetition check might flag it but let's see
-        # "x"*1000 → 1000/1000 = 1.0 > 0.5 → noise
-        # This is actually correct behavior for a 1000-char string of 'x'
+        # "x"*1000 → repetition 1000/1000 = 1.0 > 0.5 → noise
+        assert ok is False
 
     def test_single_char_each_side(self) -> None:
         nf = NoiseFilter(min_chars=0, noise_patterns=[])

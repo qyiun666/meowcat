@@ -36,9 +36,6 @@ class SignalContext:
     """ISO 8601 timestamp. Auto-generated at construction."""
 
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 @runtime_checkable
 class IoAdapterProtocol(Protocol):
     """I/O adapter protocol — Gateway plugin, handles send/receive for one protocol/pipe.

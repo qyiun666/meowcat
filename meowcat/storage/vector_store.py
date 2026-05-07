@@ -64,9 +64,6 @@ class VectorStore:
                 {"id": doc_id, "text": text, "metadata": metadata})
         logger.debug("VectorStore added doc: %s", doc_id)
         return doc_id
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def search(self, query: str, k: int = 5) -> list[dict[str, Any]]:
         """Search top-*k* similar documents by keyword (or embedding) score."""
@@ -135,9 +132,6 @@ class VectorStore:
         ]
 
     # -- Internal: JSONL persistence -----------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def _load(self) -> None:
         assert self._persist_path is not None
@@ -215,4 +209,3 @@ def _cosine(a: list[float], b: list[float]) -> float:
     if norm_a == 0 or norm_b == 0:
         return 0.0
     return dot / (norm_a * norm_b)
-

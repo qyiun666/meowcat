@@ -23,12 +23,12 @@ from meowcat.reflex import ReflexRegistry
 class TestBlindSpotDetector:
     """Curiosity: detect knowledge blind spots from queries."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_empty_queries(self):
         bsd = BlindSpotDetector()
         assert await bsd.detect([]) == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_all_novel(self):
         bsd = BlindSpotDetector(novelty_threshold=0.3)
         queries = [
@@ -39,7 +39,7 @@ class TestBlindSpotDetector:
         # Kubernetes and Redis should be detected as novel
         assert len(spots) >= 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_nothing_when_known(self):
         bsd = BlindSpotDetector()
         queries = ["Tell me about Python"]
@@ -47,7 +47,7 @@ class TestBlindSpotDetector:
         # Python is known, no blind spot
         assert all(s["topic"] != "Python" for s in spots)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_camelcase_terms(self):
         bsd = BlindSpotDetector(novelty_threshold=0.3)
         queries = ["How do I use ReactQuery with TypeScript?"]
@@ -55,7 +55,7 @@ class TestBlindSpotDetector:
         topics = {s["topic"] for s in spots}
         assert "ReactQuery" in topics or "TypeScript" in topics
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_snake_case_terms(self):
         bsd = BlindSpotDetector(novelty_threshold=0.3)
         queries = ["The fast_api endpoint returns 404"]
@@ -63,7 +63,7 @@ class TestBlindSpotDetector:
         topics = {s["topic"] for s in spots}
         assert "fast_api" in topics
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_acronyms(self):
         bsd = BlindSpotDetector(novelty_threshold=0.3)
         queries = ["How to set up CI/CD with AWS ECS?"]
@@ -71,7 +71,7 @@ class TestBlindSpotDetector:
         topics = {s["topic"] for s in spots}
         assert "AWS" in topics
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_novelty_threshold_filters(self):
         bsd = BlindSpotDetector(novelty_threshold=1.0)  # impossibly high
         queries = ["What is Docker?", "What is Docker?"]
@@ -84,7 +84,7 @@ class TestBlindSpotDetector:
         spots2 = await bsd2.detect(queries, known_topics=[])
         assert spots2 == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_evidence_included(self):
         bsd = BlindSpotDetector()
         queries = ["Tell me about Docker containers"]
@@ -94,7 +94,7 @@ class TestBlindSpotDetector:
             assert "novelty" in s
             assert "count" in s
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_sorted_by_novelty(self):
         bsd = BlindSpotDetector(novelty_threshold=0.1)
         queries = [
@@ -105,7 +105,7 @@ class TestBlindSpotDetector:
         if len(spots) >= 2:
             assert spots[0]["novelty"] >= spots[1]["novelty"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_plug_detector(self):
         bsd = BlindSpotDetector()
 
@@ -117,7 +117,7 @@ class TestBlindSpotDetector:
         assert len(spots) == 1
         assert spots[0]["topic"] == "custom"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unplug_detector(self):
         bsd = BlindSpotDetector(novelty_threshold=0.3)
 
@@ -144,7 +144,7 @@ class TestBlindSpotDetector:
 class TestToolFailureLearner:
     """Tool evolution: learn from execution failures."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_record_and_count(self):
         tfl = ToolFailureLearner()
         await tfl.record("read_file", {"path": "/x"}, "FileNotFound", 120)
@@ -152,7 +152,7 @@ class TestToolFailureLearner:
         assert tfl.fail_count("read_file") == 1
         assert tfl.fail_count("write_file") == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_hotspots_min_failures(self):
         tfl = ToolFailureLearner()
         await tfl.record("tool_a", {}, "err", 0)
@@ -166,7 +166,7 @@ class TestToolFailureLearner:
         assert hotspots[0][0] == "tool_b"
         assert hotspots[0][1] == 3
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_hotspots_sorted_by_count(self):
         tfl = ToolFailureLearner()
         for _ in range(5):
@@ -178,7 +178,7 @@ class TestToolFailureLearner:
         assert hotspots[0][0] == "tool_a"
         assert hotspots[0][1] == 5
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_record_stores_error_info(self):
         tfl = ToolFailureLearner()
         await tfl.record("tool_x", {"key": "val"}, "TimeoutError", 5000)
@@ -189,7 +189,7 @@ class TestToolFailureLearner:
         assert info["error"] == "TimeoutError"
         assert info["elapsed_ms"] == 5000
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_fifo_eviction(self):
         tfl = ToolFailureLearner(max_records=3)
         for i in range(5):
@@ -199,7 +199,7 @@ class TestToolFailureLearner:
         tools = {r["tool"] for r in tfl._records}
         assert tools == {"tool_2", "tool_3", "tool_4"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_reset(self):
         tfl = ToolFailureLearner()
         await tfl.record("t", {}, "e", 0)
@@ -208,7 +208,7 @@ class TestToolFailureLearner:
         tfl.reset()
         assert tfl.fail_count() == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_plug_on_failure(self):
         tfl = ToolFailureLearner()
         side_effect: list[dict] = []
@@ -234,12 +234,12 @@ class TestToolFailureLearner:
 class TestHotPathObserver:
     """Reflex evolution: promote frequently used paths."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_empty(self):
         hpo = HotPathObserver()
         assert await hpo.detect() == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_below_threshold(self):
         hpo = HotPathObserver(min_triggers=5)
         hpo.record("text_dialogue")
@@ -248,14 +248,14 @@ class TestHotPathObserver:
         hpo.record("text_dialogue")  # 4 < 5
         assert await hpo.detect() == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_above_threshold(self):
         hpo = HotPathObserver(min_triggers=3)
         for _ in range(3):
             hpo.record("text_dialogue")
         assert await hpo.detect() == ["text_dialogue"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_custom_threshold(self):
         hpo = HotPathObserver(min_triggers=5)
         for _ in range(3):
@@ -265,7 +265,7 @@ class TestHotPathObserver:
         # override to 2 → detected
         assert await hpo.detect(min_triggers=2) == ["danger"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_sorted_by_count(self):
         hpo = HotPathObserver(min_triggers=1)
         for _ in range(5):
@@ -291,7 +291,7 @@ class TestHotPathObserver:
         hpo.record("z")
         assert hpo.total == 3
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_reset(self):
         hpo = HotPathObserver()
         hpo.record("x")
@@ -303,7 +303,7 @@ class TestHotPathObserver:
         assert await hpo.detect() == []
         assert hpo.stats() == {}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_plug_observer(self):
         hpo = HotPathObserver()
         for _ in range(5):
@@ -367,12 +367,12 @@ class TestReflexRegistryHotPaths:
 class TestNoopWhiskersBlindSpot:
     """NoopWhiskers detect_blind_spot — default and pluggable."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_returns_empty(self):
         nw = NoopWhiskers()
         assert await nw.detect_blind_spot(["What is Redis?"]) == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_plug_returns_list(self):
         nw = NoopWhiskers()
 
@@ -392,13 +392,13 @@ class TestNoopWhiskersBlindSpot:
 class TestNoopPawsToolFailure:
     """NoopPaws on_tool_failure — default and pluggable."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_returns_recorded_false(self):
         np = NoopPaws()
         result = await np.on_tool_failure("read_file", {}, "Error")
         assert result == {"recorded": False}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_plug_returns_dict(self):
         np = NoopPaws()
 
@@ -424,7 +424,7 @@ class TestDiagnose:
         info = bsd.diagnose()
         assert "plugs" in info
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_tool_failure_diagnose(self):
         tfl = ToolFailureLearner()
         await tfl.record("t", {}, "e", 0)
@@ -432,11 +432,10 @@ class TestDiagnose:
         assert info["total_failures"] == 1
         assert "hotspots" in info
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_hot_path_diagnose(self):
         hpo = HotPathObserver()
         hpo.record("x")
         info = await hpo.diagnose()
         assert info["total_triggers"] == 1
         assert "hot_paths" in info
-

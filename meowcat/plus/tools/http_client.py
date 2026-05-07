@@ -13,12 +13,6 @@ from typing import Any
 
 from meowcat.constants import HTTP_CLIENT_MAX_RESPONSE_CHARS
 from meowcat.tools.tool import RiskLevel, Tool, ToolSpec
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
 
 async def _http_get(url: str, **_: Any) -> str:
@@ -27,9 +21,6 @@ async def _http_get(url: str, **_: Any) -> str:
         import httpx
     except ImportError:
         return "httpx not installed. Run: pip install httpx"
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:

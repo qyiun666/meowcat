@@ -86,9 +86,6 @@ class CommandRouter(Pluggable):
     def unregister(self, name: str) -> None:
         """Remove a registered command by name."""
         self._commands.pop(name, None)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def get_command(self, name: str) -> Command | None:
         """Look up a command by name (exact match)."""

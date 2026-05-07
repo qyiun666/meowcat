@@ -63,9 +63,6 @@ class WebhookAdapter:
         return body.get("message", ""), body.get("user_id", "unknown")
 
     # -- Adapter protocol implementation --------------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     async def serve(
         self,
@@ -85,9 +82,6 @@ class WebhookAdapter:
 
         async with self._server:
             await self._server.serve_forever()
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def _handle_webhook(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
@@ -130,9 +124,6 @@ class WebhookAdapter:
             if not self.verify_signature(headers, body_raw):
                 await self._respond(writer, 403)
                 return
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
             body = json.loads(body_raw.decode()) if body_raw else {}
             text, user_id = self.parse_message(body)

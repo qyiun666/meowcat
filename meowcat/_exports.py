@@ -339,9 +339,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ReflexRegistry":       ("meowcat.reflex", "ReflexRegistry"),
     "Trigger":              ("meowcat.reflex", "Trigger"),
     "BUILTIN_REFLEX_PATHS": ("meowcat.reflex", "BUILTIN_REFLEX_PATHS"),
-    # Copyright (c) 2026 Axonant
-    # SPDX-License-Identifier: MIT
-
     # — middleware —
     "SignalLogger":    ("meowcat.middleware", "SignalLogger"),
     "RateLimiter":     ("meowcat.middleware", "RateLimiter"),
@@ -352,9 +349,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "OrganMixin": ("meowcat.organ_base", "OrganMixin"),
     # — pipeline —
     "Pipeline": ("meowcat.pipeline", "Pipeline"),
-    # Copyright (c) 2026 Axonant
-    # SPDX-License-Identifier: MIT
-
     # — perception —
     "PerceptionContext": ("meowcat.perception", "PerceptionContext"),
     "Modality":          ("meowcat.perception", "Modality"),
@@ -364,9 +358,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "render_wiring":     ("meowcat.diagnose", "render_wiring"),
     "Needle":            ("meowcat.inject", "Needle"),
     "NeedleDisabledError": ("meowcat.inject", "NeedleDisabledError"),
-    # Copyright (c) 2026 Axonant
-    # SPDX-License-Identifier: MIT
-
     # — path / chain / loops —
     "Path":                   ("meowcat.path", "Path"),
     "PathRegistry":           ("meowcat.path", "PathRegistry"),

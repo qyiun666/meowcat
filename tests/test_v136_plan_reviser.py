@@ -268,7 +268,7 @@ class TestPlanReviserRegister:
 class TestPlanReviserReset:
     """Attempt counter reset."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_reset_counter(self):
         r = PlanReviser(max_attempts=10)
         r.register(_FailStrategy("a"))
@@ -288,7 +288,7 @@ class TestPlanReviserReset:
 class TestPlanReviserRevise:
     """revise() strategy chain execution."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_first_strategy_wins(self):
         r = PlanReviser()
         r.register(_AlwaysApply())
@@ -299,7 +299,7 @@ class TestPlanReviserRevise:
         assert result.action == "always"
         assert r.attempt_count == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_skips_non_applicable(self):
         r = PlanReviser()
         r.register(_NeverApply())
@@ -310,7 +310,7 @@ class TestPlanReviserRevise:
         assert result.action == "always"
         assert r.attempt_count == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_falls_through_to_next_on_failure(self):
         r = PlanReviser()
         r.register(_FailStrategy("first"))
@@ -321,7 +321,7 @@ class TestPlanReviserRevise:
         assert result.action == "always"
         assert r.attempt_count == 2  # first failed, second succeeded
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_max_attempts_exceeded(self):
         r = PlanReviser(max_attempts=1)
         r.register(_FailStrategy("a"))
@@ -333,7 +333,7 @@ class TestPlanReviserRevise:
         assert "Max attempts" in result.message
         assert r.attempt_count == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_chain_exhausted(self):
         r = PlanReviser()
         r.register(_NeverApply())
@@ -344,7 +344,7 @@ class TestPlanReviserRevise:
         assert "No strategy" in result.message
         assert r.attempt_count == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_chain(self):
         r = PlanReviser()
         ctx = RevisionContext(task_id="t6")
@@ -352,7 +352,7 @@ class TestPlanReviserRevise:
         assert result.success is False
         assert result.action == "escalate"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_all_strategies_fail_within_limit(self):
         r = PlanReviser(max_attempts=5)
         r.register(_FailStrategy("a"))
@@ -364,7 +364,7 @@ class TestPlanReviserRevise:
         assert "No strategy" in result.message
         assert r.attempt_count == 2  # Both failed, chain exhausted
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_conditional_apply(self):
         r = PlanReviser()
         r.register(_ConditionalStrategy("cond", applies=False, succeed=True))
@@ -374,7 +374,7 @@ class TestPlanReviserRevise:
         assert result.success is True
         assert result.action == "winner"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_attempt_counter_incremented(self):
         r = PlanReviser(max_attempts=5)
         r.register(_FailStrategy("a"))
@@ -385,7 +385,7 @@ class TestPlanReviserRevise:
         assert result.success is True
         assert r.attempt_count == 3
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_context_attempt_updated(self):
         r = PlanReviser(max_attempts=5)
         r.register(_FailStrategy("a"))
@@ -393,7 +393,8 @@ class TestPlanReviserRevise:
         ctx = RevisionContext(task_id="t10", attempt=99)
         result = await r.revise(ctx)
         assert result.success is True
-        assert ctx.attempt == 2
+        # ctx.attempt is no longer mutated by revise() — use attempt_count instead
+        assert r.attempt_count == 2
 
 
 # ── PlanReviser: diagnose ─────────────────────────────────────────────

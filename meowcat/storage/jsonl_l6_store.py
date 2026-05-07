@@ -34,13 +34,7 @@ class JsonlL6Store:
         self._dir = Path(data_dir).resolve()
         self._dir.mkdir(parents=True, exist_ok=True)
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     # -- Protocol (L6StorageProtocol) -----------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def append(self, cat_uid: str, turn: int,
                user_msg: str, ai_reply: str) -> None:
@@ -50,9 +44,6 @@ class JsonlL6Store:
         with open(self._file_path(cat_uid), "a", encoding="utf-8") as fh:
             fh.write(line)
             fh.flush()
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]:
         """Load all conversation turns for *cat_uid*."""
@@ -96,4 +87,3 @@ class JsonlL6Store:
                     result.append(json.loads(line)  # type: ignore[arg-type]
                                   )
         return result
-

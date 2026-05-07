@@ -78,7 +78,7 @@ class TestJsonFocusStore:
 
     # ── save / load round-trip ────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_save_and_load(self, store: JsonFocusStore):
         state = FocusState(
             topics=["db", "api"],
@@ -92,11 +92,11 @@ class TestJsonFocusStore:
         assert loaded.current_keywords == ["postgres", "fastapi"]
         assert loaded.threshold == 0.4
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_load_missing_returns_none(self, store: JsonFocusStore):
         assert await store.load() is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_overwrite(self, store: JsonFocusStore):
         await store.save(FocusState(topics=["v1"]))
         await store.save(FocusState(topics=["v2"], threshold=0.7))
@@ -105,7 +105,7 @@ class TestJsonFocusStore:
         assert loaded.topics == ["v2"]
         assert loaded.threshold == 0.7
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_state(self, store: JsonFocusStore):
         await store.save(FocusState())
         loaded = await store.load()
@@ -116,34 +116,34 @@ class TestJsonFocusStore:
 
     # ── delete ────────────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delete(self, store: JsonFocusStore):
         await store.save(FocusState(topics=["x"]))
         assert await store.load() is not None
         await store.delete()
         assert await store.load() is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delete_missing_no_error(self, store: JsonFocusStore):
         # Should not raise when no file exists
         await store.delete()
 
     # ── properties ────────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_file_path_property(self, store: JsonFocusStore, tmp_path: Path):
         assert store.file_path == tmp_path
 
     # ── diagnose ──────────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_diagnose_no_file(self, store: JsonFocusStore):
         diag = store.diagnose()
         assert diag["file_path"] == str(store.file_path)
         assert diag["exists"] is False
         assert diag["file_size"] == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_diagnose_with_file(self, store: JsonFocusStore):
         await store.save(FocusState(topics=["hello"]))
         diag = store.diagnose()
@@ -152,7 +152,7 @@ class TestJsonFocusStore:
 
     # ── atomic write ──────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_atomic_write_no_temp_leak(self, store: JsonFocusStore):
         await store.save(FocusState(topics=["atomic"]))
         parent = store.file_path.parent
@@ -162,7 +162,7 @@ class TestJsonFocusStore:
 
     # ── unicode ───────────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unicode_data(self, store: JsonFocusStore):
         state = FocusState(
             topics=["中文话题", "日本語"],
@@ -176,7 +176,7 @@ class TestJsonFocusStore:
 
     # ── corrupted file ────────────────────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_corrupted_json_returns_none(self, store: JsonFocusStore):
         store.file_path.parent.mkdir(parents=True, exist_ok=True)
         store.file_path.write_text("not json {{{", encoding="utf-8")
@@ -184,7 +184,7 @@ class TestJsonFocusStore:
 
     # ── parent directory auto-created ─────────────────────────────
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_auto_creates_parent_dir(self, tmp_path: Path):
         nested = tmp_path / "sub" / "deep" / "focus.json"
         store = JsonFocusStore(nested)

@@ -83,9 +83,6 @@ class Pluggable:
             if not self._plugs[hook]:
                 self._plugs.pop(hook, None)
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     # Aliases (v1.1.6) — plug/unplug for consistency with Colony and design docs
 
     def plug(self, hook: str, fn: Callable[..., Any]) -> None:
@@ -106,9 +103,6 @@ class Pluggable:
 
         Callers decide how to handle results (first-hit / merge / replace).
         Callers MUST use ``async for``.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         Args:
             hook: hook name.
@@ -190,4 +184,3 @@ class Pluggable:
 
 
 __all__ = ["Pluggable"]
-

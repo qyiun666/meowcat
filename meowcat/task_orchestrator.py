@@ -275,33 +275,28 @@ class TaskOrchestrator:
 
     # ── Topological sort ───────────────────────────────────────────
 
-    def topological_sort(self) -> list[list[str]]:
-        """Topologically sort registered tasks into execution levels.
+    @staticmethod
+    def _kahn_sort(nodes: dict[str, TaskNode]) -> list[list[str]]:
+        """Kahn's algorithm: topologically sort nodes into execution levels.
 
-        Each level is a list of ``task_id`` strings that can run
-        concurrently (no mutual dependencies).  Levels are ordered:
-        level 0 has no dependencies, level 1 depends only on level 0, etc.
+        Args:
+            nodes: Task nodes keyed by task_id.
 
         Returns:
             A list of levels, each being a list of ``task_id`` strings.
 
         Raises:
-            ValueError: The task graph contains a cycle, or references
-                        a missing dependency.
+            ValueError: The task graph contains a cycle.
         """
-        if not self._nodes:
-            return []
-
-        # Build adjacency and in-degree
         in_degree: dict[str, int] = {}
         adj: dict[str, list[str]] = defaultdict(list)
 
-        for tid in self._nodes:
+        for tid in nodes:
             in_degree.setdefault(tid, 0)
 
-        for tid, node in self._nodes.items():
+        for tid, node in nodes.items():
             for dep in node.depends_on:
-                if dep not in self._nodes:
+                if dep not in nodes:
                     raise ValueError(
                         f"Task '{tid}' depends on '{dep}', "
                         f"which is not registered."
@@ -309,7 +304,6 @@ class TaskOrchestrator:
                 adj[dep].append(tid)
                 in_degree[tid] = in_degree.get(tid, 0) + 1
 
-        # Kahn's algorithm
         queue: deque[str] = deque(
             tid for tid, deg in in_degree.items() if deg == 0
         )
@@ -328,8 +322,7 @@ class TaskOrchestrator:
                         queue.append(neighbour)
             levels.append(level)
 
-        if visited_count != len(self._nodes):
-            # Cycle detected — find remaining nodes
+        if visited_count != len(nodes):
             remaining = [
                 tid for tid, deg in in_degree.items() if deg > 0
             ]
@@ -339,6 +332,25 @@ class TaskOrchestrator:
             )
 
         return levels
+
+    def topological_sort(self) -> list[list[str]]:
+        """Topologically sort registered tasks into execution levels.
+
+        Each level is a list of ``task_id`` strings that can run
+        concurrently (no mutual dependencies).  Levels are ordered:
+        level 0 has no dependencies, level 1 depends only on level 0, etc.
+
+        Returns:
+            A list of levels, each being a list of ``task_id`` strings.
+
+        Raises:
+            ValueError: The task graph contains a cycle, or references
+                        a missing dependency.
+        """
+        if not self._nodes:
+            return []
+
+        return self._kahn_sort(self._nodes)
 
     # ── Execution ──────────────────────────────────────────────────
 
@@ -406,44 +418,8 @@ class TaskOrchestrator:
         results: dict[str, TaskResult] = {}
         failed_ids: set[str] = set()
 
-        # Build adjacency for the subgraph
-        in_degree: dict[str, int] = {}
-        adj: dict[str, list[str]] = defaultdict(list)
-
-        for tid in nodes:
-            in_degree.setdefault(tid, 0)
-
-        for tid, node in nodes.items():
-            for dep in node.depends_on:
-                adj[dep].append(tid)
-                in_degree[tid] = in_degree.get(tid, 0) + 1
-
-        # Kahn's algorithm to get levels
-        queue: deque[str] = deque(
-            tid for tid, deg in in_degree.items() if deg == 0
-        )
-        levels: list[list[str]] = []
-        visited = 0
-
-        while queue:
-            level: list[str] = []
-            for _ in range(len(queue)):
-                tid = queue.popleft()
-                level.append(tid)
-                visited += 1
-                for neighbour in adj.get(tid, []):
-                    in_degree[neighbour] -= 1
-                    if in_degree[neighbour] == 0:
-                        queue.append(neighbour)
-            levels.append(level)
-
-        if visited != len(nodes):
-            remaining = [tid for tid, deg in in_degree.items() if deg > 0]
-            raise ValueError(
-                f"Cycle detected in task graph. Remaining: {remaining}"
-            )
-
-        # Execute level by level
+        # Use shared Kahn's algorithm for topological sort
+        levels = self._kahn_sort(nodes)
         for level in levels:
             if failed_ids and self._abort_on_failure:
                 # Cancel all remaining tasks in this and subsequent levels

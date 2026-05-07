@@ -30,9 +30,6 @@ class SqliteGraphStore:
     key-value table where ``cat_uid`` is the primary key and
     ``graph_data`` holds the JSON-serialised graph dict.
     """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def __init__(self, db_path: str | Path) -> None:
         self._db_path = Path(db_path).resolve()
@@ -43,9 +40,6 @@ class SqliteGraphStore:
     async def load(self, cat_uid: str) -> dict[str, Any]:
         """Load the persisted graph data for *cat_uid*, or ``{}`` if missing."""
         return await asyncio.to_thread(self._load_sync, cat_uid)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def _load_sync(self, cat_uid: str) -> dict[str, Any]:
         row = self._query_one(
@@ -57,9 +51,6 @@ class SqliteGraphStore:
     async def save(self, cat_uid: str, graph_data: dict[str, Any]) -> None:
         """Persist *graph_data* for *cat_uid* (upsert)."""
         return await asyncio.to_thread(self._save_sync, cat_uid, graph_data)
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     def _save_sync(self, cat_uid: str, graph_data: dict[str, Any]) -> None:
         blob = json.dumps(graph_data, ensure_ascii=False)

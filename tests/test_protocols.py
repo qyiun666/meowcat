@@ -114,7 +114,7 @@ class TestNoopSatisfiesProtocol:
         assert a.classify_rejection("hello") == "none"
         assert a.parse_correction("hello") is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_frontal(self) -> None:
         f = NoopFrontal()
         assert isinstance(f, FrontalCortexProtocol)
@@ -129,7 +129,7 @@ class TestNoopSatisfiesProtocol:
         c = NoopCortex()
         assert isinstance(c, CortexProtocol)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)
@@ -170,7 +170,7 @@ class TestNoopSatisfiesProtocol:
         assert isinstance(c, LLMBrainProtocol)
         assert c.name == "noop_cerebellum"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_anomaly_growth(self) -> None:
         a = NoopAnomalyGrowth()
         assert isinstance(a, AnomalyGrowthProtocol)
@@ -178,21 +178,21 @@ class TestNoopSatisfiesProtocol:
         result = await a.record("drift", "snippet", 0.9)
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_correction_growth(self) -> None:
         c = NoopCorrectionGrowth()
         assert isinstance(c, CorrectionGrowthProtocol)
         result = await c.record("wrong", "correct", session_id="s1")
         assert isinstance(result, dict)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_crystallizer(self) -> None:
         c = NoopCrystallizer()
         assert isinstance(c, CrystallizerProtocol)
         assert await c.crystallize("my_skill", 3) is False
         assert await c.hotspots(2) == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_role_emergence(self) -> None:
         r = NoopRoleEmergence()
         assert isinstance(r, RoleEmergenceProtocol)
@@ -239,4 +239,3 @@ class TestProtocolRuntimeCheckable:
         class NoName:
             pass
         assert not isinstance(NoName(), OrganProtocol)
-

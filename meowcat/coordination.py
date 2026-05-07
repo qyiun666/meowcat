@@ -62,17 +62,11 @@ class AsyncApprovalGate:
         # Agent waits for resolution
         result = await gate.wait(req.request_id)
         assert result.status == ApprovalStatus.APPROVED
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     **Pluggable strategy**::
 
         gate.plug("on_submit", my_custom_submit_hook)
         gate.plug("on_resolve", my_audit_logger)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     .. note:: (v1.2.33)
 
@@ -87,9 +81,6 @@ class AsyncApprovalGate:
         self._futures: dict[str, asyncio.Future[ApprovalRequest]] = {}
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
         self._counter = 0
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     # -- Plugin system (lightweight, Pluggable-compatible) ---------------
 

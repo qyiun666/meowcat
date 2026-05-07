@@ -470,13 +470,13 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 🛠️ 基于 meowcat 的应用
 
-基于 meowcat 框架的完整 AI Agent 实现 → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([官网](http://www.meowagent.top)) — 真实器官、SQLite 生产级存储、Discord/Telegram 适配器，一行 `Cat(CatBase)` 继承即可运行。
+基于 meowcat 框架的完整 AI Agent 实现 → **[MeowAgent](https://github.com/Axonant/MeowAgent)** ([官网](https://qyiun666.github.io/meowagent.github.io/)) — 真实器官、SQLite 生产级存储、Discord/Telegram 适配器，一行 `Cat(CatBase)` 继承即可运行。
 
 ---
 
 ## 📬 联系我们
 
-- **官网：** http://www.meowagent.top（待上线）
+- **官网：** https://qyiun666.github.io/meowagent.github.io/
 - **邮箱：** qyiun666@163.com
 - **GitHub：** https://github.com/Axonant/MeowAgent — 基于 meowcat 的应用层 Agent 实现（待公开）
 
@@ -486,14 +486,14 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本       | 时间       | 亮点                                                                                                                                                                    |
-| :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 版本       | 时间       | 亮点                                                                                                                                                                                                                                    |
+| :--------- | :--------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **v1.3.6** | 2026.05.07 | OrganPrompt 提示插槽 · Hippocampus episodes 持久化 · LLM 模型货架 12 供应商 · 管理器基类 5 件套 · PeriodicScheduler/FocusStore/CheckpointStore · PlanReviser 策略链 · TaskOrchestrator DAG · Async 生命周期钩子 · Telemetry/CB 公开 API |
-| **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                          |
-| **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
-| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
-| **v1.0.x** | 2026.05.02 | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                      |
-| **v0.5.x** | 2026.05.01 | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图 |
+| **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                                                                                          |
+| **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                                                                                           |
+| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                                                                                      |
+| **v1.0.x** | 2026.05.02 | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                                                                                      |
+| **v0.5.x** | 2026.05.01 | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图                                                                 |
 
 ---
 

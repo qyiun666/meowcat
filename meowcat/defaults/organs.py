@@ -692,9 +692,6 @@ class NoopThalamus(Pluggable):
 
     def decide_route(self, **kwargs: Any) -> dict[str, Any]:
         return {"route": "chat"}
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 class NoopHippocampus(Pluggable):
     """Default hippocampus: pure in-memory graph store, lost on process restart.
@@ -736,9 +733,6 @@ class NoopHippocampus(Pluggable):
     @entities.setter
     def entities(self, value: dict[str, dict[str, Any]]) -> None:
         self._entities = value
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     @property
     def episodes(self) -> list[dict[str, Any]]:
         if self._episodes is None:

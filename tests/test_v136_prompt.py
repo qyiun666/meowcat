@@ -68,7 +68,7 @@ class TestOrganPrompt:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemBasic:
 
     async def test_basic_fallback(self):
@@ -104,7 +104,7 @@ class TestRenovatedBrainstemBasic:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemOrganPrompt:
 
     @pytest.fixture
@@ -210,7 +210,7 @@ class TestRenovatedBrainstemOrganPrompt:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemCatSelf:
 
     @pytest.fixture
@@ -359,7 +359,7 @@ class TestRenovatedBrainstemCatSelf:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemInjectionToggle:
 
     @pytest.fixture
@@ -413,7 +413,7 @@ class TestRenovatedBrainstemInjectionToggle:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemFallback:
 
     async def test_organ_route_first_priority(self):
@@ -519,7 +519,7 @@ class TestRenovatedBrainstemFallback:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestNoopBrainstemV136:
 
     async def test_new_signature_accepts_organ_and_route(self):
@@ -697,7 +697,7 @@ class TestRenovatedBrainstemProperties:
 # =========================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 class TestRenovatedBrainstemPlugin:
 
     async def test_plugin_full_override(self):

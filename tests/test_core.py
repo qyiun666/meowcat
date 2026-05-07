@@ -47,7 +47,7 @@ class TestProtocols:
         assert isinstance(a, AmygdalaProtocol)
         assert a.is_rejection("hello") is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_noop_satisfies_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)

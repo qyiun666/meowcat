@@ -8,9 +8,6 @@ out of the box.  Pure-framework abstractions live in ``meowcat.tools``.
 """
 
 from __future__ import annotations
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 from meowcat.tools.tool import Tool
 from meowcat.plus.tools.file_ops import plus_read_file, plus_write_file

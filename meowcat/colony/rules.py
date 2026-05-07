@@ -23,9 +23,6 @@ class ColonyRules(Pluggable):
         ColonyRules(safety_policy="strict", approval_required=True, rate_limit_per_min=20)
         ColonyRules(extra={"custom_policy": "block_external_domains"})
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
         # Custom rule checker
         colony.rules.plug("on_check", my_multi_tenant_checker)
     """

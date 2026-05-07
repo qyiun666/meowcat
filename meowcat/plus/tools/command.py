@@ -27,9 +27,6 @@ _SAFE_ENV_KEYS: frozenset[str] = frozenset({
     "SHELL", "TERM",
     "VIRTUAL_ENV", "CONDA_PREFIX",  # Python env
 })
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 
 def _build_safe_env() -> dict[str, str]:
@@ -39,16 +36,10 @@ def _build_safe_env() -> dict[str, str]:
         value = os.environ.get(key)
         if value is not None:
             env[key] = value
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     # Always ensure PATH is present
     if "PATH" not in env:
         env["PATH"] = "/usr/local/bin:/usr/bin:/bin"
     return env
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 
 async def _run_command(command: str, **_: Any) -> str:

@@ -182,9 +182,6 @@ class PathRegistry:
         # Lookup
         path = registry.get("locate")
         all_paths = registry.list_all()
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         # Execute
         result = await registry.run(cat, "locate", query="hello")
@@ -277,4 +274,3 @@ class PathRegistry:
 
 
 __all__ = ["Path", "PathRegistry", "BUILTIN_PATHS", "register_builtin_paths"]
-

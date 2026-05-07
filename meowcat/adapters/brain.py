@@ -201,9 +201,6 @@ class HippocampusAgent(AgentOrgan):
         fn = getattr(self._agent, "from_dict", None)
         if fn:
             fn(d=d)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def get_entity(self, entity_id: str) -> Any | None:
         fn = getattr(self._agent, "get_entity", None)
         if fn:
@@ -267,9 +264,6 @@ class HippocampusAgent(AgentOrgan):
         fn = getattr(self._agent, "append_content", None)
         if fn:
             fn(entity_id=entity_id, text=text, max_total=max_total)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def update_importance(self, entity_id: str, importance: float) -> None:
         fn = getattr(self._agent, "update_importance", None)
         if fn:

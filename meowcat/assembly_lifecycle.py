@@ -123,7 +123,7 @@ class LifecycleMixin:
 
     # -- Organs mounted hooks (v1.2.36) ------------------------------------
 
-    def on_organs_mounted(self, hook: CatHook) -> None:
+    def on_organs_mounted(self, hook: Callable[[Any], None]) -> None:
         """Register a hook called after all known organs are mounted.
 
         Use this when you need to interact with organs (e.g. inject colony
@@ -133,14 +133,12 @@ class LifecycleMixin:
         .. note::
 
             v1.3.6: ``on_organs_mounted`` hooks are always called
-            **synchronously** during assembly.  For async initialisation
-            that requires awaiting, register an ``on_start`` hook instead.
+            **synchronously** during assembly — only sync callables are
+            accepted.  For async initialisation that requires awaiting,
+            register an ``on_start`` hook instead.
 
         Args:
-            hook: Sync callable accepting a CatBase instance.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
+            hook: Sync callable ``(cat: CatBase) -> None``.
 
         Examples:
 
@@ -174,8 +172,6 @@ class LifecycleMixin:
             >>> cat.on_start(lambda c: c.gateway.start(c))
         """
         self._start_hooks.append(hook)  # type: ignore[attr-defined]
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def on_shutdown(self, hook: CatHook) -> None:
         """Register a shutdown hook. Called in **reverse** registration
@@ -195,8 +191,6 @@ class LifecycleMixin:
             >>> cat.on_shutdown(lambda c: c.gateway.stop())
         """
         self._shutdown_hooks.append(hook)  # type: ignore[attr-defined]
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     # -- Lifecycle -----------------------------------------------------------
 

@@ -99,9 +99,6 @@ class InMemoryCheckpointStore(CheckpointStore):
 
 class BaseWorker(ABC):
     """Abstract resumable worker.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     Workers execute tasks with checkpoint support. If a task fails or the
     process restarts, the worker can resume from the last checkpoint.
@@ -140,9 +137,6 @@ class BaseWorker(ABC):
         self.priority = priority
         self.depends_on = depends_on or []
         self.max_retries = max_retries
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
         # Pluggable hooks
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
@@ -191,9 +185,6 @@ class BaseWorker(ABC):
         max_retries times before finally failing.
         """
         remaining_retries = self.max_retries
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         while True:
             try:

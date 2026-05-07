@@ -88,9 +88,6 @@ class ScribblePad(Pluggable):
             if ok is False:
                 return
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
         # Capacity enforcement
         if self._enforce_capacity and self.is_full():
             _log.warning("scribble rejected (pad full)",
@@ -104,9 +101,6 @@ class ScribblePad(Pluggable):
 
         Args:
             n: Number of recent entries. Negative = all.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Returns:
             Shallow copy of recent entries (newest last).
@@ -120,9 +114,6 @@ class ScribblePad(Pluggable):
 
         Calls ``on_drain`` plugin chain before clearing — plugins can
         compress, archive, or transform entries before they're returned.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         Returns:
             All accumulated entries (possibly transformed by ``on_drain``).

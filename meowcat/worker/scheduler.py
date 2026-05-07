@@ -56,9 +56,6 @@ class WorkerScheduler:
             task_id: Task identifier passed to worker.run().
             steps: Steps passed to worker.run().
             resume: Whether to resume from checkpoint.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Returns:
             Job identifier string.
@@ -92,9 +89,6 @@ class WorkerScheduler:
         """
         if not self._workers:
             return {}
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
         # Build dependency tracking
         pending_deps: dict[str, set[str]] = {}

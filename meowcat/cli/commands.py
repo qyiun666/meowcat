@@ -167,9 +167,6 @@ def register_colony_commands(
     active_cat_ref: list[Any],
 ) -> None:
     """Register colony management and diagnose commands on the router.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     Args:
         router: :class:`CommandRouter` to register on.

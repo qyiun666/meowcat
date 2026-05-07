@@ -56,15 +56,9 @@ class GlobalColonyRegistry(Pluggable):
         "on_unregister": {"in": "colony_id: str", "out": "None"},
     }
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def __init__(self) -> None:
         super().__init__()
         self._colonies: dict[str, Colony] = {}
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     # -- Registration -------------------------------------------------
 
@@ -86,9 +80,6 @@ class GlobalColonyRegistry(Pluggable):
 
     def unregister(self, colony_id: str) -> bool:
         """Remove a Colony from the global registry.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Fires ``on_unregister`` hook(s) before removal.
 

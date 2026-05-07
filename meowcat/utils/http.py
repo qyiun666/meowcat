@@ -35,9 +35,6 @@ def get_shared_client(
     headers: dict[str, str] | None = None,
 ) -> Any:
     """Get or create a shared httpx AsyncClient.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     On first call, creates a new client with the given config.
     Subsequent calls return the same client — config params are

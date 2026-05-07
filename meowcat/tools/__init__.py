@@ -18,9 +18,6 @@ from meowcat.tools.paws import PawsEngine
 from meowcat.tools.matcher import KeywordToolMatcher
 
 # -- Re-export concrete plus/ implementations for backward compatibility -----
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 # Delegates to the central _LAZY_MAP from meowcat._exports (single source of truth).
 
 
@@ -43,9 +40,6 @@ def __getattr__(name: str):
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
 # Remove eager imports that cause circular dependency
 # (previously: from meowcat.plus.tools import BUILTIN_TOOLS; from meowcat.plus import ...)

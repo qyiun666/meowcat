@@ -82,9 +82,6 @@ class RateLimiter:
         return ctx
 
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 class TimeoutGuard:
     """Auto-abort on timeout.
 
@@ -96,9 +93,6 @@ class TimeoutGuard:
         on_timeout: optional callback invoked when timeout occurs.
             Receives :class:`SignalCall` ctx. Can be sync or async.
             Use to notify organs (e.g. Amygdala recording anomaly).
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     Example:
 

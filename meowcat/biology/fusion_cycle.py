@@ -38,9 +38,6 @@ class FusionCycle:
     passing to ``PinealGland.trigger_if()``.
     """
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     @staticmethod
     def on_full(min_count: int) -> Callable[[ScribblePad], bool]:
         """Trigger when ScribblePad entry count reaches or exceeds *min_count*.
@@ -62,9 +59,6 @@ class FusionCycle:
         return _condition
 
     @staticmethod
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def on_timer(minutes: int) -> Callable[[ScribblePad], bool]:
         """Trigger based on elapsed time since last trigger.
 
@@ -81,9 +75,6 @@ class FusionCycle:
             raise ValueError(f"minutes must be >= 1, got {minutes}")
 
         last_trigger = [0.0]  # mutable cell
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         def _condition(pad: ScribblePad) -> bool:
             now = _time.time()

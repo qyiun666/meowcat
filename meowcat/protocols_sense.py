@@ -33,15 +33,9 @@ class EarsProtocol(Protocol):
     def tag_emotion(self, episode: dict[str, Any]) -> dict[str, Any]: ...
 
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 @runtime_checkable
 class EyesProtocol(Protocol):
     """Eyes — image/video visual input.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     v1.0.8: scan_screen / describe removed (app-layer specific),
     keeping only the generic see method.
@@ -114,4 +108,3 @@ class PawsProtocol(Protocol):
 
     async def interact_with_tool(
         self, skill_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
-

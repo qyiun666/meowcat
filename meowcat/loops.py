@@ -186,9 +186,6 @@ class LoopRegistry:
     _loops: dict[str, Loop] = field(default_factory=dict, init=False)
     _loops_list: list[Loop] = field(default_factory=list, init=False)
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def register(self, loop: Loop) -> None:
         """Register a loop. Same name overwrites old value.
 

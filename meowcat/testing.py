@@ -10,12 +10,6 @@ create minimal test containers so test code doesn't need to change.
 from meowcat.colony import Colony
 from meowcat.defaults import InMemorySharedStore
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
 def make_test_colony(colony_id: str = "test") -> Colony:
     """Create a minimal Colony for test use."""

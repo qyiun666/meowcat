@@ -34,9 +34,6 @@ class OrganHost:
 
     # -- Write interface ------------------------------------------------
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
     def mount(
         self,
         category: str,

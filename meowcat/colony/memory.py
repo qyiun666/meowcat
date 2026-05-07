@@ -131,17 +131,11 @@ class SharedMemoryPool:
                 if raw:
                     results.append(json.loads(raw))
         return results
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     async def count(self) -> int:
         """Number of shared memory entries."""
         vs = await self._ensure_vector()
         return vs.count()
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def keyword_search(
         self,

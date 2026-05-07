@@ -219,9 +219,6 @@ class MergeProposalShape(BaseModel):
     anomaly_hits: list[str] = Field(default_factory=list)
     observations: list[str] = Field(default_factory=list)
     error_detail: str = ""
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 class WorkflowShape(BaseModel):
     """Long-running workflow entity — task orchestration state persisted across sessions.

@@ -72,9 +72,6 @@ def _parse_frontmatter(text: str) -> dict[str, Any]:
             ctx_stack.append(ctx_stack[-1][k])
 
     return result
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 
 def _parse_scalar(val: str) -> Any:
@@ -125,9 +122,6 @@ def _split_csv(text: str) -> list[str]:
         items.append("".join(buf).strip())
     return items
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 class SkillLoader:
     """SKILL.md file loader — scans directories and converts SKILL.md to Tools.
@@ -146,9 +140,6 @@ class SkillLoader:
     def __init__(self, skills_dir: Path) -> None:
         self.skills_dir = Path(skills_dir)
         self._tools: list[Tool] = []
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     def scan_directory(self) -> list[Tool]:
         """Recursively scan ``skills_dir`` for ``SKILL.md`` files.

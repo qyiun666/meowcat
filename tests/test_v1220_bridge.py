@@ -58,7 +58,7 @@ class MockBridgeCat:
 class TestBridgeConversationLoop:
     """DefaultConversationLoop with use_organ_pipeline=True."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -69,7 +69,7 @@ class TestBridgeConversationLoop:
         assert len(cat.perceive_calls) == 0
         assert len(cat.run_loop_calls) == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_perceive(self):
         """Bridge mode calls cat.perceive() and returns pipeline result."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -80,7 +80,7 @@ class TestBridgeConversationLoop:
         assert cat.perceive_calls[0] == "hello bridge"
         assert "bridge" in resp
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_fallback_to_run_loop(self):
         """When perceive() fails, fall back to run_loop()."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -94,7 +94,7 @@ class TestBridgeConversationLoop:
         assert cat.run_loop_calls[0][0] == "conversation"
         assert "fallback reply" in resp
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_both_fail(self):
         """When both perceive() and run_loop() fail, graceful fallback."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -106,7 +106,7 @@ class TestBridgeConversationLoop:
         # Should still return something, not raise
         assert isinstance(resp, str)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_preserves_before_after(self):
         """Bridge mode still fires before_act/after_act and fusion."""
         pad = ScribblePad(capacity=10)
@@ -125,7 +125,7 @@ class TestBridgeConversationLoop:
 class TestBridgeTaskLoop:
     """DefaultTaskLoop with use_organ_pipeline=True."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -135,7 +135,7 @@ class TestBridgeTaskLoop:
         assert result == {"task": "deploy", "status": "planned"}
         assert len(cat.run_loop_calls) == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_run_loop(self):
         """Bridge mode calls cat.run_loop("tool_execution")."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -147,7 +147,7 @@ class TestBridgeTaskLoop:
         assert cat.run_loop_calls[0][1] == {"task": "deploy task"}
         assert result["status"] == "completed"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_failure_fallback(self):
         """When run_loop() fails, graceful fallback."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -164,7 +164,7 @@ class TestBridgeTaskLoop:
 class TestBridgeLearnLoop:
     """DefaultLearnLoop with use_organ_pipeline=True."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -174,7 +174,7 @@ class TestBridgeLearnLoop:
         assert result == {"topic": "topic", "learned": True}
         assert len(cat.run_loop_calls) == 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_run_loop(self):
         """Bridge mode calls cat.run_loop("diagnostic")."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -187,7 +187,7 @@ class TestBridgeLearnLoop:
         assert result["learned"] is True
         assert "diagnostic" in result
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_bridged_failure_fallback(self):
         """When run_loop() fails, graceful fallback."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
@@ -238,4 +238,3 @@ class TestCatSelfLoopBridge:
                        use_organ_pipeline=True)
         assert loop._fusion is my_strategy
         assert loop._use_organ_pipeline is True
-

@@ -70,9 +70,6 @@ class CliAdapter:
     ) -> None:
         """Stdio mode: blocking stdin.readline in executor."""
         loop = asyncio.get_running_loop()
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         while self._running:
             try:
@@ -82,9 +79,6 @@ class CliAdapter:
 
             if not line:
                 break
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
             text = line.strip()
             if not text:
@@ -105,9 +99,6 @@ class CliAdapter:
                     async for chunk in stream:
                         await self.stream_chunk(chunk, ctx.session_id)
                     await self.stream_end(ctx.session_id)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     async def _serve_queue(
         self,

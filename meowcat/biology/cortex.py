@@ -93,14 +93,8 @@ class Cortex(Pluggable):
             if isinstance(r, list):
                 return r
         return _default_rule_extractor(facts)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # ── L2: Beliefs (v1.1.27) ────────────────────────────────────
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def promote_to_belief(
         self,

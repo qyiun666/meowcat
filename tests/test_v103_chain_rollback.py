@@ -124,7 +124,7 @@ class TestChainRollbackFields:
 class TestChainRunSuccess:
     """Path 全部成功时不触发回滚。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_success_no_rollback(self) -> None:
         """成功执行 → 不回滚。"""
         cat, organ = _setup_cat_and_registry()
@@ -139,7 +139,7 @@ class TestChainRunSuccess:
         assert result == {"from_b": "ok"}
         assert organ.calls == ["step_a", "step_b"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_single_step_success(self) -> None:
         """单步成功 → 不回滚。"""
         cat, organ = _setup_cat_and_registry()
@@ -160,7 +160,7 @@ class TestChainRunSuccess:
 class TestChainRunRollback:
     """失败时逆序执行 rollback_paths。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_rollback_on_failure(self) -> None:
         """第一步成功，第二步失败 → 回滚第一步。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_b")
@@ -177,7 +177,7 @@ class TestChainRunRollback:
         # step_a 成功、step_b 调用后失败（已记录）、rollback_a 被调用
         assert organ.calls == ["step_a", "step_b", "rollback_a"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_rollback_reverse_order(self) -> None:
         """回滚按逆序执行（后注册的路径先回滚）。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_a")
@@ -194,7 +194,7 @@ class TestChainRunRollback:
         # step_a 调用后失败（已记录）、回滚逆序: rollback_b 先, rollback_a 后
         assert organ.calls == ["step_a", "rollback_b", "rollback_a"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_rollback_multiple_after_multi_step(self) -> None:
         """多步成功后某步失败，所有前置步骤的回滚都执行。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_b")
@@ -217,7 +217,7 @@ class TestChainRunRollback:
 class TestChainRunRollbackErrors:
     """回滚中的异常不掩盖原始异常。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_rollback_exception_not_masked(self) -> None:
         """回滚步失败 → 原始异常仍然抛出，回滚异常被吞掉。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_a")
@@ -234,7 +234,7 @@ class TestChainRunRollbackErrors:
         # step_a 调用后失败（已记录）、回滚逆序: rollback_a 先执行成功，rollback_fail 后执行失败（已记录）
         assert organ.calls == ["step_a", "rollback_a", "rollback_fail"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_all_rollbacks_fail(self) -> None:
         """所有回滚都失败 → 原始异常仍然抛出。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_a")
@@ -258,7 +258,7 @@ class TestChainRunRollbackErrors:
 class TestChainRunEmptyRollback:
     """空 rollback_paths 时行为不变（向后兼容）。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_rollback_no_effect_on_success(self) -> None:
         """成功 + 空回滚 → 正常返回。"""
         cat, organ = _setup_cat_and_registry()
@@ -270,7 +270,7 @@ class TestChainRunEmptyRollback:
         assert result == {"from_a": "ok"}
         assert organ.calls == ["step_a"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_rollback_on_failure(self) -> None:
         """失败 + 空回滚 → 原始异常直接抛出。"""
         cat, organ = _setup_cat_and_registry(fail_on="step_a")
@@ -284,11 +284,10 @@ class TestChainRunEmptyRollback:
         # step_a 调用后失败（已记录），没有回滚
         assert organ.calls == ["step_a"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_nonexistent_chain_raises(self) -> None:
         """不存在的链路抛出 KeyError。"""
         cat, _ = _setup_cat_and_registry()
 
         with pytest.raises(KeyError, match="not found"):
             await cat.chain_registry.run(cat, "nonexistent")
-

@@ -84,9 +84,6 @@ class _FederationMixin:
             await self._transport.stop()
             self._transport = None
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
         # Cancel all pending remote requests
         for fut in self._pending_remote.values():
             if not fut.done():
@@ -111,9 +108,6 @@ class _FederationMixin:
         Requires this Colony to have called federate() to enable federation.
         The remote Colony wiring still applies — the remote cat's own wiring
         validates whether the target organ and method are accessible.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         Args:
             target_colony: Remote colony_id.
@@ -153,9 +147,6 @@ class _FederationMixin:
 
         fut: asyncio.Future = asyncio.get_event_loop().create_future()
         self._pending_remote[request_id] = fut
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         try:
             await self._transport.publish(target_colony, payload)

@@ -284,7 +284,7 @@ class TestTaskOrchestratorExecute:
     async def _echo(node: TaskNode) -> str:
         return f"done:{node.task_id}"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_single(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
@@ -293,13 +293,13 @@ class TestTaskOrchestratorExecute:
         assert results["a"].output == "done:a"
         assert results["a"].duration > 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_empty(self):
         orch = TaskOrchestrator()
         results = await orch.execute(self._echo)
         assert results == {}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_linear(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
@@ -309,7 +309,7 @@ class TestTaskOrchestratorExecute:
         assert all(r.status == TaskStatus.COMPLETED for r in results.values())
         assert results["c"].output == "done:c"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_parallel(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
@@ -320,7 +320,7 @@ class TestTaskOrchestratorExecute:
         # All three should have completed
         assert len(results) == 3
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_diamond(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="d", depends_on=["b", "c"]))
@@ -331,7 +331,7 @@ class TestTaskOrchestratorExecute:
         assert all(r.status == TaskStatus.COMPLETED for r in results.values())
         assert results["d"].output == "done:d"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_subset(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
@@ -341,14 +341,14 @@ class TestTaskOrchestratorExecute:
         assert set(results.keys()) == {"a", "c"}
         assert "b" not in results
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_subset_missing_raises(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
         with pytest.raises(KeyError, match="not registered"):
             await orch.execute(self._echo, tasks=["ghost"])
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_subset_preserves_internal_deps(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))
@@ -359,7 +359,7 @@ class TestTaskOrchestratorExecute:
         assert results["a"].status == TaskStatus.COMPLETED
         assert results["c"].status == TaskStatus.COMPLETED
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_abort_on_failure(self):
         orch = TaskOrchestrator(abort_on_failure=True)
 
@@ -376,7 +376,7 @@ class TestTaskOrchestratorExecute:
         assert results["b"].status == TaskStatus.FAILED
         assert results["c"].status == TaskStatus.CANCELLED
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_no_abort_continues(self):
         orch = TaskOrchestrator(abort_on_failure=False)
 
@@ -394,7 +394,7 @@ class TestTaskOrchestratorExecute:
         # c still runs (abort_on_failure=False)
         assert results["c"].status == TaskStatus.COMPLETED
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_concurrent_within_level(self):
         orch = TaskOrchestrator(max_concurrent=2)
         started: list[str] = []
@@ -413,7 +413,7 @@ class TestTaskOrchestratorExecute:
         assert len(results) == 3
         assert all(r.status == TaskStatus.COMPLETED for r in results.values())
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_execute_result_status(self):
         orch = TaskOrchestrator()
         orch.add_task(TaskNode(task_id="a"))

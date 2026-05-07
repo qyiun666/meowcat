@@ -47,15 +47,9 @@ class Needle:
 
     def __init__(self, cat) -> None:
         """Construct the injector.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Args:
             cat: ``CatBase`` or instance with ``_host`` attribute
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         Raises:
             NeedleDisabledError: when ``MEOWCAT_DISABLE_NEEDLE=1``
@@ -69,9 +63,6 @@ class Needle:
             "Needle created — this bypasses wiring checks. "
             "For debugging/admin use only."
         )
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def poke(self, to_organ: Organ, method: str, **kwargs: Any) -> Any:
         """Directly call a method on the target organ, without wiring validation.

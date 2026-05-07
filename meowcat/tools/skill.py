@@ -63,9 +63,6 @@ class Skill:
         return self.spec.name
 
     @property
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def description(self) -> str:
         return self.spec.description
 

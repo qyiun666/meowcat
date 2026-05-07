@@ -204,13 +204,13 @@ class TestJsonRpcRequest:
 class TestMissingServer:
     """discover / call_tool 对未配置服务器的处理。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_discover_missing_server(self) -> None:
         client = MCPClient()
         tools = await client.discover("nonexistent")
         assert tools == []
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_call_tool_missing_server(self) -> None:
         client = MCPClient()
         result = await client.call_tool("nonexistent", "tool", {})
@@ -222,7 +222,7 @@ class TestMissingServer:
 class TestCallToolStdioMock:
     """使用 echo 脚本模拟 MCP 调用。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_call_tool_stdio_echo(self) -> None:
         """用 Python echo 子进程模拟 MCP tools/call 响应。"""
         import sys
@@ -245,7 +245,7 @@ class TestCallToolStdioMock:
         result = await client.call_tool("echo", "my_tool", {"x": 1})
         assert "called my_tool" in result
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_call_tool_stdio_error(self) -> None:
         """子进程返回 JSON-RPC error 时的处理。"""
         import sys
@@ -266,7 +266,7 @@ class TestCallToolStdioMock:
         result = await client.call_tool("err", "bad_tool", {})
         assert "Tool not found" in result
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_call_tool_stdio_nonzero_exit(self) -> None:
         """子进程非零退出时的错误处理。"""
         import sys
@@ -292,7 +292,7 @@ class TestCallToolStdioMock:
 class TestDiscoverStdioMock:
     """使用 echo 脚本模拟 MCP 工具发现。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_discover_stdio(self) -> None:
         """模拟 MCP initialize + tools/list 单进程返回工具列表。"""
         import sys
@@ -328,7 +328,7 @@ class TestDiscoverStdioMock:
         assert tools[1].name == "t2"
         assert tools[0].server_name == "test"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_discover_command_not_found(self) -> None:
         """命令不存在的错误处理。"""
         client = MCPClient()
@@ -356,4 +356,3 @@ class TestStandalone:
         cfg = MCPServerConfig(name="x")
         client.add_server(cfg)
         assert len(client.list_servers()) == 1
-

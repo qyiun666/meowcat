@@ -57,9 +57,6 @@ class IpcAdapter:
 
         async with self._server:
             await self._server.serve_forever()
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
@@ -73,9 +70,6 @@ class IpcAdapter:
             platform="ipc",
             user_id="desktop-user",
         )
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         try:
             while True:
@@ -87,9 +81,6 @@ class IpcAdapter:
                     msg = json.loads(line.decode().strip())
                 except json.JSONDecodeError:
                     continue
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
                 text = msg.get("message", "") if isinstance(
                     msg, dict) else str(msg)

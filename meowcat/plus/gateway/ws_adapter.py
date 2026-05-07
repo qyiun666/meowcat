@@ -154,9 +154,6 @@ class WsAdapter:
                 platform="ws",
                 user_id=headers.get("x-user-id", "unknown"),
             )
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
             # Message loop
             buf = bytearray()

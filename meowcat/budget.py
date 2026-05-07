@@ -259,9 +259,13 @@ class BudgetTracker:
         Returns total tokens freed.
         """
         freed = 0
-        # Iterate in insertion order (oldest first)
+        # Sort by last_access_ts ascending (oldest first) for explicit LRU order
+        sorted_items = sorted(
+            self._items.items(),
+            key=lambda kv: kv[1][2],  # last_access_ts
+        )
         keys_to_evict: list[str] = []
-        for key, (tokens, category, _ts) in self._items.items():
+        for key, (tokens, category, _ts) in sorted_items:
             if freed >= needed:
                 break
             keys_to_evict.append(key)
@@ -280,13 +284,19 @@ class BudgetTracker:
         Returns total tokens freed.
         """
         freed = 0
+        # Sort matching items by last_access_ts ascending (oldest first)
+        matching = [
+            (key, tokens, ts)
+            for key, (tokens, cat, ts) in self._items.items()
+            if cat == category
+        ]
+        matching.sort(key=lambda x: x[2])  # last_access_ts
         keys_to_evict: list[str] = []
-        for key, (tokens, cat, _ts) in self._items.items():
+        for key, tokens, _ts in matching:
             if freed >= needed:
                 break
-            if cat == category:
-                keys_to_evict.append(key)
-                freed += tokens
+            keys_to_evict.append(key)
+            freed += tokens
 
         for key in keys_to_evict:
             self._on_evict(key)

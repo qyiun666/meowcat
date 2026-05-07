@@ -124,9 +124,6 @@ class Crystallizer:
             "detector", DefaultDetector())
         thresh = self._resolve_threshold()
         return detector(self._hits, self._total, thresh)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # ── L2: Pattern Crystallization ─────────────────────────────────
 
@@ -135,9 +132,6 @@ class Crystallizer:
 
         When the same sequence repeats 3+ times, ``detect_patterns()``
         suggests registering a ``meowcat.chain.Chain``.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
         Args:
             seq: Ordered list of tool/skill/path slugs.

@@ -41,12 +41,6 @@ def _resolve_path(path: str, workspace: Path | None = None) -> Path:
 
     # Resolve all symlinks via realpath
     real = Path(os.path.realpath(str(p)))
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     # Check each parent component for symlink escapes
     for parent in real.parents:

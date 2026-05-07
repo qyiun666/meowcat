@@ -176,6 +176,9 @@ class TopicClosureDetector:
             (w, re.compile(re.escape(w), re.IGNORECASE))
             for w in self._config.closure_signal_words
         ]
+        # Per-word weight overrides (merged with DEFAULT_SIGNAL_WEIGHTS)
+        self._signal_weights: dict[str, float] = dict(
+            self.DEFAULT_SIGNAL_WEIGHTS)
         # Internal tracking
         self._exchange_count: int = 0
         self._recent_context: list[str] = []  # sliding window of exchanges
@@ -327,17 +330,20 @@ class TopicClosureDetector:
 
     # ── Signal word management ─────────────────────────────────────
 
-    def register_signal_word(self, word: str) -> None:
+    def register_signal_word(self, word: str, weight: float = 0.5) -> None:
         """Register a new closure signal word at runtime.
 
         Args:
-            word:  The word or phrase to register.
+            word:   The word or phrase to register.
+            weight: Closure signal weight (0..1).  Higher = stronger
+                    closure signal.  Default 0.5.
         """
         if word not in self._config.closure_signal_words:
             self._config.closure_signal_words.append(word)
             self._signal_re.append(
                 (word, re.compile(re.escape(word), re.IGNORECASE))
             )
+        self._signal_weights[word] = weight
 
     def unregister_signal_word(self, word: str) -> None:
         """Remove a previously registered signal word.
@@ -350,6 +356,7 @@ class TopicClosureDetector:
             self._signal_re = [
                 (w, p) for w, p in self._signal_re if w != word
             ]
+        self._signal_weights.pop(word, None)
 
     # ── Internal helpers ───────────────────────────────────────────
 
@@ -381,7 +388,10 @@ class TopicClosureDetector:
         Returns:
             Confidence score (0..1).
         """
-        base = self.DEFAULT_SIGNAL_WEIGHTS.get(matched_word, 0.5)
+        base = self._signal_weights.get(
+            matched_word,
+            self.DEFAULT_SIGNAL_WEIGHTS.get(matched_word, 0.5),
+        )
         # Boost confidence with more exchanges (logarithmic)
         exchange_bonus = min(0.3, self._exchange_count * 0.02)
         return min(1.0, base + exchange_bonus)

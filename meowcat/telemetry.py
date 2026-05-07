@@ -90,9 +90,6 @@ class Tracer:
 
     def end_span(self, span: SignalSpan, error: Exception | None = None) -> None:
         """Finalize a span when the signal call completes.
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
         Records ``finished_at``, sets ``status`` and ``error`` fields,
         appends to the internal buffer, and optionally emits a
@@ -125,9 +122,6 @@ class Tracer:
     def spans(self) -> list[SignalSpan]:
         """Return a snapshot of all completed spans (newest last)."""
         return list(self._spans)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def clear(self) -> None:
         """Discard all collected spans."""
@@ -200,4 +194,3 @@ class Metrics:
 
 
 __all__ = ["SignalSpan", "Tracer", "Metrics"]
-

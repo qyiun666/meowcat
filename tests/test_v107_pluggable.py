@@ -100,14 +100,14 @@ def test_pluggable_run_plugs_no_plugs():
 # ===================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_amygdala_mode_a_default():
     a = NoopAmygdala()
     r = await a.assess_safety("hi")
     assert r == {"safe": True, "risk": "none"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_amygdala_mode_a_plug_block():
     a = NoopAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": False, "risk": "block"})
@@ -115,7 +115,7 @@ async def test_amygdala_mode_a_plug_block():
     assert r == {"safe": False, "risk": "block"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_amygdala_mode_a_plug_first_wins():
     a = NoopAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": False, "risk": "block"})
@@ -126,7 +126,7 @@ async def test_amygdala_mode_a_plug_first_wins():
     assert r == {"safe": False, "risk": "block"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_amygdala_mode_a_plug_safe_passes():
     a = NoopAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": True, "risk": "none"})
@@ -134,7 +134,7 @@ async def test_amygdala_mode_a_plug_safe_passes():
     assert r == {"safe": True, "risk": "none"}  # 默认
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_frontal_mode_a():
     f = NoopFrontal()
     assert await f.is_continue("msg") is False
@@ -142,7 +142,7 @@ async def test_frontal_mode_a():
     assert await f.is_continue("msg") is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_frontal_mode_a_detect_shift():
     f = NoopFrontal()
     assert await f.detect_shift("msg") is False
@@ -155,7 +155,7 @@ async def test_frontal_mode_a_detect_shift():
 # ===================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_ears_mode_b_hear():
     e = NoopEars()
     r = await e.hear("hello")
@@ -166,7 +166,7 @@ async def test_ears_mode_b_hear():
     assert r == {"text": "hello", "keywords": ["hello"], "language": "zh"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_ears_mode_b_extract_keywords():
     e = NoopEars()
     r = await e.extract_keywords("test")
@@ -177,7 +177,7 @@ async def test_ears_mode_b_extract_keywords():
     assert r == ["a", "b"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_whiskers_mode_b():
     w = NoopWhiskers()
     r = await w.feel_input("test")
@@ -187,7 +187,7 @@ async def test_whiskers_mode_b():
     assert r == {"injection": True}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_whiskers_mode_b_hallucination():
     w = NoopWhiskers()
     r = await w.check_hallucination("reply", "s1")
@@ -198,7 +198,7 @@ async def test_whiskers_mode_b_hallucination():
     assert r == {"hallucination": True}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_hypothalamus_mode_b():
     h = NoopHypothalamus()
     r = await h.run_maintenance()
@@ -210,7 +210,7 @@ async def test_hypothalamus_mode_b():
     assert r["orphans_cleaned"] == 0  # 保留默认
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_cortex_mode_b():
     c = NoopCortex()
     r = await c.synthesize(100)
@@ -220,7 +220,7 @@ async def test_cortex_mode_b():
     assert r == "worldview snippet"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_brainstem_mode_b():
     b = NoopBrainstem()
     r = await b.build_system_prompt("cerebrum", "chat")
@@ -231,7 +231,7 @@ async def test_brainstem_mode_b():
     assert r == "prompt for chat"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_thalamus_mode_b():
     t = NoopThalamus()
     r = await t.locate("hello", "s1")
@@ -241,7 +241,7 @@ async def test_thalamus_mode_b():
     assert r["route"] == "danger"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_hippocampus_mode_b_remember():
     h = NoopHippocampus()
     r = await h.remember("hi", "hello", "cat1", "gpt-4")
@@ -254,7 +254,7 @@ async def test_hippocampus_mode_b_remember():
 # ===================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_mouth_mode_c():
     m = NoopMouth()
     r = await m.speak("hello")
@@ -264,7 +264,7 @@ async def test_mouth_mode_c():
     assert r == "[[hello]]"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_purr_mode_c():
     p = NoopPurr()
     r = await p.stream("hello")
@@ -274,7 +274,7 @@ async def test_purr_mode_c():
     assert r == "HELLO"
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_tail_mode_c():
     t = NoopTail()
     await t.render({"status": "ok"})  # 默认 no-op
@@ -284,7 +284,7 @@ async def test_tail_mode_c():
     assert rendered == [{"status": "testing"}]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_eyes_mode_c():
     e = NoopEyes()
     r = await e.see(b"img", "image/png")
@@ -294,7 +294,7 @@ async def test_eyes_mode_c():
     assert r == {"caption": "a cat"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_paws_mode_c():
     p = NoopPaws()
     r = await p.execute("tool1", {"arg": 1})
@@ -310,7 +310,7 @@ async def test_paws_mode_c():
 # ===================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_thalamus_locate_default():
     t = NoopThalamus()
     r = await t.locate("hello world", "session_1")
@@ -448,7 +448,7 @@ def test_noop_tail_is_tail_protocol():
 # ===================================================================
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_create_cat_default_thalamus_hippocampus():
     """create_cat 不传 thalamus/hippocampus 时自动使用 Noop 实现。"""
 

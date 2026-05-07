@@ -29,9 +29,6 @@ class Pipeline:
 
     def __init__(self, stages: list[StageProtocol]) -> None:
         self.stages: list[StageProtocol] = list(stages)
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     async def execute(self, ctx: Any) -> AsyncIterator[Any]:
         """Drive all Stages in order, yielding all events."""

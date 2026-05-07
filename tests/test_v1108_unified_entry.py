@@ -43,7 +43,7 @@ def _colony_with_cats(*names: str) -> tuple[Colony, dict[str, CatBase]]:
 class TestReceiveExternal:
     """receive_external 统一对外入口 — 地址路由。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_valid_address_delivers(self) -> None:
         """有效地址路由消息到目标猫。"""
         colony, cats = _colony_with_cats("planner")
@@ -56,7 +56,7 @@ class TestReceiveExternal:
         assert result["cat_uid"] == cat.cat_uid
         assert result["cats_count"] == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_event_emitted_on_cat(self) -> None:
         """消息以事件形式发送到目标猫。"""
         colony, cats = _colony_with_cats("planner")
@@ -78,7 +78,7 @@ class TestReceiveExternal:
         assert received[0]["priority"] == "high"
         assert received[0]["address"] == addr
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_invalid_address_format(self) -> None:
         """无效地址格式抛出 ValueError。"""
         colony, _ = _colony_with_cats("planner")
@@ -92,7 +92,7 @@ class TestReceiveExternal:
         with pytest.raises(ValueError, match="Invalid address"):
             await colony.receive_external("colony_", message="hi")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_colony_mismatch(self) -> None:
         """地址中的 colony_id 不匹配抛出 ValueError。"""
         colony, _ = _colony_with_cats("planner")
@@ -102,7 +102,7 @@ class TestReceiveExternal:
                 "other-colony_nope01", message="hi"
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cat_not_found(self) -> None:
         """目标猫不存在抛出 KeyError。"""
         colony, _ = _colony_with_cats("planner")
@@ -112,7 +112,7 @@ class TestReceiveExternal:
                 "test-colony_nope01", message="hi"
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_colony(self) -> None:
         """空猫群中路由抛出 KeyError。"""
         colony = Colony("test-colony", storage=InMemorySharedStore())
@@ -256,4 +256,3 @@ class TestHippocampusLocate:
         results_default = hippo.locate("hello")
         results_explicit = hippo.locate("hello", scope="self")
         assert results_default == results_explicit
-

@@ -38,17 +38,11 @@ class AgentOrgan(Pluggable):
                 return await self._delegate("generate", prompt=prompt,
                                            system_prompt=system_prompt, **kw)
     """
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def __init__(self, agent: Any, *, name: str | None = None) -> None:
         Pluggable.__init__(self)
         self._agent = agent
         self.name: str = name or getattr(agent, "name", type(agent).__name__)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # ------------------------------------------------------------------
     # Core delegation

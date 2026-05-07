@@ -64,9 +64,6 @@ class Metacognition(Pluggable):
 
     # -- Core API ------------------------------------------------------
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def record_capability(
         self,
         domain: str,
@@ -95,9 +92,6 @@ class Metacognition(Pluggable):
         self._capabilities[domain] = record
         return dict(record)
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     def self_assess(self, domain: str) -> dict[str, Any]:
         """Assess whether the cat is capable in a given domain.
 
@@ -112,9 +106,6 @@ class Metacognition(Pluggable):
         Returns:
             Assessment dict.
         """
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
         # Plugin slot — custom assessor
         for _name, r in self._run_plugs_sync(
             "assessor", domain, dict(self._capabilities),

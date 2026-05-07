@@ -68,9 +68,6 @@ def render_wiring(
     # if organs provided, add isolated nodes
     if organs is not None:
         nodes |= organs
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     # node → short ID mapping (mermaid/dot need valid identifiers)
     node_ids: dict[Organ, str] = {}
@@ -102,9 +99,6 @@ def _render_mermaid(
         label = f"{organ[0]}:{organ[1]}"
         lines.append(f"    {nid}(\"{label}\")")
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     # allowed edges
     for i, (frm, to) in enumerate(sorted(allowed)):
         lines.append(f"    {node_ids[frm]} --> {node_ids[to]}")
@@ -119,9 +113,6 @@ def _render_mermaid(
 
     return "\n".join(lines)
 
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
 def _render_dot(
     node_ids: dict[Organ, str],

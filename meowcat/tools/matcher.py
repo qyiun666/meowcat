@@ -53,9 +53,6 @@ class KeywordToolMatcher:
         self._hooks: dict[str, list[Callable[..., Any]]] = {}
 
     # -- Plugin system ---------------------------------------------------
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def plug(self, hook: str, fn: Callable[..., Any]) -> None:
         """Register a hook callback ('scorer', 'filter')."""
@@ -117,9 +114,6 @@ class KeywordToolMatcher:
         # Sort by score descending, then by name for stability
         results.sort(key=lambda x: (-x[0], x[1].name))
         return [(t, s) for s, t in results[:top_n]]
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     def best_match(self, intent: str) -> Tool | None:
         """Return the single best matching tool, or None."""

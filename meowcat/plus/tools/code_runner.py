@@ -55,9 +55,6 @@ _CODE_TIMEOUT = 10  # seconds
 
 async def _code_runner(language: str, code: str, **_: Any) -> str:
     """Execute code in a sandboxed subprocess.
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     Args:
         language: ``"python"`` or ``"javascript"``.

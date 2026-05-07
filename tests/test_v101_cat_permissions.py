@@ -125,21 +125,21 @@ class TestForbiddenMethods:
         c.freeze_nervous_system()
         return c
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_spawn_kitten_forbidden(self, cat) -> None:
         with pytest.raises(IllegalNeuralPathError, match="spawn_kitten"):
             await cat.signal(
                 THALAMUS, ("brain", "test_organ"), "spawn_kitten",
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_absorb_merge_forbidden(self, cat) -> None:
         with pytest.raises(IllegalNeuralPathError, match="absorb_merge"):
             await cat.signal(
                 THALAMUS, ("brain", "test_organ"), "absorb_merge",
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_regular_method_allowed(self, cat) -> None:
         result = await cat.signal(
             THALAMUS, ("brain", "test_organ"), "regular_method",
@@ -175,4 +175,3 @@ class TestDefaultCatBase:
         except AttributeError:
             pass  # 预期
         assert cat.name == "cat1"
-

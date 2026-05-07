@@ -41,9 +41,6 @@ can continue explicitly writing ``self.cat.signal(...)`` with no issues.
             wv = await self._signal_to(CORTEX, "synthesize", max_tokens=200)
 """
 
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 from __future__ import annotations
 

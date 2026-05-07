@@ -209,7 +209,7 @@ class TestLoopSequenceRegistry:
 class TestRunSequential:
     """顺序执行 loops。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_sequential_two_loops(self) -> None:
         """两个 Loop 顺序执行，结果传递。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"), ("loop_b", "step_b"))
@@ -220,7 +220,7 @@ class TestRunSequential:
         # step_b 最后执行，返回 {"from_b": "ok"}
         assert result == {"from_b": "ok"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_sequential_passes_result(self) -> None:
         """前一步结果传给下一步。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"), ("loop_b", "step_b"))
@@ -232,7 +232,7 @@ class TestRunSequential:
         # 两个 step 都被调用
         assert organ.calls == ["step_a", "step_b"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_sequential_single_loop(self) -> None:
         """单个 Loop 正常执行。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"))
@@ -248,7 +248,7 @@ class TestRunSequential:
 class TestRunSequentialStopOnError:
     """sequential + stop_on_error 行为。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_stop_on_error_true(self) -> None:
         """stop_on_error=True → 失败立即抛异常。"""
         cat = _setup_cat_with_loops(
@@ -266,7 +266,7 @@ class TestRunSequentialStopOnError:
         # step_a 被调用（失败），step_b 未执行
         assert organ.calls == ["step_a"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_stop_on_error_true_later_fails(self) -> None:
         """第一步成功、第二步失败。"""
         cat = _setup_cat_with_loops(
@@ -290,7 +290,7 @@ class TestRunSequentialStopOnError:
 class TestRunSequentialNoStopError:
     """sequential + 跳过失败。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_skip_failed_loop_continue(self) -> None:
         """stop_on_error=False → 跳过失败的 Loop 继续执行。"""
         cat = _setup_cat_with_loops(
@@ -317,7 +317,7 @@ class TestRunSequentialNoStopError:
 class TestRunEventDriven:
     """event_driven 并发执行。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_event_driven_two_loops(self) -> None:
         """两个 Loop 并发执行。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"), ("loop_b", "step_b"))
@@ -330,7 +330,7 @@ class TestRunEventDriven:
         assert result["loop_a"] == {"from_a": "ok"}
         assert result["loop_b"] == {"from_b": "ok"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_event_driven_single_loop(self) -> None:
         """单个 Loop 并发执行。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"))
@@ -346,7 +346,7 @@ class TestRunEventDriven:
 class TestRunEventDrivenStopError:
     """event_driven + stop_on_error 行为。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_stop_on_error_true_concurrent(self) -> None:
         """stop_on_error=True → 任一失败整体抛异常。"""
         cat = _setup_cat_with_loops(
@@ -363,7 +363,7 @@ class TestRunEventDrivenStopError:
         with pytest.raises(RuntimeError, match="step_b failed"):
             await cat.loopseq_registry.run(cat, "test_seq")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_stop_on_error_false_concurrent(self) -> None:
         """stop_on_error=False → 失败 Loop 返回 _error。"""
         cat = _setup_cat_with_loops(
@@ -386,7 +386,7 @@ class TestRunEventDrivenStopError:
 class TestRunEdgeCases:
     """边界/错误情况。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_empty_sequence(self) -> None:
         """空 loops 序列 → 返回空结果。"""
         cat = _setup_cat_with_loops()
@@ -396,14 +396,14 @@ class TestRunEdgeCases:
         result = await cat.loopseq_registry.run(cat, "empty_seq")
         assert result == {"": {}}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_nonexistent_loopseq_raises(self) -> None:
         """不存在的 LoopSequence 抛 KeyError。"""
         cat = _setup_cat_with_loops()
         with pytest.raises(KeyError, match="not found"):
             await cat.loopseq_registry.run(cat, "nonexistent")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_nonexistent_loop_raises(self) -> None:
         """引用不存在的 Loop 抛 KeyError。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"))
@@ -419,7 +419,7 @@ class TestRunEdgeCases:
 class TestCatIntegration:
     """CatBase.run_loopseq 快捷方法。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_loopseq_shortcut(self) -> None:
         """cat.run_loopseq() 等价于 cat.loopseq_registry.run()。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"), ("loop_b", "step_b"))
@@ -429,7 +429,7 @@ class TestCatIntegration:
         result = await cat.run_loopseq("test_seq")
         assert result == {"from_b": "ok"}
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_loopseq_with_input(self) -> None:
         """run_loopseq 支持 initial_input。"""
         cat = _setup_cat_with_loops(("loop_a", "step_a"))
@@ -455,4 +455,3 @@ class TestBuiltinLoopseq:
     def test_builtin_loopseqs_contains(self) -> None:
         """BUILTIN_LOOPSEQS 包含 DAILY_MAINTENANCE_SEQ。"""
         assert DAILY_MAINTENANCE_SEQ in BUILTIN_LOOPSEQS
-

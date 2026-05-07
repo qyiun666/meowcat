@@ -161,7 +161,7 @@ class TestGatewayMount:
 class TestHttpAdapter:
     """HttpAdapter POST 收发 / JSON / 错误 / SSE。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_post_chat_ok(self) -> None:
         """POST /chat 返回 JSON reply。"""
         adapter = HttpAdapter(port=0)  # port=0 让 OS 分配
@@ -210,7 +210,7 @@ class TestHttpAdapter:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_post_missing_message(self) -> None:
         """POST /chat 缺少 message 字段返回 400。"""
         adapter = HttpAdapter(port=0)
@@ -252,7 +252,7 @@ class TestHttpAdapter:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_post_wrong_path_404(self) -> None:
         """POST 到错误路径返回 404。"""
         adapter = HttpAdapter(port=0)
@@ -294,7 +294,7 @@ class TestHttpAdapter:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_sse_stream_response(self) -> None:
         """Accept: text/event-stream 触发 SSE 流式响应。"""
         adapter = HttpAdapter(port=0)
@@ -398,7 +398,7 @@ class TestWsFrameEncoding:
 class TestWsAdapter:
     """WsAdapter WebSocket 协议收发。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ws_handshake_and_message(self) -> None:
         """WebSocket handshake + 消息收发。"""
         adapter = WsAdapter(port=0)
@@ -468,7 +468,7 @@ class TestWsAdapter:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ws_missing_key_rejected(self) -> None:
         """缺少 Sec-WebSocket-Key 的连接被拒绝。"""
         adapter = WsAdapter(port=0)
@@ -517,7 +517,7 @@ class TestWsAdapter:
 class TestCliAdapter:
     """CliAdapter stdin/stdout 收发。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cli_input_output(self) -> None:
         """stdin 输入 → on_message 回调 → stdout 输出。"""
         adapter = CliAdapter()
@@ -544,7 +544,7 @@ class TestCliAdapter:
         assert calls[0][1].user_id == "cli-user"
         assert calls[1][0] == "world"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cli_send_to_stdout(self) -> None:
         """send() 输出到 stdout。"""
         adapter = CliAdapter()
@@ -552,7 +552,7 @@ class TestCliAdapter:
             await adapter.send("hello stdout", "s1")
             mock_print.assert_called_once_with("hello stdout", flush=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cli_stream_chunk_no_newline(self) -> None:
         """stream_chunk 输出不换行。"""
         adapter = CliAdapter()
@@ -560,7 +560,7 @@ class TestCliAdapter:
             await adapter.stream_chunk("chunk1", "s1")
             mock_print.assert_called_once_with("chunk1", end="", flush=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cli_stream_end_newline(self) -> None:
         """stream_end 补换行。"""
         adapter = CliAdapter()
@@ -594,14 +594,14 @@ class TestCliAdapterQueue:
         with pytest.raises(ValueError, match="mode"):
             CliAdapter(mode="invalid")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_enqueue_without_queue_raises(self) -> None:
         """stdio 模式下调用 enqueue 抛 RuntimeError。"""
         adapter = CliAdapter()
         with pytest.raises(RuntimeError, match="enqueue"):
             await adapter.enqueue("hello")
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_queue_single_message(self) -> None:
         """queue 模式：enqueue 一条消息 → on_message 被调用。"""
         adapter = CliAdapter(mode="queue")
@@ -637,7 +637,7 @@ class TestCliAdapterQueue:
         assert calls[0][1].platform == "cli"
         assert calls[0][1].user_id == "cli-user"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_queue_multiple_messages(self) -> None:
         """queue 模式：多条消息依次处理。"""
         adapter = CliAdapter(mode="queue")
@@ -668,7 +668,7 @@ class TestCliAdapterQueue:
 
         assert calls == ["msg1", "msg2", "msg3"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_queue_send_to_stdout(self) -> None:
         """queue 模式下 send() 仍然输出到 stdout。"""
         adapter = CliAdapter(mode="queue")
@@ -676,7 +676,7 @@ class TestCliAdapterQueue:
             await adapter.send("queue output", "s1")
             mock_print.assert_called_once_with("queue output", flush=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_queue_stream_chunk(self) -> None:
         """queue 模式下 stream_chunk 正常输出。"""
         adapter = CliAdapter(mode="queue")
@@ -684,7 +684,7 @@ class TestCliAdapterQueue:
             await adapter.stream_chunk("chunk", "s1")
             mock_print.assert_called_once_with("chunk", end="", flush=True)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_queue_stop_before_enqueue(self) -> None:
         """stop 后 serve loop 退出，不再处理消息。"""
         adapter = CliAdapter(mode="queue")
@@ -740,7 +740,7 @@ class TestWebhookAdapter:
         assert text == ""
         assert uid == "unknown"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_webhook_post_callback(self) -> None:
         """POST webhook 回调 → on_message 被调用。"""
         adapter = WebhookAdapter(port=0)
@@ -791,7 +791,7 @@ class TestWebhookAdapter:
         assert called[0][1].platform == "webhook"
         assert called[0][1].user_id == "u42"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_webhook_signature_rejected(self) -> None:
         """签名验证失败返回 403。"""
         adapter = WebhookAdapter(port=0)
@@ -844,7 +844,7 @@ class TestWebhookAdapter:
 class TestIpcAdapter:
     """IpcAdapter Unix socket 收发。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ipc_send_receive(self) -> None:
         """Unix socket 发送消息 → on_message 被调用 → 收到回复。"""
         socket_path = f"/tmp/test-meowcat-{os.getpid()}.sock"
@@ -885,7 +885,7 @@ class TestIpcAdapter:
         assert called[0][0] == "hello ipc"
         assert called[0][1].platform == "ipc"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ipc_multiple_messages(self) -> None:
         """Unix socket 支持多轮消息。"""
         socket_path = f"/tmp/test-meowcat-multi-{os.getpid()}.sock"
@@ -1002,4 +1002,3 @@ class TestSignalContextInjection:
         assert isinstance(ctx.timestamp, str)
         # timestamp 是 ISO 8601 格式
         assert "T" in ctx.timestamp
-

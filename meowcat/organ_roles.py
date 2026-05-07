@@ -38,14 +38,8 @@ from meowcat.anatomy import (
     WHISKERS,
 )
 from meowcat.wiring import Organ
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 ORGAN_ROLES: Final[dict[Organ, str]] = {
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     # -- Brain regions --
     THALAMUS: "Route decision — all input passes through me first, determine whether to go to cerebrum or cerebellum",
     HIPPOCAMPUS: "Memory access — the single entry point for storing, finding, and forgetting",

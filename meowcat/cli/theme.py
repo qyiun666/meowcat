@@ -49,9 +49,6 @@ class Theme:
     BRIGHT_MAGENTA = "\033[95m"
     BRIGHT_CYAN = "\033[96m"
     BRIGHT_WHITE = "\033[97m"
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # -- Background -----------------------------------------------------
     BG_BLACK = "\033[40m"
@@ -62,9 +59,6 @@ class Theme:
     BG_MAGENTA = "\033[45m"
     BG_CYAN = "\033[46m"
     BG_WHITE = "\033[47m"
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
     # -- Semantic aliases (framework-level, no brand mapping) ------------
     SUCCESS = GREEN
@@ -76,9 +70,6 @@ class Theme:
     MUTED = DIM
 
     # -- Helpers ---------------------------------------------------------
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
     @staticmethod
     def styled(text: str, *codes: str) -> str:

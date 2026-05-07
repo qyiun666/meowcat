@@ -89,7 +89,7 @@ class TestFederationProtocol:
 class TestColonyFederateLifecycle:
     """federate / unfederate 生命周期管理。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_federate_and_unfederate(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test-colony", storage=store)
@@ -103,7 +103,7 @@ class TestColonyFederateLifecycle:
         await colony.unfederate()
         assert not colony.is_federated
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_double_federate_raises(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test-colony", storage=store)
@@ -117,7 +117,7 @@ class TestColonyFederateLifecycle:
         finally:
             await colony.unfederate()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unfederate_idempotent(self) -> None:
         """重复 unfederate 不报错。"""
         store = InMemorySharedStore()
@@ -129,7 +129,7 @@ class TestColonyFederateLifecycle:
         await colony.unfederate()  # 不应报错
         assert not colony.is_federated
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_remote_without_federation(self) -> None:
         """未 federate 时调用 signal_remote 应报错。"""
         store = InMemorySharedStore()
@@ -146,7 +146,7 @@ class TestColonyFederateLifecycle:
 class TestColonySignalRemote:
     """signal_remote 通过 TCP 传输向远端 Colony 发送信号。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_remote_tcp(self) -> None:
         """端到端: colony-a → TCP → colony-b → signal_remote 返回结果。"""
         store_a = InMemorySharedStore()
@@ -183,7 +183,7 @@ class TestColonySignalRemote:
             await colony_a.unfederate()
             await colony_b.unfederate()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_remote_with_args(self) -> None:
         """signal_remote 带位置参数。"""
         store_a = InMemorySharedStore()
@@ -216,7 +216,7 @@ class TestColonySignalRemote:
             await colony_a.unfederate()
             await colony_b.unfederate()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_signal_remote_cat_not_found(self) -> None:
         """远端猫不存在时返回 error。"""
         store_a = InMemorySharedStore()
@@ -251,13 +251,13 @@ class TestColonySignalRemote:
 class TestTCPSocketTransport:
     """TCPSocketTransport 基本收发功能。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_start_stop(self) -> None:
         t = TCPSocketTransport(host="127.0.0.1", port=19980)
         await t.start()
         await t.stop()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_publish_and_subscribe(self) -> None:
         """发布消息后能在 subscribe 中收到。"""
         t_a = TCPSocketTransport(host="127.0.0.1", port=19981)
@@ -283,7 +283,7 @@ class TestTCPSocketTransport:
             await t_a.stop()
             await t_b.stop()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_request_response(self) -> None:
         """request 发送请求并通过 subscribe 收响应。"""
         t_a = TCPSocketTransport(host="127.0.0.1", port=19983)
@@ -320,7 +320,7 @@ class TestTCPSocketTransport:
             await t_a.stop()
             await t_b.stop()
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_publish_unknown_peer(self) -> None:
         """publish 到未注册的 colony 报错。"""
         t = TCPSocketTransport(host="127.0.0.1", port=19985)
@@ -337,7 +337,7 @@ class TestTCPSocketTransport:
 class TestColonyFederationIsolation:
     """联邦安全约束测试。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_default_isolation(self) -> None:
         """不调用 federate 的 Colony 互相不可见。"""
         store_a = InMemorySharedStore()
@@ -355,7 +355,7 @@ class TestColonyFederationIsolation:
                 "colony-b", "cat-b", "brain", "hippocampus", "locate",
             )
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_cross_colony_wiring_still_applies(self) -> None:
         """远端 Colony 的 wiring 在 signal_remote 时仍然生效。"""
         store_a = InMemorySharedStore()
@@ -395,7 +395,7 @@ class TestColonyFederationIsolation:
 class TestColonyPendingCleanup:
     """unfederate 时清理未完成的远程请求。"""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_unfederate_cancels_pending(self) -> None:
         store = InMemorySharedStore()
         colony = Colony("test-colony", storage=store)
@@ -428,4 +428,3 @@ class TestRedisPubSubTransportBasic:
         t = RedisPubSubTransport(colony_id="test", client=None)
         assert t._colony_id == "test"
         assert isinstance(t, FederationTransport)
-

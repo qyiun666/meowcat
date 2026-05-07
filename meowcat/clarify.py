@@ -184,10 +184,7 @@ class ClarifyManager:
         # Score ambiguity
         score = self._score_ambiguity(user_msg)
 
-        if score > self._config.ambiguity_threshold or (
-            score == self._config.ambiguity_threshold
-            and self._config.ambiguity_threshold > 0.0
-        ):
+        if score >= self._config.ambiguity_threshold and self._config.ambiguity_threshold > 0.0:
             # Check round limit
             if self._clarify_count >= self._config.max_clarify_rounds:
                 return ClarifyResult(

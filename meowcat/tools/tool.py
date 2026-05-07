@@ -86,9 +86,6 @@ class Tool:
 
     def disable(self) -> None:
         self._enabled = False
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     # -- Schema generation -------------------------------------------
 

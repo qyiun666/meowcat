@@ -37,6 +37,18 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+# ── Shared defaults ────────────────────────────────────────────────
+
+_DEFAULT_NOISE_PATTERNS: list[str] = [
+    r"^(ok|okay|k|kk|okie|got it|gotcha|thanks|thx|ty|np|no problem|yw|you're welcome|sure|yep|yeah|nope|nah|hi|hello|hey|bye|goodbye|see ya|later)$",
+    r"^(cool|nice|great|awesome|perfect|fine|good|alright|all right)$",
+    r"^(yes|no|maybe|idk|i don't know|dunno|not sure)$",
+    r"^([\s,;.!?\-]+)$",  # pure punctuation/whitespace/dash
+    r"^(ha){2,}$",       # laughing: haha, hahaha...
+    r"^(lo+l+)+$",       # lol, lolol...
+]
+
+
 # ── Configuration ─────────────────────────────────────────────────────
 
 
@@ -55,14 +67,8 @@ class NoiseFilterConfig:
         check_repetition:    Whether to perform repetition checking.
     """
 
-    noise_patterns: list[str] = field(default_factory=lambda: [
-        r"^(ok|okay|k|kk|okie|got it|gotcha|thanks|thx|ty|np|no problem|yw|you're welcome|sure|yep|yeah|nope|nah|hi|hello|hey|bye|goodbye|see ya|later)$",
-        r"^(cool|nice|great|awesome|perfect|fine|good|alright|all right)$",
-        r"^(yes|no|maybe|idk|i don't know|dunno|not sure)$",
-        r"^([\s,;.!?\-]+)$",  # pure punctuation/whitespace/dash
-        r"^(ha){2,}$",       # laughing: haha, hahaha...
-        r"^(lo+l+)+$",       # lol, lolol...
-    ])
+    noise_patterns: list[str] = field(
+        default_factory=lambda: list(_DEFAULT_NOISE_PATTERNS))
     min_chars: int = 8
     max_rep_ratio: float = 0.5
     check_repetition: bool = True
@@ -85,16 +91,9 @@ class NoiseFilter:
     Returns ``False`` if ANY check flags the exchange as noise.
     """
 
-    # ── Default noise patterns (class-level, safe to reference) ───
+    # ── Default noise patterns (class-level, safe to reference) ──
 
-    DEFAULT_NOISE_PATTERNS: list[str] = [
-        r"^(ok|okay|k|kk|okie|got it|gotcha|thanks|thx|ty|np|no problem|yw|you're welcome|sure|yep|yeah|nope|nah|hi|hello|hey|bye|goodbye|see ya|later)$",
-        r"^(cool|nice|great|awesome|perfect|fine|good|alright|all right)$",
-        r"^(yes|no|maybe|idk|i don't know|dunno|not sure)$",
-        r"^([\s,;.!?\-]+)$",  # pure punctuation/whitespace/dash
-        r"^(ha){2,}$",       # laughing: haha, hahaha...
-        r"^(lo+l+)+$",       # lol, lolol...
-    ]
+    DEFAULT_NOISE_PATTERNS: list[str] = _DEFAULT_NOISE_PATTERNS
 
     def __init__(
         self,

@@ -305,7 +305,7 @@ class _SumWorker(BaseWorker):
 class TestCheckpointStore:
     """InMemoryCheckpointStore tests."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_save_and_load(self):
         store = InMemoryCheckpointStore()
         state = WorkerState(worker_id="w1", status=WorkerStatus.RUNNING)
@@ -315,19 +315,19 @@ class TestCheckpointStore:
         assert loaded.worker_id == "w1"
         assert loaded.status == WorkerStatus.RUNNING
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_load_missing_returns_none(self):
         store = InMemoryCheckpointStore()
         assert await store.load("nope") is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_delete(self):
         store = InMemoryCheckpointStore()
         await store.save(WorkerState(worker_id="w1"))
         await store.delete("w1")
         assert await store.load("w1") is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_list_all(self):
         store = InMemoryCheckpointStore()
         await store.save(WorkerState(worker_id="w1"))
@@ -339,7 +339,7 @@ class TestCheckpointStore:
 class TestBaseWorker:
     """BaseWorker lifecycle tests."""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_completes(self):
         worker = _SumWorker()
         state = await worker.run("t1", [{"n": 1}, {"n": 2}, {"n": 3}])
@@ -347,14 +347,14 @@ class TestBaseWorker:
         assert state.progress == 3.0
         assert worker.results == [1, 2, 3]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_empty_steps(self):
         worker = _SumWorker()
         state = await worker.run("t1", [])
         assert state.status == WorkerStatus.COMPLETED
         assert state.progress == 0.0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_checkpoint_saved(self):
         store = InMemoryCheckpointStore()
         worker = _SumWorker(store=store)
@@ -363,7 +363,7 @@ class TestBaseWorker:
         assert saved is not None
         assert saved.status == WorkerStatus.COMPLETED
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_resume_from_checkpoint(self):
         store = InMemoryCheckpointStore()
         worker = _SumWorker(store=store)
@@ -387,7 +387,7 @@ class TestBaseWorker:
         # Resumed from step 2, should execute only steps 3 and 4
         assert worker2.results == [3, 4]
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_pause(self):
         worker = _SumWorker()
         await worker.run("t1", [{"n": 1}])
@@ -396,7 +396,7 @@ class TestBaseWorker:
         assert saved is not None
         assert saved.status == WorkerStatus.PAUSED
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_lifecycle_hooks(self):
         events = []
 
@@ -413,7 +413,7 @@ class TestBaseWorker:
         assert "start" in events
         assert "complete" in events
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_run_failure(self):
         class _FailingWorker(BaseWorker):
             async def execute_step(self, step):
@@ -425,4 +425,3 @@ class TestBaseWorker:
         state = await worker.run("t1", [{"n": 1}, {"fail": True}])
         assert state.status == WorkerStatus.FAILED
         assert "boom" in state.error
-

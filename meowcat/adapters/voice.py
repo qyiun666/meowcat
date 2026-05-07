@@ -12,12 +12,6 @@ from typing import Any
 
 from meowcat.adapters.base import AgentOrgan
 
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
-
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
 class MouthAgent(AgentOrgan):
     """Adapter for MouthProtocol — delegates text output to an external agent.
@@ -33,9 +27,6 @@ class MouthAgent(AgentOrgan):
         async for _name, r in self._run_plugs("speak", text, **kwargs):
             return r
         return await self._delegate("speak", text=text, **kwargs)
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
-
 
 
 class PurrAgent(AgentOrgan):

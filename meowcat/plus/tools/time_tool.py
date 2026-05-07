@@ -13,12 +13,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from meowcat.tools.tool import RiskLevel, Tool, ToolSpec
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
-
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
 
 
 async def _current_time(**_: Any) -> str:
@@ -34,9 +28,6 @@ async def _current_time(**_: Any) -> str:
         f"Local: {local_str} (UTC{offset_hours:+d})\n"
         f"Unix timestamp: {now_utc.timestamp():.0f}"
     )
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
 
 plus_current_time = Tool(

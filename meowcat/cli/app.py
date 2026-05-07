@@ -50,9 +50,6 @@ class MeowTui(App[None]):
     Subclass and set ``show_sidebar=True`` to enable dual-column layout.
     Use :meth:`mount_slot` to populate named slots (sidebar, main, etc.).
     """
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
 
     CSS: ClassVar[str] = """
     Screen {
@@ -65,9 +62,6 @@ class MeowTui(App[None]):
         background: #161b22;
         padding: 0 1;
     }
-# Copyright (c) 2026 qyiun666
-# SPDX-License-Identifier: MIT
-
     #main {
         width: 1fr;
     }

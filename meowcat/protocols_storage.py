@@ -62,8 +62,6 @@ class L6StorageProtocol(Protocol):
 
     def append(self, cat_uid: str, turn: int,
                user_msg: str, ai_reply: str) -> None: ...
-# Copyright (c) 2026 Axonant
-# SPDX-License-Identifier: MIT
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]: ...
     def load_recent(self, cat_uid: str,

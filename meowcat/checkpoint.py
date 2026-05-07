@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json as _json
 import os as _os
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,7 @@ class CheckpointConfig:
 # ── CheckpointStore — abstract base ────────────────────────────────────
 
 
-class CheckpointStore:
+class CheckpointStore(ABC):
     """Abstract base class for general-purpose checkpoint persistence.
 
     Framework-layer: defines the interface for saving/loading
@@ -59,6 +60,7 @@ class CheckpointStore:
 
     # ── Core API (subclass must implement) ──────────────────────────
 
+    @abstractmethod
     async def save(self, key: str, data: dict[str, Any]) -> None:
         """Persist a checkpoint snapshot.
 
@@ -66,8 +68,9 @@ class CheckpointStore:
             key:  Unique checkpoint identifier.
             data: Arbitrary dict payload to persist.
         """
-        raise NotImplementedError
+        ...
 
+    @abstractmethod
     async def load(self, key: str) -> dict[str, Any] | None:
         """Load a checkpoint snapshot.
 
@@ -77,23 +80,25 @@ class CheckpointStore:
         Returns:
             The persisted dict, or ``None`` if no checkpoint exists.
         """
-        raise NotImplementedError
+        ...
 
+    @abstractmethod
     async def delete(self, key: str) -> None:
         """Remove a checkpoint.
 
         Args:
             key: Unique checkpoint identifier.
         """
-        raise NotImplementedError
+        ...
 
+    @abstractmethod
     async def list_keys(self) -> list[str]:
         """List all checkpoint keys currently persisted.
 
         Returns:
             Sorted list of checkpoint identifiers.
         """
-        raise NotImplementedError
+        ...
 
 
 # ── JsonCheckpointStore — default JSON-file implementation ────────────
@@ -143,6 +148,10 @@ class JsonCheckpointStore(CheckpointStore):
 
     async def save(self, key: str, data: dict[str, Any]) -> None:
         """Persist *data* for *key* with atomic file replacement."""
+        import anyio
+        await anyio.to_thread.run_sync(self._save_sync, key, data)
+
+    def _save_sync(self, key: str, data: dict[str, Any]) -> None:
         fp = self._file_path(key)
         fp.parent.mkdir(parents=True, exist_ok=True)
         tmp = fp.with_suffix(fp.suffix + ".tmp")
@@ -154,6 +163,10 @@ class JsonCheckpointStore(CheckpointStore):
 
     async def load(self, key: str) -> dict[str, Any] | None:
         """Load checkpoint for *key*, or ``None``."""
+        import anyio
+        return await anyio.to_thread.run_sync(self._load_sync, key)
+
+    def _load_sync(self, key: str) -> dict[str, Any] | None:
         fp = self._file_path(key)
         if not fp.exists():
             return None
@@ -162,6 +175,10 @@ class JsonCheckpointStore(CheckpointStore):
 
     async def delete(self, key: str) -> None:
         """Remove checkpoint for *key* (no-op if missing)."""
+        import anyio
+        await anyio.to_thread.run_sync(self._delete_sync, key)
+
+    def _delete_sync(self, key: str) -> None:
         fp = self._file_path(key)
         try:
             fp.unlink(missing_ok=True)
@@ -170,10 +187,14 @@ class JsonCheckpointStore(CheckpointStore):
 
     async def list_keys(self) -> list[str]:
         """List all checkpoint keys, sorted."""
+        import anyio
+        return await anyio.to_thread.run_sync(self._list_keys_sync)
+
+    def _list_keys_sync(self) -> list[str]:
         keys: list[str] = []
         for fp in self._dir.rglob(f"*{self._SUFFIX}"):
             rel = fp.relative_to(self._dir)
-            stem = str(rel)[:-len(self._SUFFIX)]  # strip suffix to get key
+            stem = str(rel)[:-len(self._SUFFIX)]
             keys.append(stem)
         return sorted(keys)
 
