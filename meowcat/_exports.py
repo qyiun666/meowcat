@@ -211,6 +211,8 @@ __all__ = [
     "ClarifyManager", "ClarifyConfig", "ClarifyResult",
     # v1.3.6 Budget tracker
     "BudgetTracker", "BudgetConfig",
+    # v1.3.6 Noise filter
+    "NoiseFilter", "NoiseFilterConfig",
 ]
 # fmt: on
 
@@ -619,6 +621,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — budget (v1.3.6) —
     "BudgetTracker": ("meowcat.budget", "BudgetTracker"),
     "BudgetConfig":  ("meowcat.budget", "BudgetConfig"),
+    # — noise (v1.3.6) —
+    "NoiseFilter":       ("meowcat.noise", "NoiseFilter"),
+    "NoiseFilterConfig": ("meowcat.noise", "NoiseFilterConfig"),
 }
 
 # — Submodule names (lazy via importlib) —
