@@ -336,10 +336,17 @@ class ModelConfig(BaseModel):
     temperature: float = 0.7
     max_tokens: int = 4096
     top_p: float = 1.0
-    api_key: str = ""
+    api_key: str = Field(default="", exclude=True)
     base_url: str = ""
     stop: list[str] = Field(default_factory=list)
     extra: dict[str, Any] = Field(default_factory=dict)
+
+    def __repr__(self) -> str:
+        d = self.model_dump()
+        # api_key is excluded from model_dump; show placeholder
+        d["api_key"] = "sk-***" if self.api_key else ""
+        fields = ", ".join(f"{k}={v!r}" for k, v in d.items())
+        return f"ModelConfig({fields})"
 
     def to_llm_config(self) -> ModelConfig:
         """Convert to a :class:`ModelConfig` for the colony shelf.
