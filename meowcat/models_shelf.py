@@ -417,4 +417,5 @@ class FallbackChain:
         )
 
 
-__all__ = ["ProviderEntry", "AuthType", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]
+__all__ = ["ProviderEntry", "AuthType",
+           "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]
