@@ -223,7 +223,6 @@ class MergeProposalShape(BaseModel):
 # SPDX-License-Identifier: MIT
 
 
-
 class WorkflowShape(BaseModel):
     """Long-running workflow entity — task orchestration state persisted across sessions.
 
@@ -378,4 +377,3 @@ class ModelConfig(BaseModel):
 # v1.2.17: LLMConfig is now a deprecated alias for ModelConfig.
 # Use ModelConfig directly.  The two classes were unified in v1.2.12.
 LLMConfig = ModelConfig  # deprecated — use ModelConfig directly
-

@@ -202,7 +202,7 @@ __all__ = [
     "SignalSpan", "Tracer", "Metrics",
     "TelemetryEvent", "TelemetrySpanPayload",
     # v1.3.6 Model shelf
-    "ProviderEntry", "BUILTIN_PROVIDERS", "ModelShelf",
+    "ProviderEntry", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain",
 ]
 # fmt: on
 
@@ -597,6 +597,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ProviderEntry":    ("meowcat.models_shelf", "ProviderEntry"),
     "BUILTIN_PROVIDERS": ("meowcat.models_shelf", "BUILTIN_PROVIDERS"),
     "ModelShelf":       ("meowcat.models_shelf", "ModelShelf"),
+    "FallbackChain":    ("meowcat.models_shelf", "FallbackChain"),
 }
 
 # — Submodule names (lazy via importlib) —

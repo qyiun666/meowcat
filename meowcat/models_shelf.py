@@ -14,11 +14,18 @@ and default_base_url.  The catalog is consumed by :class:`ModelShelf` which supp
 from __future__ import annotations
 
 import json
+import logging
 import urllib.request
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Callable, Literal, TypeVar
 
 import anyio
+
+from meowcat.models import ModelConfig
+
+logger = logging.getLogger("meowcat.models_shelf")
+
+_T = TypeVar("_T")
 
 AuthType = Literal["api-key", "token", "none"]
 
@@ -148,6 +155,7 @@ class ModelShelf:
         self._providers: dict[str, ProviderEntry] = dict(
             providers if providers is not None else BUILTIN_PROVIDERS
         )
+        self._models: dict[str, ModelConfig] = {}
 
     # -- Catalog queries -------------------------------------------------
 
@@ -277,5 +285,136 @@ class ModelShelf:
         items: list[dict] = data.get("data", [])
         return [m["id"] for m in items if isinstance(m, dict) and "id" in m]
 
+    # -- Model registry (T-14) -------------------------------------------
 
-__all__ = ["ProviderEntry", "AuthType", "BUILTIN_PROVIDERS", "ModelShelf"]
+    def register(self, name: str, config: ModelConfig) -> None:
+        """Stock a named :class:`ModelConfig` on the shelf (overwrites if exists).
+
+        Usage::
+
+            shelf.register("fast", ModelConfig(model="gpt-4o-mini"))
+            shelf.register("smart", ModelConfig(model="gpt-4o"))
+        """
+        self._models[name] = config
+
+    def unregister(self, name: str) -> bool:
+        """Remove a model from the shelf. Returns True if removed."""
+        return self._models.pop(name, None) is not None
+
+    def list_models(self) -> list[str]:
+        """Return all registered model names in insertion order."""
+        return list(self._models.keys())
+
+    def get_model(self, name: str) -> ModelConfig:
+        """Get a registered model config by name.
+
+        Raises:
+            KeyError: Model name not found.
+        """
+        if name not in self._models:
+            raise KeyError(
+                f"Model '{name}' not found on shelf. "
+                f"Available: {list(self._models.keys())}"
+            )
+        return self._models[name]
+
+    @property
+    def models(self) -> dict[str, ModelConfig]:
+        """Read-only copy of the registered model configs."""
+        return dict(self._models)
+
+
+class FallbackChain:
+    """Cascading failover executor — tries models in order until one succeeds.
+
+    Application layer configures the fallback order by passing an ordered list
+    of model names and a :class:`ModelShelf` reference.  When ``execute()`` is
+    called, it tries each model in sequence; on failure the error is logged
+    and the next model is attempted.  If all models fail, a :exc:`RuntimeError`
+    is raised with aggregated error details.
+
+    Usage::
+
+        shelf = ModelShelf()
+        shelf.register("fast", ModelConfig(model="gpt-4o-mini"))
+        shelf.register("smart", ModelConfig(model="gpt-4o"))
+        shelf.register("fallback", ModelConfig(model="deepseek-v3",
+                                                 provider="deepseek"))
+
+        chain = FallbackChain(["fast", "smart", "fallback"], shelf)
+
+        async def call_llm(config: ModelConfig, prompt: str) -> str:
+            # app-layer LLM invocation
+            return await some_llm_client.generate(config, prompt)
+
+        result = await chain.execute(call_llm, "Hello!")
+    """
+
+    def __init__(
+        self,
+        model_names: list[str],
+        shelf: ModelShelf,
+    ) -> None:
+        if not model_names:
+            raise ValueError("FallbackChain requires at least one model name")
+        # Resolve all configs eagerly — fail fast if any name is unknown
+        self._configs: list[ModelConfig] = [
+            shelf.get_model(name) for name in model_names
+        ]
+
+    @property
+    def model_names(self) -> list[str]:
+        """Ordered list of model names in this chain."""
+        return [c.model for c in self._configs]
+
+    async def execute(
+        self,
+        func: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Execute ``func(config, *args, **kwargs)`` against each model in order.
+
+        ``func`` receives a :class:`ModelConfig` as its first positional argument
+        followed by ``*args`` and ``**kwargs``.  It may be sync or async —
+        :meth:`execute` auto-detects via :func:`inspect.iscoroutinefunction`.
+
+        Args:
+            func: Callable ``(ModelConfig, *args, **kwargs) -> T``.
+            *args, **kwargs: Forwarded to ``func`` after the config.
+
+        Returns:
+            The return value of the first successful ``func`` call.
+
+        Raises:
+            RuntimeError: All models in the chain failed.
+        """
+        import inspect
+
+        errors: list[tuple[str, str]] = []
+        is_async = inspect.iscoroutinefunction(func)
+
+        for cfg in self._configs:
+            try:
+                if is_async:
+                    return await func(cfg, *args, **kwargs)
+                else:
+                    result = func(cfg, *args, **kwargs)
+                    # If func is sync but returns an awaitable, await it
+                    if inspect.isawaitable(result):
+                        return await result
+                    return result
+            except Exception as exc:
+                logger.warning(
+                    "FallbackChain: model '%s' failed: %s",
+                    cfg.model, exc,
+                )
+                errors.append((cfg.model, str(exc)))
+
+        raise RuntimeError(
+            f"FallbackChain: all {len(self._configs)} models failed. "
+            + "; ".join(f"{m}: {e[:80]}" for m, e in errors)
+        )
+
+
+__all__ = ["ProviderEntry", "AuthType", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]
