@@ -1,6 +1,8 @@
-# meowcat v1.3.0 · Default Configuration & Execution Catalog
+# meowcat v1.3.6 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 31 路径 + 8 链条 + 7 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
+>
+> v1.3.6 新增：OrganPrompt 插槽 · Hippocampus 持久化 · LLM 模型货架 · 管理器基类 5 件套 · 调度/存储/编排/容错
 
 `create_cat()` 一行代码做了什么？出厂自带了哪些默认执行流？这里就是答案。
 
@@ -475,6 +477,25 @@ print(cat.wiring.describe())                        # 接线图描述
 | Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
 | Gateway 协议                                | `meowcat/gateway/`                            |
 | 测试 (60+ 用例)                             | `tests/`                                      |
+
+### v1.3.6 新增模块
+
+| 内容                          | 文件路径                        |
+| :---------------------------- | :------------------------------ |
+| OrganPrompt per-organ 提示插槽 | `meowcat/organ_prompt.py`       |
+| Hippocampus episodes 持久化    | `meowcat/defaults/episode.py`   |
+| LLM 模型货架 (12 供应商)      | `meowcat/model_shelf.py`        |
+| CompressionManager 上下文压缩  | `meowcat/compression.py`        |
+| RememberPolicy 记忆策略        | `meowcat/remember_policy.py`    |
+| ClarifyManager 歧义反问        | `meowcat/clarify.py`            |
+| BudgetTracker 压缩预算         | `meowcat/budget.py`             |
+| NoiseFilter 噪音过滤           | `meowcat/noise_filter.py`       |
+| PeriodicScheduler 周期调度     | `meowcat/scheduler.py`          |
+| FocusStore 专注持久化          | `meowcat/focus.py`              |
+| TopicClosureDetector 话题闭包  | `meowcat/topic_closure.py`      |
+| CheckpointStore 检查点存储     | `meowcat/checkpoint.py`         |
+| PlanReviser 策略链框架         | `meowcat/plan_reviser.py`       |
+| TaskOrchestrator DAG 编排      | `meowcat/task_orchestrator.py`   |
 
 ---
 

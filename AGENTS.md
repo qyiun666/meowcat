@@ -391,6 +391,101 @@ cat.cat_self.after_act("回答了用户问题", {"topic": "天气"})
 
 ---
 
+## 11.1 v1.3.6 新能力速查
+
+> 框架层新增 14 个模块，覆盖提示词/持久化/模型货架/管理器/调度/编排。
+
+### OrganPrompt — per-organ 提示插槽
+
+每个脑器官（cerebrum/cerebellum/amygdala/frontal）现在有独立的提示插槽：
+
+```python
+from meowcat.organ_prompt import OrganPrompt
+
+# 挂载 per-organ 提示
+organ_prompt = OrganPrompt(
+    identity="你是一个 Python 开发专家",
+    perspective="从代码质量和性能角度思考",
+    output_format="用 Markdown 格式回复",
+    route_templates={"deep_reason": "请回答: {prompt}"},
+)
+cat.mount_organ_prompt("cerebrum", organ_prompt)
+```
+
+### Hippocampus 持久化（episodes）
+
+```python
+# add_episode 返回 episode_id
+episode_id = await cat.path_registry.run("add_episode",
+    session_id="s1", question="你好", answer="你好！", metadata={})
+
+# 查询 episodes
+episodes = await cat.organ("brain", "hippocampus").get_episodes([episode_id])
+```
+
+### LLM 模型货架
+
+```python
+from meowcat.model_shelf import ModelShelf
+
+shelf = ModelShelf()
+# 按供应商入口探测模型列表
+models = await shelf.discover("openai", api_key="sk-xxx")
+# 注册入架
+shelf.register("gpt-4o", ModelConfig(provider="openai", api_key="sk-xxx", model="gpt-4o"))
+# FallbackChain 降级链
+chain = FallbackChain(["gpt-4o", "deepseek-v3", "ollama"])
+result = await chain.run(shelf, prompt="...")
+```
+
+### 管理器基类 5 件套
+
+| 模块                 | 导入                                         | 用途           |
+| -------------------- | -------------------------------------------- | -------------- |
+| CompressionManager   | `from meowcat.compression import ...`         | 分层压缩策略   |
+| RememberPolicy       | `from meowcat.remember_policy import ...`     | 三级退避过滤   |
+| ClarifyManager       | `from meowcat.clarify import ...`             | 歧义反问检测   |
+| BudgetTracker        | `from meowcat.budget import ...`              | 压缩预算 + LRU |
+| NoiseFilter          | `from meowcat.noise_filter import ...`        | 噪音正则过滤   |
+
+### 调度/存储/编排
+
+| 模块                  | 导入                                        | 用途             |
+| --------------------- | ------------------------------------------- | ---------------- |
+| PeriodicScheduler     | `from meowcat.scheduler import ...`          | interval/cron 调度 |
+| FocusStore            | `from meowcat.focus import ...`             | Frontal 专注持久化 |
+| TopicClosureDetector  | `from meowcat.topic_closure import ...`     | 话题闭包检测     |
+| CheckpointStore       | `from meowcat.checkpoint import ...`        | 检查点存储       |
+| PlanReviser           | `from meowcat.plan_reviser import ...`      | 策略链框架       |
+| TaskOrchestrator      | `from meowcat.task_orchestrator import ...` | DAG 拓扑调度     |
+
+### Async 生命周期钩子
+
+`on_start` / `on_shutdown` 钩子现在统一支持同步和异步回调：
+
+```python
+# 异步钩子（自动检测 iscoroutinefunction）
+async def my_start(cat):
+    await load_from_db()
+cat.on_start(my_start)
+
+# 同步钩子仍兼容
+def my_start_sync(cat):
+    print("started")
+cat.on_start(my_start_sync)
+```
+
+### Telemetry / CircuitBreaker 公开 API
+
+```python
+cat.enable_telemetry()
+cat.enable_circuit_breaker()
+cat.disable_telemetry()
+cat.disable_circuit_breaker()
+```
+
+---
+
 ## 12. 安装 & 测试
 
 ```bash

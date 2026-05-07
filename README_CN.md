@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.2-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-1.3.6-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -488,6 +488,7 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 | 版本       | 时间       | 亮点                                                                                                                                                                    |
 | :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.3.6** | 2026.05.07 | OrganPrompt 提示插槽 · Hippocampus episodes 持久化 · LLM 模型货架 12 供应商 · 管理器基类 5 件套 · PeriodicScheduler/FocusStore/CheckpointStore · PlanReviser 策略链 · TaskOrchestrator DAG · Async 生命周期钩子 · Telemetry/CB 公开 API |
 | **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                          |
 | **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                           |
 | **v1.1.x** | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                      |
