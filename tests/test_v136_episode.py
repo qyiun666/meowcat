@@ -36,7 +36,8 @@ class TestNoopHippocampusEpisode:
 
     def test_add_episode_with_id(self) -> None:
         h = NoopHippocampus()
-        eid = h.add_episode({"id": "ep1", "user_msg": "hi", "ai_reply": "hello"})
+        eid = h.add_episode(
+            {"id": "ep1", "user_msg": "hi", "ai_reply": "hello"})
         assert eid == "ep1"
         assert len(h.episodes) == 1
         assert h.episodes[0]["user_msg"] == "hi"
@@ -138,7 +139,8 @@ class TestJsonlEpisodeStore:
 
     def test_get_found(self, tmp_dir: str) -> None:
         store = self._store(tmp_dir)
-        store.append("cat1", {"id": "ep1", "user_msg": "hi", "ai_reply": "hello"})
+        store.append(
+            "cat1", {"id": "ep1", "user_msg": "hi", "ai_reply": "hello"})
         ep = store.get("cat1", "ep1")
         assert ep is not None
         assert ep["user_msg"] == "hi"
@@ -213,7 +215,8 @@ class TestJsonlEpisodeStore:
         # 新实例，相同目录
         store2 = JsonlEpisodeStore(tmp_dir)
         assert store2.get("cat1", "ep1") is not None
-        assert store2.get("cat1", "ep1")["user_msg"] == "persisted"  # type: ignore[index]
+        assert store2.get("cat1", "ep1")[
+            "user_msg"] == "persisted"  # type: ignore[index]
         assert len(store2.load_all("cat1")) == 2
         assert store2.get_stats("cat1") == {"total_episodes": 2}
 
@@ -222,8 +225,10 @@ class TestJsonlEpisodeStore:
         store.append("cat1", {"id": "a", "user_msg": "cat1-msg"})
         store.append("cat2", {"id": "b", "user_msg": "cat2-msg"})
 
-        assert store.get("cat1", "a")["user_msg"] == "cat1-msg"  # type: ignore[index]
-        assert store.get("cat2", "b")["user_msg"] == "cat2-msg"  # type: ignore[index]
+        # type: ignore[index]
+        assert store.get("cat1", "a")["user_msg"] == "cat1-msg"
+        # type: ignore[index]
+        assert store.get("cat2", "b")["user_msg"] == "cat2-msg"
         assert store.get("cat1", "b") is None  # cat1 看不到 cat2 的
 
         assert len(store.load_all("cat1")) == 1
@@ -297,7 +302,8 @@ class TestRenovatedHippocampusEpisode:
         assert eid == "ep1"
         # 确认已持久化到 store
         assert store.get("cat1", "ep1") is not None
-        assert store.get("cat1", "ep1")["user_msg"] == "hi"  # type: ignore[index]
+        assert store.get("cat1", "ep1")[
+            "user_msg"] == "hi"  # type: ignore[index]
 
     def test_add_episode_store_never_crashes(self) -> None:
         """即使 store 不可写，add_episode 也不应该抛异常。"""
@@ -352,7 +358,8 @@ class TestRenovatedHippocampusEpisode:
         store = JsonlEpisodeStore(tmp_dir)
         h = RenovatedHippocampus(episode_store=store)
         h.cat_uid = ""  # 未设置
-        eid = h.add_episode({"id": "ep1", "cat_uid": "fallback-cat", "user_msg": "x"})
+        eid = h.add_episode(
+            {"id": "ep1", "cat_uid": "fallback-cat", "user_msg": "x"})
         assert eid == "ep1"
         assert store.get("fallback-cat", "ep1") is not None
 
@@ -380,6 +387,7 @@ class TestHippocampusLifecycle:
 
     def test_load_from_store_no_store(self) -> None:
         h = RenovatedHippocampus()  # no store
+
         async def _run() -> None:
             await h._load_from_store()  # 不应抛异常
         anyio.run(_run)
@@ -388,12 +396,14 @@ class TestHippocampusLifecycle:
         store = JsonlEpisodeStore(tempfile.mkdtemp())
         h = RenovatedHippocampus(episode_store=store)
         h.cat_uid = ""  # 未设置
+
         async def _run() -> None:
             await h._load_from_store()  # 不应抛异常
         anyio.run(_run)
 
     def test_flush_to_store_no_store(self) -> None:
         h = RenovatedHippocampus()
+
         async def _run() -> None:
             await h._flush_to_store()  # no-op
         anyio.run(_run)
@@ -408,6 +418,7 @@ class TestHippocampusLifecycle:
         # 新 hippocampus
         h = RenovatedHippocampus(episode_store=store)
         h.cat_uid = "cat1"
+
         async def _run() -> None:
             await h._load_from_store()
         anyio.run(_run)
@@ -442,6 +453,7 @@ class TestHippocampusLifecycle:
 
         h = RenovatedHippocampus(episode_store=_BadStore())
         h.cat_uid = "cat1"
+
         async def _run() -> None:
             await h._load_from_store()
         anyio.run(_run)
@@ -480,6 +492,7 @@ class TestHippocampusLifecycle:
         # 第二轮：新建
         h2 = RenovatedHippocampus(episode_store=store)
         h2.cat_uid = "cat1"
+
         async def _run() -> None:
             await h2._load_from_store()
         anyio.run(_run)
