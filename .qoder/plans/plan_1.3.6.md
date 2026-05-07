@@ -90,8 +90,8 @@
 | 子任务 | 能力域   | 依赖 | 并发 | 内容                                                                             |
 | ------ | -------- | ---- | ---- | -------------------------------------------------------------------------------- |
 | T-21   | 代码生成 | T-02 | [∥]  | D8 `PeriodicScheduler` 基类 — interval/cron 注册                                 |
-| T-22   | 代码生成 | T-02 | [∥]  | D9 `FocusStore` 协议 + 默认 JSON 实现，挂 lifecycle                              |
-| T-23   | 代码生成 | 无   | [∥]  | D15 `TopicClosureDetector` 基类 — detect/summarize/decay/inject 钩子，信号词注册 |
+| T-22   | 代码生成 | T-02 | [∥]  | [x] D9 `FocusStore` 协议 + 默认 JSON 实现，挂 lifecycle                              |
+| T-23   | 代码生成 | 无   | [∥]  | [x] D15 `TopicClosureDetector` 基类 — detect/summarize/decay/inject 钩子，信号词注册 |
 | T-24   | 代码生成 | T-10 | —    | [x] D16 `CheckpointStore` 协议 + 默认 JSON 实现                                      |
 
 ### Phase 7: 编排与容错（2 个）

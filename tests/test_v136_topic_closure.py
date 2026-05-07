@@ -557,7 +557,8 @@ class TestCustomOverrides:
 
         d = CustomDetector()
         d.decay("topic_x")
-        assert d.diagnose()["closed_topics_count"] == 0  # custom decay is no-op
+        # custom decay is no-op
+        assert d.diagnose()["closed_topics_count"] == 0
 
     async def test_override_inject_to_cortex(self) -> None:
         """Custom cortex injection."""
