@@ -21,7 +21,6 @@ from meowcat.defaults.presets import (
 
 from ._helpers import _detect_language, _extract_keywords
 
-
 # =========================================================================
 # Senses — 简装修
 # =========================================================================

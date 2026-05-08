@@ -40,9 +40,9 @@ from typing import TYPE_CHECKING, Any
 
 from meowcat.assembly import CatBase
 from meowcat.colony.config import ColonyConfig, ColonyOwner
+from meowcat.colony.delegation import _DelegationMixin
 from meowcat.colony.federation import _FederationMixin
 from meowcat.colony.namespace import _NamespaceMixin
-from meowcat.colony.delegation import _DelegationMixin
 from meowcat.colony.registry import GlobalColonyRegistry
 from meowcat.colony.rules import ColonyRules
 from meowcat.errors import IllegalNeuralPathError
