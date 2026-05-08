@@ -293,6 +293,7 @@ class PlanReviser:
                 continue
 
             self._attempt_count += 1
+            ctx.attempt = self._attempt_count
 
             result = await strategy.revise(ctx)
             if result.success:

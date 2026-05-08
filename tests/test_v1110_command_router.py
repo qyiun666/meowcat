@@ -108,6 +108,7 @@ class TestRegistration:
 
 # -- 4. 路由匹配 -------------------------------------------------------
 
+@pytest.mark.anyio
 class TestRouting:
     """route 方法路由匹配。"""
 
@@ -159,6 +160,7 @@ class TestRouting:
 
 # -- 5. Middleware 中间件 ----------------------------------------------
 
+@pytest.mark.anyio
 class TestMiddleware:
     """middleware 中间件拦截。"""
 
@@ -242,6 +244,7 @@ class TestListing:
 
 # -- 7. 异常处理 -------------------------------------------------------
 
+@pytest.mark.anyio
 class TestErrorHandling:
     """handler 异常处理。"""
 
@@ -286,6 +289,7 @@ class TestPluggableInheritance:
 
 # -- 9. 独立测试 -------------------------------------------------------
 
+@pytest.mark.anyio
 class TestStandalone:
     """CommandRouter 完全独立，零依赖 CatBase/Colony."""
 
@@ -303,6 +307,7 @@ class TestStandalone:
 
 # -- 10. 综合场景 ------------------------------------------------------
 
+@pytest.mark.anyio
 class TestIntegrationScenarios:
     """综合使用场景。"""
 

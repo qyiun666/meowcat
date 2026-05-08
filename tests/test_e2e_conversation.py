@@ -70,6 +70,7 @@ class _ShortCircuitStage(BaseStage):
 # ── Tests ──────────────────────────────────────────────────────────────
 
 
+@pytest.mark.anyio
 class TestE2EConversationLoop:
     """Full perceive() → reflex → pipeline → lifecycle events."""
 

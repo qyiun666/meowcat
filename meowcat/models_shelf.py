@@ -262,8 +262,12 @@ class ModelShelf:
         if resolved.auth_type != "none" and api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
-        # Ollama special case — detect by auth_type (none) or provider key
-        is_ollama = resolved.auth_type == "none" or (isinstance(entry, str) and entry == "ollama")
+        # Ollama special case — detect by explicit provider key, or by
+        # auth_type="none" + standard Ollama port 11434 (avoids false match
+        # for custom-openai deployments also running on localhost).
+        is_ollama = (isinstance(entry, str) and entry == "ollama") or (
+            resolved.auth_type == "none" and ":11434" in base_url
+        )
         if is_ollama:
             url = f"{base_url}/api/tags"
             data = await anyio.to_thread.run_sync(

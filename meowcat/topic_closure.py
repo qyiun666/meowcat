@@ -438,13 +438,29 @@ class TopicClosureDetector:
         Returns:
             Confidence score (0..1).
         """
-        base = self._signal_weights.get(
-            matched_word,
-            self.DEFAULT_SIGNAL_WEIGHTS.get(matched_word, 0.5),
-        )
+        base = self._score_signal_words(matched_word)
         # Boost confidence with more exchanges (logarithmic)
         exchange_bonus = min(0.3, self._exchange_count * 0.02)
         return min(1.0, base + exchange_bonus)
+
+    def _score_signal_words(self, matched_word: str) -> float:
+        """Score a matched signal word (0..1) from registered weights.
+
+        Looks up the word in instance-level ``_signal_weights`` first,
+        then falls back to ``DEFAULT_SIGNAL_WEIGHTS``, then to 0.5.
+
+        Overridable for custom weighting logic.
+
+        Args:
+            matched_word:  The signal word to score.
+
+        Returns:
+            Weight score (0..1).  Higher = stronger closure signal.
+        """
+        return self._signal_weights.get(
+            matched_word,
+            self.DEFAULT_SIGNAL_WEIGHTS.get(matched_word, 0.5),
+        )
 
     def _trim_context(self) -> None:
         """Trim recent context to stay within token_window (char-based)."""

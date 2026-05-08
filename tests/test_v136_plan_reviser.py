@@ -393,7 +393,8 @@ class TestPlanReviserRevise:
         ctx = RevisionContext(task_id="t10", attempt=99)
         result = await r.revise(ctx)
         assert result.success is True
-        # ctx.attempt is no longer mutated by revise() — use attempt_count instead
+        # ctx.attempt is synchronized with attempt_count inside revise()
+        assert ctx.attempt == 2
         assert r.attempt_count == 2
 
 

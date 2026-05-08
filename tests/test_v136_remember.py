@@ -122,6 +122,7 @@ class TestRememberPolicyInit:
 
 # ── 3. Pre-filter ──────────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberPreFilter:
     """预过滤: 太短 / 噪声模式。"""
 
@@ -175,6 +176,7 @@ class TestRememberPreFilter:
 
 # ── 4. Level 1 — Always remember ───────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberLevel1:
     """Level 1: 新内容 → 总是记住。"""
 
@@ -217,6 +219,7 @@ class TestRememberLevel1:
 
 # ── 5. Level 2 — Throttle / cooldown ───────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberLevel2:
     """Level 2: 相似内容 → 冷却检查。"""
 
@@ -286,6 +289,7 @@ class TestRememberLevel2:
 
 # ── 6. Level 3 — Skip ──────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberLevel3:
     """Level 3: 太多相似 → 跳过。"""
 
@@ -361,6 +365,7 @@ class TestRememberLevel3:
 
 # ── 7. Record ──────────────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberRecord:
     """record() 历史追踪。"""
 
@@ -411,6 +416,7 @@ class TestRememberRecord:
 
 # ── 8. Edge cases ──────────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberEdge:
     """边界: 空字符串 / 纯空白 / 极长文本。"""
 
@@ -454,6 +460,7 @@ class TestRememberEdge:
 
 # ── 9. Diagnose ────────────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberDiagnose:
     """diagnose() 快照。"""
 
@@ -530,6 +537,7 @@ class TestRememberSimilarity:
 
 # ── 11. Custom tiers ───────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestRememberCustomTiers:
     """自定义 tier 方法覆盖。"""
 

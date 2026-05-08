@@ -125,7 +125,7 @@ class InMemorySharedStore(SharedStore):
         for pattern, queues in list(self._watchers.items()):
             if key.startswith(pattern):
                 for q in queues:
-                    with contextlib.suppress(asyncio.QueFull):
+                    with contextlib.suppress(asyncio.QueueFull):
                         q.put_nowait((key, value))
 
     # -- SharedStore compat methods (override for efficiency) ---------

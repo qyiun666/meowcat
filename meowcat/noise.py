@@ -89,10 +89,6 @@ class NoiseFilter:
     Returns ``False`` if ANY check flags the exchange as noise.
     """
 
-    # ── Default noise patterns (class-level, safe to reference) ──
-
-    DEFAULT_NOISE_PATTERNS: list[str] = _DEFAULT_NOISE_PATTERNS
-
     def __init__(
         self,
         noise_patterns: Sequence[str] | None = None,
@@ -102,7 +98,7 @@ class NoiseFilter:
     ) -> None:
         self._config = NoiseFilterConfig(
             noise_patterns=(
-                list(noise_patterns) if noise_patterns is not None else self.DEFAULT_NOISE_PATTERNS
+                list(noise_patterns) if noise_patterns is not None else _DEFAULT_NOISE_PATTERNS
             ),
             min_chars=min_chars,
             max_rep_ratio=max_rep_ratio,

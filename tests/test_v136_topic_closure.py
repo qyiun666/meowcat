@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import time
 
+import pytest
+
 from meowcat.topic_closure import (
     TopicClosureDetector,
     TopicClosureConfig,
@@ -297,6 +299,7 @@ class TestSignalWordManagement:
 
 # ── 7. Summarize ───────────────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestSummarize:
     """summarize() 默认行为。"""
 
@@ -502,6 +505,7 @@ class TestDiagnose:
 
 # ── 13. Custom overrides ───────────────────────────────────────────────
 
+@pytest.mark.anyio
 class TestCustomOverrides:
     """自定义各钩子。"""
 

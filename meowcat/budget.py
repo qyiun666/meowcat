@@ -95,7 +95,7 @@ class BudgetTracker:
             chars_per_token=chars_per_token,
             min_free_ratio=min_free_ratio,
         )
-        # OrderedDict maintains insertion order; we update on access for LRU
+        # last_access_ts (field [2]) is the canonical LRU key; eviction sorts by it
         self._items: OrderedDict[str, tuple[int, str | None, float]] = OrderedDict()
         # item_key → (tokens, category, last_access_ts)
         self._total_used: int = 0
@@ -201,8 +201,6 @@ class BudgetTracker:
             return False
         tokens, category, _ = self._items[key]
         self._items[key] = (tokens, category, time.monotonic())
-        # Move to end (LRU)
-        self._items.move_to_end(key)
         return True
 
     def release(self, key: str) -> int:

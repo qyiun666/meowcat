@@ -275,6 +275,17 @@ class TaskOrchestrator:
     def _kahn_sort(nodes: dict[str, TaskNode]) -> list[list[str]]:
         """Kahn's algorithm: topologically sort nodes into execution levels.
 
+        **Single source of truth** for topological sorting.  Called by both:
+
+        - :meth:`topological_sort` — public inspection API (always on
+          ``self._nodes``).
+        - :meth:`_execute_levels` — private execution engine (on a
+          *filtered subgraph* when ``execute(tasks=[...])`` is used).
+
+        Because ``_execute_levels`` may receive a different node set than
+        ``self._nodes``, the two callers keep independent call-sites rather
+        than chaining through ``topological_sort``.
+
         Args:
             nodes: Task nodes keyed by task_id.
 
@@ -324,9 +335,20 @@ class TaskOrchestrator:
     def topological_sort(self) -> list[list[str]]:
         """Topologically sort registered tasks into execution levels.
 
+        **Public inspection API** — callers use this to preview the
+        execution plan before running :meth:`execute`.  It always
+        operates on the full ``self._nodes`` set.
+
         Each level is a list of ``task_id`` strings that can run
         concurrently (no mutual dependencies).  Levels are ordered:
         level 0 has no dependencies, level 1 depends only on level 0, etc.
+
+        .. note::
+
+           :meth:`_execute_levels` does **not** call this method.
+           It calls :meth:`_kahn_sort` directly because it sorts a
+           *filtered subgraph* (when ``execute(tasks=[...])`` is used),
+           which may differ from ``self._nodes``.
 
         Returns:
             A list of levels, each being a list of ``task_id`` strings.
@@ -400,7 +422,27 @@ class TaskOrchestrator:
         nodes: dict[str, TaskNode],
         executor: TaskExecutor,
     ) -> dict[str, TaskResult]:
-        """Execute tasks level-by-level with topological ordering."""
+        """Execute tasks level-by-level with topological ordering.
+
+        **Private execution engine** — called by :meth:`execute`.
+        Performs the full lifecycle: topological sort → concurrent
+        dispatch per level → status tracking → failure propagation.
+
+        Calls :meth:`_kahn_sort` directly (not :meth:`topological_sort`)
+        because it operates on *nodes*, which is a filtered subgraph
+        when ``execute(tasks=[...])`` is used.  The two methods serve
+        complementary roles:
+
+        ======================  =======================  =====================
+        Method                  Role                      Operates on
+        ======================  =======================  =====================
+        :meth:`topological_sort`  Public inspection API    ``self._nodes`` (all)
+        :meth:`_execute_levels`   Private execution engine  *nodes* (subgraph)
+        ======================  =======================  =====================
+
+        Both delegate to :meth:`_kahn_sort` — the single source of
+        truth for Kahn's algorithm — but with different input sets.
+        """
         results: dict[str, TaskResult] = {}
         failed_ids: set[str] = set()
 
