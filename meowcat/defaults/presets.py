@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
-
 
 # =========================================================================
 # KeywordPreset — 关键词预设 (挂载到 Ears/Thalamus/Amygdala/Frontal)
 # =========================================================================
+
 
 @dataclass
 class KeywordPreset:
@@ -42,13 +41,12 @@ class KeywordPreset:
     topic_keywords: dict[str, list[str]] = field(default_factory=dict)
     priority_keywords: list[str] = field(default_factory=list)
 
-    def merge(self, other: "KeywordPreset") -> "KeywordPreset":
+    def merge(self, other: KeywordPreset) -> KeywordPreset:
         """Merge another preset into this one (other takes priority on conflict)."""
         return KeywordPreset(
             name=f"{self.name}+{other.name}",
             stop_words=self.stop_words | other.stop_words,
-            command_patterns={**self.command_patterns,
-                              **other.command_patterns},
+            command_patterns={**self.command_patterns, **other.command_patterns},
             danger_patterns=self.danger_patterns + other.danger_patterns,
             topic_keywords={**self.topic_keywords, **other.topic_keywords},
             priority_keywords=self.priority_keywords + other.priority_keywords,
@@ -58,6 +56,7 @@ class KeywordPreset:
 # =========================================================================
 # PromptPreset — 提示词预设 (挂载到 Brainstem/Cerebrum)
 # =========================================================================
+
 
 @dataclass
 class PromptPreset:
@@ -95,22 +94,25 @@ class PromptPreset:
             parts.append(self.post_prompt)
         return "\n".join(parts)
 
-    def merge(self, other: "PromptPreset") -> "PromptPreset":
+    def merge(self, other: PromptPreset) -> PromptPreset:
         """Merge another preset into this one (other takes priority on conflict)."""
         return PromptPreset(
             name=f"{self.name}+{other.name}",
             templates={**self.templates, **other.templates},
             fallback=other.fallback or self.fallback,
-            pre_prompt=self.pre_prompt + "\n" +
-            other.pre_prompt if other.pre_prompt else self.pre_prompt,
-            post_prompt=self.post_prompt + "\n" +
-            other.post_prompt if other.post_prompt else self.post_prompt,
+            pre_prompt=self.pre_prompt + "\n" + other.pre_prompt
+            if other.pre_prompt
+            else self.pre_prompt,
+            post_prompt=self.post_prompt + "\n" + other.post_prompt
+            if other.post_prompt
+            else self.post_prompt,
         )
 
 
 # =========================================================================
 # OrganPrompt — per-organ 提示词插槽 (v1.3.6 挂载到 Cerebrum/Cerebellum)
 # =========================================================================
+
 
 @dataclass
 class OrganPrompt:
@@ -143,73 +145,275 @@ class OrganPrompt:
 
 # -- English stop words (common function words) ---------------------
 
-_EN_STOP: frozenset[str] = frozenset({
-    "the", "is", "a", "an", "in", "on", "at", "to", "for", "of", "and",
-    "or", "it", "be", "was", "are", "this", "that", "with", "from", "by",
-    "as", "but", "not", "so", "if", "we", "you", "i", "he", "she", "they",
-    "me", "my", "your", "his", "her", "our", "do", "does", "did", "can",
-    "will", "would", "could", "should", "has", "have", "had", "been",
-    "just", "very", "really", "about", "all", "no", "yes", "what", "when",
-    "where", "which", "who", "how", "why",
-})
+_EN_STOP: frozenset[str] = frozenset(
+    {
+        "the",
+        "is",
+        "a",
+        "an",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "and",
+        "or",
+        "it",
+        "be",
+        "was",
+        "are",
+        "this",
+        "that",
+        "with",
+        "from",
+        "by",
+        "as",
+        "but",
+        "not",
+        "so",
+        "if",
+        "we",
+        "you",
+        "i",
+        "he",
+        "she",
+        "they",
+        "me",
+        "my",
+        "your",
+        "his",
+        "her",
+        "our",
+        "do",
+        "does",
+        "did",
+        "can",
+        "will",
+        "would",
+        "could",
+        "should",
+        "has",
+        "have",
+        "had",
+        "been",
+        "just",
+        "very",
+        "really",
+        "about",
+        "all",
+        "no",
+        "yes",
+        "what",
+        "when",
+        "where",
+        "which",
+        "who",
+        "how",
+        "why",
+    }
+)
 
 # -- Chinese stop words (常用停用词) ---------------------------------
 
-_ZH_STOP: frozenset[str] = frozenset({
-    "的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一",
-    "一个", "上", "也", "很", "到", "说", "要", "去", "你", "会", "着",
-    "没有", "看", "好", "自己", "这", "他", "她", "它", "们", "那", "些",
-    "吗", "吧", "啊", "呢", "哦", "嗯", "哈", "呀", "嘛", "呗",
-    "可以", "需要", "应该", "能够", "可能", "已经", "还是", "但是",
-    "因为", "所以", "如果", "虽然", "不过", "然后", "之后", "之前",
-    "什么", "怎么", "怎么样", "为什么", "哪里", "哪个", "多少",
-    "这个", "那个", "这些", "那些", "这样", "那样", "这里", "那里",
-    "只是", "就是", "还是", "不是", "还有", "没有",
-    "让", "把", "被", "给", "对", "从", "向", "用", "以",
-    "每", "最", "更", "只", "才", "都", "再", "又", "也",
-    "请", "帮", "麻烦", "谢谢", "请问",
-})
+_ZH_STOP: frozenset[str] = frozenset(
+    {
+        "的",
+        "了",
+        "在",
+        "是",
+        "我",
+        "有",
+        "和",
+        "就",
+        "不",
+        "人",
+        "都",
+        "一",
+        "一个",
+        "上",
+        "也",
+        "很",
+        "到",
+        "说",
+        "要",
+        "去",
+        "你",
+        "会",
+        "着",
+        "没有",
+        "看",
+        "好",
+        "自己",
+        "这",
+        "他",
+        "她",
+        "它",
+        "们",
+        "那",
+        "些",
+        "吗",
+        "吧",
+        "啊",
+        "呢",
+        "哦",
+        "嗯",
+        "哈",
+        "呀",
+        "嘛",
+        "呗",
+        "可以",
+        "需要",
+        "应该",
+        "能够",
+        "可能",
+        "已经",
+        "还是",
+        "但是",
+        "因为",
+        "所以",
+        "如果",
+        "虽然",
+        "不过",
+        "然后",
+        "之后",
+        "之前",
+        "什么",
+        "怎么",
+        "怎么样",
+        "为什么",
+        "哪里",
+        "哪个",
+        "多少",
+        "这个",
+        "那个",
+        "这些",
+        "那些",
+        "这样",
+        "那样",
+        "这里",
+        "那里",
+        "只是",
+        "就是",
+        "不是",
+        "还有",
+        "让",
+        "把",
+        "被",
+        "给",
+        "对",
+        "从",
+        "向",
+        "用",
+        "以",
+        "每",
+        "最",
+        "更",
+        "只",
+        "才",
+        "再",
+        "又",
+        "请",
+        "帮",
+        "麻烦",
+        "谢谢",
+        "请问",
+    }
+)
 
 # -- English command patterns ---------------------------------------
 
 _EN_COMMANDS: dict[str, str] = {
-    "help": "chat", "info": "chat", "status": "chat",
-    "tool": "tool", "tools": "tool",
-    "run": "action", "exec": "action", "execute": "action",
-    "file": "file", "read": "file", "write": "file", "edit": "file",
-    "memory": "memory", "remember": "memory", "forget": "memory", "recall": "memory",
-    "maintenance": "maintenance", "cleanup": "maintenance",
-    "diagnose": "diagnostic", "health": "diagnostic", "check": "diagnostic",
-    "search": "memory", "find": "memory", "lookup": "memory",
-    "create": "file", "delete": "action", "remove": "action",
-    "web": "action", "fetch": "action", "download": "action",
-    "config": "chat", "settings": "chat", "setup": "chat",
+    "help": "chat",
+    "info": "chat",
+    "status": "chat",
+    "tool": "tool",
+    "tools": "tool",
+    "run": "action",
+    "exec": "action",
+    "execute": "action",
+    "file": "file",
+    "read": "file",
+    "write": "file",
+    "edit": "file",
+    "memory": "memory",
+    "remember": "memory",
+    "forget": "memory",
+    "recall": "memory",
+    "maintenance": "maintenance",
+    "cleanup": "maintenance",
+    "diagnose": "diagnostic",
+    "health": "diagnostic",
+    "check": "diagnostic",
+    "search": "memory",
+    "find": "memory",
+    "lookup": "memory",
+    "create": "file",
+    "delete": "action",
+    "remove": "action",
+    "web": "action",
+    "fetch": "action",
+    "download": "action",
+    "config": "chat",
+    "settings": "chat",
+    "setup": "chat",
 }
 
 # -- Chinese command patterns (中文指令路由) --------------------------
 
 _ZH_COMMANDS: dict[str, str] = {
-    "帮助": "chat", "帮忙": "chat", "说明": "chat", "指南": "chat",
-    "工具": "tool", "执行": "action", "运行": "action",
-    "文件": "file", "读取": "file", "写入": "file", "编辑": "file",
-    "记忆": "memory", "记住": "memory", "忘记": "memory", "回想": "memory",
-    "维护": "maintenance", "清理": "maintenance",
-    "诊断": "diagnostic", "检查": "diagnostic", "健康": "diagnostic",
-    "搜索": "memory", "查找": "memory", "寻找": "memory",
-    "创建": "file", "删除": "action", "移除": "action",
-    "网络": "action", "获取": "action", "下载": "action",
-    "配置": "chat", "设置": "chat", "安装": "chat",
-    "你好": "chat", "嗨": "chat", "聊天": "chat",
-    "分析": "chat", "解释": "chat", "总结": "chat", "翻译": "chat",
-    "写": "file", "代码": "file", "脚本": "file", "测试": "chat",
-    "安全": "diagnostic", "风险": "diagnostic", "扫描": "diagnostic",
+    "帮助": "chat",
+    "帮忙": "chat",
+    "说明": "chat",
+    "指南": "chat",
+    "工具": "tool",
+    "执行": "action",
+    "运行": "action",
+    "文件": "file",
+    "读取": "file",
+    "写入": "file",
+    "编辑": "file",
+    "记忆": "memory",
+    "记住": "memory",
+    "忘记": "memory",
+    "回想": "memory",
+    "维护": "maintenance",
+    "清理": "maintenance",
+    "诊断": "diagnostic",
+    "检查": "diagnostic",
+    "健康": "diagnostic",
+    "搜索": "memory",
+    "查找": "memory",
+    "寻找": "memory",
+    "创建": "file",
+    "删除": "action",
+    "移除": "action",
+    "网络": "action",
+    "获取": "action",
+    "下载": "action",
+    "配置": "chat",
+    "设置": "chat",
+    "安装": "chat",
+    "你好": "chat",
+    "嗨": "chat",
+    "聊天": "chat",
+    "分析": "chat",
+    "解释": "chat",
+    "总结": "chat",
+    "翻译": "chat",
+    "写": "file",
+    "代码": "file",
+    "脚本": "file",
+    "测试": "chat",
+    "安全": "diagnostic",
+    "风险": "diagnostic",
+    "扫描": "diagnostic",
 }
 
 # -- English danger patterns (SQL/XSS/shell/path) -------------------
 
 _EN_DANGER: list[re.Pattern] = [
-    re.compile(
-        r"(?i)(?:drop\s+table|delete\s+from|truncate\s+table|alter\s+table)\b"),
+    re.compile(r"(?i)(?:drop\s+table|delete\s+from|truncate\s+table|alter\s+table)\b"),
     re.compile(r"(?i)(?:exec\s*\(|eval\s*\(|__import__\s*\(|subprocess\b)"),
     re.compile(r"(?i)(?:rm\s+-rf\s+/|:\(\)\s*\{\s*:\|:&\s*\}|wget\s+.*\|sh)"),
     re.compile(r"(?i)<script\b.*?>"),
@@ -313,8 +517,14 @@ PROMPT_PRESETS: dict[str, PromptPreset] = {
 
 
 __all__ = [
-    "KeywordPreset", "PromptPreset", "OrganPrompt",
-    "KW_EN", "KW_ZH", "KW_BILINGUAL",
-    "PROMPT_DEFAULT", "PROMPT_ZH",
-    "KW_PRESETS", "PROMPT_PRESETS",
+    "KeywordPreset",
+    "PromptPreset",
+    "OrganPrompt",
+    "KW_EN",
+    "KW_ZH",
+    "KW_BILINGUAL",
+    "PROMPT_DEFAULT",
+    "PROMPT_ZH",
+    "KW_PRESETS",
+    "PROMPT_PRESETS",
 ]

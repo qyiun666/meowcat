@@ -9,15 +9,16 @@ macOS sandbox, Windows named pipes, etc. are implemented by the desktop layer.
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 
-
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
-from typing import Any, AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
-from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
+from meowcat.gateway.protocol import SignalContext
 
 
 class IpcAdapter:
@@ -43,23 +44,24 @@ class IpcAdapter:
         self._on_stream = on_stream
 
         # Clean up old socket file
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(self.socket_path)
-        except OSError:
-            pass
 
         async def handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
             await self._handle_connection(reader, writer)
 
         self._server = await asyncio.start_unix_server(
-            handler, path=self.socket_path,
+            handler,
+            path=self.socket_path,
         )
 
         async with self._server:
             await self._server.serve_forever()
 
     async def _handle_connection(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         """Handle a single IPC connection — JSON-line protocol."""
         session_id = f"ipc-{id(writer)}"
@@ -82,8 +84,7 @@ class IpcAdapter:
                 except json.JSONDecodeError:
                     continue
 
-                text = msg.get("message", "") if isinstance(
-                    msg, dict) else str(msg)
+                text = msg.get("message", "") if isinstance(msg, dict) else str(msg)
                 if not text:
                     continue
 
@@ -97,10 +98,8 @@ class IpcAdapter:
             pass
         finally:
             self._connections.pop(session_id, None)
-            try:
+            with contextlib.suppress(OSError):
                 writer.close()
-            except OSError:
-                pass
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
         """Send JSON response."""
@@ -128,20 +127,15 @@ class IpcAdapter:
     async def stop(self) -> None:
         """Shut down IPC server and all connections."""
         for writer in list(self._connections.values()):
-            try:
+            with contextlib.suppress(OSError):
                 writer.close()
-            except OSError:
-                pass
         self._connections.clear()
         if self._server:
             self._server.close()
             self._server = None
         # Clean up socket file
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(self.socket_path)
-        except OSError:
-            pass
 
 
 __all__ = ["IpcAdapter"]
-

@@ -6,7 +6,6 @@
 Zero ORM, zero business logic. Concrete implementations live in meowagent.
 """
 
-
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -16,12 +15,24 @@ from pydantic import BaseModel, Field
 from meowcat.protocols import AdapterProtocol, BrainStemProtocol, CatProtocol
 
 __all__ = [
-    "EntityShape", "ConnectionShape", "EpisodeShape", "FocusShape",
-    "SubTaskShape", "TaskResultShape", "OrchestratorReportShape",
-    "MaintenanceReportShape", "CandidateShape", "LocateResultShape",
-    "StageEvent", "PipelineContext", "LoopEvent",
-    "MergeProposalShape", "KittenCapability",
-    "WorkflowShape", "LLMConfig", "ModelConfig",
+    "EntityShape",
+    "ConnectionShape",
+    "EpisodeShape",
+    "FocusShape",
+    "SubTaskShape",
+    "TaskResultShape",
+    "OrchestratorReportShape",
+    "MaintenanceReportShape",
+    "CandidateShape",
+    "LocateResultShape",
+    "StageEvent",
+    "PipelineContext",
+    "LoopEvent",
+    "MergeProposalShape",
+    "KittenCapability",
+    "WorkflowShape",
+    "LLMConfig",
+    "ModelConfig",
 ]
 
 # -- Brain-area shapes ------------------------------------------------------
@@ -29,6 +40,7 @@ __all__ = [
 
 class EntityShape(BaseModel):
     """Entanglement graph entity."""
+
     id: str
     session_id: str
     name: str
@@ -48,6 +60,7 @@ class EntityShape(BaseModel):
 
 class ConnectionShape(BaseModel):
     """Entanglement graph connection."""
+
     id: str
     from_id: str
     to_id: str
@@ -61,6 +74,7 @@ class ConnectionShape(BaseModel):
 
 class EpisodeShape(BaseModel):
     """Entanglement graph episode."""
+
     id: str
     session_id: str = ""
     time: str = ""
@@ -73,6 +87,7 @@ class EpisodeShape(BaseModel):
 
 class FocusShape(BaseModel):
     """Working memory focus."""
+
     entity_id: str | None = None
     topic_ids: list[str] = Field(default_factory=list)
     turn_count: int = 0
@@ -80,11 +95,13 @@ class FocusShape(BaseModel):
     summary: str = ""
     context_snapshot: str = ""
 
+
 # -- Worker / Orchestration -------------------------------------------------
 
 
 class SubTaskShape(BaseModel):
     """Sub-task definition."""
+
     task_id: str
     role: str
     prompt: str
@@ -95,6 +112,7 @@ class SubTaskShape(BaseModel):
 
 class TaskResultShape(BaseModel):
     """Sub-task execution result."""
+
     task_id: str
     role: str
     success: bool
@@ -106,6 +124,7 @@ class TaskResultShape(BaseModel):
 
 class OrchestratorReportShape(BaseModel):
     """Orchestrator complete report."""
+
     subtasks: list[SubTaskShape] = Field(default_factory=list)
     results: list[TaskResultShape] = Field(default_factory=list)
     synthesis: str = ""
@@ -116,11 +135,13 @@ class OrchestratorReportShape(BaseModel):
     orchestration_id: str | None = None
     status: str = "completed"
 
+
 # -- Maintenance / Locate --------------------------------------------------
 
 
 class MaintenanceReportShape(BaseModel):
     """Steady-state maintenance report."""
+
     decayed: int = 0
     orphans_cleaned: int = 0
     woke: int = 0
@@ -129,6 +150,7 @@ class MaintenanceReportShape(BaseModel):
 
 class CandidateShape(BaseModel):
     """Retrieval candidate result. Concrete entity type lives in meowagent."""
+
     entity: EntityShape
     weight: float
     match_type: str
@@ -136,10 +158,12 @@ class CandidateShape(BaseModel):
 
 class LocateResultShape(BaseModel):
     """Locate result (formerly AlgorithmOutput, pure data)."""
+
     candidates: list[CandidateShape] = Field(default_factory=list)
     confidence: float = 0.0
     match_type: str = "none"
     is_ambiguous: bool = False
+
 
 # -- Pipeline / Events ----------------------------------------------
 
@@ -149,6 +173,7 @@ _EventKind = Literal["thinking", "output", "short_circuit"]
 
 class StageEvent(BaseModel):
     """Unified event produced by a Stage."""
+
     kind: _EventKind
     content: str = ""
     reply: str | None = None
@@ -165,11 +190,13 @@ class StageEvent(BaseModel):
     def short_circuit(cls, reply: str) -> StageEvent:
         return cls(kind="short_circuit", content="", reply=reply)
 
+
 # -- Companion BaseModel -----------------------------------------------
 
 
 class PipelineContext(BaseModel):
     """Cross-Stage shared state."""
+
     model_config = {"arbitrary_types_allowed": True}
 
     msg: str
@@ -193,9 +220,11 @@ class PipelineContext(BaseModel):
 
 class LoopEvent(BaseModel):
     """EventBus payload."""
+
     event: str
     payload: dict[str, Any] = Field(default_factory=dict)
     timestamp: str = ""
+
 
 # -- Kitten ---------------------------------------------------------
 
@@ -207,6 +236,7 @@ class MergeProposalShape(BaseModel):
     whether to write hippocampus/entanglement graph/trigger growth/crystallize/role emergence.
     See design.md section 12.6.
     """
+
     kitten_id: str
     # parent cat_uid, validated at absorb_merge to prevent spoofing
     parent_id: str
@@ -220,12 +250,14 @@ class MergeProposalShape(BaseModel):
     observations: list[str] = Field(default_factory=list)
     error_detail: str = ""
 
+
 class WorkflowShape(BaseModel):
     """Long-running workflow entity — task orchestration state persisted across sessions.
 
     Framework guarantees: state is never lost, restartable, memory-safe.
     Framework does NOT handle: step decomposition (LLM), kitten execution logic, trigger strategies.
     """
+
     entity_id: str
     cat_uid: str
     session_id: str
@@ -275,7 +307,7 @@ class KittenCapability(BaseModel):
     has_ears: bool = False
     has_eyes: bool = False
     has_whiskers: bool = True
-    has_paws: bool = True            # Iron rule: enforced True
+    has_paws: bool = True  # Iron rule: enforced True
 
     # ━━ Outputs (user-configurable) ━━
     has_mouth: bool = False
@@ -288,10 +320,9 @@ class KittenCapability(BaseModel):
 
     # ━━ Memory inheritance (inherit state from main cat, full or partial) ━━
     inherit_memory: Literal["none", "partial", "full"] = "none"
-    inherit_entity_ids: list[str] = Field(
-        default_factory=list)  # specify for partial inheritance
-    inherit_l6_recent: int = 0       # inherit most recent N L6 history entries
-    inherit_focus: bool = False      # whether to inherit main cat current focus
+    inherit_entity_ids: list[str] = Field(default_factory=list)  # specify for partial inheritance
+    inherit_l6_recent: int = 0  # inherit most recent N L6 history entries
+    inherit_focus: bool = False  # whether to inherit main cat current focus
 
     def model_post_init(self, __context: Any) -> None:
         """Iron rules silently enforced + minimum guarantee hard error."""
@@ -308,6 +339,7 @@ class KittenCapability(BaseModel):
 
 
 # -- Model config (v1.1.29) — litellm-free model shape ---------------------
+
 
 class ModelConfig(BaseModel):
     """Provider-agnostic model configuration — framework-layer canonical shape.
@@ -327,6 +359,7 @@ class ModelConfig(BaseModel):
         cfg = ModelConfig(provider="openai", model="gpt-4o", temperature=0.7)
         worker = BaseWorker(model=cfg)
     """
+
     provider: str = "openai"
     model: str
     temperature: float = 0.7
@@ -352,6 +385,7 @@ class ModelConfig(BaseModel):
             for ``ModelConfig``.
         """
         import warnings
+
         warnings.warn(
             "ModelConfig.to_llm_config() is deprecated. "
             "Use ModelConfig directly — LLMConfig is now an alias.",

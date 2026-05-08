@@ -78,8 +78,7 @@ class I18n(Pluggable):
                     break
         if value not in self._locales:
             raise ValueError(
-                f"Unsupported language '{value}'. "
-                f"Available: {list(self._locales.keys())}"
+                f"Unsupported language '{value}'. Available: {list(self._locales.keys())}"
             )
         self._lang = value
 
@@ -144,4 +143,3 @@ class I18n(Pluggable):
 
 
 __all__ = ["I18n"]
-

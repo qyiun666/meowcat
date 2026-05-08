@@ -29,17 +29,17 @@ Usage example::
     await gw.start()  # blocking, all Adapters run in parallel
 """
 
-
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, AsyncIterator, Dict
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 
 from meowcat.gateway.front_desk import DefaultFrontDesk
 from meowcat.gateway.protocol import (
     FrontDeskProtocol,
-    IoAdapterProtocol,
     GatewayProtocol,
+    IoAdapterProtocol,
     SignalContext,
 )
 
@@ -65,7 +65,7 @@ class Gateway:
     ) -> None:
         self.colony = colony
         self._front_desk: FrontDeskProtocol = front_desk or DefaultFrontDesk()
-        self._adapters: Dict[str, IoAdapterProtocol] = {}
+        self._adapters: dict[str, IoAdapterProtocol] = {}
 
     @property
     def front_desk(self) -> FrontDeskProtocol:
@@ -95,9 +95,11 @@ class Gateway:
             return
         tasks = []
         for adapter in self._adapters.values():
-            tasks.append(asyncio.create_task(
-                adapter.serve(self._on_message, self._on_stream),
-            ))
+            tasks.append(
+                asyncio.create_task(
+                    adapter.serve(self._on_message, self._on_stream),
+                )
+            )
         # all Adapters run in parallel, any exception propagates
         await asyncio.gather(*tasks)
 
@@ -113,7 +115,9 @@ class Gateway:
         return await self._front_desk.route(text, ctx, self.colony)
 
     async def _on_stream(
-        self, text: str, ctx: SignalContext,
+        self,
+        text: str,
+        ctx: SignalContext,
     ) -> AsyncIterator[str] | None:
         """Streaming version — currently delegates to non-streaming route().
 
@@ -122,8 +126,10 @@ class Gateway:
         """
         reply = await self._front_desk.route(text, ctx, self.colony)
         if reply is not None:
+
             async def _wrap():
                 yield reply
+
             return _wrap()
         return None
 

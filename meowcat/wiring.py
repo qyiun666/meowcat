@@ -17,10 +17,9 @@ Design points:
 This file has zero third-party dependencies, pure stdlib.
 """
 
-
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from meowcat.errors import IllegalNeuralPathError, MeowCatError
 
@@ -90,17 +89,23 @@ class Wiring:
         return edge in self._allowed
 
     def assert_allowed(
-        self, from_organ: Organ, to_organ: Organ,
+        self,
+        from_organ: Organ,
+        to_organ: Organ,
     ) -> None:
         """Raise :class:`IllegalNeuralPathError` if not allowed."""
         edge: Edge = (from_organ, to_organ)
         if edge in self._forbidden:
             raise IllegalNeuralPathError(
-                from_organ, to_organ, reason="forbidden by wiring",
+                from_organ,
+                to_organ,
+                reason="forbidden by wiring",
             )
         if edge not in self._allowed:
             raise IllegalNeuralPathError(
-                from_organ, to_organ, reason="not connected in wiring",
+                from_organ,
+                to_organ,
+                reason="not connected in wiring",
             )
 
     @property
@@ -125,7 +130,7 @@ class Wiring:
             return False
         return any(e not in self._forbidden for e in edges)
 
-    def snapshot(self) -> "WiringSnapshot":
+    def snapshot(self) -> WiringSnapshot:
         """Return an immutable view of the current graph, for frozen reads during reflex execution."""
         return WiringSnapshot(
             allowed=frozenset(self._allowed),

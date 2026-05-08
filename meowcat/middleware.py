@@ -7,15 +7,15 @@ All middleware implements :class:`SignalMiddleware` Protocol, can be registered
 directly via ``cat.use_middleware(...)``.
 """
 
-
 from __future__ import annotations
 
 import inspect
 import logging
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from meowcat.nervous import SignalCall, SignalMiddleware
+from meowcat.nervous import SignalCall
 
 _logger = logging.getLogger("meowcat.signal")
 
@@ -34,7 +34,10 @@ class SignalLogger:
         duration_ms = (time.monotonic() - ctx.timestamp) * 1000
         _logger.debug(
             "signal %s → %s.%s  (%.1fms)",
-            ctx.from_organ, ctx.to_organ, ctx.method, duration_ms,
+            ctx.from_organ,
+            ctx.to_organ,
+            ctx.method,
+            duration_ms,
         )
         return result
 
@@ -42,8 +45,12 @@ class SignalLogger:
         duration_ms = (time.monotonic() - ctx.timestamp) * 1000
         _logger.debug(
             "signal %s → %s.%s  ERROR %s: %s  (%.1fms)",
-            ctx.from_organ, ctx.to_organ, ctx.method,
-            type(error).__name__, error, duration_ms,
+            ctx.from_organ,
+            ctx.to_organ,
+            ctx.method,
+            type(error).__name__,
+            error,
+            duration_ms,
         )
 
 
@@ -153,4 +160,3 @@ class ContextInjector:
 
 
 __all__ = ["SignalLogger", "RateLimiter", "TimeoutGuard", "ContextInjector"]
-

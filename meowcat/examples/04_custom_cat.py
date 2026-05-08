@@ -11,7 +11,6 @@ of these subsystems.
 Run: ``python -m meowcat.examples.04_custom_cat``
 """
 
-
 from __future__ import annotations
 
 import anyio
@@ -55,11 +54,13 @@ async def main() -> None:
     biology.apply_default_wiring(nervous.wiring)
 
     # 4. Register a reflex: ears → thalamus
-    reflex.register(Reflex(
-        name="ear_to_brain",
-        trigger=lambda x: isinstance(x, str),
-        path=(("sense", "ears"), ("brain", "thalamus")),
-    ))
+    reflex.register(
+        Reflex(
+            name="ear_to_brain",
+            trigger=lambda x: isinstance(x, str),
+            path=(("sense", "ears"), ("brain", "thalamus")),
+        )
+    )
 
     # 5. Freeze + validate
     reflex.validate_paths()
@@ -67,8 +68,10 @@ async def main() -> None:
 
     # 6. Cross-organ signal
     result = await nervous.signal(
-        ("sense", "ears"), ("brain", "thalamus"),
-        "route", "hello-world",
+        ("sense", "ears"),
+        ("brain", "thalamus"),
+        "route",
+        "hello-world",
     )
     print(f"signal result: {result}")
 
@@ -81,4 +84,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
-

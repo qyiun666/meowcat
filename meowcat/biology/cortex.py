@@ -61,7 +61,10 @@ class Cortex(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "extractor": {"in": "facts: list[dict]", "out": "list[dict]"},
-        "belief": {"in": "key: str, value: str, confidence: float, challengeable: bool", "out": "dict | None"},
+        "belief": {
+            "in": "key: str, value: str, confidence: float, challengeable: bool",
+            "out": "dict | None",
+        },
     }
 
     __slots__ = ("_beliefs",)
@@ -173,7 +176,8 @@ class Cortex(Pluggable):
             return dict(belief)
 
         belief["confidence"] = round(
-            max(belief["confidence"] - impact, 0.0), 2,
+            max(belief["confidence"] - impact, 0.0),
+            2,
         )
         belief["challenge_count"] = belief.get("challenge_count", 0) + 1
         belief["last_challenge"] = evidence[:200]
@@ -185,7 +189,8 @@ class Cortex(Pluggable):
         return dict(belief)
 
     def get_beliefs(
-        self, min_confidence: float = 0.0,
+        self,
+        min_confidence: float = 0.0,
     ) -> list[tuple[str, str, float, bool]]:
         """List all current beliefs.
 
@@ -255,17 +260,20 @@ def _default_rule_extractor(facts: list[dict[str, Any]]) -> list[dict[str, Any]]
 
         # Pick dominant value
         dominant_val, dominant_count = max(
-            value_counts.items(), key=lambda x: x[1],
+            value_counts.items(),
+            key=lambda x: x[1],
         )
         confidence = dominant_count / total
 
-        rules.append({
-            "if": f"{entity}.{attr}",
-            "then": dominant_val,
-            "confidence": round(confidence, 2),
-            "count": dominant_count,
-            "total": total,
-        })
+        rules.append(
+            {
+                "if": f"{entity}.{attr}",
+                "then": dominant_val,
+                "confidence": round(confidence, 2),
+                "count": dominant_count,
+                "total": total,
+            }
+        )
 
     rules.sort(key=lambda x: -x["confidence"])
     return rules
@@ -288,4 +296,3 @@ class DefaultRuleExtractor:
 
 
 __all__ = ["Cortex", "DefaultRuleExtractor"]
-

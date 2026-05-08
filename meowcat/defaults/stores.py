@@ -6,10 +6,10 @@
 For rapid prototyping and testing. Use meowagent SQLite/JSONL implementations for production.
 """
 
-
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import Any
 
 from meowcat.storage import SharedStore
@@ -33,6 +33,7 @@ class InMemoryVectorStore:
 
     def __init__(self) -> None:
         import math
+
         self._math = math
         self._store: dict[str, list[float]] = {}
 
@@ -40,7 +41,9 @@ class InMemoryVectorStore:
         self._store[entity_id] = embedding
 
     async def search(
-        self, embedding: list[float], top_k: int = 5,
+        self,
+        embedding: list[float],
+        top_k: int = 5,
     ) -> list[str]:
         if not self._store:
             return []
@@ -64,7 +67,7 @@ class InMemoryVectorStore:
 
     # -- Internal ----------------------------------------------------
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = self._math.sqrt(sum(x * x for x in a))
         norm_b = self._math.sqrt(sum(y * y for y in b))
         if norm_a == 0 or norm_b == 0:
@@ -122,10 +125,8 @@ class InMemorySharedStore(SharedStore):
         for pattern, queues in list(self._watchers.items()):
             if key.startswith(pattern):
                 for q in queues:
-                    try:
+                    with contextlib.suppress(asyncio.QueFull):
                         q.put_nowait((key, value))
-                    except asyncio.QueFull:
-                        pass
 
     # -- SharedStore compat methods (override for efficiency) ---------
     async def load(self) -> dict[str, Any]:
@@ -152,11 +153,13 @@ class InMemoryL6Store:
     def append(self, cat_uid: str, turn: int, user_msg: str, ai_reply: str) -> None:
         if cat_uid not in self._records:
             self._records[cat_uid] = []
-        self._records[cat_uid].append({
-            "turn": turn,
-            "user": user_msg,
-            "ai": ai_reply,
-        })
+        self._records[cat_uid].append(
+            {
+                "turn": turn,
+                "user": user_msg,
+                "ai": ai_reply,
+            }
+        )
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]:
         return self._records.get(cat_uid, [])
@@ -167,9 +170,7 @@ class InMemoryL6Store:
 
     def total_chars(self, cat_uid: str) -> int:
         records = self._records.get(cat_uid, [])
-        return sum(
-            len(r.get("user", "")) + len(r.get("ai", "")) for r in records
-        )
+        return sum(len(r.get("user", "")) + len(r.get("ai", "")) for r in records)
 
     def get_stats(self, cat_uid: str) -> dict[str, Any]:
         records = self._records.get(cat_uid, [])
@@ -177,4 +178,3 @@ class InMemoryL6Store:
             "total_turns": len(records),
             "total_chars": self.total_chars(cat_uid),
         }
-

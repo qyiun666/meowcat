@@ -23,7 +23,6 @@ Usage::
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 from meowcat.log import MeowLog
@@ -90,8 +89,7 @@ class ScribblePad(Pluggable):
 
         # Capacity enforcement
         if self._enforce_capacity and self.is_full():
-            _log.warning("scribble rejected (pad full)",
-                         capacity=self._capacity)
+            _log.warning("scribble rejected (pad full)", capacity=self._capacity)
             return
 
         self._entries.append(payload)
@@ -207,6 +205,9 @@ class DefaultScribblePersister:
         return None  # don't transform, pass through
 
 
-__all__ = ["ScribblePad", "DefaultScribbleFilter", "DefaultScribbleLogger",
-           "DefaultScribblePersister"]
-
+__all__ = [
+    "ScribblePad",
+    "DefaultScribbleFilter",
+    "DefaultScribbleLogger",
+    "DefaultScribblePersister",
+]

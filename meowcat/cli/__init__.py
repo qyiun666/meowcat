@@ -14,9 +14,9 @@ v1.1.13: MeowTui — Textual TUI bare-bones App skeleton.
 """
 
 from meowcat.cli.commands import (
-    register_system_commands,
-    register_colony_commands,
     is_debug,
+    register_colony_commands,
+    register_system_commands,
 )
 from meowcat.cli.i18n import I18n
 from meowcat.cli.router import Command, CommandContext, CommandRouter
@@ -27,7 +27,14 @@ try:
 except ImportError:
     MeowTui = None
 
-__all__ = ["I18n", "Command", "CommandContext", "CommandRouter",
-           "register_system_commands", "register_colony_commands", "is_debug",
-           "MeowTui", "Theme"]
-
+__all__ = [
+    "I18n",
+    "Command",
+    "CommandContext",
+    "CommandRouter",
+    "register_system_commands",
+    "register_colony_commands",
+    "is_debug",
+    "MeowTui",
+    "Theme",
+]

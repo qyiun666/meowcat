@@ -168,7 +168,8 @@ class ChromaStore:
             )
             settings_kwargs["settings"] = settings
             self._client = chromadb.PersistentClient(
-                path=self._persist_dir, **settings_kwargs,
+                path=self._persist_dir,
+                **settings_kwargs,
             )
         else:
             self._client = chromadb.Client()
@@ -194,7 +195,6 @@ def _make_id(text: str, metadata: dict[str, Any]) -> str:
     """Generate a short unique ID from text + metadata."""
     import hashlib
     import json
-    seed = json.dumps({"text": text[:200], "meta": metadata},
-                      sort_keys=True, default=str)
-    return hashlib.md5(seed.encode()).hexdigest()[:12]
 
+    seed = json.dumps({"text": text[:200], "meta": metadata}, sort_keys=True, default=str)
+    return hashlib.md5(seed.encode()).hexdigest()[:12]

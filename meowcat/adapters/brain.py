@@ -13,6 +13,7 @@ via ``self._delegate("method", **kw)``.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from meowcat.adapters.base import AgentOrgan
@@ -26,41 +27,62 @@ class CerebrumAgent(AgentOrgan):
 
     HOOKS: dict[str, dict[str, str]] = {
         "generate": {"in": "prompt, system_prompt, temperature, max_tokens", "out": "str"},
-        "stream_generate": {"in": "prompt, system_prompt, temperature, max_tokens", "out": "AsyncIterator[str]"},
+        "stream_generate": {
+            "in": "prompt, system_prompt, temperature, max_tokens",
+            "out": "AsyncIterator[str]",
+        },
     }
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate", prompt, system_prompt, temperature, max_tokens,
+            "generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             if isinstance(r, str):
                 return r
         return await self._delegate(
-            "generate", prompt=prompt, system_prompt=system_prompt,
-            temperature=temperature, max_tokens=max_tokens,
+            "generate",
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+            "stream_generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             return r
         return await self._delegate(
-            "stream_generate", prompt=prompt, system_prompt=system_prompt,
-            temperature=temperature, max_tokens=max_tokens,
+            "stream_generate",
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
     def reload_config(self) -> None:
-        try:
+        with contextlib.suppress(AttributeError, Exception):
             self._agent.reload_config()
-        except (AttributeError, Exception):
-            pass
 
 
 class CerebellumAgent(AgentOrgan):
@@ -71,41 +93,62 @@ class CerebellumAgent(AgentOrgan):
 
     HOOKS: dict[str, dict[str, str]] = {
         "generate": {"in": "prompt, system_prompt, temperature, max_tokens", "out": "str"},
-        "stream_generate": {"in": "prompt, system_prompt, temperature, max_tokens", "out": "AsyncIterator[str]"},
+        "stream_generate": {
+            "in": "prompt, system_prompt, temperature, max_tokens",
+            "out": "AsyncIterator[str]",
+        },
     }
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate", prompt, system_prompt, temperature, max_tokens,
+            "generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             if isinstance(r, str):
                 return r
         return await self._delegate(
-            "generate", prompt=prompt, system_prompt=system_prompt,
-            temperature=temperature, max_tokens=max_tokens,
+            "generate",
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+            "stream_generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             return r
         return await self._delegate(
-            "stream_generate", prompt=prompt, system_prompt=system_prompt,
-            temperature=temperature, max_tokens=max_tokens,
+            "stream_generate",
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
     def reload_config(self) -> None:
-        try:
+        with contextlib.suppress(AttributeError, Exception):
             self._agent.reload_config()
-        except (AttributeError, Exception):
-            pass
 
 
 class ThalamusAgent(AgentOrgan):
@@ -133,15 +176,25 @@ class HippocampusAgent(AgentOrgan):
         return await self._delegate("locate", query=query, scope=scope)
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
+        self,
+        user_msg: str,
+        ai_reply: str,
+        cat_uid: str,
+        model: str,
     ) -> Any:
         return await self._delegate(
-            "remember", user_msg=user_msg, ai_reply=ai_reply,
-            cat_uid=cat_uid, model=model,
+            "remember",
+            user_msg=user_msg,
+            ai_reply=ai_reply,
+            cat_uid=cat_uid,
+            model=model,
         )
 
     def fts_search(
-        self, cat_uid: str, keywords: str, limit: int = 10,
+        self,
+        cat_uid: str,
+        keywords: str,
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
         fn = getattr(self._agent, "fts_search", None)
         if fn is None:
@@ -201,6 +254,7 @@ class HippocampusAgent(AgentOrgan):
         fn = getattr(self._agent, "from_dict", None)
         if fn:
             fn(d=d)
+
     def get_entity(self, entity_id: str) -> Any | None:
         fn = getattr(self._agent, "get_entity", None)
         if fn:
@@ -228,7 +282,11 @@ class HippocampusAgent(AgentOrgan):
         return []
 
     def connect(
-        self, from_id: str, to_id: str, relation: str, strength: float = 1.0,
+        self,
+        from_id: str,
+        to_id: str,
+        relation: str,
+        strength: float = 1.0,
     ) -> None:
         fn = getattr(self._agent, "connect", None)
         if fn:
@@ -259,11 +317,15 @@ class HippocampusAgent(AgentOrgan):
             fn(entity_id=entity_id, dormant=dormant)
 
     def append_content(
-        self, entity_id: str, text: str, max_total: int | None = None,
+        self,
+        entity_id: str,
+        text: str,
+        max_total: int | None = None,
     ) -> None:
         fn = getattr(self._agent, "append_content", None)
         if fn:
             fn(entity_id=entity_id, text=text, max_total=max_total)
+
     def update_importance(self, entity_id: str, importance: float) -> None:
         fn = getattr(self._agent, "update_importance", None)
         if fn:
@@ -312,7 +374,9 @@ class AmygdalaAgent(AgentOrgan):
         return await self._delegate("assess_safety", user_input=user_input)
 
     async def assess_tool_risk(
-        self, tool_name: str, params: dict[str, Any],
+        self,
+        tool_name: str,
+        params: dict[str, Any],
     ) -> dict[str, Any]:
         async for _name, r in self._run_plugs("assess_tool_risk", tool_name, params):
             if isinstance(r, dict):
@@ -346,24 +410,33 @@ class AmygdalaAgent(AgentOrgan):
         return None
 
     async def handle_rejection(
-        self, msg: str, last_candidates: list[Any], hippocampus: Any,
+        self,
+        msg: str,
+        last_candidates: list[Any],
+        hippocampus: Any,
     ) -> str:
         fn = getattr(self._agent, "handle_rejection", None)
         if fn is None:
             return msg
         return await self._delegate(
-            "handle_rejection", msg=msg,
-            last_candidates=last_candidates, hippocampus=hippocampus,
+            "handle_rejection",
+            msg=msg,
+            last_candidates=last_candidates,
+            hippocampus=hippocampus,
         )
 
     async def handle_correction(
-        self, msg: str, hippocampus: Any,
+        self,
+        msg: str,
+        hippocampus: Any,
     ) -> tuple[str, str] | None:
         fn = getattr(self._agent, "handle_correction", None)
         if fn is None:
             return None
         result = await self._delegate(
-            "handle_correction", msg=msg, hippocampus=hippocampus,
+            "handle_correction",
+            msg=msg,
+            hippocampus=hippocampus,
         )
         if isinstance(result, tuple) and len(result) == 2:
             return result
@@ -378,10 +451,14 @@ class BrainstemAgent(AgentOrgan):
     """
 
     async def build_system_prompt(
-        self, organ: str, route: str,
+        self,
+        organ: str,
+        route: str,
         cat_self_snapshot: Any | None = None,
     ) -> str:
-        return await self._delegate("build_system_prompt", organ=organ, route=route, cat_self_snapshot=cat_self_snapshot)
+        return await self._delegate(
+            "build_system_prompt", organ=organ, route=route, cat_self_snapshot=cat_self_snapshot
+        )
 
     def cancel_current(self) -> bool:
         fn = getattr(self._agent, "cancel_current", None)

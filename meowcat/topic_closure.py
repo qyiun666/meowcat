@@ -42,7 +42,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ── Configuration ─────────────────────────────────────────────────────
 
 
@@ -68,12 +67,32 @@ class TopicClosureConfig:
                                to include in the summary input.
     """
 
-    closure_signal_words: list[str] = field(default_factory=lambda: [
-        "好的", "谢谢", "thanks", "thank you", "OK", "ok",
-        "bye", "goodbye", "再见", "拜拜", "明白了", "got it",
-        "就这样", "that's all", "没问题", "no problem", "结束",
-        "done", "完成", "搞定", "清楚了", "clear",
-    ])
+    closure_signal_words: list[str] = field(
+        default_factory=lambda: [
+            "好的",
+            "谢谢",
+            "thanks",
+            "thank you",
+            "OK",
+            "ok",
+            "bye",
+            "goodbye",
+            "再见",
+            "拜拜",
+            "明白了",
+            "got it",
+            "就这样",
+            "that's all",
+            "没问题",
+            "no problem",
+            "结束",
+            "done",
+            "完成",
+            "搞定",
+            "清楚了",
+            "clear",
+        ]
+    )
     min_exchange_count: int = 3
     decay_cooldown: float = 300.0
     max_closed_topics: int = 50
@@ -132,22 +151,55 @@ class TopicClosureDetector:
     # ── Default signal words (class-level, safe to reference) ──────
 
     DEFAULT_SIGNAL_WORDS: list[str] = [
-        "好的", "谢谢", "thanks", "thank you", "OK", "ok",
-        "bye", "goodbye", "再见", "拜拜", "明白了", "got it",
-        "就这样", "that's all", "没问题", "no problem", "结束",
-        "done", "完成", "搞定", "清楚了", "clear",
+        "好的",
+        "谢谢",
+        "thanks",
+        "thank you",
+        "OK",
+        "ok",
+        "bye",
+        "goodbye",
+        "再见",
+        "拜拜",
+        "明白了",
+        "got it",
+        "就这样",
+        "that's all",
+        "没问题",
+        "no problem",
+        "结束",
+        "done",
+        "完成",
+        "搞定",
+        "清楚了",
+        "clear",
     ]
 
     # ── Weight map: higher → stronger closure signal ────────────────
 
     DEFAULT_SIGNAL_WEIGHTS: dict[str, float] = {
-        "好的": 0.6, "谢谢": 0.5, "thanks": 0.5, "thank you": 0.6,
-        "OK": 0.3, "ok": 0.3,
-        "bye": 0.9, "goodbye": 0.9, "再见": 0.9, "拜拜": 0.9,
-        "明白了": 0.7, "got it": 0.7, "清楚了": 0.7, "clear": 0.5,
-        "就这样": 0.8, "that's all": 0.8, "结束": 0.9,
-        "done": 0.7, "完成": 0.7, "搞定": 0.7,
-        "没问题": 0.4, "no problem": 0.4,
+        "好的": 0.6,
+        "谢谢": 0.5,
+        "thanks": 0.5,
+        "thank you": 0.6,
+        "OK": 0.3,
+        "ok": 0.3,
+        "bye": 0.9,
+        "goodbye": 0.9,
+        "再见": 0.9,
+        "拜拜": 0.9,
+        "明白了": 0.7,
+        "got it": 0.7,
+        "清楚了": 0.7,
+        "clear": 0.5,
+        "就这样": 0.8,
+        "that's all": 0.8,
+        "结束": 0.9,
+        "done": 0.7,
+        "完成": 0.7,
+        "搞定": 0.7,
+        "没问题": 0.4,
+        "no problem": 0.4,
     }
 
     def __init__(
@@ -173,12 +225,10 @@ class TopicClosureDetector:
         )
         # Pre-compile signal word patterns (case-insensitive)
         self._signal_re: list[tuple[str, re.Pattern[str]]] = [
-            (w, re.compile(re.escape(w), re.IGNORECASE))
-            for w in self._config.closure_signal_words
+            (w, re.compile(re.escape(w), re.IGNORECASE)) for w in self._config.closure_signal_words
         ]
         # Per-word weight overrides (merged with DEFAULT_SIGNAL_WEIGHTS)
-        self._signal_weights: dict[str, float] = dict(
-            self.DEFAULT_SIGNAL_WEIGHTS)
+        self._signal_weights: dict[str, float] = dict(self.DEFAULT_SIGNAL_WEIGHTS)
         # Internal tracking
         self._exchange_count: int = 0
         self._recent_context: list[str] = []  # sliding window of exchanges
@@ -230,7 +280,9 @@ class TopicClosureDetector:
         return self._detect_impl(user_msg, ai_reply)
 
     def _detect_impl(
-        self, user_msg: str, ai_reply: str,
+        self,
+        user_msg: str,
+        ai_reply: str,
     ) -> TopicClosureResult:
         """Core detection logic (overridable)."""
         # Match signal words in user message
@@ -274,7 +326,7 @@ class TopicClosureDetector:
         joined = "\n".join(topic_context)
         if len(joined) <= self._config.token_window:
             return joined
-        return joined[:self._config.token_window] + "…"
+        return joined[: self._config.token_window] + "…"
 
     def decay(self, topic_id: str) -> None:
         """Decay or archive a closed topic.
@@ -293,10 +345,12 @@ class TopicClosureDetector:
             if entry.get("topic_id") == topic_id:
                 return  # already recorded
 
-        self._closed_topics.append({
-            "topic_id": topic_id,
-            "closed_at": now,
-        })
+        self._closed_topics.append(
+            {
+                "topic_id": topic_id,
+                "closed_at": now,
+            }
+        )
 
         # Evict oldest if over limit
         while len(self._closed_topics) > self._config.max_closed_topics:
@@ -340,9 +394,7 @@ class TopicClosureDetector:
         """
         if word not in self._config.closure_signal_words:
             self._config.closure_signal_words.append(word)
-            self._signal_re.append(
-                (word, re.compile(re.escape(word), re.IGNORECASE))
-            )
+            self._signal_re.append((word, re.compile(re.escape(word), re.IGNORECASE)))
         self._signal_weights[word] = weight
 
     def unregister_signal_word(self, word: str) -> None:
@@ -353,9 +405,7 @@ class TopicClosureDetector:
         """
         if word in self._config.closure_signal_words:
             self._config.closure_signal_words.remove(word)
-            self._signal_re = [
-                (w, p) for w, p in self._signal_re if w != word
-            ]
+            self._signal_re = [(w, p) for w, p in self._signal_re if w != word]
         self._signal_weights.pop(word, None)
 
     # ── Internal helpers ───────────────────────────────────────────

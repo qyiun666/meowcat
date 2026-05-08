@@ -13,7 +13,8 @@ conversation Stages in order.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from meowcat.models import PipelineContext, StageEvent
@@ -44,9 +45,8 @@ class BaseStage(Pluggable):
             cls_name = cls_name[4:]
         # CamelCase → snake_case
         import re
-        self.name = "noop_" + re.sub(
-            r"(?<!^)(?=[A-Z])", "_", cls_name
-        ).lower()
+
+        self.name = "noop_" + re.sub(r"(?<!^)(?=[A-Z])", "_", cls_name).lower()
 
     def diagnose(self) -> dict[str, Any]:
         return {}
@@ -106,8 +106,11 @@ def build_default_pipeline() -> list[BaseStage]:
 
 __all__ = [
     "BaseStage",
-    "NoopIngestStage", "NoopLocateStage", "NoopRouteStage",
-    "NoopExecuteStage", "NoopPostStage", "NoopCompressStage",
+    "NoopIngestStage",
+    "NoopLocateStage",
+    "NoopRouteStage",
+    "NoopExecuteStage",
+    "NoopPostStage",
+    "NoopCompressStage",
     "build_default_pipeline",
 ]
-

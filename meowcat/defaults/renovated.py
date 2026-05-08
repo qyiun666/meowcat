@@ -14,23 +14,41 @@ implementations — enough to run simple flows, test wiring, and prototype.
 from __future__ import annotations
 
 import logging
-import os
 import re
 import sys
 import time as _time
-from typing import Any, Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
 from meowcat.defaults.organs import (
-    NoopAmygdala, NoopBrainstem, NoopCerebrum, NoopCerebellum,
-    NoopCortex, NoopEars, NoopEyes, NoopFrontal, NoopHippocampus,
-    NoopHypothalamus, NoopMouth, NoopPaws, NoopPurr, NoopTail,
-    NoopThalamus, NoopWhiskers, NoopAnomalyGrowth, NoopCorrectionGrowth,
-    NoopCrystallizer, NoopRoleEmergence,
+    NoopAmygdala,
+    NoopAnomalyGrowth,
+    NoopBrainstem,
+    NoopCerebellum,
+    NoopCerebrum,
+    NoopCorrectionGrowth,
+    NoopCortex,
+    NoopCrystallizer,
+    NoopEars,
+    NoopEyes,
+    NoopFrontal,
+    NoopHippocampus,
+    NoopHypothalamus,
+    NoopMouth,
+    NoopPaws,
+    NoopPurr,
+    NoopRoleEmergence,
+    NoopTail,
+    NoopThalamus,
+    NoopWhiskers,
 )
 from meowcat.defaults.presets import (
-    KW_BILINGUAL, PROMPT_DEFAULT, PROMPT_ZH,
-    KeywordPreset, OrganPrompt, PromptPreset,
+    KW_BILINGUAL,
+    PROMPT_DEFAULT,
+    KeywordPreset,
+    OrganPrompt,
+    PromptPreset,
 )
 
 _logger = logging.getLogger("meowcat.renovated")
@@ -41,7 +59,9 @@ _logger = logging.getLogger("meowcat.renovated")
 # =========================================================================
 
 
-def _extract_keywords(text: str, top_k: int = 5, stop_words: frozenset[str] | None = None) -> list[str]:
+def _extract_keywords(
+    text: str, top_k: int = 5, stop_words: frozenset[str] | None = None
+) -> list[str]:
     """Extract top-k keywords from text.
 
     ``stop_words`` is required — callers must pass a keyword preset's stop_words.
@@ -96,7 +116,7 @@ def _repetition_ratio(text: str, n: int = 5) -> float:
     grams: dict[str, int] = {}
     total = 0
     for i in range(len(text) - n + 1):
-        g = text[i:i + n]
+        g = text[i : i + n]
         grams[g] = grams.get(g, 0) + 1
         total += 1
     if total == 0:
@@ -113,6 +133,7 @@ def _nonprintable_ratio(text: str) -> float:
     if not text:
         return 0.0
     import string
+
     printable = set(string.printable)
     nonprint = sum(1 for c in text if c not in printable)
     return nonprint / len(text)
@@ -123,8 +144,10 @@ def _jaccard(a: str, b: str, n: int = 3) -> float:
 
     Useful for drift detection — compare current vs historical output.
     """
+
     def _ngrams(s: str) -> set[str]:
-        return {s[i:i + n] for i in range(len(s) - n + 1)}
+        return {s[i : i + n] for i in range(len(s) - n + 1)}
+
     sa = _ngrams(a.lower())
     sb = _ngrams(b.lower())
     if not sa or not sb:
@@ -140,13 +163,15 @@ def _looks_like_fact(text: str) -> bool:
     Used as input to hallucination detection.
     """
     import re as _re
+
     patterns = [
-        _re.compile(r'\b\d+\s*(?:KB|MB|GB|ms|s|px|%)\b'),   # numeric+unit
-        _re.compile(r'\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b'),       # CamelCase
-        _re.compile(r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b',
-                    _re.IGNORECASE),  # months
-        _re.compile(r'\b\d{4}-\d{2}-\d{2}\b'),                # ISO date
-        _re.compile(r'[/\\][\w./\\-]+\b'),                     # file paths
+        _re.compile(r"\b\d+\s*(?:KB|MB|GB|ms|s|px|%)\b"),  # numeric+unit
+        _re.compile(r"\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b"),  # CamelCase
+        _re.compile(
+            r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b", _re.IGNORECASE
+        ),  # months
+        _re.compile(r"\b\d{4}-\d{2}-\d{2}\b"),  # ISO date
+        _re.compile(r"[/\\][\w./\\-]+\b"),  # file paths
     ]
     return any(p.search(text) for p in patterns)
 
@@ -173,8 +198,7 @@ class RenovatedThalamus(NoopThalamus):
         self._keyword = keyword or KW_BILINGUAL
 
     async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
-        result: dict[str, Any] = {
-            "route": "chat", "entities": [], "snippets": []}
+        result: dict[str, Any] = {"route": "chat", "entities": [], "snippets": []}
         async for _name, r in self._run_plugs("locate", msg, session_id):
             if isinstance(r, dict):
                 result.update(r)
@@ -186,7 +210,10 @@ class RenovatedThalamus(NoopThalamus):
     def decide_route(self, **kwargs: Any) -> dict[str, Any]:
         msg = kwargs.get("text", kwargs.get("message", ""))
         cmd_route = _detect_command(msg, self._keyword)
-        return {"route": cmd_route or "chat", "keywords": _extract_keywords(msg, stop_words=self._keyword.stop_words)}
+        return {
+            "route": cmd_route or "chat",
+            "keywords": _extract_keywords(msg, stop_words=self._keyword.stop_words),
+        }
 
 
 class RenovatedAmygdala(NoopAmygdala):
@@ -229,10 +256,16 @@ class RenovatedAmygdala(NoopAmygdala):
             self._patterns = list(keyword.danger_patterns)
         else:
             self._patterns = list(KW_BILINGUAL.danger_patterns)
-        self._dangerous_tools: set[str] = dangerous_tools if dangerous_tools is not None else {
-            "run_command", "eval", "exec", "shell"}
-        self._dangerous_paths: list[str] = dangerous_paths if dangerous_paths is not None else [
-            "/etc/", "/root/", "~/.ssh/", "C:\\Windows\\"]
+        self._dangerous_tools: set[str] = (
+            dangerous_tools
+            if dangerous_tools is not None
+            else {"run_command", "eval", "exec", "shell"}
+        )
+        self._dangerous_paths: list[str] = (
+            dangerous_paths
+            if dangerous_paths is not None
+            else ["/etc/", "/root/", "~/.ssh/", "C:\\Windows\\"]
+        )
 
     def is_rejection(self, msg: str) -> bool:
         """Check if the input should be *rejected* as dangerous.
@@ -244,10 +277,7 @@ class RenovatedAmygdala(NoopAmygdala):
         For user negation/correction detection, use
         :meth:`RenovatedWhiskers.is_negation` / :meth:`RenovatedWhiskers.parse_correction`.
         """
-        for pat in self._patterns:
-            if pat.search(msg):
-                return True
-        return False
+        return any(pat.search(msg) for pat in self._patterns)
 
     def is_dangerous(self, msg: str) -> bool:
         """Alias for :meth:`is_rejection` — semantically clearer.
@@ -332,8 +362,7 @@ class RenovatedFrontal(NoopFrontal):
                 return r
         if not self._current_keywords:
             return False
-        kws = set(_extract_keywords(msg, top_k=10,
-                  stop_words=self._keyword.stop_words))
+        kws = set(_extract_keywords(msg, top_k=10, stop_words=self._keyword.stop_words))
         overlap = len(kws & self._current_keywords)
         return overlap >= max(1, len(self._current_keywords) * self._threshold)
 
@@ -345,12 +374,10 @@ class RenovatedFrontal(NoopFrontal):
 
     def update_focus(self, result: Any) -> None:
         kw_source = ""
-        if isinstance(result, dict):
-            kw_source = str(result.get("text", result.get("reply", "")))
-        else:
-            kw_source = str(result)
-        self._current_keywords = set(_extract_keywords(
-            kw_source, top_k=10, stop_words=self._keyword.stop_words))
+        kw_source = str(result.get("text", result.get("reply", ""))) if isinstance(result, dict) else str(result)
+        self._current_keywords = set(
+            _extract_keywords(kw_source, top_k=10, stop_words=self._keyword.stop_words)
+        )
 
     def archive_focus(self) -> None:
         self._topics.append(", ".join(sorted(self._current_keywords)))
@@ -370,12 +397,14 @@ class RenovatedFrontal(NoopFrontal):
         if self._focus_store is None:
             return
         import warnings
+
         warnings.warn(
-            "RenovatedFrontal.save() is deprecated since v1.3.6. "
-            "Use _save_to_store() instead.",
-            DeprecationWarning, stacklevel=2,
+            "RenovatedFrontal.save() is deprecated since v1.3.6. Use _save_to_store() instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
         import anyio
+
         state = self._export_state()
         anyio.run(self._focus_store.save, state)
 
@@ -393,12 +422,14 @@ class RenovatedFrontal(NoopFrontal):
         if self._focus_store is None:
             return
         import warnings
+
         warnings.warn(
-            "RenovatedFrontal.load() is deprecated since v1.3.6. "
-            "Use _load_from_store() instead.",
-            DeprecationWarning, stacklevel=2,
+            "RenovatedFrontal.load() is deprecated since v1.3.6. Use _load_from_store() instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
         import anyio
+
         state = anyio.run(self._focus_store.load)
         if state is not None:
             self._import_state(state)
@@ -431,6 +462,7 @@ class RenovatedFrontal(NoopFrontal):
         Returns a plain dataclass suitable for serialization.
         """
         from meowcat.focus import FocusState
+
         return FocusState(
             topics=list(self._topics),
             current_keywords=sorted(self._current_keywords),
@@ -464,8 +496,7 @@ class RenovatedHypothalamus(NoopHypothalamus):
         self._last_maintenance: float = 0.0
 
     async def run_maintenance(self, country_code: str | None = None) -> Any:
-        result: dict[str, Any] = {
-            "decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
+        result: dict[str, Any] = {"decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
         async for _name, r in self._run_plugs("run_maintenance", country_code):
             if isinstance(r, dict):
                 result.update(r)
@@ -489,18 +520,19 @@ class RenovatedCortex(NoopCortex):
     def __init__(self) -> None:
         NoopCortex.__init__(self)
         self._worldview: dict[str, dict[str, Any]] = {
-            "axioms": {}, "others": {}, "values": {}, "self": {},
+            "axioms": {},
+            "others": {},
+            "values": {},
+            "self": {},
         }
         self._weakness_log: list[dict[str, Any]] = []
 
     def ingest(self, source: str, layer: str, key: str, value: Any) -> None:
         if layer in self._worldview:
-            self._worldview[layer][key] = {
-                "source": source, "value": value, "ts": _time.time()}
+            self._worldview[layer][key] = {"source": source, "value": value, "ts": _time.time()}
 
     def record_weakness(self, kind: str, detail: str) -> None:
-        self._weakness_log.append(
-            {"kind": kind, "detail": detail, "ts": _time.time()})
+        self._weakness_log.append({"kind": kind, "detail": detail, "ts": _time.time()})
 
     def weaknesses(self) -> list[dict[str, Any]]:
         return list(self._weakness_log)
@@ -514,9 +546,7 @@ class RenovatedCortex(NoopCortex):
             parts: list[str] = []
             for layer, entries in self._worldview.items():
                 if entries:
-                    summary = ", ".join(
-                        f"{k}={v['value']}" for k, v in list(entries.items())[:5]
-                    )
+                    summary = ", ".join(f"{k}={v['value']}" for k, v in list(entries.items())[:5])
                     parts.append(f"[{layer}] {summary}")
             if parts:
                 result = "\n".join(parts)
@@ -603,7 +633,10 @@ class RenovatedBrainstem(NoopBrainstem):
 
         # 1. Plugin chain (allow full override)
         async for _name, r in self._run_plugs(
-            "build_system_prompt", organ, route, cat_self_snapshot,
+            "build_system_prompt",
+            organ,
+            route,
+            cat_self_snapshot,
         ):
             if isinstance(r, str) and r:
                 parts.append(r)
@@ -627,8 +660,7 @@ class RenovatedBrainstem(NoopBrainstem):
         if op is not None:
             route_tmpl = op.route_templates.get(route, "")
         if not route_tmpl:
-            route_tmpl = self._prompt.templates.get(
-                route, self._prompt.fallback)
+            route_tmpl = self._prompt.templates.get(route, self._prompt.fallback)
         if not route_tmpl:
             route_tmpl = "You are MeowCat, a helpful AI assistant."
         parts.append(self._fill_vars(route_tmpl))
@@ -652,8 +684,7 @@ class RenovatedBrainstem(NoopBrainstem):
     def _fill_vars(self, template: str) -> str:
         """Substitute {name} {language} {domain} {route} {organ} variables."""
         return (
-            template
-            .replace("{name}", self._cat_name)
+            template.replace("{name}", self._cat_name)
             .replace("{language}", self._language)
             .replace("{domain}", self._domain)
         )
@@ -669,10 +700,7 @@ class RenovatedBrainstem(NoopBrainstem):
         is_zh = (self._language or "").startswith("zh")
 
         lines: list[str] = []
-        if is_zh:
-            lines = ["## 自我认知", ""]
-        else:
-            lines = ["## Self-Awareness", ""]
+        lines = ["## 自我认知", ""] if is_zh else ["## Self-Awareness", ""]
 
         # Personality
         personality = getattr(snap, "personality", None) or {}
@@ -682,8 +710,7 @@ class RenovatedBrainstem(NoopBrainstem):
             if is_zh:
                 lines.append(f"性格：{tone} 的语气，使用 {lang} 交流。")
             else:
-                lines.append(
-                    f"Personality: {tone} tone, communicates in {lang}.")
+                lines.append(f"Personality: {tone} tone, communicates in {lang}.")
         elif tone:
             if is_zh:
                 lines.append(f"性格：{tone} 的语气。")
@@ -711,7 +738,7 @@ class RenovatedBrainstem(NoopBrainstem):
         capable = getattr(snap, "capable_domains", None) or []
         if capable:
             lines.append("")
-            domains = ', '.join(str(d) for d in capable[:10])
+            domains = ", ".join(str(d) for d in capable[:10])
             if is_zh:
                 lines.append(f"擅长的领域：{domains}")
             else:
@@ -720,7 +747,7 @@ class RenovatedBrainstem(NoopBrainstem):
         # Incapable domains
         incapable = getattr(snap, "incapable_domains", None) or []
         if incapable:
-            domains = ', '.join(str(d) for d in incapable[:10])
+            domains = ", ".join(str(d) for d in incapable[:10])
             if is_zh:
                 lines.append(f"不擅长的领域：{domains}")
             else:
@@ -737,13 +764,13 @@ class RenovatedCerebrum(NoopCerebrum):
     :class:`OrganPrompt` for per-organ identity/perspective/output_format.
     Without ``llm_fn``, returns a helpful message.
     """
+
     name: str = "renovated_cerebrum"
     impl_style: ImplementationStyle = ImplementationStyle.MODEL
 
     def __init__(
         self,
-        llm_fn: Callable[..., Awaitable[str]
-                         ] | Callable[..., str] | None = None,
+        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
         organ_prompt: OrganPrompt | None = None,
@@ -760,34 +787,55 @@ class RenovatedCerebrum(NoopCerebrum):
         return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none", "organ_prompt": self._organ_prompt is not None}
+        return {
+            "model": self._model,
+            "has_llm": self._llm_fn is not None,
+            "prompt_preset": self._prompt.name if self._prompt else "none",
+            "organ_prompt": self._organ_prompt is not None,
+        }
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
-        async for _name, r in self._run_plugs("generate", prompt, system_prompt, temperature, max_tokens):
+        async for _name, r in self._run_plugs(
+            "generate", prompt, system_prompt, temperature, max_tokens
+        ):
             if isinstance(r, str):
                 return r
         if self._llm_fn is not None:
             import inspect
-            result = self._llm_fn(prompt=prompt, system_prompt=system_prompt,
-                                  temperature=temperature, max_tokens=max_tokens)
+
+            result = self._llm_fn(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
             if inspect.isawaitable(result):
                 result = await result
             return str(result)
         return "(renovated cerebrum: no LLM configured)"
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
-        async for _name, r in self._run_plugs("stream_generate", prompt, system_prompt, temperature, max_tokens):
+        async for _name, r in self._run_plugs(
+            "stream_generate", prompt, system_prompt, temperature, max_tokens
+        ):
             return r
         result = await self.generate(prompt, system_prompt, temperature, max_tokens)
 
         async def _stream():
             yield result
+
         return _stream()
 
 
@@ -803,8 +851,7 @@ class RenovatedCerebellum(NoopCerebellum):
 
     def __init__(
         self,
-        llm_fn: Callable[..., Awaitable[str]
-                         ] | Callable[..., str] | None = None,
+        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
         organ_prompt: OrganPrompt | None = None,
@@ -821,34 +868,55 @@ class RenovatedCerebellum(NoopCerebellum):
         return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {"model": self._model, "has_llm": self._llm_fn is not None, "prompt_preset": self._prompt.name if self._prompt else "none", "organ_prompt": self._organ_prompt is not None}
+        return {
+            "model": self._model,
+            "has_llm": self._llm_fn is not None,
+            "prompt_preset": self._prompt.name if self._prompt else "none",
+            "organ_prompt": self._organ_prompt is not None,
+        }
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
-        async for _name, r in self._run_plugs("generate", prompt, system_prompt, temperature, max_tokens):
+        async for _name, r in self._run_plugs(
+            "generate", prompt, system_prompt, temperature, max_tokens
+        ):
             if isinstance(r, str):
                 return r
         if self._llm_fn is not None:
             import inspect
-            result = self._llm_fn(prompt=prompt, system_prompt=system_prompt,
-                                  temperature=temperature, max_tokens=max_tokens)
+
+            result = self._llm_fn(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
             if inspect.isawaitable(result):
                 result = await result
             return str(result)
         return "(renovated cerebellum: no LLM configured)"
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
-        async for _name, r in self._run_plugs("stream_generate", prompt, system_prompt, temperature, max_tokens):
+        async for _name, r in self._run_plugs(
+            "stream_generate", prompt, system_prompt, temperature, max_tokens
+        ):
             return r
         result = await self.generate(prompt, system_prompt, temperature, max_tokens)
 
         async def _stream():
             yield result
+
         return _stream()
 
 
@@ -879,7 +947,11 @@ class RenovatedHippocampus(NoopHippocampus):
         self._episode_store = episode_store
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
+        self,
+        user_msg: str,
+        ai_reply: str,
+        cat_uid: str,
+        model: str,
     ) -> Any:
         result = await NoopHippocampus.remember(self, user_msg, ai_reply, cat_uid, model)
         kws = _extract_keywords(f"{user_msg} {ai_reply}", top_k=10)
@@ -888,7 +960,10 @@ class RenovatedHippocampus(NoopHippocampus):
         return result
 
     def fts_search(
-        self, cat_uid: str, keywords: str, limit: int = 10,
+        self,
+        cat_uid: str,
+        keywords: str,
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
         results = NoopHippocampus.fts_search(self, cat_uid, keywords, limit)
         kws = set(keywords.lower().split())
@@ -896,8 +971,7 @@ class RenovatedHippocampus(NoopHippocampus):
             if kw in self._keyword_index:
                 for snippet in self._keyword_index[kw]:
                     if not any(r.get("user_msg", "")[:80] == snippet for r in results):
-                        results.append(
-                            {"keyword_match": kw, "snippet": snippet})
+                        results.append({"keyword_match": kw, "snippet": snippet})
         return results[:limit]
 
     # -- v1.3.6: Episode persistence + lifecycle -----------------------
@@ -933,8 +1007,7 @@ class RenovatedHippocampus(NoopHippocampus):
         eid = NoopHippocampus.add_episode(self, episode)
         if self._episode_store is not None:
             try:
-                store_cat_uid = self.cat_uid or episode.get(
-                    "cat_uid", "unknown")
+                store_cat_uid = self.cat_uid or episode.get("cat_uid", "unknown")
                 self._episode_store.append(store_cat_uid, dict(episode))
             except Exception:
                 pass  # persistence is best-effort; never crash on IO error
@@ -980,23 +1053,24 @@ class RenovatedEars(NoopEars):
         self._keyword = keyword or KW_BILINGUAL
 
     async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
-        text = raw_input.decode(
-            "utf-8", errors="replace") if isinstance(raw_input, bytes) else raw_input
+        text = (
+            raw_input.decode("utf-8", errors="replace")
+            if isinstance(raw_input, bytes)
+            else raw_input
+        )
         text = text.strip()
         if len(text) > self._max_length:
-            text = text[:self._max_length] + "..."
+            text = text[: self._max_length] + "..."
         kws = _extract_keywords(text, stop_words=self._keyword.stop_words)
         lang = _detect_language(text)
-        result: dict[str, Any] = {"text": text,
-                                  "keywords": kws, "language": lang}
+        result: dict[str, Any] = {"text": text, "keywords": kws, "language": lang}
         async for _name, r in self._run_plugs("hear", raw_input):
             if isinstance(r, dict):
                 result.update(r)
         return result
 
     def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:
-        result = _extract_keywords(
-            text, top_k=top_k, stop_words=self._keyword.stop_words)
+        result = _extract_keywords(text, top_k=top_k, stop_words=self._keyword.stop_words)
         for _name, r in self._run_plugs_sync("extract_keywords", text, top_k):
             if isinstance(r, list):
                 result.extend(r)
@@ -1064,29 +1138,54 @@ class RenovatedWhiskers(NoopWhiskers):
 
     INJECTION_MARKERS: list[str] = [
         # Chinese injection
-        "忽略之前的", "忘记之前的", "不要管之前的",
-        "你现在是", "你的新身份", "扮演", "伪装",
-        "忽略系统提示", "覆盖之前的指令",
+        "忽略之前的",
+        "忘记之前的",
+        "不要管之前的",
+        "你现在是",
+        "你的新身份",
+        "扮演",
+        "伪装",
+        "忽略系统提示",
+        "覆盖之前的指令",
         # English injection
-        "ignore previous", "forget previous", "disregard prior",
-        "you are now", "your new identity", "act as",
-        "system prompt", "system:", "override prompt",
-        "DAN mode", "jailbreak", "pretend to be",
+        "ignore previous",
+        "forget previous",
+        "disregard prior",
+        "you are now",
+        "your new identity",
+        "act as",
+        "system prompt",
+        "system:",
+        "override prompt",
+        "DAN mode",
+        "jailbreak",
+        "pretend to be",
     ]
 
     NEGATION_MARKERS: list[str] = [
         # Chinese negation
-        "不对", "不是", "错了", "你错了", "搞错了",
-        "你理解错了", "不是这样的", "不正确", "错误",
+        "不对",
+        "不是",
+        "错了",
+        "你错了",
+        "搞错了",
+        "你理解错了",
+        "不是这样的",
+        "不正确",
+        "错误",
         # English negation
-        "wrong", "incorrect", "not correct",
-        "that's not right", "you're wrong",
-        "you misunderstood", "that is wrong",
+        "wrong",
+        "incorrect",
+        "not correct",
+        "that's not right",
+        "you're wrong",
+        "you misunderstood",
+        "that is wrong",
     ]
 
     # Regular expressions for correction parsing
     _RE_CORRECTION_ZH = re.compile(
-        r'(?:不(?:是|对)|错(?:了|误)?)[，,。\s]*(.+?)(?:，|,)?\s*(?:是|而是|应该是|应该是|就是|应为)(.+)',
+        r"(?:不(?:是|对)|错(?:了|误)?)[，,。\s]*(.+?)(?:，|,)?\s*(?:是|而是|应该是|应该是|就是|应为)(.+)",
     )
     _RE_CORRECTION_EN = re.compile(
         r"(?:it'?s?\s+not|that'?s?\s+not|not)\s+(.+?),?\s+(?:it'?s?|that'?s?|but)\s+(.+)",
@@ -1113,10 +1212,7 @@ class RenovatedWhiskers(NoopWhiskers):
         App layer can extend via Pluggable hooks.
         """
         lower = text.lower()
-        for marker in self.INJECTION_MARKERS:
-            if marker.lower() in lower:
-                return True
-        return False
+        return any(marker.lower() in lower for marker in self.INJECTION_MARKERS)
 
     def is_negation(self, text: str) -> bool:
         """Check if user is negating/correcting the agent.
@@ -1125,13 +1221,10 @@ class RenovatedWhiskers(NoopWhiskers):
         App layer can extend via Pluggable hooks.
         """
         stripped = text.strip()
-        if stripped.endswith(('?', '？', '吗', '吧')):
+        if stripped.endswith(("?", "？", "吗", "吧")):
             return False
         lower = stripped.lower()
-        for marker in self.NEGATION_MARKERS:
-            if marker.lower() in lower:
-                return True
-        return False
+        return any(marker.lower() in lower for marker in self.NEGATION_MARKERS)
 
     def parse_correction(self, text: str) -> tuple[str, str] | None:
         """Parse "not X, but Y" correction patterns.
@@ -1162,18 +1255,18 @@ class RenovatedWhiskers(NoopWhiskers):
         }
         correction = self.parse_correction(text)
         if correction:
-            result["correction"] = {
-                "wrong": correction[0], "correct": correction[1]}
+            result["correction"] = {"wrong": correction[0], "correct": correction[1]}
         async for _name, r in self._run_plugs("feel_input", text):
             if isinstance(r, dict):
                 result.update(r)
         return result
 
     async def feel_output(
-        self, output: str, expected_schema: dict[str, Any] | None = None,
+        self,
+        output: str,
+        expected_schema: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        result: dict[str, Any] = {"length": len(
-            output), "empty": not output.strip()}
+        result: dict[str, Any] = {"length": len(output), "empty": not output.strip()}
         self._recent_outputs.append(output)
         if len(self._recent_outputs) > self._max_recent:
             self._recent_outputs.pop(0)
@@ -1192,7 +1285,9 @@ class RenovatedWhiskers(NoopWhiskers):
         return {"drift": drift, "avg_length": avg}
 
     def check_hallucination(
-        self, reply: str, session_id: str | None = None,
+        self,
+        reply: str,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {"hallucination": False}
         for _name, r in self._run_plugs_sync("check_hallucination", reply, session_id):
@@ -1248,7 +1343,11 @@ class RenovatedPurr(NoopPurr):
         self._total_chars = 0
 
     def diagnose(self) -> dict[str, Any]:
-        return {"streaming": self._streaming, "chunks": self._chunk_count, "chars": self._total_chars}
+        return {
+            "streaming": self._streaming,
+            "chunks": self._chunk_count,
+            "chars": self._total_chars,
+        }
 
     async def stream(self, text: str, **kwargs: Any) -> Any:
         async for _name, r in self._run_plugs("stream", text, **kwargs):
@@ -1272,7 +1371,7 @@ class RenovatedTail(NoopTail):
         return {"renovated": True}
 
     async def render(self, state: dict[str, Any]) -> None:
-        async for _name, r in self._run_plugs("render", state):
+        async for _name, _r in self._run_plugs("render", state):
             return None
         status = state.get("status", "idle")
         entities = state.get("entities", 0)
@@ -1301,8 +1400,7 @@ class RenovatedPaws(NoopPaws):
         self._tool_registry = tool_registry
 
     def diagnose(self) -> dict[str, Any]:
-        registered = [t.name for t in self._tool_registry.list_all()
-                      ] if self._tool_registry else []
+        registered = [t.name for t in self._tool_registry.list_all()] if self._tool_registry else []
         return {"tools": registered, "count": len(registered)}
 
     async def execute(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1322,7 +1420,9 @@ class RenovatedPaws(NoopPaws):
             return {"ok": False, "reason": str(exc)}
 
     async def interact_with_tool(
-        self, skill_name: str, params: dict[str, Any],
+        self,
+        skill_name: str,
+        params: dict[str, Any],
     ) -> dict[str, Any]:
         return await self.execute(skill_name, params)
 
@@ -1346,14 +1446,25 @@ class RenovatedAnomalyGrowth(NoopAnomalyGrowth):
         return {"anomalies": len(self._log), "recent": self._log[-5:]}
 
     def record(
-        self, reason: str, snippet: str, confidence: float = 0.8,
-        phase: str = "input", session_id: str = "",
+        self,
+        reason: str,
+        snippet: str,
+        confidence: float = 0.8,
+        phase: str = "input",
+        session_id: str = "",
     ) -> Any:
-        for _name, r in self._run_plugs_sync("record", reason, snippet, confidence, phase, session_id):
+        for _name, r in self._run_plugs_sync(
+            "record", reason, snippet, confidence, phase, session_id
+        ):
             if isinstance(r, dict):
                 return r
-        entry = {"reason": reason, "snippet": snippet[:200],
-                 "confidence": confidence, "phase": phase, "ts": _time.time()}
+        entry = {
+            "reason": reason,
+            "snippet": snippet[:200],
+            "confidence": confidence,
+            "phase": phase,
+            "ts": _time.time(),
+        }
         self._log.append(entry)
         return {"recorded": True, "total": len(self._log)}
 
@@ -1372,14 +1483,16 @@ class RenovatedCorrectionGrowth(NoopCorrectionGrowth):
         return {"corrections": len(self._log), "recent": self._log[-5:]}
 
     def record(
-        self, wrong: str, correct: str, session_id: str = "",
+        self,
+        wrong: str,
+        correct: str,
+        session_id: str = "",
         topic: str = "",
     ) -> Any:
         for _name, r in self._run_plugs_sync("record", wrong, correct, session_id, topic):
             if isinstance(r, dict):
                 return r
-        entry = {"wrong": wrong[:200], "correct": correct[:200],
-                 "topic": topic, "ts": _time.time()}
+        entry = {"wrong": wrong[:200], "correct": correct[:200], "topic": topic, "ts": _time.time()}
         self._log.append(entry)
         return {"recorded": True, "total": len(self._log)}
 
@@ -1444,8 +1557,7 @@ class RenovatedRoleEmergence(NoopRoleEmergence):
         for _name, r in self._run_plugs_sync("record", pattern, evidence):
             if isinstance(r, dict):
                 return r
-        entry = {"pattern": pattern,
-                 "evidence": evidence[:200], "ts": _time.time()}
+        entry = {"pattern": pattern, "evidence": evidence[:200], "ts": _time.time()}
         self._patterns.append(entry)
         return {"recorded": True, "total": len(self._patterns)}
 
@@ -1484,16 +1596,29 @@ RENOVATED_ORGAN_MAP: dict[str, type] = {
 
 __all__ = [
     # Brain
-    "RenovatedThalamus", "RenovatedHippocampus", "RenovatedCerebrum",
-    "RenovatedCerebellum", "RenovatedAmygdala", "RenovatedFrontal",
-    "RenovatedHypothalamus", "RenovatedCortex", "RenovatedBrainstem",
+    "RenovatedThalamus",
+    "RenovatedHippocampus",
+    "RenovatedCerebrum",
+    "RenovatedCerebellum",
+    "RenovatedAmygdala",
+    "RenovatedFrontal",
+    "RenovatedHypothalamus",
+    "RenovatedCortex",
+    "RenovatedBrainstem",
     # Senses
-    "RenovatedEars", "RenovatedEyes", "RenovatedWhiskers", "RenovatedPaws",
+    "RenovatedEars",
+    "RenovatedEyes",
+    "RenovatedWhiskers",
+    "RenovatedPaws",
     # Voice
-    "RenovatedMouth", "RenovatedPurr", "RenovatedTail",
+    "RenovatedMouth",
+    "RenovatedPurr",
+    "RenovatedTail",
     # Growth
-    "RenovatedAnomalyGrowth", "RenovatedCorrectionGrowth",
-    "RenovatedCrystallizer", "RenovatedRoleEmergence",
+    "RenovatedAnomalyGrowth",
+    "RenovatedCorrectionGrowth",
+    "RenovatedCrystallizer",
+    "RenovatedRoleEmergence",
     # Mappings
     "RENOVATED_ORGAN_MAP",
 ]

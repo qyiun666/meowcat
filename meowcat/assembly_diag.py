@@ -33,7 +33,8 @@ class DiagnosticMixin:
         Returns:
             ``{"brain:hippocampus": {...}, "sense:ears": {...}, ...}``
         """
-        from meowcat.diagnose import Stethoscope  # noqa: PLC0415
+        from meowcat.diagnose import Stethoscope
+
         return await Stethoscope.probe_all(self)
 
     async def brain_check(self) -> dict[str, Any]:
@@ -44,7 +45,8 @@ class DiagnosticMixin:
         Returns:
             ``{"hippocampus": {...}, "cerebrum": {...}, ...}``
         """
-        from meowcat.diagnose import Stethoscope  # noqa: PLC0415
+        from meowcat.diagnose import Stethoscope
+
         return await Stethoscope.probe_category(self, "brain")
 
     def wiring_diagram(self, format: str = "mermaid") -> str:
@@ -63,13 +65,16 @@ class DiagnosticMixin:
             >>> print(cat.wiring_diagram())
             >>> print(cat.wiring_diagram(format="dot"))
         """
-        from meowcat.diagnose import render_wiring  # noqa: PLC0415
+        from meowcat.diagnose import render_wiring
+
         # Collect all mounted organs as input for orphan node detection
-        mounted: frozenset[Organ] = frozenset(
-            self._host.list_all_organs())  # type: ignore[attr-defined]
+        mounted: frozenset[Organ] = frozenset(self._host.list_all_organs())  # type: ignore[attr-defined]
         return render_wiring(
             # type: ignore[attr-defined]
-            self.wiring, format=format, organs=mounted)
+            self.wiring,
+            format=format,
+            organs=mounted,
+        )
 
     # -- CLI facade methods (v1.0.9) ------------------------------------------
 
@@ -88,7 +93,10 @@ class DiagnosticMixin:
         """
         return await self.chain_registry.run(  # type: ignore[attr-defined]
             # type: ignore[attr-defined]
-            self, "memory_search", msg=query, session_id=self.cat_uid,
+            self,
+            "memory_search",
+            msg=query,
+            session_id=self.cat_uid,
         )
 
     async def memory_stats(self) -> dict[str, Any]:
@@ -100,13 +108,15 @@ class DiagnosticMixin:
             Memory stats dict
         """
         result = await self.signal(  # type: ignore[attr-defined]
-            BRAINSTEM, HIPPOCAMPUS, "stats")
+            BRAINSTEM, HIPPOCAMPUS, "stats"
+        )
         if isinstance(result, dict):
             return result
         return {"stats": result}
 
     async def run_maintenance(
-        self, country_code: str | None = None,
+        self,
+        country_code: str | None = None,
     ) -> dict[str, Any]:
         """Run maintenance. Equivalent to ``/maintenance``.
 
@@ -120,9 +130,9 @@ class DiagnosticMixin:
             Maintenance result dict
         """
         return await self.loopseq_registry.run(  # type: ignore[attr-defined]
-            self, "daily_maintenance",
+            self,
+            "daily_maintenance",
         )
 
 
 __all__ = ["DiagnosticMixin"]
-

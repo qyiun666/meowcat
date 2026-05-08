@@ -36,16 +36,15 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ── Shared defaults ────────────────────────────────────────────────
 
 _DEFAULT_NOISE_PATTERNS: list[str] = [
-    r"^(ok|okay|k|kk|okie|got it|gotcha|thanks|thx|ty|np|no problem|yw|you're welcome|sure|yep|yeah|nope|nah|hi|hello|hey|bye|goodbye|see ya|later)$",
+    r"^(ok|okay|k|kk|okie|got it|gotcha|thanks|thx|ty|np|no problem|yw|you're welcome|sure|yep|yeah|nope|nah|hi|hello|hey|bye|goodbye|see ya|later)$",  # noqa: E501
     r"^(cool|nice|great|awesome|perfect|fine|good|alright|all right)$",
     r"^(yes|no|maybe|idk|i don't know|dunno|not sure)$",
     r"^([\s,;.!?\-]+)$",  # pure punctuation/whitespace/dash
-    r"^(ha){2,}$",       # laughing: haha, hahaha...
-    r"^(lo+l+)+$",       # lol, lolol...
+    r"^(ha){2,}$",  # laughing: haha, hahaha...
+    r"^(lo+l+)+$",  # lol, lolol...
 ]
 
 
@@ -67,8 +66,7 @@ class NoiseFilterConfig:
         check_repetition:    Whether to perform repetition checking.
     """
 
-    noise_patterns: list[str] = field(
-        default_factory=lambda: list(_DEFAULT_NOISE_PATTERNS))
+    noise_patterns: list[str] = field(default_factory=lambda: list(_DEFAULT_NOISE_PATTERNS))
     min_chars: int = 8
     max_rep_ratio: float = 0.5
     check_repetition: bool = True
@@ -104,9 +102,7 @@ class NoiseFilter:
     ) -> None:
         self._config = NoiseFilterConfig(
             noise_patterns=(
-                list(noise_patterns)
-                if noise_patterns is not None
-                else self.DEFAULT_NOISE_PATTERNS
+                list(noise_patterns) if noise_patterns is not None else self.DEFAULT_NOISE_PATTERNS
             ),
             min_chars=min_chars,
             max_rep_ratio=max_rep_ratio,
@@ -181,9 +177,8 @@ class NoiseFilter:
             return False
 
         # If both individual messages are noise (pure ack + ack), reject
-        if (
-            self._check_noise_patterns(user_msg.strip())
-            and self._check_noise_patterns(ai_reply.strip())
+        if self._check_noise_patterns(user_msg.strip()) and self._check_noise_patterns(
+            ai_reply.strip()
         ):
             self._noise_count += 1
             return False
@@ -213,10 +208,7 @@ class NoiseFilter:
 
         Returns ``True`` if any pattern matches (text is noise).
         """
-        for pat in self._noise_re:
-            if pat.search(text):
-                return True
-        return False
+        return any(pat.search(text) for pat in self._noise_re)
 
     def _check_min_length(self, text: str) -> bool:
         """Check if text is below minimum content length.

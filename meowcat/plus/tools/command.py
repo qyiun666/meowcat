@@ -20,13 +20,24 @@ from meowcat.tools.tool import RiskLevel, Tool, ToolSpec
 _DEFAULT_WORKSPACE = Path.home() / ".meowcat" / "workspace"
 
 # Safe environment variables to pass to subprocess (whitelist)
-_SAFE_ENV_KEYS: frozenset[str] = frozenset({
-    "PATH", "HOME", "USER", "LOGNAME",
-    "LANG", "LC_ALL", "LC_CTYPE",
-    "TMPDIR", "TEMP", "TMP",
-    "SHELL", "TERM",
-    "VIRTUAL_ENV", "CONDA_PREFIX",  # Python env
-})
+_SAFE_ENV_KEYS: frozenset[str] = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "SHELL",
+        "TERM",
+        "VIRTUAL_ENV",
+        "CONDA_PREFIX",  # Python env
+    }
+)
 
 
 def _build_safe_env() -> dict[str, str]:
@@ -48,10 +59,14 @@ async def _run_command(command: str, **_: Any) -> str:
         return "Error: empty command"
     try:
         import shlex
+
         args = shlex.split(command)
         result = subprocess.run(
-            args, capture_output=True, text=True,
-            timeout=COMMAND_DEFAULT_TIMEOUT, cwd=str(_DEFAULT_WORKSPACE),
+            args,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_DEFAULT_TIMEOUT,
+            cwd=str(_DEFAULT_WORKSPACE),
             env=_build_safe_env(),
         )
         output = result.stdout or result.stderr or "(no output)"
@@ -68,11 +83,9 @@ plus_run_command = Tool(
     ToolSpec(
         name="run_command",
         description="Execute a shell command",
-        parameters={"command": {"type": "string",
-                                "description": "Shell command"}},
+        parameters={"command": {"type": "string", "description": "Shell command"}},
         risk=RiskLevel.HIGH,
         category="system",
     ),
     handler=_run_command,
 )
-

@@ -162,9 +162,9 @@ class KeywordToolMatcher:
 def _tokenize(text: str) -> list[str]:
     """Simple tokenizer: split on non-alphanumeric boundaries, filter short tokens."""
     import re
+
     tokens = re.split(r"[^a-z0-9]+", text.lower())
     return [t for t in tokens if len(t) > 1]
 
 
 __all__ = ["KeywordToolMatcher"]
-

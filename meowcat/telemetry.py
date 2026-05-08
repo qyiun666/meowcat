@@ -24,8 +24,8 @@ from __future__ import annotations
 import time
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from meowcat.wiring import Organ
 
@@ -65,16 +65,12 @@ class Tracer:
         event_bus: optional EventBus for telemetry span events.
     """
 
-    def __init__(
-        self, max_spans: int = 10_000, event_bus: EventBus | None = None
-    ) -> None:
+    def __init__(self, max_spans: int = 10_000, event_bus: EventBus | None = None) -> None:
         self._spans: list[SignalSpan] = []
         self._max_spans = max_spans
         self._event_bus = event_bus
 
-    def start_span(
-        self, from_organ: Organ, to_organ: Organ, method: str
-    ) -> SignalSpan:
+    def start_span(self, from_organ: Organ, to_organ: Organ, method: str) -> SignalSpan:
         """Create a span marking the start of a signal call.
 
         Returns a :class:`SignalSpan` to be passed to :meth:`end_span`
@@ -101,10 +97,11 @@ class Tracer:
             span.error = f"{type(error).__name__}: {error}"
         self._spans.append(span)
         if len(self._spans) > self._max_spans:
-            self._spans = self._spans[-self._max_spans:]
+            self._spans = self._spans[-self._max_spans :]
 
         if self._event_bus is not None:
-            from meowcat.events import TelemetryEvent  # noqa: PLC0415
+            from meowcat.events import TelemetryEvent
+
             self._event_bus.emit_nowait(
                 TelemetryEvent.SPAN,
                 {
@@ -140,12 +137,9 @@ class Metrics:
     """
 
     def __init__(self) -> None:
-        self._latency: dict[tuple[Organ, Organ, str],
-                            list[float]] = defaultdict(list)
-        self._errors: dict[tuple[Organ, Organ,
-                                 str, str], int] = defaultdict(int)
-        self._call_count: dict[tuple[Organ, Organ, str],
-                               int] = defaultdict(int)
+        self._latency: dict[tuple[Organ, Organ, str], list[float]] = defaultdict(list)
+        self._errors: dict[tuple[Organ, Organ, str, str], int] = defaultdict(int)
+        self._call_count: dict[tuple[Organ, Organ, str], int] = defaultdict(int)
 
     def record(self, span: SignalSpan) -> None:
         """Record metrics from a completed :class:`SignalSpan`.
@@ -157,8 +151,7 @@ class Metrics:
         if span.finished_at is not None:
             self._latency[key].append(span.finished_at - span.started_at)
         if span.status == "error" and span.error:
-            err_type = span.error.split(
-                ":")[0] if ":" in span.error else span.error
+            err_type = span.error.split(":")[0] if ":" in span.error else span.error
             error_key = (*key, err_type)
             self._errors[error_key] += 1
 

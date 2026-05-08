@@ -43,3 +43,15 @@ disable_error_code = ["attr-defined"]
 [[tool.mypy.overrides]]
 module = ["pydantic", "anyio", "httpx", "playwright", "chromadb", "textual"]
 ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = [".history/", "__pycache__/", "docs/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["PLC", "D", "F822", "N999"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["meowcat"]

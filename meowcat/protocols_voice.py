@@ -7,7 +7,6 @@ v1.0.7: completed Protocol definitions for Mouth/Purr/Tail,
 replacing the weak ``protocol=None`` constraint in biology.py.
 """
 
-
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable

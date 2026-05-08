@@ -14,7 +14,7 @@ import json as _json
 import logging as _logging
 import time as _time
 from collections.abc import Awaitable, Callable
-from typing import Any, Union
+from typing import Any
 
 from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS
 from meowcat.events import Lifecycle
@@ -23,7 +23,7 @@ _log = _logging.getLogger(__name__)
 
 # v1.0.14: Lifecycle hook type — sync or async callable accepting a CatBase instance
 # v1.3.6: extended to support async hooks (D14)
-CatHook = Union[Callable[[Any], None], Callable[[Any], Awaitable[None]]]
+CatHook = Callable[[Any], None] | Callable[[Any], Awaitable[None]]
 
 
 class LifecycleMixin:
@@ -65,7 +65,8 @@ class LifecycleMixin:
         """Return all currently active (unfinished) workflows."""
         return [
             # type: ignore[attr-defined]
-            wf for wf in self._active_workflows.values()
+            wf
+            for wf in self._active_workflows.values()
             if wf.get("status") in ("active", "awaiting_user")
         ]
 
@@ -81,16 +82,14 @@ class LifecycleMixin:
         try:
             # type: ignore[attr-defined]
             hippo = self.organ("brain", "hippocampus")
-            active = hippo.list_active_workflows(
-                self.cat_uid)  # type: ignore[attr-defined]
+            active = hippo.list_active_workflows(self.cat_uid)  # type: ignore[attr-defined]
             for wf in active:
                 eid = wf.get("entity_id", wf.get("id", ""))
                 if eid:
                     # type: ignore[attr-defined]
                     self._active_workflows[eid] = wf
         except Exception:
-            _log.debug(
-                "_resume_workflows: failed to load workflows", exc_info=True)
+            _log.debug("_resume_workflows: failed to load workflows", exc_info=True)
 
     async def _checkpoint_workflows(self) -> None:
         """Iterate all active Workflows and write checkpoint to Hippocampus.
@@ -113,13 +112,14 @@ class LifecycleMixin:
                     "updated_at": str(_time.time()),
                 }
                 await self._nervous.signal(  # type: ignore[attr-defined]
-                    BRAINSTEM, HIPPOCAMPUS, "append_content",
+                    BRAINSTEM,
+                    HIPPOCAMPUS,
+                    "append_content",
                     entity_id=eid,
                     text="\n[checkpoint] " + _json.dumps(checkpoint_data),
                 )
         except Exception:
-            _log.debug(
-                "_checkpoint_workflows: failed to write checkpoint", exc_info=True)
+            _log.debug("_checkpoint_workflows: failed to write checkpoint", exc_info=True)
 
     # -- Organs mounted hooks (v1.2.36) ------------------------------------
 

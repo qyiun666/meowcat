@@ -73,7 +73,7 @@ class DefaultFrontDesk(Pluggable):
     async def route(
         self,
         text: str,
-        ctx: "SignalContext",
+        ctx: SignalContext,
         colony: Any,
     ) -> str | None:
         """Route external message → target cat or placeholder.
@@ -92,7 +92,10 @@ class DefaultFrontDesk(Pluggable):
         """
         # 1. Plugins — first-hit
         async for _name, result in self._run_plugs(
-            "on_route", text, ctx, colony,
+            "on_route",
+            text,
+            ctx,
+            colony,
         ):
             if result is not None:
                 return result  # type: ignore[no-any-return]

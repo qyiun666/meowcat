@@ -33,10 +33,10 @@ Usage::
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from meowcat.log import MeowLog
 from meowcat.events import FusionEvent
+from meowcat.log import MeowLog
 from meowcat.pluggable import Pluggable
 
 if TYPE_CHECKING:
@@ -56,8 +56,7 @@ class Insight:
         tags: Optional topic tags for categorisation.
     """
 
-    __slots__ = ("summary", "confidence", "source_count",
-                 "contradictions", "tags")
+    __slots__ = ("summary", "confidence", "source_count", "contradictions", "tags")
 
     def __init__(
         self,
@@ -172,8 +171,7 @@ class PinealGland(Pluggable):
             if keep:
                 filtered.append(ins)
 
-        _log.info("meditate", scribbles_in=len(
-            scribbles), insights_out=len(filtered))
+        _log.info("meditate", scribbles_in=len(scribbles), insights_out=len(filtered))
         return filtered
 
     def fuse_to_self(self, insights: list[Insight]) -> None:
@@ -227,10 +225,14 @@ class PinealGland(Pluggable):
             if fuse_colony:
                 self.fuse_to_colony(insights)
 
-        _log.info(FusionEvent.TRIGGER_END, insights_count=len(insights),
-                  scribbles=len(scribbles))
-        _log.info("trigger", scribbles=len(scribbles), insights=len(insights),
-                  fuse_self=fuse_self, fuse_colony=fuse_colony)
+        _log.info(FusionEvent.TRIGGER_END, insights_count=len(insights), scribbles=len(scribbles))
+        _log.info(
+            "trigger",
+            scribbles=len(scribbles),
+            insights=len(insights),
+            fuse_self=fuse_self,
+            fuse_colony=fuse_colony,
+        )
         return insights
 
     def trigger_if(
@@ -335,11 +337,13 @@ def _default_merger(
         summary = " | ".join(texts[:3])  # merge up to 3 representative texts
         if len(texts) > 3:
             summary += f" ... (+{len(texts) - 3})"
-        insights.append(Insight(
-            summary=summary,
-            confidence=min(0.9, 0.5 + 0.1 * len(group)),
-            source_count=len(group),
-        ))
+        insights.append(
+            Insight(
+                summary=summary,
+                confidence=min(0.9, 0.5 + 0.1 * len(group)),
+                source_count=len(group),
+            )
+        )
     return insights
 
 
@@ -363,10 +367,18 @@ class DefaultMerger:
 
 
 _DEFAULT_ANTONYMS: tuple[tuple[str, str], ...] = (
-    ("good", "bad"), ("success", "failure"), ("safe", "dangerous"),
-    ("fast", "slow"), ("easy", "hard"), ("correct", "wrong"),
-    ("true", "false"), ("yes", "no"), ("allow", "deny"),
-    ("approve", "reject"), ("open", "closed"), ("high", "low"),
+    ("good", "bad"),
+    ("success", "failure"),
+    ("safe", "dangerous"),
+    ("fast", "slow"),
+    ("easy", "hard"),
+    ("correct", "wrong"),
+    ("true", "false"),
+    ("yes", "no"),
+    ("allow", "deny"),
+    ("approve", "reject"),
+    ("open", "closed"),
+    ("high", "low"),
 )
 
 
@@ -435,4 +447,3 @@ __all__ = [
     "DefaultContradiction",
     "DefaultInsightFilter",
 ]
-

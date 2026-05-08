@@ -10,10 +10,11 @@ This module only provides :class:`Pipeline` executor: drives Stages sequentially
 stops on ``short_circuit`` event. Not responsible for Stage implementation.
 """
 
-
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
+import contextlib
+from collections.abc import AsyncIterator
+from typing import Any
 
 from meowcat.protocols import StageProtocol
 
@@ -43,15 +44,10 @@ class Pipeline:
     def _mark_short_circuit(ctx: Any, ev: Any) -> None:
         """Write short-circuit state back to ctx. ctx can be a dataclass or pydantic BaseModel;
         silently skips if fields are missing — does not decide for the business layer."""
-        try:
+        with contextlib.suppress(AttributeError):
             ctx.short_circuited = True
-        except AttributeError:
-            pass
-        try:
+        with contextlib.suppress(AttributeError):
             ctx.final_reply = getattr(ev, "reply", None)
-        except AttributeError:
-            pass
 
 
 __all__ = ["Pipeline"]
-

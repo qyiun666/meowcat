@@ -21,9 +21,9 @@ For external developers::
 This file has zero third-party dependencies and zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -53,37 +53,44 @@ class Chain:
 
 # Named constants (v0.5.29 publicly exported)
 MEMORY_SEARCH_CHAIN: Chain = Chain(
-    "memory_search", ("locate",),
+    "memory_search",
+    ("locate",),
     "Memory search — search hippocampus for relevant memories",
 )
 FULL_REASONING_CHAIN: Chain = Chain(
-    "full_reasoning", ("deep_reason", "speak"),
+    "full_reasoning",
+    ("deep_reason", "speak"),
     "Reasoning + output — deep reason then speak",
 )
 TOOL_EXEC_CHAIN: Chain = Chain(
-    "tool_exec", ("execute_tool",),
+    "tool_exec",
+    ("execute_tool",),
     "Tool execution — call paws interactive tools",
 )
 MAINTENANCE_CHAIN: Chain = Chain(
-    "maintenance", ("decay", "cleanup_orphans"),
+    "maintenance",
+    ("decay", "cleanup_orphans"),
     "Self-maintenance — decay memories + cleanup orphan connections",
 )
 DIAGNOSTIC_CHAIN: Chain = Chain(
-    "diagnostic", ("crystallize",),
+    "diagnostic",
+    ("crystallize",),
     "Diagnostic — surface crystallizer hotspots + usage stats",
 )
 WORKFLOW_CHAIN: Chain = Chain(
-    "workflow_chain", ("workflow_create", "execute_tool",
-                       "workflow_checkpoint"),
+    "workflow_chain",
+    ("workflow_create", "execute_tool", "workflow_checkpoint"),
     "Workflow single-step — create → execute → archive",
 )
 # -- v1.3.0 Growth chains --------------------------------------------------
 GROWTH_CHAIN: Chain = Chain(
-    "growth_chain", ("record_anomaly", "crystallize"),
+    "growth_chain",
+    ("record_anomaly", "crystallize"),
     "Growth chain — record anomaly pattern, then crystallize skills",
 )
 REFLECTION_CHAIN: Chain = Chain(
-    "reflection_chain", ("crystallize",),
+    "reflection_chain",
+    ("crystallize",),
     "Reflection chain — post-execution skill review",
 )
 
@@ -99,7 +106,7 @@ BUILTIN_CHAINS: tuple[Chain, ...] = (
 )
 
 
-def register_builtin_chains(registry: "ChainRegistry") -> None:
+def register_builtin_chains(registry: ChainRegistry) -> None:
     """Register builtin chains into a ChainRegistry.
 
     Args:
@@ -110,6 +117,7 @@ def register_builtin_chains(registry: "ChainRegistry") -> None:
 
 
 # -- ChainRegistry -------------------------------------------------
+
 
 @dataclass
 class ChainRegistry:
@@ -141,9 +149,7 @@ class ChainRegistry:
             TypeError: chain is not a Chain instance
         """
         if not isinstance(chain, Chain):
-            raise TypeError(
-                f"Expected Chain instance, got {type(chain).__name__}"
-            )
+            raise TypeError(f"Expected Chain instance, got {type(chain).__name__}")
         if chain.name in self._chains:
             self._chains_list.remove(self._chains[chain.name])
         self._chains[chain.name] = chain
@@ -194,22 +200,21 @@ class ChainRegistry:
         try:
             for path_name in chain.path_names:
                 last_result = await cat.path_registry.run(
-                    cat, path_name, **current_input,
+                    cat,
+                    path_name,
+                    **current_input,
                 )
                 # previous step return value becomes next step kwargs
-                if isinstance(last_result, dict):
-                    current_input = last_result
-                else:
-                    current_input = {"_result": last_result}
+                current_input = last_result if isinstance(last_result, dict) else {"_result": last_result}
         except Exception:
             # execute rollback paths in reverse; rollback exceptions do not mask the original
             for rollback_name in reversed(chain.rollback_paths):
-                try:
+                with contextlib.suppress(Exception):
                     await cat.path_registry.run(
-                        cat, rollback_name, **current_input,
+                        cat,
+                        rollback_name,
+                        **current_input,
                     )
-                except Exception:
-                    pass
             raise
 
         # return the last step result (preserving dict type)
@@ -219,11 +224,16 @@ class ChainRegistry:
 
 
 __all__ = [
-    "Chain", "ChainRegistry",
-    "MEMORY_SEARCH_CHAIN", "FULL_REASONING_CHAIN",
-    "TOOL_EXEC_CHAIN", "MAINTENANCE_CHAIN", "DIAGNOSTIC_CHAIN",
+    "Chain",
+    "ChainRegistry",
+    "MEMORY_SEARCH_CHAIN",
+    "FULL_REASONING_CHAIN",
+    "TOOL_EXEC_CHAIN",
+    "MAINTENANCE_CHAIN",
+    "DIAGNOSTIC_CHAIN",
     "WORKFLOW_CHAIN",
-    "GROWTH_CHAIN", "REFLECTION_CHAIN",
-    "BUILTIN_CHAINS", "register_builtin_chains",
+    "GROWTH_CHAIN",
+    "REFLECTION_CHAIN",
+    "BUILTIN_CHAINS",
+    "register_builtin_chains",
 ]
-

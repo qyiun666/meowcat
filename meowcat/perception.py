@@ -11,7 +11,6 @@ Reflex.trigger directly.
 Zero meowagent dependency.
 """
 
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal
@@ -19,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from meowcat.protocols import CatProtocol
+    pass
 
 Modality = Literal["text", "image", "audio", "tool_result", "unknown"]
 
@@ -77,20 +76,22 @@ class PerceptionContext(BaseModel):
 # -- Modality inference ---------------------------------------------------
 
 _IMAGE_MAGIC: tuple[bytes, ...] = (
-    b"\x89PNG\r\n\x1a\n",    # PNG
-    b"\xff\xd8\xff",           # JPEG
-    b"GIF87a", b"GIF89a",       # GIF
-    b"RIFF",                    # WEBP header
-    b"BM",                      # BMP
+    b"\x89PNG\r\n\x1a\n",  # PNG
+    b"\xff\xd8\xff",  # JPEG
+    b"GIF87a",
+    b"GIF89a",  # GIF
+    b"RIFF",  # WEBP header
+    b"BM",  # BMP
 )
 
 _AUDIO_MAGIC: tuple[bytes, ...] = (
     # WAV (RIFF....WAVE); same magic as WEBP, choose by scenario
     b"RIFF",
-    b"ID3",                     # MP3 with ID3 tags
-    b"\xff\xfb", b"\xff\xf3",   # MP3 frame header
-    b"OggS",                    # OGG
-    b"fLaC",                    # FLAC
+    b"ID3",  # MP3 with ID3 tags
+    b"\xff\xfb",
+    b"\xff\xf3",  # MP3 frame header
+    b"OggS",  # OGG
+    b"fLaC",  # FLAC
 )
 
 
@@ -125,4 +126,3 @@ def infer_modality(input: Any) -> Modality:
 
 
 __all__ = ["PerceptionContext", "Modality", "infer_modality"]
-

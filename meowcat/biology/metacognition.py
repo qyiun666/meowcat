@@ -108,7 +108,9 @@ class Metacognition(Pluggable):
         """
         # Plugin slot — custom assessor
         for _name, r in self._run_plugs_sync(
-            "assessor", domain, dict(self._capabilities),
+            "assessor",
+            domain,
+            dict(self._capabilities),
         ):
             if isinstance(r, dict):
                 return r
@@ -132,17 +134,11 @@ class Metacognition(Pluggable):
 
     def capable_domains(self) -> list[str]:
         """Return domains where the cat believes itself capable."""
-        return [
-            d for d, r in self._capabilities.items()
-            if r["capable"] is True
-        ]
+        return [d for d, r in self._capabilities.items() if r["capable"] is True]
 
     def incapable_domains(self) -> list[str]:
         """Return domains where the cat knows it's incapable."""
-        return [
-            d for d, r in self._capabilities.items()
-            if r["capable"] is False
-        ]
+        return [d for d, r in self._capabilities.items() if r["capable"] is False]
 
     def diagnose(self) -> dict[str, Any]:
         """Return a diagnostic snapshot."""
@@ -187,4 +183,3 @@ def _default_assessor(
 
 
 __all__ = ["Metacognition"]
-

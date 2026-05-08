@@ -15,7 +15,6 @@ Usage::
     hippo = await Stethoscope.probe_organ(cat, "brain", "hippocampus")
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -52,9 +51,7 @@ def render_wiring(
         >>> print(render_wiring(cat.wiring, format="dot"))
     """
     if format not in ("mermaid", "dot"):
-        raise ValueError(
-            f"Unknown format '{format}', expected 'mermaid' or 'dot'"
-        )
+        raise ValueError(f"Unknown format '{format}', expected 'mermaid' or 'dot'")
 
     allowed = wiring.edges()
     forbidden = wiring.forbids()
@@ -97,14 +94,14 @@ def _render_mermaid(
     # node declarations
     for organ, nid in sorted(node_ids.items(), key=lambda x: x[1]):
         label = f"{organ[0]}:{organ[1]}"
-        lines.append(f"    {nid}(\"{label}\")")
+        lines.append(f'    {nid}("{label}")')
 
     # allowed edges
-    for i, (frm, to) in enumerate(sorted(allowed)):
+    for _i, (frm, to) in enumerate(sorted(allowed)):
         lines.append(f"    {node_ids[frm]} --> {node_ids[to]}")
 
     # forbidden edges
-    for i, (frm, to) in enumerate(sorted(forbidden)):
+    for _i, (frm, to) in enumerate(sorted(forbidden)):
         lines.append(f"    {node_ids[frm]} -.->|✗| {node_ids[to]}")
 
     # isolated node styles
@@ -127,9 +124,7 @@ def _render_dot(
         label = f"{organ[0]}:{organ[1]}"
         # isolated nodes gray
         if organ in isolated:
-            lines.append(
-                f'    {nid} [label="{label}", style=filled, fillcolor="#ddd"];'
-            )
+            lines.append(f'    {nid} [label="{label}", style=filled, fillcolor="#ddd"];')
         else:
             lines.append(f'    {nid} [label="{label}"];')
 
@@ -139,10 +134,7 @@ def _render_dot(
 
     # forbidden edges
     for frm, to in sorted(forbidden):
-        lines.append(
-            f'    {node_ids[frm]} -> {node_ids[to]} '
-            f'[color=red, style=dashed, label="✗"];'
-        )
+        lines.append(f'    {node_ids[frm]} -> {node_ids[to]} [color=red, style=dashed, label="✗"];')
 
     lines.append("}")
     return "\n".join(lines)
@@ -185,7 +177,7 @@ class Stethoscope:
         """
         host: OrganHost = cat.host
         result: dict[str, dict[str, Any]] = {}
-        for cat_name, instance in host.organs(category).items():
+        for cat_name, _instance in host.organs(category).items():
             key = cat_name  # omit category prefix
             try:
                 result[key] = await cat.probe((category, cat_name))
@@ -209,4 +201,3 @@ class Stethoscope:
 
 
 __all__ = ["Stethoscope", "render_wiring"]
-

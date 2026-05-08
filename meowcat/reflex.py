@@ -17,26 +17,30 @@ At startup, ``cat.freeze_nervous_system()`` calls ``validate(wiring)`` to check 
 path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvalidError`.
 """
 
-
 from __future__ import annotations
 
 import bisect
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# v1.0.18: built-in reflex path structures
+from meowcat.anatomy import (
+    AMYGDALA,
+    BRAINSTEM,
+    CEREBELLUM,
+    CEREBRUM,
+    EARS,
+    MOUTH,
+    THALAMUS,
+)
 from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
-from meowcat.events import EventBus
-from meowcat.events import Lifecycle, NerveEvent
+from meowcat.events import EventBus, Lifecycle, NerveEvent
 from meowcat.perception import PerceptionContext, infer_modality
 from meowcat.pipeline import Pipeline
 from meowcat.protocols import StageProtocol
 from meowcat.wiring import Organ, Wiring
-
-# v1.0.18: built-in reflex path structures
-from meowcat.anatomy import (
-    AMYGDALA, BRAINSTEM, CEREBELLUM, CEREBRUM, EARS, MOUTH, THALAMUS,
-)
 
 if TYPE_CHECKING:
     from meowcat.nervous import Nervous
@@ -70,7 +74,7 @@ class Reflex(BaseModel):
 
     def hops(self) -> list[tuple[Organ, Organ]]:
         """Path adjacency hop sequence: ``[(p0,p1), (p1,p2), ...]``."""
-        return list(zip(self.path[:-1], self.path[1:]))
+        return list(zip(self.path[:-1], self.path[1:], strict=False))
 
 
 class ReflexRegistry:
@@ -132,9 +136,7 @@ class ReflexRegistry:
 
     def _record_trigger(self, reflex_name: str) -> None:
         """Internal: increment trigger counter for hot path tracking."""
-        self._trigger_counts[reflex_name] = (
-            self._trigger_counts.get(reflex_name, 0) + 1
-        )
+        self._trigger_counts[reflex_name] = self._trigger_counts.get(reflex_name, 0) + 1
         self._total_triggers += 1
 
     def observe_hot_paths(self, min_triggers: int = 5) -> list[tuple[str, int]]:
@@ -151,9 +153,7 @@ class ReflexRegistry:
             List of ``(reflex_name, trigger_count)`` tuples.
         """
         result = [
-            (name, count)
-            for name, count in self._trigger_counts.items()
-            if count >= min_triggers
+            (name, count) for name, count in self._trigger_counts.items() if count >= min_triggers
         ]
         result.sort(key=lambda x: -x[1])
         return result
@@ -196,7 +196,7 @@ class ReflexArc:
     def __init__(
         self,
         events: EventBus,
-        nervous: "Nervous | None" = None,
+        nervous: Nervous | None = None,
     ) -> None:
         self.events = events
         self.nervous = nervous
@@ -298,12 +298,11 @@ class ReflexArc:
 
 BUILTIN_REFLEX_PATHS: dict[str, tuple[Organ, ...]] = {
     "text_dialogue": (EARS, THALAMUS, BRAINSTEM, CEREBRUM, CEREBELLUM, MOUTH),
-    "danger":        (EARS, THALAMUS, AMYGDALA, MOUTH),
+    "danger": (EARS, THALAMUS, AMYGDALA, MOUTH),
 }
 """Predefined reflex path structures. Applications use these as ``path=``
 arguments when registering ``Reflex`` instances. The ``trigger`` callable
 is always supplied by the application layer."""
 
 
-__all__ = ["Reflex", "ReflexRegistry",
-           "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]
+__all__ = ["Reflex", "ReflexRegistry", "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]

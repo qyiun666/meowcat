@@ -37,28 +37,27 @@ Kitten scenario: pass ``forbidden_methods`` at construction to disable specific 
     await nervous.signal(..., "spawn_kitten")  # -> IllegalNeuralPathError
 """
 
-
 from __future__ import annotations
 
 import inspect
 import time
 from dataclasses import dataclass, field
-from functools import lru_cache
+from functools import cache
 from typing import Any, Protocol
 
-from meowcat.errors import IllegalNeuralPathError, CircuitOpenError
-from meowcat.events import EventBus
+from meowcat.errors import CircuitOpenError, IllegalNeuralPathError
+from meowcat.events import EventBus, NerveEvent
 from meowcat.host import OrganHost
-from meowcat.events import NerveEvent
-from meowcat.telemetry import Tracer, Metrics, SignalSpan
+from meowcat.telemetry import Metrics, SignalSpan, Tracer
 from meowcat.wiring import Organ, Wiring
 
-
 # -- Signal middleware types --------------------------------------------------
+
 
 @dataclass(frozen=True)
 class SignalCall:
     """Immutable context for a single signal() call."""
+
     from_organ: Organ
     to_organ: Organ
     method: str
@@ -69,6 +68,7 @@ class SignalCall:
 
 # -- Circuit breaker types (v1.2.19) ---------------------------------------
 
+
 @dataclass
 class CircuitState:
     """Per-circuit failure tracking for signal circuit breaker.
@@ -76,6 +76,7 @@ class CircuitState:
     Keyed by ``(to_organ, method)``. Tracks consecutive failures and
     controls open/closed/half-open transitions.
     """
+
     failures: int = 0
     last_failure: float = 0.0
     open_until: float = 0.0
@@ -104,19 +105,20 @@ class SignalMiddleware(Protocol):
         ...
 
 
-@lru_cache(maxsize=None)
-def _build_organ_spec_index() -> dict[Organ, "OrganSpec"]:  # noqa: F821
+@cache
+def _build_organ_spec_index() -> dict[Organ, OrganSpec]:  # noqa: F821
     """Build ORGAN_SPECS coordinate→spec index (cached)."""
-    from meowcat.biology import ORGAN_SPECS  # noqa: PLC0415
+    from meowcat.biology import ORGAN_SPECS
+
     return {s.coord: s for s in ORGAN_SPECS}
 
 
-def _get_organ_spec(organ: Organ) -> "OrganSpec | None":  # noqa: F821
+def _get_organ_spec(organ: Organ) -> OrganSpec | None:  # noqa: F821
     """Look up spec in ORGAN_SPECS by organ coordinate."""
     return _build_organ_spec_index().get(organ)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _protocol_public_members(proto: type) -> frozenset[str]:
     """Return the set of public member names declared on a Protocol (cached).
 
@@ -128,9 +130,7 @@ def _protocol_public_members(proto: type) -> frozenset[str]:
     per Protocol class; subsequent signal hot paths do only one dict lookup
     + one set membership check.
     """
-    return frozenset(
-        name for name in dir(proto) if not name.startswith("_")
-    )
+    return frozenset(name for name in dir(proto) if not name.startswith("_"))
 
 
 class Nervous:
@@ -184,8 +184,7 @@ class Nervous:
 
         # telemetry (v1.2.21)
         self._telemetry_enabled = enable_telemetry
-        self.tracer: Tracer | None = Tracer(
-            event_bus=events) if enable_telemetry else None
+        self.tracer: Tracer | None = Tracer(event_bus=events) if enable_telemetry else None
         self.metrics: Metrics | None = Metrics() if enable_telemetry else None
 
     # -- Synapse ------------------------------------------------------
@@ -206,8 +205,7 @@ class Nervous:
             info["after_is_async"] = inspect.iscoroutinefunction(mw.after)
         if hasattr(mw, "on_error"):
             info["has_on_error"] = True
-            info["on_error_is_async"] = inspect.iscoroutinefunction(
-                mw.on_error)
+            info["on_error_is_async"] = inspect.iscoroutinefunction(mw.on_error)
         self._mw_info.append(info)
 
     # -- Circuit breaker helpers (v1.2.19) ------------------------------
@@ -231,7 +229,8 @@ class Nervous:
         if now < state.open_until:
             if key not in self._cb_probing:
                 raise CircuitOpenError(
-                    to_organ, method,
+                    to_organ,
+                    method,
                     failures=state.failures,
                     retry_after=state.open_until - now,
                 )
@@ -305,7 +304,8 @@ class Nervous:
         """
         if method in self.forbidden_methods:
             raise IllegalNeuralPathError(
-                from_organ, to_organ,
+                from_organ,
+                to_organ,
                 reason=f"forbidden method '{method}'",
             )
 
@@ -313,14 +313,15 @@ class Nervous:
 
         # v0.5.11 Protocol contract validation: if target coordinate has a Protocol mapping,
         # verify method is declared on that Protocol. Skip if no mapping (preserving flexibility).
-        from meowcat.biology import ORGAN_PROTOCOLS  # noqa: PLC0415
+        from meowcat.biology import ORGAN_PROTOCOLS
+
         protocol = ORGAN_PROTOCOLS.get(to_organ)
         if protocol is not None and method not in _protocol_public_members(protocol):
             raise IllegalNeuralPathError(
-                from_organ, to_organ,
+                from_organ,
+                to_organ,
                 reason=(
-                    f"method '{method}' not declared on "
-                    f"{protocol.__name__} for organ {to_organ}"
+                    f"method '{method}' not declared on {protocol.__name__} for organ {to_organ}"
                 ),
             )
 
@@ -328,7 +329,8 @@ class Nervous:
         spec = _get_organ_spec(to_organ)
         if spec and method in spec.write_methods and from_organ not in spec.write_callers:
             raise IllegalNeuralPathError(
-                from_organ, to_organ,
+                from_organ,
+                to_organ,
                 reason=(
                     f"'{method}' is a write method on {to_organ}, "
                     f"only {spec.write_callers} can call it"
@@ -434,30 +436,28 @@ class Nervous:
             IllegalNeuralPathError: organ not in wiring
             TypeError: organ does not implement Diagnosable protocol or diagnose() returns non-dict
         """
-        from meowcat.protocols import Diagnosable  # noqa: PLC0415
+        from meowcat.protocols import Diagnosable
 
         if not self.wiring.is_organ_wired(to_organ):
             raise IllegalNeuralPathError(
-                ("_probe", "_probe"), to_organ,
+                ("_probe", "_probe"),
+                to_organ,
                 reason="organ not wired — probe only allowed on wired organs",
             )
 
         target = self.host.organ(*to_organ)
 
         if not isinstance(target, Diagnosable):
-            raise TypeError(
-                f"Organ {to_organ} does not implement Diagnosable protocol"
-            )
+            raise TypeError(f"Organ {to_organ} does not implement Diagnosable protocol")
 
-        fn = getattr(target, "diagnose")
+        fn = target.diagnose
         result = fn()
         if inspect.isawaitable(result):
             result = await result
 
         if not isinstance(result, dict):
             raise TypeError(
-                f"Organ {to_organ}.diagnose() must return dict, "
-                f"got {type(result).__name__}"
+                f"Organ {to_organ}.diagnose() must return dict, got {type(result).__name__}"
             )
 
         return result
@@ -470,7 +470,8 @@ class Nervous:
         Equivalent to ``meowcat.biology.apply_default_wiring(self.wiring)``.
         Can be called at any time, can be called multiple times (wiring is a set, deduplicates).
         """
-        from meowcat import biology  # noqa: PLC0415
+        from meowcat import biology
+
         biology.apply_default_wiring(self.wiring)
 
     def freeze(self) -> None:

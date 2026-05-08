@@ -10,7 +10,6 @@ Import from ``meowcat.plus.tools`` or ``meowcat.plus``.
 from __future__ import annotations
 
 import logging
-import os
 import re
 from pathlib import Path
 from typing import Any
@@ -29,10 +28,7 @@ async def _list_dir(path: str, **_: Any) -> str:
     """List directory contents, truncated at 200 entries with file sizes."""
     ws = _DEFAULT_WORKSPACE
     p = Path(path).expanduser()
-    if not p.is_absolute():
-        p = (ws / p).resolve()
-    else:
-        p = p.resolve()
+    p = (ws / p).resolve() if not p.is_absolute() else p.resolve()
 
     if not p.exists():
         return f"Directory not found: {p}"
@@ -62,8 +58,7 @@ plus_list_dir = Tool(
     ToolSpec(
         name="list_dir",
         description="List directory contents (truncated at 200 entries, includes file sizes)",
-        parameters={"path": {"type": "string",
-                             "description": "Directory path"}},
+        parameters={"path": {"type": "string", "description": "Directory path"}},
         risk=RiskLevel.LOW,
         category="file",
     ),
@@ -77,10 +72,7 @@ async def _grep_files(pattern: str, path: str, **_: Any) -> str:
     """Search file contents with regex, max 300 files."""
     ws = _DEFAULT_WORKSPACE
     p = Path(path).expanduser()
-    if not p.is_absolute():
-        p = (ws / p).resolve()
-    else:
-        p = p.resolve()
+    p = (ws / p).resolve() if not p.is_absolute() else p.resolve()
 
     if not p.exists():
         return f"Path not found: {p}"
@@ -99,7 +91,7 @@ async def _grep_files(pattern: str, path: str, **_: Any) -> str:
             for entry in sorted(d.iterdir()):
                 if file_count >= 300:
                     return
-                if entry.name.startswith('.') and entry.name not in ('.', '..'):
+                if entry.name.startswith(".") and entry.name not in (".", ".."):
                     continue
                 if entry.is_dir():
                     _search_dir(entry)
@@ -108,14 +100,12 @@ async def _grep_files(pattern: str, path: str, **_: Any) -> str:
                     if file_count > 300:
                         return
                     try:
-                        content = entry.read_text(
-                            encoding="utf-8", errors="replace")
+                        content = entry.read_text(encoding="utf-8", errors="replace")
                     except Exception:
                         return
                     for lineno, line in enumerate(content.splitlines(), 1):
                         if pat.search(line):
-                            results.append(
-                                f"{entry}:{lineno}: {line[:200]}")
+                            results.append(f"{entry}:{lineno}: {line[:200]}")
                             if len(results) >= 500:
                                 return
         except PermissionError:
@@ -168,4 +158,3 @@ def _fmt_size(size: int) -> str:
 
 
 __all__ = ["plus_list_dir", "plus_grep_files"]
-

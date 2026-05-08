@@ -23,4 +23,3 @@ def make_cat(name: str = "test", **kwargs):
     """
     colony = make_test_colony()
     return colony.create_cat(name=name, **kwargs)
-

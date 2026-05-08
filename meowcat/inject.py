@@ -20,7 +20,6 @@ Usage::
     await needle.poke_memory({"name": "fix", "content": "corrected"})
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -55,13 +54,10 @@ class Needle:
             NeedleDisabledError: when ``MEOWCAT_DISABLE_NEEDLE=1``
         """
         if os.environ.get("MEOWCAT_DISABLE_NEEDLE") == "1":
-            raise NeedleDisabledError(
-                "Needle is disabled by MEOWCAT_DISABLE_NEEDLE=1"
-            )
+            raise NeedleDisabledError("Needle is disabled by MEOWCAT_DISABLE_NEEDLE=1")
         self._cat = cat
         logger.warning(
-            "Needle created — this bypasses wiring checks. "
-            "For debugging/admin use only."
+            "Needle created — this bypasses wiring checks. For debugging/admin use only."
         )
 
     async def poke(self, to_organ: Organ, method: str, **kwargs: Any) -> Any:
@@ -86,9 +82,7 @@ class Needle:
             raise ValueError(f"Organ {to_organ} not mounted")
         fn = getattr(target, method, None)
         if fn is None:
-            raise AttributeError(
-                f"Organ {to_organ} has no method '{method}'"
-            )
+            raise AttributeError(f"Organ {to_organ} has no method '{method}'")
         result = fn(**kwargs)
         if inspect.isawaitable(result):
             result = await result
@@ -101,7 +95,9 @@ class Needle:
             **entity_data: Entity data passed to ``add_entity()``
         """
         return await self.poke(
-            ("brain", "hippocampus"), "add_entity", **entity_data,
+            ("brain", "hippocampus"),
+            "add_entity",
+            **entity_data,
         )
 
     async def poke_focus(self, topic: str) -> Any:
@@ -111,7 +107,9 @@ class Needle:
             topic: Focus topic
         """
         return await self.poke(
-            ("brain", "frontal"), "update_focus", result=topic,
+            ("brain", "frontal"),
+            "update_focus",
+            result=topic,
         )
 
     async def poke_worldview(self, layer: str, key: str, value: Any) -> Any:
@@ -123,10 +121,13 @@ class Needle:
             value: Value
         """
         return await self.poke(
-            ("brain", "cortex"), "ingest",
-            source="needle", layer=layer, key=key, value=value,
+            ("brain", "cortex"),
+            "ingest",
+            source="needle",
+            layer=layer,
+            key=key,
+            value=value,
         )
 
 
 __all__ = ["Needle", "NeedleDisabledError"]
-

@@ -10,12 +10,12 @@ Difference from Tool:
 A Skill is a coarser-grained capability unit than a Tool; a Skill may internally call multiple Tools.
 """
 
-
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SkillSpec:
     """Skill spec — coarser-grained capability unit than ToolSpec."""
+
     name: str
     description: str
     version: str = "0.1.0"
@@ -49,8 +50,7 @@ class Skill:
     def __init__(
         self,
         spec: SkillSpec,
-        handler: Callable[..., Union[str,
-                                     Coroutine[Any, Any, str]]] | None = None,
+        handler: Callable[..., str | Coroutine[Any, Any, str]] | None = None,
     ) -> None:
         self.spec = spec
         self._handler = handler
@@ -92,6 +92,7 @@ class Skill:
             raise RuntimeError(f"Skill '{self.name}' has no handler")
         try:
             import asyncio
+
             raw = self._handler(**kwargs)
             if asyncio.iscoroutine(raw):
                 return str(await raw)
@@ -133,8 +134,7 @@ class SkillRegistry:
     def register(self, skill: Skill) -> None:
         """Register a Skill. Same name will be overwritten."""
         if skill.name in self._skills:
-            logger.warning(
-                "Skill '%s' already registered, overwriting", skill.name)
+            logger.warning("Skill '%s' already registered, overwriting", skill.name)
         self._skills[skill.name] = skill
 
     def get(self, name: str) -> Skill | None:
@@ -149,13 +149,19 @@ class SkillRegistry:
 
     def list_by_source(self, source: str, enabled_only: bool = True) -> list[Skill]:
         """Filter by source."""
-        return [s for s in self._skills.values()
-                if s.spec.source == source and (not enabled_only or s.enabled)]
+        return [
+            s
+            for s in self._skills.values()
+            if s.spec.source == source and (not enabled_only or s.enabled)
+        ]
 
     def list_by_category(self, category: str, enabled_only: bool = True) -> list[Skill]:
         """Filter by category."""
-        return [s for s in self._skills.values()
-                if s.spec.category == category and (not enabled_only or s.enabled)]
+        return [
+            s
+            for s in self._skills.values()
+            if s.spec.category == category and (not enabled_only or s.enabled)
+        ]
 
     def enable(self, name: str) -> bool:
         """Enable a Skill."""
@@ -182,11 +188,6 @@ class SkillRegistry:
         q = query.lower()
         results: list[Skill] = []
         for skill in self._skills.values():
-            if q in skill.name.lower():
-                results.append(skill)
-            elif q in skill.description.lower():
-                results.append(skill)
-            elif any(q in t.lower() for t in skill.spec.tags):
+            if q in skill.name.lower() or q in skill.description.lower() or any(q in t.lower() for t in skill.spec.tags):  # noqa: E501
                 results.append(skill)
         return results
-

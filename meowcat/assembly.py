@@ -43,15 +43,14 @@ can run, ``enable_reflex=False`` can also run; corresponding signal/perceive
 will raise RuntimeError clearly indicating the subsystem is disabled.
 """
 
-
 from __future__ import annotations
 
 import logging as _logging
-from collections.abc import Callable
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
-from meowcat.assembly_lifecycle import CatHook, LifecycleMixin
 from meowcat.assembly_diag import DiagnosticMixin
+from meowcat.assembly_lifecycle import CatHook, LifecycleMixin
 from meowcat.errors import IllegalNeuralPathError, StandaloneCatError
 from meowcat.events import EventBus, Handler
 from meowcat.host import OrganHost
@@ -76,7 +75,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         self,
         cat_uid: str,
         *,
-        container: "Colony | None" = None,
+        container: Colony | None = None,  # noqa: F821
         parent_id: str | None = None,
         allowed_organs: frozenset[str] | None = None,
         forbidden_methods: frozenset[str] = frozenset(),
@@ -130,9 +129,9 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         self._host = OrganHost(cat_uid)
         self._events = EventBus()
         self._nervous: Nervous | None = (
-            Nervous(self._host, self._events,
-                    forbidden_methods=forbidden_methods)
-            if enable_wiring else None
+            Nervous(self._host, self._events, forbidden_methods=forbidden_methods)
+            if enable_wiring
+            else None
         )
         self._reflex: ReflexArc | None = (
             ReflexArc(self._events, self._nervous) if enable_reflex else None
@@ -141,22 +140,27 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         self.tool_registry = ToolRegistry()
         self.skill_registry = SkillRegistry()
         # v0.5.27: Path registry — atomic path table
-        from meowcat.path import PathRegistry, register_builtin_paths  # noqa: PLC0415
+        from meowcat.path import PathRegistry, register_builtin_paths
+
         self.path_registry = PathRegistry()
         if register_default_paths:
             register_builtin_paths(self.path_registry)
         # v0.5.28a: Chain registry — Path sequence composer
-        from meowcat.chain import ChainRegistry, register_builtin_chains  # noqa: PLC0415
+        from meowcat.chain import ChainRegistry, register_builtin_chains
+
         self.chain_registry = ChainRegistry()
         if register_default_chains:
             register_builtin_chains(self.chain_registry)
         # v0.5.28b: Loop registry — Chain + trigger/exit events
-        from meowcat.loops import LoopRegistry, register_default_loops as _register_default_loops  # noqa: PLC0415
+        from meowcat.loops import LoopRegistry
+        from meowcat.loops import register_default_loops as _register_default_loops
+
         self.loop_registry = LoopRegistry()
         if register_default_loops:
             _register_default_loops(self.loop_registry, self.chain_registry)
         # v1.0.4: LoopSequence registry — Loop sequence composer
-        from meowcat.loops import LoopSequenceRegistry  # noqa: PLC0415
+        from meowcat.loops import LoopSequenceRegistry
+
         self.loopseq_registry = LoopSequenceRegistry()
         # v1.0.14: Lifecycle hooks
         self._start_hooks: list[CatHook] = []
@@ -179,7 +183,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
     # -- Read-only facade properties -----------------------------------------
 
     @property
-    def container(self) -> "Colony":
+    def container(self) -> Colony:  # noqa: F821
         """The Colony container this cat belongs to (mandatory since v1.1.3)."""
         return self._container
 
@@ -251,7 +255,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         return self._nervous.wiring
 
     @property
-    def reflexes(self) -> "ReflexRegistry":
+    def reflexes(self) -> ReflexRegistry:  # noqa: F821
         """Reflex registry (raises :class:`AttributeError` when ReflexArc
         is disabled)."""
         if self._reflex is None:
@@ -327,7 +331,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         return self._host.unmount(category, name)
 
     def assert_organs_mounted(
-        self, required: list[tuple[str, str]],
+        self,
+        required: list[tuple[str, str]],
     ) -> None:
         """Assert required organs are mounted."""
         self._host.assert_organs_mounted(required)
@@ -389,30 +394,43 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         Hot path: ``_``-prefixed private attributes skip with zero overhead
         → O(1) frozenset lookup.
         """
-        if name.startswith('_'):
+        if name.startswith("_"):
             return super().__getattribute__(name)
-        allowed = super().__getattribute__('_allowed_organs')
-        if allowed is not None and name not in allowed:
-            if name not in CatBase._ALWAYS_ALLOWED:
-                raise IllegalNeuralPathError(
-                    ("_cat", "_cat"), ("_cat", name),
-                    reason=(
-                        f"Cat '{super().__getattribute__('cat_uid')}' "
-                        f"is not allowed to access organ '{name}'."
-                    ),
-                )
+        allowed = super().__getattribute__("_allowed_organs")
+        if allowed is not None and name not in allowed and name not in CatBase._ALWAYS_ALLOWED:
+            raise IllegalNeuralPathError(
+                ("_cat", "_cat"),
+                ("_cat", name),
+                reason=(
+                    f"Cat '{super().__getattribute__('cat_uid')}' "
+                    f"is not allowed to access organ '{name}'."
+                ),
+            )
         return super().__getattribute__(name)
 
-    _ALWAYS_ALLOWED: frozenset[str] = frozenset({
-        "cat_uid", "name", "cat_address", "global_address", "container", "parent_id",
-        "tool_registry", "skill_registry",
-        "path_registry", "chain_registry", "loop_registry",
-        "loopseq_registry",
-        "wiring", "reflexes", "events",
-        "list_all_organs", "has_organ",
-        "cat_self",  # v1.2.0
-        "on_organs_mounted",  # v1.2.36: hook for post-mount organ injection
-    })
+    _ALWAYS_ALLOWED: frozenset[str] = frozenset(
+        {
+            "cat_uid",
+            "name",
+            "cat_address",
+            "global_address",
+            "container",
+            "parent_id",
+            "tool_registry",
+            "skill_registry",
+            "path_registry",
+            "chain_registry",
+            "loop_registry",
+            "loopseq_registry",
+            "wiring",
+            "reflexes",
+            "events",
+            "list_all_organs",
+            "has_organ",
+            "cat_self",  # v1.2.0
+            "on_organs_mounted",  # v1.2.36: hook for post-mount organ injection
+        }
+    )
 
     # -- Neural synapse facade -----------------------------------------------
 
@@ -441,7 +459,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         order. Use when ``register_default_paths=False`` was passed to
         ``__init__`` but paths are needed later.
         """
-        from meowcat.path import register_builtin_paths  # noqa: PLC0415
+        from meowcat.path import register_builtin_paths
+
         register_builtin_paths(self.path_registry)
 
     def register_default_chains(self) -> None:
@@ -450,7 +469,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         Safe to call multiple times. Use when ``register_default_chains=False``
         was passed to ``__init__`` but chains are needed later.
         """
-        from meowcat.chain import register_builtin_chains  # noqa: PLC0415
+        from meowcat.chain import register_builtin_chains
+
         register_builtin_chains(self.chain_registry)
 
     def register_default_loops(self) -> None:
@@ -459,7 +479,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         Safe to call multiple times. Use when ``register_default_loops=False``
         was passed to ``__init__`` but loops are needed later.
         """
-        from meowcat.loops import register_default_loops  # noqa: PLC0415
+        from meowcat.loops import register_default_loops
+
         register_default_loops(self.loop_registry, self.chain_registry)
 
     def register_default_tools(self) -> None:
@@ -469,7 +490,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         Use when ``register_default_tools=False`` was passed to ``__init__``
         but builtin tools are needed later.
         """
-        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        from meowcat.plus.tools import BUILTIN_TOOLS
+
         for t in BUILTIN_TOOLS:
             self.tool_registry.register(t)
 
@@ -541,7 +563,11 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
                 "signal unavailable — cat was constructed with enable_wiring=False",
             )
         return await self._nervous.signal(
-            from_organ, to_organ, method, *args, **kwargs,
+            from_organ,
+            to_organ,
+            method,
+            *args,
+            **kwargs,
         )
 
     async def probe(self, to_organ: Organ) -> dict[str, Any]:
@@ -633,8 +659,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
                 ``None`` means empty list.
             reflexes: Reflex list; ``None`` means register no reflexes.
         """
-        assemble_default_cat(
-            self, reflex_stages=reflex_stages, reflexes=reflexes)
+        assemble_default_cat(self, reflex_stages=reflex_stages, reflexes=reflexes)
         self.freeze_nervous_system()
 
 
@@ -648,14 +673,24 @@ def mount_known_organs(cat: CatBase) -> None:
     Args:
         cat: CatBase instance with organ attributes already set
     """
-    _BRAIN_NAMES = {
-        "hippocampus", "thalamus", "amygdala", "frontal",
-        "hypothalamus", "cerebellum", "cerebrum", "brainstem", "cortex",
+    _BRAIN_NAMES = {  # noqa: N806
+        "hippocampus",
+        "thalamus",
+        "amygdala",
+        "frontal",
+        "hypothalamus",
+        "cerebellum",
+        "cerebrum",
+        "brainstem",
+        "cortex",
     }
-    _SENSE_NAMES = {"ears", "eyes", "whiskers", "paws"}
-    _VOICE_NAMES = {"mouth", "purr", "tail"}
-    _GROWTH_NAMES = {
-        "anomaly_growth", "correction_growth", "crystallizer", "role_emergence",
+    _SENSE_NAMES = {"ears", "eyes", "whiskers", "paws"}  # noqa: N806
+    _VOICE_NAMES = {"mouth", "purr", "tail"}  # noqa: N806
+    _GROWTH_NAMES = {  # noqa: N806
+        "anomaly_growth",
+        "correction_growth",
+        "crystallizer",
+        "role_emergence",
     }
 
     for name in _BRAIN_NAMES:
@@ -683,6 +718,7 @@ def mount_known_organs(cat: CatBase) -> None:
 
 
 # -- Top-level assembly function (v0.5.9 added) ------------------------------
+
 
 def assemble_default_cat(
     cat: CatBase,
@@ -715,7 +751,8 @@ def assemble_default_cat(
     # v0.5.23: Register generic builtin tools (every cat needs these)
     # v1.2.10: Optional — skip when register_default_tools=False
     if cat._register_default_tools:
-        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        from meowcat.plus.tools import BUILTIN_TOOLS
+
         for t in BUILTIN_TOOLS:
             cat.tool_registry.register(t)
 
@@ -734,4 +771,5 @@ def assemble_default_cat(
             cat.register_reflex(ref)
 
 
+__all__ = ["CatBase", "CatHook", "assemble_default_cat", "mount_known_organs"]
 __all__ = ["CatBase", "CatHook", "assemble_default_cat", "mount_known_organs"]

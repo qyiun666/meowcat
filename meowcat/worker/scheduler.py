@@ -16,7 +16,7 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
-from meowcat.worker import BaseWorker, WorkerStatus, WorkerState
+from meowcat.worker import BaseWorker, WorkerState, WorkerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +44,14 @@ class WorkerScheduler:
 
     # -- Registration -----------------------------------------------------------
 
-    def submit(self, worker: BaseWorker, *,
-               task_id: str = "",
-               steps: list[dict[str, Any]] | None = None,
-               resume: bool = False,
-               ) -> str:
+    def submit(
+        self,
+        worker: BaseWorker,
+        *,
+        task_id: str = "",
+        steps: list[dict[str, Any]] | None = None,
+        resume: bool = False,
+    ) -> str:
         """Register a worker for scheduled execution.
 
         Args:
@@ -69,8 +72,12 @@ class WorkerScheduler:
         worker._sched_steps = steps or []
         worker._sched_resume = resume
 
-        logger.debug("Scheduler: submitted %s (job=%s, priority=%d)",
-                      worker.worker_id, job_id, worker.priority)
+        logger.debug(
+            "Scheduler: submitted %s (job=%s, priority=%d)",
+            worker.worker_id,
+            job_id,
+            worker.priority,
+        )
         return job_id
 
     # -- Execution ---------------------------------------------------------------
@@ -131,10 +138,7 @@ class WorkerScheduler:
 
         # Main scheduling loop
         while remaining:
-            ready = [
-                w_id for w_id in remaining
-                if not pending_deps.get(w_id, set())
-            ]
+            ready = [w_id for w_id in remaining if not pending_deps.get(w_id, set())]
             if not ready:
                 # Cycle or missing dependency
                 blocked_info = {w_id: list(deps) for w_id, deps in pending_deps.items() if deps}
@@ -164,15 +168,16 @@ class WorkerScheduler:
         """List all submitted workers with metadata."""
         result = []
         for w_id, worker in self._workers.items():
-            result.append({
-                "worker_id": w_id,
-                "priority": worker.priority,
-                "depends_on": worker.depends_on,
-                "max_retries": worker.max_retries,
-                "status": self.status(w_id).value if self.status(w_id) else "unknown",
-            })
+            result.append(
+                {
+                    "worker_id": w_id,
+                    "priority": worker.priority,
+                    "depends_on": worker.depends_on,
+                    "max_retries": worker.max_retries,
+                    "status": self.status(w_id).value if self.status(w_id) else "unknown",
+                }
+            )
         return result
 
 
 __all__ = ["WorkerScheduler"]
-

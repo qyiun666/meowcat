@@ -12,7 +12,6 @@ Standard tool execution flow for every cat's paws:
 The framework layer defines this flow; the application layer can customize each stage via subclassing.
 """
 
-
 from __future__ import annotations
 
 import logging
@@ -87,14 +86,15 @@ class PawsEngine:
             }
 
         # High-risk tool + require_confirm → mark as needs confirmation
-        needs_confirm = (
-            self.require_confirm
-            and tool.spec.risk in (RiskLevel.HIGH, RiskLevel.MEDIUM)
+        needs_confirm = self.require_confirm and tool.spec.risk in (
+            RiskLevel.HIGH,
+            RiskLevel.MEDIUM,
         )
 
         # 3. execute
         try:
             import asyncio
+
             output = await asyncio.wait_for(
                 tool.execute(**params),
                 timeout=self.timeout_s,
@@ -157,7 +157,10 @@ class PawsEngine:
         return self._audit_log.copy()
 
     def _log(
-        self, tool: Tool, params: dict[str, Any], result: dict[str, Any],
+        self,
+        tool: Tool,
+        params: dict[str, Any],
+        result: dict[str, Any],
     ) -> None:
         """Record execution audit log."""
         entry = {
@@ -171,6 +174,7 @@ class PawsEngine:
         self._audit_log.append(entry)
         logger.info(
             "[PawsEngine] tool=%s success=%s elapsed=%.1fms",
-            tool.name, entry["success"], entry["elapsed_ms"],
+            tool.name,
+            entry["success"],
+            entry["elapsed_ms"],
         )
-

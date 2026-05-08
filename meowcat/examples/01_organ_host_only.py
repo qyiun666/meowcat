@@ -10,7 +10,6 @@ No need for nervous system / reflex / events.
 Run: ``python -m meowcat.examples.01_organ_host_only``
 """
 
-
 from __future__ import annotations
 
 from meowcat import OrganHost
@@ -50,4 +49,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

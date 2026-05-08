@@ -10,12 +10,11 @@ Path/Chain/Loop registration and execution. Uses CatBase directly
 Run: ``python -m meowcat.examples.05_minimal_chat_cat``
 """
 
-
 from __future__ import annotations
 
 import anyio
 
-from meowcat import CatBase, Path, Chain, Loop, biology
+from meowcat import CatBase, Chain, Loop, Path, biology
 
 
 class EchoBrain:
@@ -57,8 +56,8 @@ async def main() -> None:
     cat.mount("brain", "cerebrum", echo)
     # Same instance, cerebrum→cerebellum default wiring already connected
     cat.mount("brain", "cerebellum", echo)
-    cat.mount("voice",  "mouth",  SimpleMouth())
-    cat.mount("sense", "ears",   SimpleEars())
+    cat.mount("voice", "mouth", SimpleMouth())
+    cat.mount("sense", "ears", SimpleEars())
 
     # 2. Assemble custom wiring + freeze
     biology.apply_default_wiring(cat._nervous.wiring)
@@ -67,29 +66,54 @@ async def main() -> None:
     cat._nervous.freeze()
 
     # 3. Register custom Paths
-    cat.path_registry.register(Path(
-        "hear_local", ("sense", "ears"), ("sense", "ears"),
-        "hear", "read", "Ear self-loop — receive text input",
-    ))
-    cat.path_registry.register(Path(
-        "think", ("sense", "ears"), ("brain", "cerebrum"),
-        "generate", "read", "Ears→Brain — reasoning",
-    ))
-    cat.path_registry.register(Path(
-        "speak_local", ("brain", "cerebellum"), ("voice", "mouth"),
-        "speak", "write", "Cerebellum→Mouth output",
-    ))
+    cat.path_registry.register(
+        Path(
+            "hear_local",
+            ("sense", "ears"),
+            ("sense", "ears"),
+            "hear",
+            "read",
+            "Ear self-loop — receive text input",
+        )
+    )
+    cat.path_registry.register(
+        Path(
+            "think",
+            ("sense", "ears"),
+            ("brain", "cerebrum"),
+            "generate",
+            "read",
+            "Ears→Brain — reasoning",
+        )
+    )
+    cat.path_registry.register(
+        Path(
+            "speak_local",
+            ("brain", "cerebellum"),
+            ("voice", "mouth"),
+            "speak",
+            "write",
+            "Cerebellum→Mouth output",
+        )
+    )
 
     # 4. Register Chain: hear→think→speak
-    cat.chain_registry.register(Chain(
-        "quick_chat", ("hear_local", "think", "speak_local"), "Quick chat",
-    ))
+    cat.chain_registry.register(
+        Chain(
+            "quick_chat",
+            ("hear_local", "think", "speak_local"),
+            "Quick chat",
+        )
+    )
 
     # 5. Register Loop
-    cat.loop_registry.register(Loop(
-        "quick_chat_loop", "Quick chat loop",
-        chain=cat.chain_registry.get("quick_chat"),
-    ))
+    cat.loop_registry.register(
+        Loop(
+            "quick_chat_loop",
+            "Quick chat loop",
+            chain=cat.chain_registry.get("quick_chat"),
+        )
+    )
 
     # 6. Execute
     print("=== Chain: quick_chat ===")
@@ -117,4 +141,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
-

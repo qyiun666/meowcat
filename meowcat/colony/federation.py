@@ -10,9 +10,10 @@ Imported into :class:`~meowcat.colony.Colony` as a mixin base class.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import uuid
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from meowcat.errors import IllegalNeuralPathError
 
@@ -55,8 +56,7 @@ class _FederationMixin:
             RuntimeError: Already federated.
         """
         if self._federated:
-            raise RuntimeError(
-                f"Colony '{self.colony_id}' is already federated")
+            raise RuntimeError(f"Colony '{self.colony_id}' is already federated")
 
         self._transport = transport
         await transport.start()
@@ -74,10 +74,8 @@ class _FederationMixin:
 
         if self._federation_task:
             self._federation_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._federation_task
-            except asyncio.CancelledError:
-                pass
             self._federation_task = None
 
         if self._transport:
@@ -153,7 +151,8 @@ class _FederationMixin:
             result = await asyncio.wait_for(fut, timeout=30.0)
             if result.get("error"):
                 raise IllegalNeuralPathError(
-                    ("colony", cat_uid), (to_category, to_name),
+                    ("colony", cat_uid),
+                    (to_category, to_name),
                     reason=result["error"],
                 )
             return result.get("data")
@@ -171,8 +170,7 @@ class _FederationMixin:
         except asyncio.CancelledError:
             pass
         except Exception:
-            logger.exception(
-                "Federation loop error in colony '%s'", self.colony_id)
+            logger.exception("Federation loop error in colony '%s'", self.colony_id)
 
     async def _handle_federation_message(self, msg: dict) -> None:
         """Handle an inbound federation message."""
@@ -213,6 +211,7 @@ class _FederationMixin:
                 fn = getattr(target_organ, method)
 
                 import inspect as _inspect
+
                 result = fn(*args, **kw)
                 if _inspect.isawaitable(result):
                     result = await result
@@ -227,7 +226,8 @@ class _FederationMixin:
                 await self._transport.publish(from_colony, response)
             except Exception:
                 logger.exception(
-                    "Failed to send signal_response to '%s'", from_colony,
+                    "Failed to send signal_response to '%s'",
+                    from_colony,
                 )
 
     def _handle_signal_response(self, msg: dict) -> None:
@@ -236,4 +236,3 @@ class _FederationMixin:
         fut = self._pending_remote.get(request_id)
         if fut and not fut.done():
             fut.set_result(msg)
-

@@ -25,6 +25,7 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
@@ -32,7 +33,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 # ── FocusState ───────────────────────────────────────────────────────
 
@@ -130,10 +130,8 @@ class JsonFocusStore(FocusStore):
             os.replace(tmp_path, str(self._file_path))
         except Exception:
             # Clean up temp file on failure
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(tmp_path)
-            except OSError:
-                pass
             raise
 
     async def load(self) -> FocusState | None:
@@ -161,10 +159,8 @@ class JsonFocusStore(FocusStore):
 
     async def delete(self) -> None:
         """Remove the persisted focus file."""
-        try:
+        with contextlib.suppress(OSError):
             self._file_path.unlink(missing_ok=True)
-        except OSError:
-            pass
 
     # ── Diagnostics ───────────────────────────────────────────────
 
@@ -173,9 +169,5 @@ class JsonFocusStore(FocusStore):
         return {
             "file_path": str(self._file_path),
             "exists": self._file_path.exists(),
-            "file_size": (
-                self._file_path.stat().st_size
-                if self._file_path.exists()
-                else 0
-            ),
+            "file_size": (self._file_path.stat().st_size if self._file_path.exists() else 0),
         }

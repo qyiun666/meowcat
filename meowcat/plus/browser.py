@@ -97,13 +97,13 @@ class BrowserTool:
             headless=self._headless,
         )
         self._page = await self._browser.new_page(
-            viewport={"width": self._viewport_width,
-                      "height": self._viewport_height},
+            viewport={"width": self._viewport_width, "height": self._viewport_height},
         )
         self._started = True
         logger.info(
             "Browser started: %s (headless=%s)",
-            self._browser_type, self._headless,
+            self._browser_type,
+            self._headless,
         )
 
     async def close(self) -> None:
@@ -232,9 +232,7 @@ class BrowserTool:
     def _require_page(self) -> object:
         """Ensure browser is started, return the active page."""
         if not self._started or self._page is None:
-            raise RuntimeError(
-                "Browser not started. Call await browser.start() first."
-            )
+            raise RuntimeError("Browser not started. Call await browser.start() first.")
         return self._page
 
     def _get_playwright(self) -> object:
@@ -251,4 +249,3 @@ class BrowserTool:
             ) from None
         self._pw_func = async_playwright
         return self._pw_func
-

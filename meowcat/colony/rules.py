@@ -58,4 +58,3 @@ class ColonyRules(Pluggable):
             if isinstance(r, dict) and not r.get("allowed", True):
                 return r
         return {"allowed": True}
-

@@ -29,7 +29,6 @@ and role emergence (:mod:`meowcat.biology.roles`) modules for colony-level intel
 This file has zero third-party dependencies, zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -54,7 +53,6 @@ from meowcat.anatomy import (
     GROWTH,
     HIPPOCAMPUS,
     HYPOTHALAMUS,
-    ImplementationStyle,
     MOUTH,
     PAWS,
     PURR,
@@ -67,6 +65,7 @@ from meowcat.anatomy import (
     VOICE,
     VOICES,
     WHISKERS,
+    ImplementationStyle,
 )
 from meowcat.wiring import Edge, Organ, Wiring
 
@@ -120,6 +119,7 @@ def __getattr__(name: str):
     """Lazy-load biology submodules on first access."""
     if name in _LAZY_BIOLOGY:
         import importlib
+
         mod = importlib.import_module(_LAZY_BIOLOGY[name])
         attr = getattr(mod, name)
         # Cache in module globals so subsequent access is direct
@@ -129,6 +129,7 @@ def __getattr__(name: str):
 
 
 # -- Organ spec table (single source of truth) ---------------------------------------
+
 
 @dataclass(frozen=True)
 class OrganSpec:
@@ -166,7 +167,7 @@ class OrganSpec:
 
 def _build_organ_specs() -> tuple[OrganSpec, ...]:
     """Build ORGAN_SPECS (lazy import protocols to avoid circular imports)."""
-    from meowcat.protocols import (  # noqa: PLC0415
+    from meowcat.protocols import (
         AmygdalaProtocol,
         AnomalyGrowthProtocol,
         BrainStemProtocol,
@@ -180,7 +181,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
         HypothalamusProtocol,
         LLMBrainProtocol,
         MouthProtocol,
-        OrganProtocol,
         PawsProtocol,
         PurrProtocol,
         RoleEmergenceProtocol,
@@ -188,198 +188,266 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
         ThalamusProtocol,
         WhiskersProtocol,
     )
+
     return (
         # -- Brain regions ----------------------------------------------
         OrganSpec(
-            coord=THALAMUS, protocol=ThalamusProtocol,
-            in_edges=SENSORS,                              # sensors → thalamus
-            out_edges=(CEREBRUM, BRAINSTEM, AMYGDALA,
-                       HIPPOCAMPUS),  # thalamus → cerebrum/brainstem/amygdala/hippocampus
+            coord=THALAMUS,
+            protocol=ThalamusProtocol,
+            in_edges=SENSORS,  # sensors → thalamus
+            out_edges=(
+                CEREBRUM,
+                BRAINSTEM,
+                AMYGDALA,
+                HIPPOCAMPUS,
+            ),  # thalamus → cerebrum/brainstem/amygdala/hippocampus
             read_methods=("hear",),  # sensory relay entry point
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
-                ImplementationStyle.MODEL, ImplementationStyle.HYBRID,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.RULE,
+                ImplementationStyle.MODEL,
+                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=HIPPOCAMPUS, protocol=HippocampusProtocol,
+            coord=HIPPOCAMPUS,
+            protocol=HippocampusProtocol,
             in_edges=(CEREBRUM, FRONTAL, HYPOTHALAMUS, BRAINSTEM),
             out_edges=(CEREBRUM, CORTEX),
             read_methods=(
-                "entities", "episodes",
-                "locate", "get_entity", "get_all", "get_by_name",
-                "get_related", "stats", "fts_search", "to_dict",
+                "entities",
+                "episodes",
+                "locate",
+                "get_entity",
+                "get_all",
+                "get_by_name",
+                "get_related",
+                "stats",
+                "fts_search",
+                "to_dict",
             ),
             write_methods=(
-                "remember", "add_entity", "add_episode",
-                "connect", "decay", "weaken_connections",
-                "cleanup_orphan_connections", "from_dict",
-                "record_access", "set_dormant", "append_content",
-                "update_importance", "set_last_seen",
+                "remember",
+                "add_entity",
+                "add_episode",
+                "connect",
+                "decay",
+                "weaken_connections",
+                "cleanup_orphan_connections",
+                "from_dict",
+                "record_access",
+                "set_dormant",
+                "append_content",
+                "update_importance",
+                "set_last_seen",
             ),
             write_callers=(BRAINSTEM, HYPOTHALAMUS),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=CEREBRUM, protocol=LLMBrainProtocol,
+            coord=CEREBRUM,
+            protocol=LLMBrainProtocol,
             in_edges=(THALAMUS, HIPPOCAMPUS, FRONTAL, BRAINSTEM),
             out_edges=(HIPPOCAMPUS, CEREBELLUM, FRONTAL),
             supported_styles=(
-                ImplementationStyle.MODEL, ImplementationStyle.HYBRID,
-            ),
-        ),
-        OrganSpec(
-            coord=CEREBELLUM, protocol=LLMBrainProtocol,
-            in_edges=(CEREBRUM, AMYGDALA, BRAINSTEM),
-            out_edges=EFFECTORS,                           # paws/mouth/purr/tail
-            supported_styles=(
-                ImplementationStyle.MODEL, ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=AMYGDALA, protocol=AmygdalaProtocol,
-            in_edges=(THALAMUS, BRAINSTEM),
-            out_edges=(CEREBELLUM, MOUTH, CEREBRUM,
-                       ANOMALY_GROWTH, CORRECTION_GROWTH),
+            coord=CEREBELLUM,
+            protocol=LLMBrainProtocol,
+            in_edges=(CEREBRUM, AMYGDALA, BRAINSTEM),
+            out_edges=EFFECTORS,  # paws/mouth/purr/tail
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
-                ImplementationStyle.MODEL, ImplementationStyle.HYBRID,
+                ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=FRONTAL, protocol=FrontalCortexProtocol,
+            coord=AMYGDALA,
+            protocol=AmygdalaProtocol,
+            in_edges=(THALAMUS, BRAINSTEM),
+            out_edges=(CEREBELLUM, MOUTH, CEREBRUM, ANOMALY_GROWTH, CORRECTION_GROWTH),
+            supported_styles=(
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.RULE,
+                ImplementationStyle.MODEL,
+                ImplementationStyle.HYBRID,
+            ),
+        ),
+        OrganSpec(
+            coord=FRONTAL,
+            protocol=FrontalCortexProtocol,
             in_edges=(CEREBRUM, BRAINSTEM),
             out_edges=(CEREBRUM, HIPPOCAMPUS, BRAINSTEM),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=HYPOTHALAMUS, protocol=HypothalamusProtocol,
+            coord=HYPOTHALAMUS,
+            protocol=HypothalamusProtocol,
             in_edges=(BRAINSTEM,),
-            out_edges=(HYPOTHALAMUS, HIPPOCAMPUS,
-                       CORTEX),  # includes self-loop
+            out_edges=(HYPOTHALAMUS, HIPPOCAMPUS, CORTEX),  # includes self-loop
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.RULE,
             ),
         ),
         OrganSpec(
-            coord=CORTEX, protocol=CortexProtocol,
+            coord=CORTEX,
+            protocol=CortexProtocol,
             in_edges=(HIPPOCAMPUS, HYPOTHALAMUS, BRAINSTEM),
             out_edges=(),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=BRAINSTEM, protocol=BrainStemProtocol,
+            coord=BRAINSTEM,
+            protocol=BrainStemProtocol,
             in_edges=(THALAMUS,),
             # master dispatch: to all brain regions (except self) / senses / voices; PAWS not included
             # (brainstem→paws edge absent from v0.5.9 golden set, SENSORS excludes PAWS)
             out_edges=(
-                THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM,
-                AMYGDALA, FRONTAL, HYPOTHALAMUS, CORTEX,
-                ANOMALY_GROWTH, CORRECTION_GROWTH, CRYSTALLIZER, ROLE_EMERGENCE,
-                *SENSORS, *VOICES,
+                THALAMUS,
+                HIPPOCAMPUS,
+                CEREBRUM,
+                CEREBELLUM,
+                AMYGDALA,
+                FRONTAL,
+                HYPOTHALAMUS,
+                CORTEX,
+                ANOMALY_GROWTH,
+                CORRECTION_GROWTH,
+                CRYSTALLIZER,
+                ROLE_EMERGENCE,
+                *SENSORS,
+                *VOICES,
             ),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
-                ImplementationStyle.MODEL, ImplementationStyle.HYBRID,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.RULE,
+                ImplementationStyle.MODEL,
+                ImplementationStyle.HYBRID,
             ),
         ),
         # -- Senses ----------------------------------------------
         OrganSpec(
-            coord=EARS, protocol=EarsProtocol,
-            in_edges=(), out_edges=(THALAMUS, AMYGDALA),
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-            ),
+            coord=EARS,
+            protocol=EarsProtocol,
+            in_edges=(),
+            out_edges=(THALAMUS, AMYGDALA),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         OrganSpec(
-            coord=EYES, protocol=EyesProtocol,
-            in_edges=(), out_edges=(THALAMUS, AMYGDALA),
+            coord=EYES,
+            protocol=EyesProtocol,
+            in_edges=(),
+            out_edges=(THALAMUS, AMYGDALA),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=WHISKERS, protocol=WhiskersProtocol,
-            in_edges=(), out_edges=(THALAMUS, AMYGDALA, ANOMALY_GROWTH),
+            coord=WHISKERS,
+            protocol=WhiskersProtocol,
+            in_edges=(),
+            out_edges=(THALAMUS, AMYGDALA, ANOMALY_GROWTH),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         # PAWS is an effector: only cerebellum→paws inbound (consistent with v0.5.9)
         OrganSpec(
-            coord=PAWS, protocol=PawsProtocol,
-            in_edges=(CEREBELLUM,), out_edges=(),
+            coord=PAWS,
+            protocol=PawsProtocol,
+            in_edges=(CEREBELLUM,),
+            out_edges=(),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.RULE,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.RULE,
                 ImplementationStyle.HYBRID,
             ),
         ),
         # -- Voice (v1.0.7 completed Protocols)------------------------------
         OrganSpec(
-            coord=MOUTH, protocol=MouthProtocol,
-            in_edges=(CEREBELLUM, AMYGDALA, BRAINSTEM), out_edges=(),
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-            ),
+            coord=MOUTH,
+            protocol=MouthProtocol,
+            in_edges=(CEREBELLUM, AMYGDALA, BRAINSTEM),
+            out_edges=(),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         OrganSpec(
-            coord=PURR, protocol=PurrProtocol,
-            in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-            ),
+            coord=PURR,
+            protocol=PurrProtocol,
+            in_edges=(CEREBELLUM, BRAINSTEM),
+            out_edges=(),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         OrganSpec(
-            coord=TAIL, protocol=TailProtocol,
-            in_edges=(CEREBELLUM, BRAINSTEM), out_edges=(),
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-            ),
+            coord=TAIL,
+            protocol=TailProtocol,
+            in_edges=(CEREBELLUM, BRAINSTEM),
+            out_edges=(),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         # -- Growth organs (v1.0.8 named protocols)-------------------
         OrganSpec(
-            coord=ANOMALY_GROWTH, protocol=AnomalyGrowthProtocol,
+            coord=ANOMALY_GROWTH,
+            protocol=AnomalyGrowthProtocol,
             in_edges=(BRAINSTEM, AMYGDALA, WHISKERS),
             out_edges=(HIPPOCAMPUS, CORTEX),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=CORRECTION_GROWTH, protocol=CorrectionGrowthProtocol,
+            coord=CORRECTION_GROWTH,
+            protocol=CorrectionGrowthProtocol,
             in_edges=(BRAINSTEM, AMYGDALA),
             out_edges=(HIPPOCAMPUS, CORTEX),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=CRYSTALLIZER, protocol=CrystallizerProtocol,
-            in_edges=(BRAINSTEM,), out_edges=(),
+            coord=CRYSTALLIZER,
+            protocol=CrystallizerProtocol,
+            in_edges=(BRAINSTEM,),
+            out_edges=(),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
-            coord=ROLE_EMERGENCE, protocol=RoleEmergenceProtocol,
-            in_edges=(BRAINSTEM,), out_edges=(),
+            coord=ROLE_EMERGENCE,
+            protocol=RoleEmergenceProtocol,
+            in_edges=(BRAINSTEM,),
+            out_edges=(),
             supported_styles=(
-                ImplementationStyle.ALGORITHM, ImplementationStyle.MODEL,
+                ImplementationStyle.ALGORITHM,
+                ImplementationStyle.MODEL,
                 ImplementationStyle.HYBRID,
             ),
         ),
@@ -429,7 +497,7 @@ FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = (
     (CEREBRUM, PAWS),
     # cerebrum should not directly drive vocalization. All side effects funneled through cerebellum→effectors
     (CEREBRUM, MOUTH),
-    # v1.0.8: cerebrum does not directly connect to growth organs. Growth is a side effect, routed through cerebellum or brainstem
+    # v1.0.8: cerebrum does not directly connect to growth organs. Growth is a side effect, routed through cerebellum or brainstem  # noqa: E501
     (CEREBRUM, ANOMALY_GROWTH),
     (CEREBRUM, CORRECTION_GROWTH),
     # v1.2.17: cerebrum does not directly connect to crystallizer / role emergence.
@@ -441,6 +509,7 @@ FORBIDDEN_PATHS: Final[tuple[Edge, ...]] = (
 
 
 # -- Assembly function ----------------------------------------------------
+
 
 def apply_default_wiring(wiring: Wiring) -> None:
     """Wire the default neuroanatomy onto the wiring.
@@ -454,42 +523,73 @@ def apply_default_wiring(wiring: Wiring) -> None:
 
 __all__ = [
     # category constants (re-export from anatomy)
-    "BRAIN", "SENSE", "VOICE", "STORAGE", "GROWTH",
+    "BRAIN",
+    "SENSE",
+    "VOICE",
+    "STORAGE",
+    "GROWTH",
     # organ coordinates (re-export from anatomy)
-    "THALAMUS", "HIPPOCAMPUS", "CEREBRUM", "CEREBELLUM", "AMYGDALA",
-    "FRONTAL", "HYPOTHALAMUS", "CORTEX", "BRAINSTEM",
-    "EARS", "EYES", "WHISKERS", "PAWS",
-    "ANOMALY_GROWTH", "CORRECTION_GROWTH",
-    "CRYSTALLIZER", "ROLE_EMERGENCE",
-    "MOUTH", "PURR", "TAIL",
-
-    "SENSORS", "VOICES", "EFFECTORS", "BRAIN_REGIONS",
+    "THALAMUS",
+    "HIPPOCAMPUS",
+    "CEREBRUM",
+    "CEREBELLUM",
+    "AMYGDALA",
+    "FRONTAL",
+    "HYPOTHALAMUS",
+    "CORTEX",
+    "BRAINSTEM",
+    "EARS",
+    "EYES",
+    "WHISKERS",
+    "PAWS",
+    "ANOMALY_GROWTH",
+    "CORRECTION_GROWTH",
+    "CRYSTALLIZER",
+    "ROLE_EMERGENCE",
+    "MOUTH",
+    "PURR",
+    "TAIL",
+    "SENSORS",
+    "VOICES",
+    "EFFECTORS",
+    "BRAIN_REGIONS",
     # v0.5.10 Organ spec table
-    "OrganSpec", "ORGAN_SPECS",
+    "OrganSpec",
+    "ORGAN_SPECS",
     # table + assembly function
-    "BUILTIN_NERVOUS_SYSTEM", "FORBIDDEN_PATHS",
+    "BUILTIN_NERVOUS_SYSTEM",
+    "FORBIDDEN_PATHS",
     "ORGAN_PROTOCOLS",
     "apply_default_wiring",
-
     # v1.1.22 colony-level collective intelligence
     "CollectiveGrowth",
     "CollectiveEmergence",
     # v1.1.23 scribble pad
-    "ScribblePad", "DefaultScribbleFilter", "DefaultScribbleLogger",
+    "ScribblePad",
+    "DefaultScribbleFilter",
+    "DefaultScribbleLogger",
     "DefaultScribblePersister",
     # v1.1.24 pineal gland + fusion cycle
-    "PinealGland", "Insight",
-    "DefaultMerger", "DefaultContradiction", "DefaultInsightFilter",
+    "PinealGland",
+    "Insight",
+    "DefaultMerger",
+    "DefaultContradiction",
+    "DefaultInsightFilter",
     "FusionCycle",
     # v1.1.25 cortex worldview L1
-    "Cortex", "DefaultRuleExtractor",
+    "Cortex",
+    "DefaultRuleExtractor",
     # v1.1.26 active growth
-    "BlindSpotDetector", "ToolFailureLearner", "HotPathObserver",
+    "BlindSpotDetector",
+    "ToolFailureLearner",
+    "HotPathObserver",
     "ActiveGrowthPack",
     # v1.1.27 metacognition L3
     "Metacognition",
     # v1.2.0 CatSelf + default closed loops
-    "CatSelf", "SelfSnapshot",
-    "DefaultConversationLoop", "DefaultTaskLoop", "DefaultLearnLoop",
+    "CatSelf",
+    "SelfSnapshot",
+    "DefaultConversationLoop",
+    "DefaultTaskLoop",
+    "DefaultLearnLoop",
 ]
-

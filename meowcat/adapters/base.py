@@ -57,7 +57,8 @@ class AgentOrgan(Pluggable):
         fn = getattr(self._agent, method, None)
         if fn is None:
             raise OrganDelegateError(
-                type(self).__name__, method,
+                type(self).__name__,
+                method,
                 f"agent {type(self._agent).__name__!r} has no method {method!r}",
             )
         try:
@@ -70,10 +71,14 @@ class AgentOrgan(Pluggable):
         except Exception as exc:
             _log.debug(
                 "%s.%s() delegation error: %s",
-                type(self).__name__, method, exc,
+                type(self).__name__,
+                method,
+                exc,
             )
             raise OrganDelegateError(
-                type(self).__name__, method, str(exc),
+                type(self).__name__,
+                method,
+                str(exc),
             ) from exc
 
     # ------------------------------------------------------------------
@@ -106,4 +111,3 @@ class SkillOrgan(AgentOrgan):
 
 
 __all__ = ["AgentOrgan", "SkillOrgan"]
-

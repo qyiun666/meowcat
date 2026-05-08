@@ -1,8 +1,9 @@
-# meowcat v1.3.6 · Default Configuration & Execution Catalog
+# meowcat v1.3.7 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 31 路径 + 8 链条 + 7 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
 >
 > v1.3.6 新增：OrganPrompt 插槽 · Hippocampus 持久化 · LLM 模型货架 · 管理器基类 5 件套 · 调度/存储/编排/容错
+> v1.3.7 新增：Gateway 绑定 Colony + FrontDesk 前台接待员 (Protocol + Pluggable)
 
 `create_cat()` 一行代码做了什么？出厂自带了哪些默认执行流？这里就是答案。
 
@@ -475,7 +476,7 @@ print(cat.wiring.describe())                        # 接线图描述
 | Plus 内置工具 (8)                           | `meowcat/plus/tools/`                         |
 | Colony 多猫容器 + 联邦                      | `meowcat/colony/`                             |
 | Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
-| Gateway 协议（皮肤 + FrontDesk 前台）        | `meowcat/gateway/`                            |
+| Gateway 协议（皮肤 + FrontDesk 前台）       | `meowcat/gateway/`                            |
 | 测试 (60+ 用例)                             | `tests/`                                      |
 
 ### v1.3.6 新增模块

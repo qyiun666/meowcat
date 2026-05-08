@@ -10,7 +10,6 @@ When adding/removing organs, update this table accordingly.
 This file has zero third-party dependencies, zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
 from typing import Final
@@ -67,4 +66,3 @@ ORGAN_ROLES: Final[dict[Organ, str]] = {
 }
 
 __all__ = ["ORGAN_ROLES"]
-

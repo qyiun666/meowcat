@@ -7,13 +7,15 @@
 """
 
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from typing import Any
+
 from meowcat.storage.jsonl_episode_store import JsonlEpisodeStore
 from meowcat.storage.jsonl_l6_store import JsonlL6Store
 from meowcat.storage.sqlite_graph_store import SqliteGraphStore
 from meowcat.storage.vector_store import VectorStore
-
-from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator
 
 
 class SharedStore(ABC):
@@ -68,5 +70,4 @@ class SharedStore(ABC):
         return await self.load()
 
 
-__all__ = ["SharedStore", "SqliteGraphStore",
-           "JsonlL6Store", "JsonlEpisodeStore", "VectorStore"]
+__all__ = ["SharedStore", "SqliteGraphStore", "JsonlL6Store", "JsonlEpisodeStore", "VectorStore"]

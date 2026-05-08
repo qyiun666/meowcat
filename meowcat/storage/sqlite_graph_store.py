@@ -42,8 +42,7 @@ class SqliteGraphStore:
         return await asyncio.to_thread(self._load_sync, cat_uid)
 
     def _load_sync(self, cat_uid: str) -> dict[str, Any]:
-        row = self._query_one(
-            "SELECT graph_data FROM cat_graphs WHERE cat_uid = ?", (cat_uid,))
+        row = self._query_one("SELECT graph_data FROM cat_graphs WHERE cat_uid = ?", (cat_uid,))
         if row is None:
             return {}
         return json.loads(row[0])  # type: ignore[no-any-return]
@@ -83,4 +82,3 @@ class SqliteGraphStore:
         with self._connect() as conn:
             cur = conn.execute(sql, params)
             return cur.fetchone()
-

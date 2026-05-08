@@ -8,7 +8,7 @@ Cross-colony cat lookup by global address (``colony_id/cat_uid``).
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from meowcat.pluggable import Pluggable
 
@@ -139,9 +139,7 @@ class GlobalColonyRegistry(Pluggable):
         """
         parts = address.split("_", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
-            raise ValueError(
-                f"Invalid address '{address}': expected 'colony_id_cat_uid'"
-            )
+            raise ValueError(f"Invalid address '{address}': expected 'colony_id_cat_uid'")
         colony_id, cat_uid = parts
         colony = self.get_colony(colony_id)
         return colony.get_cat(cat_uid)
@@ -188,4 +186,3 @@ class GlobalColonyRegistry(Pluggable):
     def total_cat_count(self) -> int:
         """Total number of cats across all registered colonies."""
         return sum(len(colony._cats) for colony in self._colonies.values())
-

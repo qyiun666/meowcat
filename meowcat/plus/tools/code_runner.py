@@ -62,10 +62,7 @@ async def _code_runner(language: str, code: str, **_: Any) -> str:
     """
     lang = language.strip().lower()
     if lang not in ("python", "javascript"):
-        return (
-            f"Unsupported language: '{language}'. "
-            "Use 'python' or 'javascript'."
-        )
+        return f"Unsupported language: '{language}'. Use 'python' or 'javascript'."
 
     if lang == "python":
         return await _run_python(code)
@@ -84,14 +81,18 @@ async def _run_python(code: str) -> str:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            exe, "-I", "-c", code,
+            exe,
+            "-I",
+            "-c",
+            code,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(_DEFAULT_WORKSPACE),
             env=_SAFE_ENV,
         )
         stdout, stderr = await asyncio.wait_for(
-            proc.communicate(), timeout=_CODE_TIMEOUT,
+            proc.communicate(),
+            timeout=_CODE_TIMEOUT,
         )
         output = (
             stdout.decode("utf-8", errors="replace")
@@ -114,14 +115,17 @@ async def _run_node(code: str) -> str:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "node", "-e", code,
+            "node",
+            "-e",
+            code,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(_DEFAULT_WORKSPACE),
             env=_SAFE_ENV,
         )
         stdout, stderr = await asyncio.wait_for(
-            proc.communicate(), timeout=_CODE_TIMEOUT,
+            proc.communicate(),
+            timeout=_CODE_TIMEOUT,
         )
         output = (
             stdout.decode("utf-8", errors="replace")
@@ -145,8 +149,7 @@ plus_code_runner = Tool(
             f"(timeout {_CODE_TIMEOUT}s)"
         ),
         parameters={
-            "language": {"type": "string",
-                         "description": "'python' or 'javascript'"},
+            "language": {"type": "string", "description": "'python' or 'javascript'"},
             "code": {"type": "string", "description": "Code to execute"},
         },
         risk=RiskLevel.HIGH,
@@ -156,4 +159,3 @@ plus_code_runner = Tool(
 )
 
 __all__ = ["plus_code_runner"]
-

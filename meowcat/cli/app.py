@@ -37,6 +37,7 @@ Subclass :class:`MeowTui`, set ``show_sidebar=True``, then call
 
 from __future__ import annotations
 
+import contextlib
 from typing import ClassVar
 
 from textual.app import App, ComposeResult
@@ -137,10 +138,8 @@ class MeowTui(App[None]):
 
     def hide_loading(self) -> None:
         """Remove the loading indicator if present."""
-        try:
+        with contextlib.suppress(Exception):
             self.query_one("#loading", LoadingIndicator).remove()
-        except Exception:
-            pass
 
     # -- Actions ---------------------------------------------------------------
 
@@ -152,4 +151,3 @@ class MeowTui(App[None]):
         for child in list(scroll.children):
             if child.id != "loading":
                 child.remove()
-

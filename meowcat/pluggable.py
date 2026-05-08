@@ -15,7 +15,6 @@ Three execution modes (chosen by each Noop class, not enforced by Pluggable):
 - C Full-replace: first plugin completely replaces default behavior
 """
 
-
 from __future__ import annotations
 
 import inspect
@@ -118,9 +117,7 @@ class Pluggable:
                 result = await result
             yield hook, result
 
-    def _run_plugs_sync(
-        self, hook: str, *args: Any, **kwargs: Any
-    ) -> Iterator[tuple[str, Any]]:
+    def _run_plugs_sync(self, hook: str, *args: Any, **kwargs: Any) -> Iterator[tuple[str, Any]]:
         """Sync variant — iterate plugins without await.
 
         For callers that cannot use ``async for`` (property setters,
@@ -143,7 +140,8 @@ class Pluggable:
                 _log.debug(
                     "_run_plugs_sync hook '%s' plugin %s returned coroutine — "
                     "use async variant (_run_plugs) instead",
-                    hook, getattr(fn, '__name__', fn),
+                    hook,
+                    getattr(fn, "__name__", fn),
                 )
             yield hook, result
 

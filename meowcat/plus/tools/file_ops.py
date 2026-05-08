@@ -34,10 +34,7 @@ def _resolve_path(path: str, workspace: Path | None = None) -> Path:
     ws = workspace or _DEFAULT_WORKSPACE
     ws_resolved = ws.resolve()
     p = Path(path).expanduser()
-    if not p.is_absolute():
-        p = (ws / p).resolve()
-    else:
-        p = p.resolve()
+    p = (ws / p).resolve() if not p.is_absolute() else p.resolve()
 
     # Resolve all symlinks via realpath
     real = Path(os.path.realpath(str(p)))
@@ -53,21 +50,19 @@ def _resolve_path(path: str, workspace: Path | None = None) -> Path:
             except ValueError:
                 logger.warning(
                     "Path traversal blocked: symlink %s → %s outside workspace",
-                    parent, resolved_parent,
+                    parent,
+                    resolved_parent,
                 )
                 raise ValueError(
-                    f"Path traversal detected: {parent} is a symlink "
-                    f"pointing outside the workspace"
-                )
+                    f"Path traversal detected: {parent} is a symlink pointing outside the workspace"
+                ) from None
 
     # Security check: ensure resolved real path within workspace
     try:
         real.relative_to(ws_resolved)
     except ValueError:
         logger.warning("Path outside workspace: %s", real)
-        raise ValueError(
-            f"Path is outside the workspace: {real}"
-        )
+        raise ValueError(f"Path is outside the workspace: {real}") from None
     return real
 
 
@@ -127,4 +122,3 @@ plus_write_file = Tool(
     ),
     handler=_write_file,
 )
-

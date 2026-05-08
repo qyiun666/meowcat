@@ -19,11 +19,13 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-_loggers: dict[str, "MeowLog"] = {}
+_loggers: dict[str, MeowLog] = {}
 _handlers: list[Callable[[dict[str, Any]], None]] = []
 
 
@@ -40,7 +42,7 @@ class MeowLog:
         self._py = logging.getLogger(name)
 
     @classmethod
-    def get(cls, name: str) -> "MeowLog":
+    def get(cls, name: str) -> MeowLog:
         """Get or create a logger by name (singleton per name)."""
         if name not in _loggers:
             _loggers[name] = cls(name)
@@ -83,11 +85,8 @@ class MeowLog:
         level_int = getattr(logging, level)
         self._py.log(level_int, "%s  %s", msg, data or "")
         for handler in _handlers:
-            try:
+            with contextlib.suppress(Exception):
                 handler(entry)
-            except Exception:
-                pass
 
 
 __all__ = ["MeowLog"]
-

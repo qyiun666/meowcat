@@ -36,10 +36,8 @@ from __future__ import annotations
 
 import time
 from collections import OrderedDict
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
-
 
 # ── Configuration ─────────────────────────────────────────────────────
 
@@ -98,9 +96,7 @@ class BudgetTracker:
             min_free_ratio=min_free_ratio,
         )
         # OrderedDict maintains insertion order; we update on access for LRU
-        self._items: OrderedDict[str, tuple[int, str | None, float]] = (
-            OrderedDict()
-        )
+        self._items: OrderedDict[str, tuple[int, str | None, float]] = OrderedDict()
         # item_key → (tokens, category, last_access_ts)
         self._total_used: int = 0
         self._category_used: dict[str, int] = {}
@@ -168,15 +164,13 @@ class BudgetTracker:
             cat_limit = self._config.category_budgets[category]
             cat_used = self._category_used.get(category, 0)
             if cat_used + tokens > cat_limit:
-                freed += self._evict_for_category(category,
-                                                  cat_used + tokens - cat_limit)
+                freed += self._evict_for_category(category, cat_used + tokens - cat_limit)
 
         # Check total budget
         needed = self._total_used + tokens - self._config.total_budget
         if needed > 0:
             # Add min_free_ratio headroom
-            headroom = int(self._config.total_budget *
-                           self._config.min_free_ratio)
+            headroom = int(self._config.total_budget * self._config.min_free_ratio)
             freed += self._evict_for_total(needed + headroom)
 
         # Update tracking
@@ -185,9 +179,7 @@ class BudgetTracker:
             old_tokens, old_cat, _ = self._items[key]
             self._total_used -= old_tokens
             if old_cat is not None:
-                self._category_used[old_cat] = (
-                    self._category_used.get(old_cat, 0) - old_tokens
-                )
+                self._category_used[old_cat] = self._category_used.get(old_cat, 0) - old_tokens
             # Move to end (LRU: most recent at end)
             del self._items[key]
         else:
@@ -196,9 +188,7 @@ class BudgetTracker:
         self._items[key] = (tokens, category, now)
         self._total_used += tokens
         if category is not None:
-            self._category_used[category] = (
-                self._category_used.get(category, 0) + tokens
-            )
+            self._category_used[category] = self._category_used.get(category, 0) + tokens
 
         return freed
 
@@ -226,9 +216,7 @@ class BudgetTracker:
         tokens, category, _ = self._items.pop(key)
         self._total_used -= tokens
         if category is not None:
-            self._category_used[category] = (
-                self._category_used.get(category, 0) - tokens
-            )
+            self._category_used[category] = self._category_used.get(category, 0) - tokens
         return tokens
 
     def get(self, key: str) -> int | None:
@@ -265,7 +253,7 @@ class BudgetTracker:
             key=lambda kv: kv[1][2],  # last_access_ts
         )
         keys_to_evict: list[str] = []
-        for key, (tokens, category, _ts) in sorted_items:
+        for key, (tokens, _category, _ts) in sorted_items:
             if freed >= needed:
                 break
             keys_to_evict.append(key)
@@ -286,9 +274,7 @@ class BudgetTracker:
         freed = 0
         # Sort matching items by last_access_ts ascending (oldest first)
         matching = [
-            (key, tokens, ts)
-            for key, (tokens, cat, ts) in self._items.items()
-            if cat == category
+            (key, tokens, ts) for key, (tokens, cat, ts) in self._items.items() if cat == category
         ]
         matching.sort(key=lambda x: x[2])  # last_access_ts
         keys_to_evict: list[str] = []

@@ -7,12 +7,12 @@ Gateway = the colony's skin, all protocol adapters plug into the same Gateway.
 1 Colony : 1 Gateway : N Adapters.
 """
 
-
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Awaitable, Callable, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass(frozen=True)
@@ -39,8 +39,7 @@ class SignalContext:
     for routing decision.
     """
 
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     """ISO 8601 timestamp. Auto-generated at construction."""
 
 
@@ -99,7 +98,10 @@ class FrontDeskProtocol(Protocol):
     """
 
     async def route(
-        self, text: str, ctx: SignalContext, colony: Any,
+        self,
+        text: str,
+        ctx: SignalContext,
+        colony: Any,
     ) -> str | None:
         """Route an external message to a cat or return a placeholder reply.
 
@@ -136,8 +138,11 @@ class GatewayProtocol(Protocol):
 
 
 __all__ = [
-    "SignalContext", "IoAdapterProtocol", "FrontDeskProtocol",
-    "GatewayProtocol", "HTTP_REASONS",
+    "SignalContext",
+    "IoAdapterProtocol",
+    "FrontDeskProtocol",
+    "GatewayProtocol",
+    "HTTP_REASONS",
 ]
 
 

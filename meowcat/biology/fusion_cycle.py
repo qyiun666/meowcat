@@ -112,4 +112,3 @@ class FusionCycle:
 
 
 __all__ = ["FusionCycle"]
-

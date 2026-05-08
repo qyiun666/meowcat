@@ -17,7 +17,7 @@ import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 
 # -- Worker status -----------------------------------------------------------
 
+
 class WorkerStatus(Enum):
     """Worker lifecycle status."""
+
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
@@ -39,6 +41,7 @@ class WorkerStatus(Enum):
 @dataclass
 class WorkerState:
     """Serializable worker state for checkpoint/restore."""
+
     worker_id: str
     status: WorkerStatus = WorkerStatus.IDLE
     task_id: str = ""
@@ -50,6 +53,7 @@ class WorkerState:
 
 
 # -- Checkpoint store ---------------------------------------------------------
+
 
 class CheckpointStore(ABC):
     """Abstract checkpoint persistence for workers.
@@ -96,6 +100,7 @@ class InMemoryCheckpointStore(CheckpointStore):
 
 
 # -- Base worker --------------------------------------------------------------
+
 
 class BaseWorker(ABC):
     """Abstract resumable worker.
@@ -195,7 +200,9 @@ class BaseWorker(ABC):
                 remaining_retries -= 1
                 logger.warning(
                     "Worker %s task %s failed, retrying (%d left)",
-                    self.worker_id, task_id, remaining_retries,
+                    self.worker_id,
+                    task_id,
+                    remaining_retries,
                 )
                 # Reset state for retry
                 self.state.checkpoint.clear()
@@ -213,13 +220,13 @@ class BaseWorker(ABC):
         if resume:
             saved = await self.store.load(self.worker_id)
             if saved is not None and saved.status in (
-                WorkerStatus.PAUSED, WorkerStatus.RUNNING,
+                WorkerStatus.PAUSED,
+                WorkerStatus.RUNNING,
             ):
                 self.state = saved
                 completed_steps = int(self.state.progress)
                 steps = steps[completed_steps:]
-                logger.info("Worker %s resumed at step %d",
-                            self.worker_id, completed_steps)
+                logger.info("Worker %s resumed at step %d", self.worker_id, completed_steps)
 
         self.state.task_id = task_id
         self.state.status = WorkerStatus.RUNNING
@@ -245,8 +252,9 @@ class BaseWorker(ABC):
             self.state.error = str(exc)
             await self.store.save(self.state)
             self._fire("on_error", self.state, exc)
-            logger.exception("Worker %s failed at step %d",
-                             self.worker_id, int(self.state.progress))
+            logger.exception(
+                "Worker %s failed at step %d", self.worker_id, int(self.state.progress)
+            )
 
         finally:
             self.state.updated_at = time.time()
@@ -278,7 +286,6 @@ def _new_worker_id() -> str:
 # -- Deferred import (avoids circular import with worker.scheduler) -----------
 from meowcat.worker.scheduler import WorkerScheduler  # noqa: E402,F811
 
-
 # -- Re-exports --------------------------------------------------------------
 __all__ = [
     "WorkerStatus",
@@ -288,4 +295,3 @@ __all__ = [
     "BaseWorker",
     "WorkerScheduler",
 ]
-

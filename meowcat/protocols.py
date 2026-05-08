@@ -8,10 +8,10 @@ All typing.Protocol (duck typing), zero third-party dependencies.
 v1.0.5: storage/brain/sense protocols split into sub-modules; this file re-exports for compatibility.
 """
 
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkable
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 # v1.0.5: re-export from sub-modules, keep from meowcat import ... fully compatible
 from meowcat.protocols_brain import (
@@ -37,11 +37,6 @@ from meowcat.protocols_sense import (
     PawsProtocol,
     WhiskersProtocol,
 )
-from meowcat.protocols_voice import (
-    MouthProtocol,
-    PurrProtocol,
-    TailProtocol,
-)
 from meowcat.protocols_storage import (
     FederationTransport,
     GraphStorageProtocol,
@@ -49,17 +44,15 @@ from meowcat.protocols_storage import (
     SharedStorageProtocol,
     VectorStorageProtocol,
 )
+from meowcat.protocols_voice import (
+    MouthProtocol,
+    PurrProtocol,
+    TailProtocol,
+)
 
 if TYPE_CHECKING:
     from meowcat.models import (
-        CandidateShape,
-        ConnectionShape,
-        EntityShape,
-        EpisodeShape,
-        FocusShape,
         KittenCapability,
-        LocateResultShape,
-        MaintenanceReportShape,
         MergeProposalShape,
         PipelineContext,
         StageEvent,
@@ -67,22 +60,40 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
-    "Diagnosable", "OrganProtocol",
+    "Diagnosable",
+    "OrganProtocol",
     "FederationTransport",
-    "GraphStorageProtocol", "L6StorageProtocol",
-    "VectorStorageProtocol", "SharedStorageProtocol",
+    "GraphStorageProtocol",
+    "L6StorageProtocol",
+    "VectorStorageProtocol",
+    "SharedStorageProtocol",
     "LLMProviderProtocol",
-    "BrainStemProtocol", "HippocampusProtocol", "ThalamusProtocol",
-    "LLMBrainProtocol", "AmygdalaProtocol", "FrontalCortexProtocol",
-    "HypothalamusProtocol", "CortexProtocol",
-    "EarsProtocol", "EyesProtocol", "WhiskersProtocol", "PawsProtocol",
-    "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
-    "CrystallizerProtocol", "RoleEmergenceProtocol",
-    "MouthProtocol", "PurrProtocol", "TailProtocol",
+    "BrainStemProtocol",
+    "HippocampusProtocol",
+    "ThalamusProtocol",
+    "LLMBrainProtocol",
+    "AmygdalaProtocol",
+    "FrontalCortexProtocol",
+    "HypothalamusProtocol",
+    "CortexProtocol",
+    "EarsProtocol",
+    "EyesProtocol",
+    "WhiskersProtocol",
+    "PawsProtocol",
+    "AnomalyGrowthProtocol",
+    "CorrectionGrowthProtocol",
+    "CrystallizerProtocol",
+    "RoleEmergenceProtocol",
+    "MouthProtocol",
+    "PurrProtocol",
+    "TailProtocol",
     "StageProtocol",
     "KittenProtocol",  # doc-only, not @runtime_checkable; isinstance() raises TypeError
-    "OrchestratorProtocol", "SettingsProtocol", "CatProtocol",
-    "AdapterProtocol", "SecurityPolicyProtocol",
+    "OrchestratorProtocol",
+    "SettingsProtocol",
+    "CatProtocol",
+    "AdapterProtocol",
+    "SecurityPolicyProtocol",
 ]
 
 # -- Pipeline -----------------------------------------------------
@@ -98,7 +109,9 @@ class StageProtocol(Protocol):
     **Reflex Arc**: none direct; Stage can call signal() via ctx.cat internally
     **Implemented by**: app layer (Pipeline Stage)
     """
+
     name: str
+
     async def run(self, ctx: PipelineContext) -> AsyncIterator[StageEvent]: ...
 
 
@@ -114,8 +127,7 @@ class SecurityPolicyProtocol(Protocol):
     """
 
     def is_danger(self, input: str) -> bool: ...
-    def assess_tool_risk(
-        self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
+    def assess_tool_risk(self, name: str, params: dict[str, Any]) -> dict[str, str]: ...
 
 
 # -- Kitten blueprint ------------------------------------------------
@@ -137,7 +149,7 @@ class KittenProtocol(Protocol):
     **Implemented by**: app layer (KittenAgent implementation)
     """
 
-    parent_id: str                   # parent cat_uid, string identifier only
+    parent_id: str  # parent cat_uid, string identifier only
     task: SubTaskShape
     role: str
     workspace: Any
@@ -156,6 +168,7 @@ class KittenProtocol(Protocol):
     async def execute(self) -> MergeProposalShape: ...
     def propose_merge(self) -> MergeProposalShape: ...
     async def dismiss(self) -> None: ...
+
 
 # -- Cat body -------------------------------------------------------
 
@@ -185,6 +198,7 @@ class SettingsProtocol(Protocol):
     **Reflex Arc**: none
     **Implemented by**: app layer (settings implementation)
     """
+
     data_dir: Any
 
 
@@ -203,6 +217,7 @@ class AdapterProtocol(Protocol):
     **Reflex Arc**: indirectly participates in text_dialogue (routing via locate weights)
     **Implemented by**: app layer (adapter config)
     """
+
     name: str
     entity_types: Any
     locate_weights: Any
@@ -212,13 +227,15 @@ class AdapterProtocol(Protocol):
 class CatProtocol(Protocol):
     """Cat body protocol — full external API of a complete cat. Composes all brain regions + senses + orchestration.
 
-    **Position**: none (Cat is the assembly class, no single organ coordinate; organs registered independently via wiring)
+    **Position**: none (Cat is the assembly class, no single organ coordinate;
+    organs registered independently via wiring)
     **Inbound**: external callers (CLI, Server, multi-platform adapters) trigger via process_message/perceive_stream
     **Outbound**: produces replies and actions coordinated by internal organs
     **Reflex Arc**: holds all reflex arcs registered by app layer
     **Lifecycle**: start() → event loop → shutdown()
     **Implemented by**: app layer (Cat assembly class)
     """
+
     cat_uid: str
     settings: Any
     data_dir: Any
@@ -249,8 +266,7 @@ class CatProtocol(Protocol):
 
     # external API
     async def process_message(self, msg: str) -> str: ...
-    async def perceive_stream(
-        self, msg: str) -> AsyncIterator[dict[str, str]]: ...
+    async def perceive_stream(self, msg: str) -> AsyncIterator[dict[str, str]]: ...
 
     async def start(self) -> None: ...
     async def shutdown(self) -> None: ...

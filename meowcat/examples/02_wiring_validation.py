@@ -10,7 +10,6 @@ graph, no duplicates, bidirectional edges auto-symmetrized), then go live.
 Run: ``python -m meowcat.examples.02_wiring_validation``
 """
 
-
 from __future__ import annotations
 
 from meowcat import Wiring, biology
@@ -44,4 +43,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

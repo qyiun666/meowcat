@@ -1,7 +1,9 @@
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-"""meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12) + Nameplate (v1.1.4) + Shared Area (v1.1.6) + Group Chat (v1.1.7) + Unified Entry (v1.1.8) + Task Delegation (v1.3.0).
+"""meowcat Colony — Cat container (v1.0.2) + Federation (v1.0.12) + Nameplate (v1.1.4)
++ Shared Area (v1.1.6) + Group Chat (v1.1.7) + Unified Entry (v1.1.8)
++ Task Delegation (v1.3.0).
 
 Colony manages peer-to-peer collaboration + shared storage for multiple cats.
 Cats created in a colony are automatically registered and share storage.
@@ -9,14 +11,18 @@ Cats created in a colony are automatically registered and share storage.
 v1.0.12: Federation — cross-host Colony mutual awareness, communication (federate + signal_remote).
 v1.1.4: Nameplate — name/description/max_cats/colony_uid/is_full + ColonyConfig + default() factory.
 v1.1.6: Shared Area — ColonyOwner + ColonyRules + 5 namespace SharedStorage (owner/rules/knowledge/growth/cats).
-v1.1.7: Group Chat — broadcast_request (1→many request-response) + signal_between (1→1 private chat) unified communication.
+v1.1.7: Group Chat — broadcast_request (1→many) + signal_between (1→1) unified communication.
 v1.1.8: Unified Entry — receive_external (address routing) + list_cat_capabilities + search scope guard (self/colony).
-v1.1.20: Shared Memory — SharedMemoryPool for colony-wide knowledge sharing + VectorStore integration.
-v1.1.21: Collective Intelligence — Cross-cat memory search (Hippocampus.locate scope=colony) + delegation with memory snapshot (snapshot + spawn_cat).
+v1.1.20: Shared Memory — SharedMemoryPool for colony-wide sharing + VectorStore integration.
+v1.1.21: Collective Intelligence — Cross-cat memory search (Hippocampus.locate scope=colony)
+    + delegation with memory snapshot (snapshot + spawn_cat).
 v1.1.22: Collective Growth — anomaly/correction shared to growth/ namespace + colony-level role emergence.
-v1.2.11: File split — ColonyConfig/ColonyOwner → config.py, ColonyRules → rules.py, Federation → federation.py, GlobalColonyRegistry → registry.py.
-v1.2.37: File split — Colony federation transports moved from meowcat.colony_transports to colony/transports.py.
-v1.3.0: Task Delegation — delegate_async (fire-and-forget, non-blocking) + await_task (poll with kitten health check) + check_cat (alive/stuck/dead) + signal_between timeout.
+v1.2.11: File split — ColonyConfig/ColonyOwner → config.py, ColonyRules → rules.py,
+    Federation → federation.py, GlobalColonyRegistry → registry.py.
+v1.2.37: File split — Colony federation transports moved to colony/transports.py.
+v1.3.0: Task Delegation — delegate_async (fire-and-forget, non-blocking)
+    + await_task (poll with kitten health check) + check_cat (alive/stuck/dead)
+    + signal_between timeout.
 
 Orthogonal to Kitten (master/slave mode):
 - Kitten: master cat spawns kitten → result delivered back (parent → child)
@@ -24,28 +30,25 @@ Orthogonal to Kitten (master/slave mode):
 - Colony Federation: cross-host Colony peer-to-peer communication (colony ↔ colony), via FederationTransport
 """
 
-
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import logging
 import time
 import uuid
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from meowcat.assembly import CatBase
+from meowcat.colony.config import ColonyConfig, ColonyOwner
+from meowcat.colony.federation import _FederationMixin
+from meowcat.colony.registry import GlobalColonyRegistry
+from meowcat.colony.rules import ColonyRules
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.models import ModelConfig
 from meowcat.pluggable import Pluggable
-from meowcat.storage import SharedStore
 from meowcat.protocols_storage import FederationTransport
-
-from meowcat.colony.config import ColonyConfig, ColonyOwner
-from meowcat.colony.rules import ColonyRules
-from meowcat.colony.federation import _FederationMixin
-from meowcat.colony.registry import GlobalColonyRegistry
+from meowcat.storage import SharedStore
 
 if TYPE_CHECKING:
     from meowcat.biology.growth import CollectiveGrowth
@@ -148,17 +151,21 @@ class Colony(Pluggable, _FederationMixin):
         self._storage = storage
         self._llm_shelf: dict[str, ModelConfig] = dict(llm_shelf or {})
         self._cats: dict[str, CatBase] = {}
-        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set(
-        )
-        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set(
-        )
+        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set()
+        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set()
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
         self._owner = owner or ColonyOwner()
         self._rules = rules or ColonyRules()
         self._registered_ns: set[str] = {
-            "owner", "rules", "knowledge", "growth", "cats", "__tasks__"}
+            "owner",
+            "rules",
+            "knowledge",
+            "growth",
+            "cats",
+            "__tasks__",
+        }
         # -- Federation state (initialized here, used by _FederationMixin) --
         self._transport: FederationTransport | None = None
         self._federation_task: asyncio.Task | None = None
@@ -167,8 +174,8 @@ class Colony(Pluggable, _FederationMixin):
         # -- Shared Memory (v1.1.20) ---------------------------------------
         self._memory_pool = None  # lazily created on first access
         # -- Collective Growth + Emergence (v1.1.22) -------------------------
-        self._growth = None     # lazily created on first access
-        self._emergence = None   # lazily created on first access
+        self._growth = None  # lazily created on first access
+        self._emergence = None  # lazily created on first access
         # -- Task delegation (v1.3.0) -----------------------------------
         # actual task results (non-serialized)
         self._task_results: dict[str, Any] = {}
@@ -196,7 +203,8 @@ class Colony(Pluggable, _FederationMixin):
         - base36 timestamp (6 chars): second-level Unix time in base36
         → 12 chars total, e.g. ``0efb30telx53``
         """
-        from meowcat.constants import CALL_SIGN  # noqa: PLC0415
+        from meowcat.constants import CALL_SIGN
+
         return f"{CALL_SIGN}{Colony._base36(int(time.time()))}"
 
     def _next_cat_uid(self) -> str:
@@ -215,7 +223,7 @@ class Colony(Pluggable, _FederationMixin):
     def name(self, value: str) -> None:
         old = self._name
         self._name = value
-        for _hook, r in self._run_plugs_sync("on_name_change", old, value):
+        for _hook, _r in self._run_plugs_sync("on_name_change", old, value):
             pass  # fire-and-forget notification
 
     @property
@@ -310,7 +318,7 @@ class Colony(Pluggable, _FederationMixin):
         """
         prefix = self._ns_prefix(namespace)
         all_keys = await self._ensure_storage().list_keys()
-        return [k[len(prefix):] for k in all_keys if k.startswith(prefix)]
+        return [k[len(prefix) :] for k in all_keys if k.startswith(prefix)]
 
     async def ns_watch(self, namespace: str, pattern: str) -> Any:
         """Watch namespace key changes matching pattern.
@@ -380,8 +388,7 @@ class Colony(Pluggable, _FederationMixin):
         if name is not None:
             if name not in self._llm_shelf:
                 raise KeyError(
-                    f"LLM '{name}' not found on shelf. "
-                    f"Available: {list(self._llm_shelf.keys())}"
+                    f"LLM '{name}' not found on shelf. Available: {list(self._llm_shelf.keys())}"
                 )
             return self._llm_shelf[name]
 
@@ -420,10 +427,7 @@ class Colony(Pluggable, _FederationMixin):
         Returns:
             Registered CatBase instance with ``_llm_config`` attribute.
         """
-        if isinstance(llm, ModelConfig):
-            llm_config = llm
-        else:
-            llm_config = self.pick_llm(llm)
+        llm_config = llm if isinstance(llm, ModelConfig) else self.pick_llm(llm)
 
         cat = self.create_cat(
             name=name,
@@ -469,7 +473,8 @@ class Colony(Pluggable, _FederationMixin):
         Returns:
             Ready-to-use Colony instance.
         """
-        from meowcat.defaults.stores import InMemorySharedStore  # noqa: PLC0415
+        from meowcat.defaults.stores import InMemorySharedStore
+
         storage = kwargs.pop("storage", InMemorySharedStore())
         name = kwargs.pop("name", None) or colony_id
         return cls(colony_id, storage=storage, name=name, **kwargs)
@@ -497,13 +502,15 @@ class Colony(Pluggable, _FederationMixin):
 
         if (from_id, to_id) in self._cross_forbidden:
             raise IllegalNeuralPathError(
-                ("colony", from_id), ("colony", to_id),
+                ("colony", from_id),
+                ("colony", to_id),
                 reason=f"cross-cat signal forbidden: {from_id} → {to_id}",
             )
 
         if self._cross_allowed and (from_id, to_id) not in self._cross_allowed:
             raise IllegalNeuralPathError(
-                ("colony", from_id), ("colony", to_id),
+                ("colony", from_id),
+                ("colony", to_id),
                 reason=f"cross-cat signal not allowed: {from_id} → {to_id}",
             )
 
@@ -534,8 +541,7 @@ class Colony(Pluggable, _FederationMixin):
         """
         if self.is_full:
             raise RuntimeError(
-                f"Colony '{self.colony_id}' is full "
-                f"({len(self._cats)}/{self._max_cats} cats)"
+                f"Colony '{self.colony_id}' is full ({len(self._cats)}/{self._max_cats} cats)"
             )
 
         cat_uid = self._next_cat_uid()
@@ -677,7 +683,8 @@ class Colony(Pluggable, _FederationMixin):
     def _ensure_storage(self) -> SharedStore:
         """Lazy-init storage if not provided."""
         if self._storage is None:
-            from meowcat.defaults.stores import InMemorySharedStore  # noqa: PLC0415
+            from meowcat.defaults.stores import InMemorySharedStore
+
             self._storage = InMemorySharedStore()
         return self._storage
 
@@ -704,12 +711,12 @@ class Colony(Pluggable, _FederationMixin):
         """List all shared storage keys for a cat (prefix stripped)."""
         prefix = f"{cat_uid}/"
         all_keys = await self._ensure_storage().list_keys()
-        return [
-            k[len(prefix):] for k in all_keys if k.startswith(prefix)
-        ]
+        return [k[len(prefix) :] for k in all_keys if k.startswith(prefix)]
 
     async def storage_watch(
-        self, cat_uid: str, pattern: str,
+        self,
+        cat_uid: str,
+        pattern: str,
     ) -> Any:
         """Watch shared storage key changes matching pattern.
 
@@ -723,7 +730,10 @@ class Colony(Pluggable, _FederationMixin):
     # -- Result delivery ---------------------------------------------
 
     async def deliver_result(
-        self, parent_id: str, from_kitten: str, result: Any,
+        self,
+        parent_id: str,
+        from_kitten: str,
+        result: Any,
     ) -> None:
         """Kitten delivers result back to parent cat.
 
@@ -802,6 +812,7 @@ class Colony(Pluggable, _FederationMixin):
                 fn = getattr(organ, method)
                 result = fn(**kw)
                 import inspect as _inspect
+
                 if _inspect.isawaitable(result):
                     result = await result
                 results[cat_uid] = result
@@ -853,14 +864,11 @@ class Colony(Pluggable, _FederationMixin):
         """
         parts = address.split("_", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
-            raise ValueError(
-                f"Invalid address '{address}': expected 'colony_id_cat_uid'"
-            )
+            raise ValueError(f"Invalid address '{address}': expected 'colony_id_cat_uid'")
         colony_id, cat_uid = parts
         if colony_id != self.colony_id:
             raise ValueError(
-                f"Address colony '{colony_id}' does not match "
-                f"this colony '{self.colony_id}'"
+                f"Address colony '{colony_id}' does not match this colony '{self.colony_id}'"
             )
         cat = self.get_cat(cat_uid)
         await cat.emit("external_message", {"address": address, **kwargs})
@@ -887,9 +895,7 @@ class Colony(Pluggable, _FederationMixin):
         result: dict[str, list[dict[str, Any]]] = {}
         for cat_uid, cat in self._cats.items():
             organs = cat.list_all_organs()
-            result[cat_uid] = [
-                {"category": c, "name": n} for c, n in organs
-            ]
+            result[cat_uid] = [{"category": c, "name": n} for c, n in organs]
         return result
 
     def search_scope_guard(self, cat_uid: str, scope: str) -> None:
@@ -905,13 +911,10 @@ class Colony(Pluggable, _FederationMixin):
             KeyError: Cat not found.
         """
         if scope not in ("self", "colony"):
-            raise ValueError(
-                f"Invalid search scope '{scope}': must be 'self' or 'colony'"
-            )
+            raise ValueError(f"Invalid search scope '{scope}': must be 'self' or 'colony'")
         # Ensure cat exists
         if cat_uid not in self._cats:
-            raise KeyError(
-                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
+            raise KeyError(f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
 
     # -- Inter-cat communication --------------------------------------
 
@@ -965,6 +968,7 @@ class Colony(Pluggable, _FederationMixin):
         # 4. Invoke method
         fn = getattr(target_organ, method)
         import inspect as _inspect
+
         result = fn(*args, **kw)
         if _inspect.isawaitable(result):
             if timeout is not None:
@@ -1041,8 +1045,14 @@ class Colony(Pluggable, _FederationMixin):
                 payload["status"] = "running"
                 await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))
                 result = await self.signal_between(
-                    from_id, to_id, to_category, to_name, method,
-                    *args, timeout=timeout, **kw,
+                    from_id,
+                    to_id,
+                    to_category,
+                    to_name,
+                    method,
+                    *args,
+                    timeout=timeout,
+                    **kw,
                 )
                 # Store actual result in memory (non-serialized)
                 self._task_results[task_id] = result
@@ -1050,20 +1060,26 @@ class Colony(Pluggable, _FederationMixin):
                 payload["result"] = repr(result)
                 payload["finished_at"] = time.monotonic()
                 await self.ns_set(
-                    self._TASKS_NS, task_id, json.dumps(payload, default=str),
+                    self._TASKS_NS,
+                    task_id,
+                    json.dumps(payload, default=str),
                 )
             except asyncio.TimeoutError:
                 payload["status"] = "timed_out"
                 payload["finished_at"] = time.monotonic()
                 await self.ns_set(
-                    self._TASKS_NS, task_id, json.dumps(payload),
+                    self._TASKS_NS,
+                    task_id,
+                    json.dumps(payload),
                 )
             except Exception as exc:
                 payload["status"] = "errored"
                 payload["error"] = repr(exc)
                 payload["finished_at"] = time.monotonic()
                 await self.ns_set(
-                    self._TASKS_NS, task_id, json.dumps(payload, default=str),
+                    self._TASKS_NS,
+                    task_id,
+                    json.dumps(payload, default=str),
                 )
 
         asyncio.create_task(_runner())
@@ -1126,19 +1142,16 @@ class Colony(Pluggable, _FederationMixin):
             if st == "done":
                 # Return actual result from memory, fallback to serialized
                 return self._task_results.pop(
-                    task_id, status.get("result"),
+                    task_id,
+                    status.get("result"),
                 )
             if st in ("errored", "timed_out"):
-                raise RuntimeError(
-                    f"Task {task_id} {st}: "
-                    f"{status.get('error', 'no detail')}"
-                )
+                raise RuntimeError(f"Task {task_id} {st}: {status.get('error', 'no detail')}")
 
             elapsed = time.monotonic() - start
             if elapsed >= max_wait:
                 raise asyncio.TimeoutError(
-                    f"Task {task_id} exceeded max_wait {max_wait}s "
-                    f"(current status: {st})"
+                    f"Task {task_id} exceeded max_wait {max_wait}s (current status: {st})"
                 )
 
             # Check kitten health if we know who the kitten is
@@ -1146,9 +1159,7 @@ class Colony(Pluggable, _FederationMixin):
             if to_id and st == "running":
                 cat_health = await self.check_cat(str(to_id))
                 if cat_health == "dead":
-                    raise RuntimeError(
-                        f"Kitten cat '{to_id}' is dead (task {task_id})"
-                    )
+                    raise RuntimeError(f"Kitten cat '{to_id}' is dead (task {task_id})")
 
             await asyncio.sleep(poll_interval)
 
@@ -1178,7 +1189,7 @@ class Colony(Pluggable, _FederationMixin):
     # -- Shared Memory (v1.1.20) --------------------------------------
 
     @property
-    def memory(self) -> "SharedMemoryPool":
+    def memory(self) -> SharedMemoryPool:  # noqa: F821
         """Colony-level shared memory pool (lazy-init).
 
         Usage::
@@ -1187,14 +1198,15 @@ class Colony(Pluggable, _FederationMixin):
             results = await colony.memory.recall("Python 版本")
         """
         if self._memory_pool is None:
-            from meowcat.colony.memory import SharedMemoryPool  # noqa: PLC0415
+            from meowcat.colony.memory import SharedMemoryPool
+
             self._memory_pool = SharedMemoryPool(self)
         return self._memory_pool
 
     # -- Collective Growth + Emergence (v1.1.22) -----------------------
 
     @property
-    def growth(self) -> "CollectiveGrowth":
+    def growth(self) -> CollectiveGrowth:
         """Colony-level collective growth (lazy-init).
 
         Usage::
@@ -1205,12 +1217,13 @@ class Colony(Pluggable, _FederationMixin):
             anomalies = await colony.growth.list_anomalies()
         """
         if self._growth is None:
-            from meowcat.biology.growth import CollectiveGrowth  # noqa: PLC0415
+            from meowcat.biology.growth import CollectiveGrowth
+
             self._growth = CollectiveGrowth(self)
         return self._growth
 
     @property
-    def emergence(self) -> "CollectiveEmergence":
+    def emergence(self) -> CollectiveEmergence:
         """Colony-level collective role emergence (lazy-init).
 
         Usage::
@@ -1220,11 +1233,17 @@ class Colony(Pluggable, _FederationMixin):
                                                     evidence="发现3次SQL异常")
         """
         if self._emergence is None:
-            from meowcat.biology.roles import CollectiveEmergence  # noqa: PLC0415
+            from meowcat.biology.roles import CollectiveEmergence
+
             self._emergence = CollectiveEmergence(self)
         return self._emergence
 
 
-__all__ = ["Colony", "ColonyConfig", "ColonyOwner",
-           "ColonyRules", "FederationTransport", "GlobalColonyRegistry"]
-
+__all__ = [
+    "Colony",
+    "ColonyConfig",
+    "ColonyOwner",
+    "ColonyRules",
+    "FederationTransport",
+    "GlobalColonyRegistry",
+]

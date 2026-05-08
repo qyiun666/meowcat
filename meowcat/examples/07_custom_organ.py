@@ -10,12 +10,11 @@ Organ → Path → Chain → Loop.
 Run: ``python -m meowcat.examples.07_custom_organ``
 """
 
-
 from __future__ import annotations
 
 import anyio
 
-from meowcat import CatBase, Path, Chain, Loop, biology
+from meowcat import CatBase, Chain, Loop, Path, biology
 
 
 class MyNose:
@@ -54,8 +53,12 @@ async def main() -> None:
     cat = CatBase("custom-organ-cat")
 
     # 2. Mount custom organs
-    cat.mount("sense", "ears", type("NoopEars", (), {
-              "name": "ears", "diagnose": lambda: {}})(), protocol=None)
+    cat.mount(
+        "sense",
+        "ears",
+        type("NoopEars", (), {"name": "ears", "diagnose": lambda: {}})(),
+        protocol=None,
+    )
     cat.mount("sense", "nose", MyNose())
     cat.mount("voice", "echo_mouth", EchoMouth())
 
@@ -134,4 +137,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
-

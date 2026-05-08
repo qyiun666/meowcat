@@ -9,16 +9,17 @@ Optional SSE for streaming (``Accept: text/event-stream`` → stream_chunk push 
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 
-
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
-from typing import Any, AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 from meowcat.constants import GATEWAY_DEFAULT_TIMEOUT
-from meowcat.gateway.protocol import HTTP_REASONS, IoAdapterProtocol, SignalContext
+from meowcat.gateway.protocol import HTTP_REASONS, SignalContext
 
 _logger = logging.getLogger(__name__)
 
@@ -49,18 +50,24 @@ class HttpAdapter:
             await self._handle_connection(reader, writer)
 
         self._server = await asyncio.start_server(
-            handler, host=self.host, port=self.port,
+            handler,
+            host=self.host,
+            port=self.port,
         )
 
         async with self._server:
             await self._server.serve_forever()
 
     async def _handle_connection(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         """Handle a single HTTP connection."""
         try:
-            request_line = await asyncio.wait_for(reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT)
+            request_line = await asyncio.wait_for(
+                reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT
+            )
             if not request_line:
                 writer.close()
                 return
@@ -84,9 +91,14 @@ class HttpAdapter:
 
             # read body
             content_length = int(headers.get("content-length", "0"))
-            body_raw = await asyncio.wait_for(
-                reader.readexactly(content_length), timeout=10,
-            ) if content_length > 0 else b""
+            body_raw = (
+                await asyncio.wait_for(
+                    reader.readexactly(content_length),
+                    timeout=10,
+                )
+                if content_length > 0
+                else b""
+            )
 
             if method != "POST" or path != "/chat":
                 await self._write_response(writer, 404, {"error": "not found"})
@@ -120,13 +132,14 @@ class HttpAdapter:
         except (ConnectionError, OSError):
             await self._write_response(writer, 500, {"error": "internal error"})
         finally:
-            try:
+            with contextlib.suppress(OSError):
                 writer.close()
-            except OSError:
-                pass
 
     async def _handle_sse(
-        self, writer: asyncio.StreamWriter, text: str, ctx: SignalContext,
+        self,
+        writer: asyncio.StreamWriter,
+        text: str,
+        ctx: SignalContext,
     ) -> None:
         """SSE streaming response."""
         writer.write(
@@ -147,7 +160,10 @@ class HttpAdapter:
             await writer.drain()
 
     async def _write_response(
-        self, writer: asyncio.StreamWriter, status: int, body: dict[str, Any],
+        self,
+        writer: asyncio.StreamWriter,
+        status: int,
+        body: dict[str, Any],
     ) -> None:
         """Write HTTP JSON response."""
         payload = json.dumps(body).encode()
@@ -156,25 +172,24 @@ class HttpAdapter:
             f"HTTP/1.1 {status} {reason}\r\n"
             f"Content-Type: application/json\r\n"
             f"Content-Length: {len(payload)}\r\n"
-            f"Connection: close\r\n\r\n"
-            .encode() + payload,
+            f"Connection: close\r\n\r\n".encode()
+            + payload,
         )
         await writer.drain()
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
         """HTTP is stateless — store in internal buffer for next request to return."""
         _logger.debug(
-            "HttpAdapter.send() no-op: in HTTP req/resp mode, response handled by _on_message return value")
+            "HttpAdapter.send() no-op: in HTTP req/resp mode, response handled by _on_message return value"
+        )
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
         """SSE push chunk (handled internally by _handle_sse)."""
-        _logger.debug(
-            "HttpAdapter.stream_chunk() no-op: SSE handled internally by _handle_sse")
+        _logger.debug("HttpAdapter.stream_chunk() no-op: SSE handled internally by _handle_sse")
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
         """SSE end marker (handled internally by _handle_sse)."""
-        _logger.debug(
-            "HttpAdapter.stream_end() no-op: SSE handled internally by _handle_sse")
+        _logger.debug("HttpAdapter.stream_end() no-op: SSE handled internally by _handle_sse")
 
     async def stop(self) -> None:
         """Close HTTP server."""
@@ -184,4 +199,3 @@ class HttpAdapter:
 
 
 __all__ = ["HttpAdapter"]
-

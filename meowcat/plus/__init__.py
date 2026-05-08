@@ -14,17 +14,17 @@ from __future__ import annotations
 
 from meowcat.plus.browser import BrowserTool
 from meowcat.plus.chroma_store import ChromaStore
+from meowcat.plus.crystallizer import Crystallizer, DefaultDetector
+from meowcat.plus.gateway import (
+    CliAdapter,
+    HttpAdapter,
+    IpcAdapter,
+    WebhookAdapter,
+    WsAdapter,
+)
 from meowcat.plus.mcp_client import MCPClient, MCPServerConfig, MCPTool
 from meowcat.plus.skill_loader import SkillLoader
-from meowcat.plus.crystallizer import Crystallizer, DefaultDetector
 from meowcat.plus.tools import BUILTIN_TOOLS
-from meowcat.plus.gateway import (
-    HttpAdapter,
-    WsAdapter,
-    WebhookAdapter,
-    CliAdapter,
-    IpcAdapter,
-)
 
 __all__ = [
     "BrowserTool",
@@ -42,4 +42,3 @@ __all__ = [
     "CliAdapter",
     "IpcAdapter",
 ]
-

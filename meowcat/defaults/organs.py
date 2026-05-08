@@ -12,7 +12,6 @@ Three execution modes:
 - C Full replacement: first plugin completely replaces default behavior
 """
 
-
 from __future__ import annotations
 
 import time as _time
@@ -20,9 +19,7 @@ import warnings
 from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
-from meowcat.defaults.stores import InMemoryGraphStore
 from meowcat.pluggable import Pluggable
-
 
 # ===================================================================
 # Brain Regions
@@ -56,12 +53,17 @@ class NoopAmygdala(Pluggable):
         return None
 
     async def handle_rejection(
-        self, msg: str, last_candidates: list[Any], hippocampus: Any,
+        self,
+        msg: str,
+        last_candidates: list[Any],
+        hippocampus: Any,
     ) -> str:
         return msg
 
     async def handle_correction(
-        self, msg: str, hippocampus: Any,
+        self,
+        msg: str,
+        hippocampus: Any,
     ) -> tuple[str, str] | None:
         return None
 
@@ -72,7 +74,9 @@ class NoopAmygdala(Pluggable):
         return {"safe": True, "risk": "none"}
 
     async def assess_tool_risk(
-        self, tool_name: str, params: dict[str, Any],
+        self,
+        tool_name: str,
+        params: dict[str, Any],
     ) -> dict[str, Any]:
         async for _name, r in self._run_plugs("assess_tool_risk", tool_name, params):
             if isinstance(r, dict):
@@ -139,8 +143,7 @@ class NoopHypothalamus(Pluggable):
         Pluggable.__init__(self)
 
     async def run_maintenance(self, country_code: str | None = None) -> Any:
-        result: dict[str, Any] = {
-            "decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
+        result: dict[str, Any] = {"decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
         async for _name, r in self._run_plugs("run_maintenance", country_code):
             if isinstance(r, dict):
                 result.update(r)
@@ -213,17 +216,23 @@ class NoopBrainstem(Pluggable):
         return {}
 
     async def build_system_prompt(
-        self, organ: str, route: str,
+        self,
+        organ: str,
+        route: str,
         cat_self_snapshot: Any | None = None,
     ) -> str:
         parts: list[str] = []
-        async for _name, r in self._run_plugs("build_system_prompt", organ, route, cat_self_snapshot):
+        async for _name, r in self._run_plugs(
+            "build_system_prompt", organ, route, cat_self_snapshot
+        ):
             if isinstance(r, str) and r:
                 parts.append(r)
         return "\n".join(parts) if parts else ""
 
     async def compress_context(
-        self, messages: list[dict], max_tokens: int = 4000,
+        self,
+        messages: list[dict],
+        max_tokens: int = 4000,
     ) -> list[dict]:
         """Compress conversation context to fit token budget.
 
@@ -239,7 +248,9 @@ class NoopBrainstem(Pluggable):
             Compressed message list.
         """
         async for _name, r in self._run_plugs(
-            "compress_context", messages, max_tokens,
+            "compress_context",
+            messages,
+            max_tokens,
         ):
             if isinstance(r, list):
                 return r
@@ -270,8 +281,14 @@ class NoopCerebrum(Pluggable):
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "str"},
-        "stream_generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "AsyncIterator[str]"},
+        "generate": {
+            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "out": "str",
+        },
+        "stream_generate": {
+            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "out": "AsyncIterator[str]",
+        },
     }
 
     name: str = "noop_cerebrum"
@@ -284,22 +301,36 @@ class NoopCerebrum(Pluggable):
         return {}
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate", prompt, system_prompt, temperature, max_tokens,
+            "generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             if isinstance(r, str):
                 return r
         return ""
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+            "stream_generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             return r
         # empty async generator fallback
@@ -307,6 +338,7 @@ class NoopCerebrum(Pluggable):
         async def _empty():
             if False:
                 yield ""
+
         return _empty()
 
     def reload_config(self) -> None:
@@ -320,8 +352,14 @@ class NoopCerebellum(Pluggable):
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "str"},
-        "stream_generate": {"in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None", "out": "AsyncIterator[str]"},
+        "generate": {
+            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "out": "str",
+        },
+        "stream_generate": {
+            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "out": "AsyncIterator[str]",
+        },
     }
 
     name: str = "noop_cerebellum"
@@ -334,28 +372,43 @@ class NoopCerebellum(Pluggable):
         return {}
 
     async def generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate", prompt, system_prompt, temperature, max_tokens,
+            "generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             if isinstance(r, str):
                 return r
         return ""
 
     async def stream_generate(
-        self, prompt: str, system_prompt: str | None = None,
-        temperature: float = 0.7, max_tokens: int | None = None,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate", prompt, system_prompt, temperature, max_tokens,
+            "stream_generate",
+            prompt,
+            system_prompt,
+            temperature,
+            max_tokens,
         ):
             return r
 
         async def _empty():
             if False:
                 yield ""
+
         return _empty()
 
     def reload_config(self) -> None:
@@ -385,8 +438,7 @@ class NoopEars(Pluggable):
         Pluggable.__init__(self)
 
     async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
-        result: dict[str, Any] = {"text": str(
-            raw_input), "keywords": [], "language": "unknown"}
+        result: dict[str, Any] = {"text": str(raw_input), "keywords": [], "language": "unknown"}
         async for _name, r in self._run_plugs("hear", raw_input):
             if isinstance(r, dict):
                 result.update(r)
@@ -457,7 +509,9 @@ class NoopWhiskers(Pluggable):
         return result
 
     async def feel_output(
-        self, output: str, expected_schema: dict[str, Any] | None = None,
+        self,
+        output: str,
+        expected_schema: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {}
         async for _name, r in self._run_plugs("feel_output", output, expected_schema):
@@ -469,7 +523,9 @@ class NoopWhiskers(Pluggable):
         return {"drift": False}
 
     async def check_hallucination(
-        self, reply: str, session_id: str | None = None,
+        self,
+        reply: str,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {"hallucination": False}
         async for _name, r in self._run_plugs("check_hallucination", reply, session_id):
@@ -488,7 +544,9 @@ class NoopWhiskers(Pluggable):
         App layer can mount a ``"detect_blind_spot"`` plug to enable.
         """
         async for _name, r in self._run_plugs(
-            "detect_blind_spot", recent_queries, known_topics or [],
+            "detect_blind_spot",
+            recent_queries,
+            known_topics or [],
         ):
             if isinstance(r, list):
                 return r
@@ -570,7 +628,7 @@ class NoopTail(Pluggable):
         return {}
 
     async def render(self, state: dict[str, Any]) -> None:
-        async for _name, r in self._run_plugs("render", state):
+        async for _name, _r in self._run_plugs("render", state):
             return None
         return None
 
@@ -588,7 +646,10 @@ class NoopPaws(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "execute": {"in": "name: str, params: dict", "out": "dict[str, Any]"},
-        "on_tool_failure": {"in": "tool: str, params: dict, error: str, elapsed: float", "out": "dict[str, Any]"},
+        "on_tool_failure": {
+            "in": "tool: str, params: dict, error: str, elapsed: float",
+            "out": "dict[str, Any]",
+        },
     }
 
     name: str = "noop_paws"
@@ -620,34 +681,45 @@ class NoopPaws(Pluggable):
         App layer can mount an ``"on_tool_failure"`` plug to enable.
         """
         async for _name, r in self._run_plugs(
-            "on_tool_failure", tool_name, params, error, elapsed_ms,
+            "on_tool_failure",
+            tool_name,
+            params,
+            error,
+            elapsed_ms,
         ):
             if isinstance(r, dict):
                 return r
         return {"recorded": False}
 
     async def touch_file(
-        self, path: str, content: str | None = None,
+        self,
+        path: str,
+        content: str | None = None,
     ) -> dict[str, Any]:
         warnings.warn(
             "touch_file() is deprecated, use execute('touch_file', {...}) instead",
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         return await self.execute("touch_file", {"path": path, "content": content})
 
     async def run_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
         warnings.warn(
             "run_command() is deprecated, use execute('run_command', {...}) instead",
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         return await self.execute("run_command", {"command": command, **kwargs})
 
     async def interact_with_tool(
-        self, skill_name: str, params: dict[str, Any],
+        self,
+        skill_name: str,
+        params: dict[str, Any],
     ) -> dict[str, Any]:
         warnings.warn(
             "interact_with_tool() is deprecated, use execute(skill_name, params) instead",
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         return await self.execute(skill_name, params)
 
@@ -683,8 +755,7 @@ class NoopThalamus(Pluggable):
         return result
 
     async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
-        result: dict[str, Any] = {
-            "route": "chat", "entities": [], "snippets": []}
+        result: dict[str, Any] = {"route": "chat", "entities": [], "snippets": []}
         async for _name, r in self._run_plugs("locate", msg, session_id):
             if isinstance(r, dict):
                 result.update(r)
@@ -692,6 +763,7 @@ class NoopThalamus(Pluggable):
 
     def decide_route(self, **kwargs: Any) -> dict[str, Any]:
         return {"route": "chat"}
+
 
 class NoopHippocampus(Pluggable):
     """Default hippocampus: pure in-memory graph store, lost on process restart.
@@ -733,6 +805,7 @@ class NoopHippocampus(Pluggable):
     @entities.setter
     def entities(self, value: dict[str, dict[str, Any]]) -> None:
         self._entities = value
+
     @property
     def episodes(self) -> list[dict[str, Any]]:
         if self._episodes is None:
@@ -756,11 +829,19 @@ class NoopHippocampus(Pluggable):
     # -- Memory storage -----------------------------------------------
 
     async def remember(
-        self, user_msg: str, ai_reply: str, cat_uid: str, model: str,
+        self,
+        user_msg: str,
+        ai_reply: str,
+        cat_uid: str,
+        model: str,
     ) -> Any:
         result: dict[str, Any] = {"user_msg": user_msg, "ai_reply": ai_reply}
         async for _name, r in self._run_plugs(
-            "remember", user_msg, ai_reply, cat_uid, model,
+            "remember",
+            user_msg,
+            ai_reply,
+            cat_uid,
+            model,
         ):
             if isinstance(r, dict):
                 result.update(r)
@@ -787,21 +868,22 @@ class NoopHippocampus(Pluggable):
         return [ep for ep in self.episodes if ep.get("id") in id_set]
 
     def add_entity(self, entity: dict[str, Any]) -> None:
-        eid = entity.get("id", entity.get(
-            "entity_id", str(len(self.entities))))
+        eid = entity.get("id", entity.get("entity_id", str(len(self.entities))))
         self.entities[eid] = entity
 
     # -- Memory retrieval --------------------------------------------
 
     def fts_search(
-        self, cat_uid: str, keywords: str, limit: int = 10,
+        self,
+        cat_uid: str,
+        keywords: str,
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
         """Full-text search memory (simple keyword matching)."""
         results: list[dict[str, Any]] = []
         kws = keywords.lower().split()
         for ep in self.episodes:
-            text = (ep.get("user_msg", "") + " " +
-                    ep.get("ai_reply", "")).lower()
+            text = (ep.get("user_msg", "") + " " + ep.get("ai_reply", "")).lower()
             if any(kw in text for kw in kws):
                 results.append(ep)
                 if len(results) >= limit:
@@ -833,9 +915,7 @@ class NoopHippocampus(Pluggable):
             ValueError: Invalid scope value.
         """
         if scope not in ("self", "colony"):
-            raise ValueError(
-                f"Invalid search scope '{scope}': must be 'self' or 'colony'"
-            )
+            raise ValueError(f"Invalid search scope '{scope}': must be 'self' or 'colony'")
         if scope == "self":
             return self.fts_search("", query)
         # scope == "colony": cross-cat search via colony SharedMemoryPool (v1.1.21)
@@ -861,25 +941,30 @@ class NoopHippocampus(Pluggable):
             ``{"topics": [...], "context": [...], "created_at": ...}``
         """
         import time as _time
+
         context: list[dict[str, Any]] = []
         for topic in topics:
             # own hippocampus memories
             for ep in self.fts_search("", topic, limit=5):
-                context.append({
-                    "type": "self",
-                    "source": "episode",
-                    "topic": topic,
-                    "content": ep,
-                })
+                context.append(
+                    {
+                        "type": "self",
+                        "source": "episode",
+                        "topic": topic,
+                        "content": ep,
+                    }
+                )
             # colony shared memories
             if scope == "colony" and self._colony_memory is not None:
                 for cm in self._colony_memory.keyword_search(topic, k=5):
-                    context.append({
-                        "type": "colony",
-                        "source": "shared_memory",
-                        "topic": topic,
-                        "content": cm,
-                    })
+                    context.append(
+                        {
+                            "type": "colony",
+                            "source": "shared_memory",
+                            "topic": topic,
+                            "content": cm,
+                        }
+                    )
         return {
             "topics": list(topics),
             "context": context,
@@ -912,12 +997,20 @@ class NoopHippocampus(Pluggable):
     # -- Connection operations ---------------------------------------
 
     def connect(
-        self, from_id: str, to_id: str, relation: str, strength: float = 1.0,
+        self,
+        from_id: str,
+        to_id: str,
+        relation: str,
+        strength: float = 1.0,
     ) -> None:
         if from_id in self.entities:
-            self.entities[from_id].setdefault("connections", []).append({
-                "to": to_id, "relation": relation, "strength": strength,
-            })
+            self.entities[from_id].setdefault("connections", []).append(
+                {
+                    "to": to_id,
+                    "relation": relation,
+                    "strength": strength,
+                }
+            )
 
     def weaken_connections(self, entity_id: str, factor: float = 0.5) -> None:
         entity = self.entities.get(entity_id)
@@ -930,7 +1023,7 @@ class NoopHippocampus(Pluggable):
         now = _time.time()
         threshold_sec = days_threshold * 86400
         removed = 0
-        for eid, entity in list(self.entities.items()):
+        for _eid, entity in list(self.entities.items()):
             connections = entity.get("connections", [])
             kept = []
             for conn in connections:
@@ -962,9 +1055,7 @@ class NoopHippocampus(Pluggable):
         return {
             "entities": len(self.entities),
             "episodes": len(self.episodes),
-            "connections": sum(
-                len(e.get("connections", [])) for e in self.entities.values()
-            ),
+            "connections": sum(len(e.get("connections", [])) for e in self.entities.values()),
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -987,7 +1078,10 @@ class NoopHippocampus(Pluggable):
             self.entities[entity_id]["dormant"] = dormant
 
     def append_content(
-        self, entity_id: str, text: str, max_total: int | None = None,
+        self,
+        entity_id: str,
+        text: str,
+        max_total: int | None = None,
     ) -> None:
         if entity_id in self.entities:
             existing = self.entities[entity_id].get("content", "")
@@ -998,8 +1092,7 @@ class NoopHippocampus(Pluggable):
 
     def update_importance(self, entity_id: str, importance: float) -> None:
         if entity_id in self.entities:
-            self.entities[entity_id]["importance"] = max(
-                0.0, min(1.0, importance))
+            self.entities[entity_id]["importance"] = max(0.0, min(1.0, importance))
 
     def set_last_seen(self, entity_id: str, ts: str) -> None:
         if entity_id in self.entities:
@@ -1036,7 +1129,10 @@ class NoopAnomalyGrowth(Pluggable):
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "record": {"in": "reason: str, snippet: str, confidence: float, phase: str, session_id: str", "out": "Any"},
+        "record": {
+            "in": "reason: str, snippet: str, confidence: float, phase: str, session_id: str",
+            "out": "Any",
+        },
     }
 
     name: str = "noop_anomaly_growth"
@@ -1049,12 +1145,21 @@ class NoopAnomalyGrowth(Pluggable):
         return {}
 
     async def record(
-        self, reason: str, snippet: str, confidence: float = 0.8,
-        phase: str = "input", session_id: str = "",
+        self,
+        reason: str,
+        snippet: str,
+        confidence: float = 0.8,
+        phase: str = "input",
+        session_id: str = "",
     ) -> Any:
         result: dict[str, Any] = {"recorded": False}
         async for _name, r in self._run_plugs(
-            "record", reason, snippet, confidence, phase, session_id,
+            "record",
+            reason,
+            snippet,
+            confidence,
+            phase,
+            session_id,
         ):
             if isinstance(r, dict):
                 result.update(r)
@@ -1081,12 +1186,19 @@ class NoopCorrectionGrowth(Pluggable):
         return {}
 
     async def record(
-        self, wrong: str, correct: str, session_id: str = "",
+        self,
+        wrong: str,
+        correct: str,
+        session_id: str = "",
         topic: str = "",
     ) -> Any:
         result: dict[str, Any] = {"recorded": False}
         async for _name, r in self._run_plugs(
-            "record", wrong, correct, session_id, topic,
+            "record",
+            wrong,
+            correct,
+            session_id,
+            topic,
         ):
             if isinstance(r, dict):
                 result.update(r)

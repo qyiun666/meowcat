@@ -241,13 +241,9 @@ class TaskOrchestrator:
             KeyError: Either *task_id* or *depends_on* is not registered.
         """
         if task_id not in self._nodes:
-            raise KeyError(
-                f"Task '{task_id}' not found. Register it via add_task() first."
-            )
+            raise KeyError(f"Task '{task_id}' not found. Register it via add_task() first.")
         if depends_on not in self._nodes:
-            raise KeyError(
-                f"Task '{depends_on}' not found. Register it via add_task() first."
-            )
+            raise KeyError(f"Task '{depends_on}' not found. Register it via add_task() first.")
         node = self._nodes[task_id]
         if depends_on not in node.depends_on:
             node.depends_on.append(depends_on)
@@ -297,16 +293,11 @@ class TaskOrchestrator:
         for tid, node in nodes.items():
             for dep in node.depends_on:
                 if dep not in nodes:
-                    raise ValueError(
-                        f"Task '{tid}' depends on '{dep}', "
-                        f"which is not registered."
-                    )
+                    raise ValueError(f"Task '{tid}' depends on '{dep}', which is not registered.")
                 adj[dep].append(tid)
                 in_degree[tid] = in_degree.get(tid, 0) + 1
 
-        queue: deque[str] = deque(
-            tid for tid, deg in in_degree.items() if deg == 0
-        )
+        queue: deque[str] = deque(tid for tid, deg in in_degree.items() if deg == 0)
         levels: list[list[str]] = []
         visited_count = 0
 
@@ -323,12 +314,9 @@ class TaskOrchestrator:
             levels.append(level)
 
         if visited_count != len(nodes):
-            remaining = [
-                tid for tid, deg in in_degree.items() if deg > 0
-            ]
+            remaining = [tid for tid, deg in in_degree.items() if deg > 0]
             raise ValueError(
-                f"Cycle detected in task graph. "
-                f"Nodes still with incoming edges: {remaining}"
+                f"Cycle detected in task graph. Nodes still with incoming edges: {remaining}"
             )
 
         return levels
@@ -397,9 +385,7 @@ class TaskOrchestrator:
         sub_nodes: dict[str, TaskNode] = {}
         for tid in subset_ids:
             node = self._nodes[tid]
-            filtered_deps = [
-                d for d in node.depends_on if d in subset_ids
-            ]
+            filtered_deps = [d for d in node.depends_on if d in subset_ids]
             sub_nodes[tid] = TaskNode(
                 task_id=node.task_id,
                 name=node.name,
@@ -451,8 +437,8 @@ class TaskOrchestrator:
             # Dispatch level concurrently with semaphore
             sem = asyncio.Semaphore(self._max_concurrent)
 
-            async def _run_one(tid: str) -> None:
-                async with sem:
+            async def _run_one(tid: str, _sem: asyncio.Semaphore = sem) -> None:
+                async with _sem:
                     node = nodes[tid]
                     node.status = TaskStatus.RUNNING
                     loop = asyncio.get_running_loop()

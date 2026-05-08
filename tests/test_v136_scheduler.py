@@ -402,7 +402,8 @@ class TestTaskDisabled:
         s.register("off", "loop", interval=0.05, enabled=False)
 
         await s.start(cat)
-        await asyncio.sleep(0.15)  # brief wait to confirm nothing fires
+        for _ in range(3):
+            await asyncio.sleep(0)  # yield control, let scheduler tick
         await s.stop()
 
         assert cat.call_count == 0

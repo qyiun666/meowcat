@@ -33,10 +33,10 @@ debug log.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from collections.abc import Callable, Awaitable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 _log = logging.getLogger(__name__)
@@ -177,13 +177,9 @@ class PeriodicScheduler:
                         both are provided.
         """
         if interval is None and cron is None:
-            raise ValueError(
-                f"Task '{name}': must provide either interval or cron"
-            )
+            raise ValueError(f"Task '{name}': must provide either interval or cron")
         if interval is not None and cron is not None:
-            raise ValueError(
-                f"Task '{name}': interval and cron are mutually exclusive"
-            )
+            raise ValueError(f"Task '{name}': interval and cron are mutually exclusive")
 
         task = PeriodicTask(
             name=name,
@@ -247,10 +243,8 @@ class PeriodicScheduler:
         self._running = False
         if self._task is not None:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
             self._task = None
 
         # Wait for all in-flight dispatches to complete
@@ -276,14 +270,13 @@ class PeriodicScheduler:
                         # Dispatch asynchronously (fire-and-forget
                         # with concurrency limit); keep reference
                         # for clean shutdown
-                        t = asyncio.ensure_future(
-                            self._dispatch(task, cat)
-                        )
+                        t = asyncio.ensure_future(self._dispatch(task, cat))
                         self._inflight.add(t)
                         t.add_done_callback(self._inflight.discard)
             except Exception:
                 _log.debug(
-                    "PeriodicScheduler tick error", exc_info=True,
+                    "PeriodicScheduler tick error",
+                    exc_info=True,
                 )
 
             await asyncio.sleep(self._config.tick_interval)
@@ -350,8 +343,7 @@ class PeriodicScheduler:
         App layer can use ``croniter`` or any cron library.
         """
         raise NotImplementedError(
-            "Cron support requires a cron parser. "
-            "Install 'croniter' and override _parse_cron()."
+            "Cron support requires a cron parser. Install 'croniter' and override _parse_cron()."
         )
 
     # ── Execution (overridable) ────────────────────────────────────
@@ -374,7 +366,9 @@ class PeriodicScheduler:
         """
         _log.warning(
             "PeriodicScheduler task '%s' (loop=%s) failed: %s",
-            task.name, task.loop_name, exc,
+            task.name,
+            task.loop_name,
+            exc,
         )
 
     # ── Diagnostics ────────────────────────────────────────────────

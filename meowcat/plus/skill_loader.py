@@ -23,8 +23,7 @@ from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
 
 logger = logging.getLogger(__name__)
 
-_RISK_MAP = {"low": RiskLevel.LOW,
-             "medium": RiskLevel.MEDIUM, "high": RiskLevel.HIGH}
+_RISK_MAP = {"low": RiskLevel.LOW, "medium": RiskLevel.MEDIUM, "high": RiskLevel.HIGH}
 
 
 def _parse_frontmatter(text: str) -> dict[str, Any]:
@@ -157,8 +156,7 @@ class SkillLoader:
                 tool = self._load_skill(skill_file)
                 if tool is not None:
                     self._tools.append(tool)
-                    logger.debug("Loaded skill: %s from %s",
-                                 tool.name, skill_file)
+                    logger.debug("Loaded skill: %s from %s", tool.name, skill_file)
             except Exception as exc:
                 logger.warning("Failed to load %s: %s", skill_file, exc)
         return list(self._tools)
@@ -184,8 +182,7 @@ class SkillLoader:
                 if isinstance(pv, dict):
                     params[str(pk)] = {str(k): str(v) for k, v in pv.items()}
                 else:
-                    params[str(pk)] = {"type": "string",
-                                       "description": str(pv)}
+                    params[str(pk)] = {"type": "string", "description": str(pv)}
         elif isinstance(raw_params, list):
             params = {str(p): {} for p in raw_params}
 
@@ -214,4 +211,3 @@ class SkillLoader:
         for tool in self._tools:
             registry.register(tool)
         return len(self._tools)
-

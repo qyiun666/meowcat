@@ -9,13 +9,12 @@ how to register, and how to execute. Concrete implementations live in ``meowcat.
 ``meowcat/tools/`` has zero meowagent dependency and zero concrete I/O.
 """
 
-
 from __future__ import annotations
 
-from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
-from meowcat.tools.skill import Skill, SkillRegistry, SkillSpec
-from meowcat.tools.paws import PawsEngine
 from meowcat.tools.matcher import KeywordToolMatcher
+from meowcat.tools.paws import PawsEngine
+from meowcat.tools.skill import Skill, SkillRegistry, SkillSpec
+from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
 
 # -- Re-export concrete plus/ implementations for backward compatibility -----
 # Delegates to the central _LAZY_MAP from meowcat._exports (single source of truth).
@@ -23,17 +22,18 @@ from meowcat.tools.matcher import KeywordToolMatcher
 
 def __getattr__(name: str):
     # Delegate to the top-level _LAZY_MAP (eliminates duplicate maintenance)
-    from meowcat import _LAZY_MAP  # noqa: PLC0415
+    from meowcat import _LAZY_MAP
+
     entry = _LAZY_MAP.get(name)
     if entry is not None:
         import importlib
+
         mod_path, attr = entry
         try:
             module = importlib.import_module(mod_path)
         except ImportError as e:
             raise ImportError(
-                f"'{name}' requires the '{mod_path}' package, "
-                f"which may not be installed."
+                f"'{name}' requires the '{mod_path}' package, which may not be installed."
             ) from e
         value = getattr(module, attr)
         globals()[name] = value
@@ -64,4 +64,3 @@ __all__ = [
     "DefaultDetector",
     "KeywordToolMatcher",
 ]
-

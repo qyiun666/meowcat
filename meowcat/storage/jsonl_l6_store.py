@@ -36,8 +36,7 @@ class JsonlL6Store:
 
     # -- Protocol (L6StorageProtocol) -----------------------------------
 
-    def append(self, cat_uid: str, turn: int,
-               user_msg: str, ai_reply: str) -> None:
+    def append(self, cat_uid: str, turn: int, user_msg: str, ai_reply: str) -> None:
         """Append one dialogue turn to the cat's JSONL file."""
         record = {"turn": turn, "user": user_msg, "ai": ai_reply}
         line = json.dumps(record, ensure_ascii=False) + "\n"
@@ -56,10 +55,7 @@ class JsonlL6Store:
 
     def total_chars(self, cat_uid: str) -> int:
         """Total characters (user + ai) across all turns."""
-        return sum(
-            len(r.get("user", "")) + len(r.get("ai", ""))
-            for r in self._read_lines(cat_uid)
-        )
+        return sum(len(r.get("user", "")) + len(r.get("ai", "")) for r in self._read_lines(cat_uid))
 
     def get_stats(self, cat_uid: str) -> dict[str, Any]:
         """Return ``{"total_turns": N, "total_chars": C}``."""
@@ -80,10 +76,11 @@ class JsonlL6Store:
         if not fp.exists():
             return []
         result: list[dict[str, Any]] = []
-        with open(fp, "r", encoding="utf-8") as fh:
+        with open(fp, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if line:
-                    result.append(json.loads(line)  # type: ignore[arg-type]
-                                  )
+                    result.append(
+                        json.loads(line)  # type: ignore[arg-type]
+                    )
         return result

@@ -41,7 +41,8 @@ Usage::
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,7 @@ class DefaultDetector:
     def __call__(self, hits: dict[str, int], total: int, threshold: float) -> list[str]:
         if total < 1:
             return []
-        return [slug for slug, count in hits.items()
-                if count / total >= threshold]
+        return [slug for slug, count in hits.items() if count / total >= threshold]
 
 
 class Crystallizer:
@@ -120,8 +120,7 @@ class Crystallizer:
 
         Runs the detector (default or plugged) against current usage data.
         """
-        detector: Callable[..., list[str]] = self._plugs.get(
-            "detector", DefaultDetector())
+        detector: Callable[..., list[str]] = self._plugs.get("detector", DefaultDetector())
         thresh = self._resolve_threshold()
         return detector(self._hits, self._total, thresh)
 
@@ -145,17 +144,17 @@ class Crystallizer:
         Returns:
             List of ``(sequence, count)`` sorted by count descending.
         """
-        result = [
-            (seq, cnt) for seq, cnt in self._sequences.items()
-            if cnt >= min_repeat
-        ]
+        result = [(seq, cnt) for seq, cnt in self._sequences.items() if cnt >= min_repeat]
         result.sort(key=lambda x: -x[1])
         return result
 
     # ── L3: Knowledge Crystallization ───────────────────────────────
 
     def record_correction(
-        self, key: str, value: Any, confidence: float = 0.5,
+        self,
+        key: str,
+        value: Any,
+        confidence: float = 0.5,
     ) -> None:
         """Record a correction event with confidence.
 
@@ -175,12 +174,15 @@ class Crystallizer:
                 existing["value"] = value
         else:
             self._corrections[key] = {
-                "key": key, "value": value,
-                "confidence": confidence, "count": 1,
+                "key": key,
+                "value": value,
+                "confidence": confidence,
+                "count": 1,
             }
 
     def detect_knowledge(
-        self, min_confidence: float = 0.8,
+        self,
+        min_confidence: float = 0.8,
     ) -> list[dict[str, Any]]:
         """Detect high-confidence corrections ready for permanent Cortex storage.
 
@@ -190,10 +192,7 @@ class Crystallizer:
         Returns:
             List of ``{key, value, confidence, count}`` dicts.
         """
-        result = [
-            v for v in self._corrections.values()
-            if v["confidence"] >= min_confidence
-        ]
+        result = [v for v in self._corrections.values() if v["confidence"] >= min_confidence]
         result.sort(key=lambda x: -x["confidence"])
         return result
 
@@ -227,4 +226,3 @@ class Crystallizer:
         if plug is not None:
             return float(plug() if callable(plug) else plug)
         return self._threshold
-

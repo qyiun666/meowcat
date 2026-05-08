@@ -45,7 +45,6 @@ from typing import Any
 
 from meowcat.pluggable import Pluggable
 
-
 # ════════════════════════════════════════════════════════════════════
 # BlindSpotDetector — curiosity-driven knowledge gap detection
 # ════════════════════════════════════════════════════════════════════
@@ -103,7 +102,9 @@ class BlindSpotDetector(Pluggable):
                 return r
 
         return _default_blind_spot_detect(
-            recent_queries, known_topics or [], self._novelty_threshold,
+            recent_queries,
+            known_topics or [],
+            self._novelty_threshold,
         )
 
     def diagnose(self) -> dict[str, Any]:
@@ -134,10 +135,10 @@ def _default_blind_spot_detect(
     evidence: dict[str, list[str]] = defaultdict(list)
 
     tech_pattern = re.compile(
-        r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b'   # CamelCase
-        r'|\b([a-z]+(?:_[a-z]+)+)\b'             # snake_case
-        r'|\b([A-Z]{2,})\b'                      # ACRONYMS
-        r'|\b([A-Z][a-z]+)\b',                    # Proper nouns
+        r"\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b"  # CamelCase
+        r"|\b([a-z]+(?:_[a-z]+)+)\b"  # snake_case
+        r"|\b([A-Z]{2,})\b"  # ACRONYMS
+        r"|\b([A-Z][a-z]+)\b",  # Proper nouns
     )
 
     for q in queries:
@@ -155,12 +156,14 @@ def _default_blind_spot_detect(
         novelty = min(count / max(total_queries, 1), 1.0)
         if novelty < threshold:
             continue
-        spots.append({
-            "topic": term,
-            "novelty": round(novelty, 2),
-            "count": count,
-            "evidence": evidence[term][:3],
-        })
+        spots.append(
+            {
+                "topic": term,
+                "novelty": round(novelty, 2),
+                "count": count,
+                "evidence": evidence[term][:3],
+            }
+        )
 
     return spots
 
@@ -214,20 +217,26 @@ class ToolFailureLearner(Pluggable):
         """
         # Plugin hook — fire-and-forget
         async for _name, _r in self._run_plugs(
-            "on_failure", tool_name, params, error, elapsed_ms,
+            "on_failure",
+            tool_name,
+            params,
+            error,
+            elapsed_ms,
         ):
             pass
 
-        self._records.append({
-            "tool": tool_name,
-            "params": {k: str(v)[:100] for k, v in params.items()},
-            "error": error[:200],
-            "elapsed_ms": elapsed_ms,
-        })
+        self._records.append(
+            {
+                "tool": tool_name,
+                "params": {k: str(v)[:100] for k, v in params.items()},
+                "error": error[:200],
+                "elapsed_ms": elapsed_ms,
+            }
+        )
 
         # FIFO eviction
         if len(self._records) > self._max_records:
-            self._records = self._records[-self._max_records:]
+            self._records = self._records[-self._max_records :]
 
     def hotspots(self, min_failures: int = 2) -> list[tuple[str, int, dict[str, Any]]]:
         """Return tools ranked by failure count.
@@ -337,8 +346,8 @@ class HotPathObserver(Pluggable):
                 return r
 
         return [
-            name for name, count in
-            sorted(self._counts.items(), key=lambda x: -x[1])
+            name
+            for name, count in sorted(self._counts.items(), key=lambda x: -x[1])
             if count >= threshold
         ]
 
@@ -368,4 +377,3 @@ class HotPathObserver(Pluggable):
 
 
 __all__ = ["BlindSpotDetector", "ToolFailureLearner", "HotPathObserver"]
-

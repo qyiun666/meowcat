@@ -24,8 +24,7 @@ async def _http_get(url: str, **_: Any) -> str:
 
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-            resp = await client.get(
-                url, headers={"User-Agent": "MeowCat/1.0"})
+            resp = await client.get(url, headers={"User-Agent": "MeowCat/1.0"})
             resp.raise_for_status()
             return resp.text[:HTTP_CLIENT_MAX_RESPONSE_CHARS]
     except Exception as e:
@@ -42,4 +41,3 @@ plus_http_get = Tool(
     ),
     handler=_http_get,
 )
-

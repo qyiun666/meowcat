@@ -7,10 +7,52 @@ Auto-assembly: mount organs → wiring → reflex → freeze.
 Unprovided organs automatically use Noop* / InMemory* default implementations.
 """
 
-
 from __future__ import annotations
-from meowcat.wiring import Wiring
-from meowcat.reflex import Reflex
+
+from typing import Any
+
+from meowcat.assembly import CatBase, CatHook, mount_known_organs
+from meowcat.defaults.organs import (
+    NoopAmygdala,
+    NoopCortex,
+    NoopEars,
+    NoopEyes,
+    NoopFrontal,
+    NoopHippocampus,
+    NoopHypothalamus,
+    NoopMouth,
+    NoopPaws,
+    NoopPurr,
+    NoopTail,
+    NoopThalamus,
+    NoopWhiskers,
+)
+from meowcat.defaults.presets import KeywordPreset, PromptPreset
+from meowcat.defaults.renovated import (
+    RenovatedAmygdala,
+    RenovatedAnomalyGrowth,
+    RenovatedCorrectionGrowth,
+    RenovatedCortex,
+    RenovatedCrystallizer,
+    RenovatedEars,
+    RenovatedEyes,
+    RenovatedFrontal,
+    RenovatedHippocampus,
+    RenovatedHypothalamus,
+    RenovatedMouth,
+    RenovatedPaws,
+    RenovatedPurr,
+    RenovatedRoleEmergence,
+    RenovatedTail,
+    RenovatedThalamus,
+    RenovatedWhiskers,
+)
+from meowcat.defaults.stores import (
+    InMemoryGraphStore,
+    InMemoryL6Store,
+    InMemorySharedStore,
+    InMemoryVectorStore,
+)
 from meowcat.protocols import (
     AmygdalaProtocol,
     BrainStemProtocol,
@@ -29,54 +71,7 @@ from meowcat.protocols import (
     VectorStorageProtocol,
     WhiskersProtocol,
 )
-from meowcat.events import EventBus
-from meowcat.defaults.stores import (
-    InMemoryGraphStore,
-    InMemoryL6Store,
-    InMemorySharedStore,
-    InMemoryVectorStore,
-)
-
-from typing import Any
-
-from meowcat.assembly import CatBase, CatHook, mount_known_organs
-from meowcat.defaults.organs import (
-    NoopAmygdala,
-    NoopBrainstem,
-    NoopCortex,
-    NoopEars,
-    NoopEyes,
-    NoopFrontal,
-    NoopHippocampus,
-    NoopHypothalamus,
-    NoopMouth,
-    NoopPaws,
-    NoopPurr,
-    NoopTail,
-    NoopThalamus,
-    NoopWhiskers,
-)
-from meowcat.defaults.renovated import (
-    RenovatedAmygdala,
-    RenovatedAnomalyGrowth,
-    RenovatedBrainstem,
-    RenovatedCorrectionGrowth,
-    RenovatedCortex,
-    RenovatedCrystallizer,
-    RenovatedEars,
-    RenovatedEyes,
-    RenovatedFrontal,
-    RenovatedHippocampus,
-    RenovatedHypothalamus,
-    RenovatedMouth,
-    RenovatedPaws,
-    RenovatedPurr,
-    RenovatedRoleEmergence,
-    RenovatedTail,
-    RenovatedThalamus,
-    RenovatedWhiskers,
-)
-from meowcat.defaults.presets import KeywordPreset, PromptPreset
+from meowcat.reflex import Reflex
 
 _UNSET = object()
 
@@ -96,7 +91,7 @@ def _maybe_register_hippo_lifecycle(cat: CatBase) -> None:
     support added in D14/T-02.
     """
     hippo = cat.hippocampus
-    episode_store = getattr(hippo, '_episode_store', None)
+    episode_store = getattr(hippo, "_episode_store", None)
     if episode_store is None:
         return
 
@@ -120,7 +115,7 @@ def _maybe_register_frontal_lifecycle(cat: CatBase) -> None:
     support added in D14/T-02.
     """
     frontal = cat.frontal
-    focus_store = getattr(frontal, '_focus_store', None)
+    focus_store = getattr(frontal, "_focus_store", None)
     if focus_store is None:
         return
 
@@ -138,7 +133,7 @@ def create_cat(
     *,
     cat: CatBase | None = None,
     # Required when cat=None; inferred from cat otherwise
-    container: "Colony | None" = None,
+    container: Colony | None = None,  # noqa: F821
     # ━━ Required: LLM organs ━━
     cerebrum: LLMBrainProtocol,
     cerebellum: LLMBrainProtocol | None = _UNSET,  # type: ignore[assignment]
@@ -273,8 +268,7 @@ def create_cat(
 
     if cat is None:
         if container is None:
-            raise TypeError(
-                "create_cat() requires 'container' when 'cat' is None")
+            raise TypeError("create_cat() requires 'container' when 'cat' is None")
         cat = container.create_cat(
             name=name,
             register_default_paths=register_default_paths,
@@ -292,73 +286,103 @@ def create_cat(
     # -- Brain regions ----------------------------------------------------
     # type: ignore[attr-defined]
     cat.hippocampus = hippocampus or _pick_no_init(
-        NoopHippocampus, RenovatedHippocampus, "hippocampus")
+        NoopHippocampus, RenovatedHippocampus, "hippocampus"
+    )
     # v1.3.6: Register hippocampus lifecycle hooks (on_start load, on_shutdown flush)
     _maybe_register_hippo_lifecycle(cat)
     cat.thalamus = thalamus or _pick_no_init(
         # type: ignore[attr-defined]
-        NoopThalamus, RenovatedThalamus, "thalamus", keyword=keyword)
+        NoopThalamus,
+        RenovatedThalamus,
+        "thalamus",
+        keyword=keyword,
+    )
     cat.amygdala = amygdala or _pick_no_init(
         # type: ignore[attr-defined]
-        NoopAmygdala, RenovatedAmygdala, "amygdala", keyword=keyword,
-        dangerous_tools=dangerous_tools, dangerous_paths=dangerous_paths)
+        NoopAmygdala,
+        RenovatedAmygdala,
+        "amygdala",
+        keyword=keyword,
+        dangerous_tools=dangerous_tools,
+        dangerous_paths=dangerous_paths,
+    )
     cat.frontal = frontal or _pick_no_init(
         # type: ignore[attr-defined]
-        NoopFrontal, RenovatedFrontal, "frontal", keyword=keyword,
-        threshold=frontal_threshold, focus_store=focus_store)
+        NoopFrontal,
+        RenovatedFrontal,
+        "frontal",
+        keyword=keyword,
+        threshold=frontal_threshold,
+        focus_store=focus_store,
+    )
     # v1.3.6 T-22: Register frontal lifecycle hooks (on_start load, on_shutdown save)
     _maybe_register_frontal_lifecycle(cat)
     # type: ignore[attr-defined]
     cat.hypothalamus = hypothalamus or _pick_no_init(
-        NoopHypothalamus, RenovatedHypothalamus, "hypothalamus")
+        NoopHypothalamus, RenovatedHypothalamus, "hypothalamus"
+    )
     # type: ignore[attr-defined]
     cat.cerebellum = cerebrum if cerebellum is _UNSET else cerebellum
     cat.cerebrum = cerebrum  # type: ignore[attr-defined]
-    cat.cortex = cortex or _pick_no_init(
-        NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
+    cat.cortex = cortex or _pick_no_init(NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
     cat.brainstem = brainstem  # type: ignore[attr-defined]
 
     # -- Senses ----------------------------------------------------------
     cat.ears = ears or _pick_no_init(
         # type: ignore[attr-defined]
-        NoopEars, RenovatedEars, "ears", keyword=keyword)
-    cat.eyes = eyes or _pick_no_init(
-        NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
+        NoopEars,
+        RenovatedEars,
+        "ears",
+        keyword=keyword,
+    )
+    cat.eyes = eyes or _pick_no_init(NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
     cat.whiskers = whiskers or _pick_no_init(
         # type: ignore[attr-defined]
-        NoopWhiskers, RenovatedWhiskers, "whiskers")
-    cat.paws = paws or _pick_no_init(
-        NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
+        NoopWhiskers,
+        RenovatedWhiskers,
+        "whiskers",
+    )
+    cat.paws = paws or _pick_no_init(NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
 
     # -- Outputs ---------------------------------------------------------
-    cat.mouth = mouth or _pick_no_init(
-        NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
-    cat.purr = purr or _pick_no_init(
-        NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
-    cat.tail = tail or _pick_no_init(
-        NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
+    cat.mouth = mouth or _pick_no_init(NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
+    cat.purr = purr or _pick_no_init(NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
+    cat.tail = tail or _pick_no_init(NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
 
     # -- Growth organs ---------------------------------------------------
     from meowcat.defaults.organs import (
         NoopAnomalyGrowth as _NoopAG,
+    )
+    from meowcat.defaults.organs import (
         NoopCorrectionGrowth as _NoopCG,
+    )
+    from meowcat.defaults.organs import (
         NoopCrystallizer as _NoopCr,
+    )
+    from meowcat.defaults.organs import (
         NoopRoleEmergence as _NoopRE,
     )
+
     # type: ignore[attr-defined]
     cat.anomaly_growth = anomaly_growth or _pick_no_init(
-        _NoopAG, RenovatedAnomalyGrowth, "anomaly_growth")
+        _NoopAG, RenovatedAnomalyGrowth, "anomaly_growth"
+    )
     # type: ignore[attr-defined]
     cat.correction_growth = correction_growth or _pick_no_init(
-        _NoopCG, RenovatedCorrectionGrowth, "correction_growth")
+        _NoopCG, RenovatedCorrectionGrowth, "correction_growth"
+    )
     # type: ignore[attr-defined]
     cat.crystallizer = crystallizer or _pick_no_init(
-        _NoopCr, RenovatedCrystallizer, "crystallizer",
+        _NoopCr,
+        RenovatedCrystallizer,
+        "crystallizer",
         crystallize_threshold=crystallize_threshold,
-        hotspot_threshold=hotspot_threshold)
+        hotspot_threshold=hotspot_threshold,
+    )
     # type: ignore[attr-defined]
     cat.role_emergence = role_emergence or _pick_no_init(
-        _NoopRE, RenovatedRoleEmergence, "role_emergence")
+        _NoopRE, RenovatedRoleEmergence, "role_emergence"
+    )
 
     # -- Storage ---------------------------------------------------------
     # type: ignore[attr-defined]
@@ -381,7 +405,8 @@ def create_cat(
 
     # Builtin tools (v1.2.10: optional, controlled by register_default_tools)
     if register_default_tools:
-        from meowcat.plus.tools import BUILTIN_TOOLS  # noqa: PLC0415
+        from meowcat.plus.tools import BUILTIN_TOOLS
+
         for t in BUILTIN_TOOLS:
             cat.tool_registry.register(t)
 
@@ -394,15 +419,18 @@ def create_cat(
         # works out of the box with create_cat (renovated=True).
         # Stages are noop stubs — emit correct lifecycle events;
         # applications override with real Stage implementations.
-        from meowcat.defaults.stages import build_default_pipeline  # noqa: PLC0415
-        from meowcat.reflex import BUILTIN_REFLEX_PATHS  # noqa: PLC0415
-        cat.register_reflex(Reflex(
-            name="text_dialogue",
-            trigger=lambda x: isinstance(x, str),
-            path=BUILTIN_REFLEX_PATHS["text_dialogue"],
-            stages=build_default_pipeline(),
-            priority=0,
-        ))
+        from meowcat.defaults.stages import build_default_pipeline
+        from meowcat.reflex import BUILTIN_REFLEX_PATHS
+
+        cat.register_reflex(
+            Reflex(
+                name="text_dialogue",
+                trigger=lambda x: isinstance(x, str),
+                path=BUILTIN_REFLEX_PATHS["text_dialogue"],
+                stages=build_default_pipeline(),
+                priority=0,
+            )
+        )
 
     # -- Assembly hook: before freeze (inject extra organs / wiring) --
     if on_before_freeze:

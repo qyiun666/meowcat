@@ -16,6 +16,7 @@ from typing import Any
 @dataclass
 class ColonyConfig:
     """Colony configuration — nameplate snapshot for serialization/restore."""
+
     name: str | None = None
     description: str = ""
     max_cats: int | None = None
@@ -30,8 +31,8 @@ class ColonyOwner:
         ColonyOwner(name="张三", email="zhang@corp.com", language="zh")
         ColonyOwner(name="Li Si", extra={"slack_id": "U123", "role": "admin"})
     """
+
     name: str = ""
     email: str = ""
     language: str = "en"
     extra: dict[str, Any] = field(default_factory=dict)
-

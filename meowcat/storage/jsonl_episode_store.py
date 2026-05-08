@@ -71,7 +71,7 @@ class JsonlEpisodeStore:
         fp = self._file_path(cat_uid)
         if not fp.exists():
             return None
-        with open(fp, "r", encoding="utf-8") as fh:
+        with open(fp, encoding="utf-8") as fh:
             fh.seek(offset)
             line = fh.readline()
             if line:
@@ -79,7 +79,9 @@ class JsonlEpisodeStore:
         return None
 
     def get_batch(
-        self, cat_uid: str, ids: list[str],
+        self,
+        cat_uid: str,
+        ids: list[str],
     ) -> list[dict[str, Any]]:
         """Batch get episodes by ids."""
         index = self._load_index(cat_uid)
@@ -87,7 +89,7 @@ class JsonlEpisodeStore:
         if not fp.exists():
             return []
         result: list[dict[str, Any]] = []
-        with open(fp, "r", encoding="utf-8") as fh:
+        with open(fp, encoding="utf-8") as fh:
             for eid in ids:
                 offset = index.get(eid)
                 if offset is not None:
@@ -119,7 +121,7 @@ class JsonlEpisodeStore:
         ip = self._index_path(cat_uid)
         if not ip.exists():
             return {}
-        with open(ip, "r", encoding="utf-8") as fh:
+        with open(ip, encoding="utf-8") as fh:
             data = json.load(fh)
         if isinstance(data, dict):
             # json keys are always str, but values may be int or float
@@ -142,7 +144,7 @@ class JsonlEpisodeStore:
         if not fp.exists():
             return []
         result: list[dict[str, Any]] = []
-        with open(fp, "r", encoding="utf-8") as fh:
+        with open(fp, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if line:

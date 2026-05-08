@@ -14,4 +14,3 @@ __all__ = [
     "get_shared_client",
     "close_shared_client",
 ]
-

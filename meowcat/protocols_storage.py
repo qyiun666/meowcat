@@ -6,15 +6,17 @@
 All typing.Protocol (duck typing), zero third-party dependencies.
 """
 
-
 from __future__ import annotations
 
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
 import warnings
+from collections.abc import AsyncIterator
+from typing import Any, Protocol, runtime_checkable
 
 __all__ = [
-    "GraphStorageProtocol", "L6StorageProtocol",
-    "VectorStorageProtocol", "SharedStorageProtocol",
+    "GraphStorageProtocol",
+    "L6StorageProtocol",
+    "VectorStorageProtocol",
+    "SharedStorageProtocol",
     "FederationTransport",
 ]
 
@@ -56,16 +58,15 @@ class L6StorageProtocol(Protocol):
         warnings.warn(
             "L6StorageProtocol is deprecated since v1.3.6. "
             "Use JsonlEpisodeStore with RenovatedHippocampus instead.",
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         super().__init_subclass__(**kwargs)
 
-    def append(self, cat_uid: str, turn: int,
-               user_msg: str, ai_reply: str) -> None: ...
+    def append(self, cat_uid: str, turn: int, user_msg: str, ai_reply: str) -> None: ...
 
     def load_all(self, cat_uid: str) -> list[dict[str, Any]]: ...
-    def load_recent(self, cat_uid: str,
-                    n: int = 20) -> list[dict[str, Any]]: ...
+    def load_recent(self, cat_uid: str, n: int = 20) -> list[dict[str, Any]]: ...
 
     def total_chars(self, cat_uid: str) -> int: ...
     def get_stats(self, cat_uid: str) -> dict[str, Any]: ...
@@ -101,16 +102,17 @@ class SharedStorageProtocol(Protocol):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         warnings.warn(
-            "SharedStorageProtocol is deprecated. "
-            "Extend meowcat.storage.SharedStore instead.",
-            DeprecationWarning, stacklevel=2,
+            "SharedStorageProtocol is deprecated. Extend meowcat.storage.SharedStore instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
         super().__init_subclass__(**kwargs)
 
 
 @runtime_checkable
 class FederationTransport(Protocol):
-    """Cross-Colony communication transport — enables Colonies on different hosts/processes to discover and communicate with each other.
+    """Cross-Colony communication transport — enables Colonies
+    on different hosts/processes to discover and communicate with each other.
 
     **Position**: none (transport layer, no organ coordinate)
     **Inbound**: injected by Colony.federate(), not called via wiring

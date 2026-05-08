@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,7 @@ class VectorStore:
         doc_id = _make_id(text, metadata)
         self._docs[doc_id] = {"text": text, "metadata": metadata}
         if self._persist_path:
-            self._append_jsonl(
-                {"id": doc_id, "text": text, "metadata": metadata})
+            self._append_jsonl({"id": doc_id, "text": text, "metadata": metadata})
         logger.debug("VectorStore added doc: %s", doc_id)
         return doc_id
 
@@ -108,8 +108,12 @@ class VectorStore:
                 scored.append((score, doc_id))
         scored.sort(key=lambda x: x[0], reverse=True)
         return [
-            {"id": doc_id, "text": self._docs[doc_id]["text"],
-             "metadata": self._docs[doc_id]["metadata"], "score": score}
+            {
+                "id": doc_id,
+                "text": self._docs[doc_id]["text"],
+                "metadata": self._docs[doc_id]["metadata"],
+                "score": score,
+            }
             for score, doc_id in scored[:k]
         ]
 
@@ -126,8 +130,12 @@ class VectorStore:
             scored.append((score, doc_id))
         scored.sort(key=lambda x: x[0], reverse=True)
         return [
-            {"id": doc_id, "text": self._docs[doc_id]["text"],
-             "metadata": self._docs[doc_id]["metadata"], "score": score}
+            {
+                "id": doc_id,
+                "text": self._docs[doc_id]["text"],
+                "metadata": self._docs[doc_id]["metadata"],
+                "score": score,
+            }
             for score, doc_id in scored[:k]
         ]
 
@@ -137,14 +145,13 @@ class VectorStore:
         assert self._persist_path is not None
         if not self._persist_path.exists():
             return
-        with open(self._persist_path, "r", encoding="utf-8") as fh:
+        with open(self._persist_path, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
                 if not line:
                     continue
                 rec = json.loads(line)
-                self._docs[rec["id"]] = {
-                    "text": rec["text"], "metadata": rec["metadata"]}
+                self._docs[rec["id"]] = {"text": rec["text"], "metadata": rec["metadata"]}
 
     def _append_jsonl(self, record: dict[str, Any]) -> None:
         assert self._persist_path is not None
@@ -156,20 +163,23 @@ class VectorStore:
         assert self._persist_path is not None
         with open(self._persist_path, "w", encoding="utf-8") as fh:
             for doc_id, doc in self._docs.items():
-                fh.write(json.dumps(
-                    {"id": doc_id, "text": doc["text"],
-                        "metadata": doc["metadata"]},
-                    ensure_ascii=False,
-                ) + "\n")
+                fh.write(
+                    json.dumps(
+                        {"id": doc_id, "text": doc["text"], "metadata": doc["metadata"]},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
 
 
 # -- Helpers ------------------------------------------------------------
 
+
 def _make_id(text: str, metadata: dict[str, Any]) -> str:
     """Generate a short unique ID from text + metadata."""
     import hashlib
-    seed = json.dumps({"text": text[:200], "meta": metadata},
-                      sort_keys=True, default=str)
+
+    seed = json.dumps({"text": text[:200], "meta": metadata}, sort_keys=True, default=str)
     return hashlib.sha256(seed.encode()).hexdigest()[:12]
 
 
@@ -179,13 +189,12 @@ def _tokenize(text: str) -> set[str]:
     Handles both ASCII words and CJK characters as bigrams.
     """
     import re
+
     tokens: set[str] = set()
     # ASCII / Latin / Cyrillic words (2+ chars)
-    tokens.update(t.lower() for t in re.findall(
-        r"[\u0041-\u024F\u0400-\u04FF]{2,}", text))
+    tokens.update(t.lower() for t in re.findall(r"[\u0041-\u024F\u0400-\u04FF]{2,}", text))
     # CJK characters → bigrams for partial matching
-    cjk = re.findall(
-        r"[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]", text)
+    cjk = re.findall(r"[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7AF]", text)
     for i in range(len(cjk)):
         tokens.add(cjk[i])  # unigram
         if i + 1 < len(cjk):
@@ -203,7 +212,8 @@ def _jaccard(a: set[str], b: set[str]) -> float:
 def _cosine(a: list[float], b: list[float]) -> float:
     """Cosine similarity between two vectors."""
     import math
-    dot = sum(x * y for x, y in zip(a, b))
+
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(y * y for y in b))
     if norm_a == 0 or norm_b == 0:

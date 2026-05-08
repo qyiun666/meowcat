@@ -10,16 +10,17 @@ The framework layer only provides the protocol pipe; platform-specific logic
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 
-
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
-from typing import Any, AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 from meowcat.constants import GATEWAY_DEFAULT_TIMEOUT
-from meowcat.gateway.protocol import HTTP_REASONS, IoAdapterProtocol, SignalContext
+from meowcat.gateway.protocol import HTTP_REASONS, SignalContext
 
 _logger = logging.getLogger(__name__)
 
@@ -44,7 +45,10 @@ class WebhookAdapter:
     name = "webhook"
 
     def __init__(
-        self, host: str = "0.0.0.0", port: int = 8002, path: str = "/webhook",
+        self,
+        host: str = "0.0.0.0",
+        port: int = 8002,
+        path: str = "/webhook",
     ) -> None:
         self.host = host
         self.port = port
@@ -77,18 +81,24 @@ class WebhookAdapter:
             await self._handle_webhook(reader, writer)
 
         self._server = await asyncio.start_server(
-            handler, host=self.host, port=self.port,
+            handler,
+            host=self.host,
+            port=self.port,
         )
 
         async with self._server:
             await self._server.serve_forever()
 
     async def _handle_webhook(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         """Handle a single webhook POST request."""
         try:
-            request_line = await asyncio.wait_for(reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT)
+            request_line = await asyncio.wait_for(
+                reader.readline(), timeout=GATEWAY_DEFAULT_TIMEOUT
+            )
             if not request_line:
                 writer.close()
                 return
@@ -112,9 +122,14 @@ class WebhookAdapter:
 
             # Read body
             content_length = int(headers.get("content-length", "0"))
-            body_raw = await asyncio.wait_for(
-                reader.readexactly(content_length), timeout=10,
-            ) if content_length > 0 else b""
+            body_raw = (
+                await asyncio.wait_for(
+                    reader.readexactly(content_length),
+                    timeout=10,
+                )
+                if content_length > 0
+                else b""
+            )
 
             if method != "POST" or path != self.path:
                 await self._respond(writer, 404)
@@ -134,7 +149,7 @@ class WebhookAdapter:
                 user_id=user_id,
             )
 
-            reply = await self._on_message(text, ctx)
+            await self._on_message(text, ctx)
             await self._respond(writer, 200)
 
         except (json.JSONDecodeError, asyncio.TimeoutError):
@@ -142,10 +157,8 @@ class WebhookAdapter:
         except (ConnectionError, OSError):
             await self._respond(writer, 500)
         finally:
-            try:
+            with contextlib.suppress(OSError):
                 writer.close()
-            except OSError:
-                pass
 
     @staticmethod
     async def _respond(writer: asyncio.StreamWriter, status: int) -> None:
@@ -155,25 +168,24 @@ class WebhookAdapter:
         writer.write(
             f"HTTP/1.1 {status} {reason}\r\n"
             f"Content-Length: {len(body)}\r\n"
-            f"Connection: close\r\n\r\n"
-            .encode() + body,
+            f"Connection: close\r\n\r\n".encode()
+            + body,
         )
         await writer.drain()
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
         """send is a no-op in Webhook mode (response handled by callback return value)."""
         _logger.debug(
-            "WebhookAdapter.send() no-op: webhook response handled by _on_message return value")
+            "WebhookAdapter.send() no-op: webhook response handled by _on_message return value"
+        )
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
         """Streaming not supported in Webhook mode."""
-        _logger.debug(
-            "WebhookAdapter.stream_chunk() no-op: webhook does not support streaming")
+        _logger.debug("WebhookAdapter.stream_chunk() no-op: webhook does not support streaming")
 
     async def stream_end(self, session_id: str, **meta: Any) -> None:
         """Streaming not supported in Webhook mode."""
-        _logger.debug(
-            "WebhookAdapter.stream_end() no-op: webhook does not support streaming")
+        _logger.debug("WebhookAdapter.stream_end() no-op: webhook does not support streaming")
 
     async def stop(self) -> None:
         """Shut down webhook server."""
@@ -183,4 +195,3 @@ class WebhookAdapter:
 
 
 __all__ = ["WebhookAdapter"]
-

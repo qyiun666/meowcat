@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import shlex
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from meowcat.pluggable import Pluggable
@@ -150,8 +150,12 @@ class CommandRouter(Pluggable):
             return self._t("command_error", error=str(exc))
 
     def command(
-        self, name: str | None = None, group: str = "General",
-        description: str = "", min_args: int = 0, max_args: int | None = None,
+        self,
+        name: str | None = None,
+        group: str = "General",
+        description: str = "",
+        min_args: int = 0,
+        max_args: int | None = None,
     ) -> Callable:
         """Decorator: register a command handler in one line.
 
@@ -165,13 +169,21 @@ class CommandRouter(Pluggable):
             async def cmd_foo(ctx: CommandContext) -> str:
                 return await do_something()
         """
+
         def decorator(handler):
             cmd_name = name or f"/{handler.__name__.removeprefix('cmd_')}"
-            self.register(Command(
-                name=cmd_name, handler=handler, group=group,
-                description=description, min_args=min_args, max_args=max_args,
-            ))
+            self.register(
+                Command(
+                    name=cmd_name,
+                    handler=handler,
+                    group=group,
+                    description=description,
+                    min_args=min_args,
+                    max_args=max_args,
+                )
+            )
             return handler
+
         return decorator
 
     async def parse_and_route(self, raw: str) -> str:
@@ -203,4 +215,3 @@ class CommandRouter(Pluggable):
 
 
 __all__ = ["Command", "CommandContext", "CommandRouter"]
-

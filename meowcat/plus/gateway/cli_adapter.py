@@ -8,15 +8,15 @@ Replaces app-layer embedded CLI loop. Pure stdlib, zero external dependencies.
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 
-
 from __future__ import annotations
 
 import asyncio
 import sys
+from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any
 
-from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
+from meowcat.gateway.protocol import SignalContext
 
 
 class CliAdapter:
@@ -30,9 +30,7 @@ class CliAdapter:
 
     def __init__(self, mode: str = "stdio") -> None:
         if mode not in ("stdio", "queue"):
-            raise ValueError(
-                f"CliAdapter mode must be 'stdio' or 'queue', got {mode!r}"
-            )
+            raise ValueError(f"CliAdapter mode must be 'stdio' or 'queue', got {mode!r}")
         self._mode = mode
         self._running = False
         self._queue: asyncio.Queue[str] | None = None
@@ -148,4 +146,3 @@ class CliAdapter:
 
 
 __all__ = ["CliAdapter"]
-

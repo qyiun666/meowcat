@@ -61,11 +61,8 @@ def get_shared_client(
     try:
         import httpx  # type: ignore[import-untyped]
     except ImportError:
-        logger.warning(
-            "httpx not installed — HTTP features require: pip install httpx")
-        raise ImportError(
-            "httpx not installed. Install with: pip install httpx"
-        ) from None
+        logger.warning("httpx not installed — HTTP features require: pip install httpx")
+        raise ImportError("httpx not installed. Install with: pip install httpx") from None
 
     limits = httpx.Limits(
         max_connections=max_connections,
@@ -84,7 +81,9 @@ def get_shared_client(
     }
     logger.info(
         "Shared HTTP client created: timeout=%.1fs, max_conn=%d, keepalive=%d",
-        timeout, max_connections, max_keepalive,
+        timeout,
+        max_connections,
+        max_keepalive,
     )
     return _shared_client
 
@@ -98,4 +97,3 @@ async def close_shared_client() -> None:
         _shared_client = None
         _shared_client_config = {}
         logger.info("Shared HTTP client closed")
-

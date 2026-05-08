@@ -7,22 +7,30 @@ cerebellum, brainstem, hippocampus, etc.
 All typing.Protocol (duck typing), zero third-party dependencies.
 """
 
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkable
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from meowcat.models import LocateResultShape
 
 __all__ = [
-    "Diagnosable", "OrganProtocol",
-    "BrainStemProtocol", "HippocampusProtocol", "ThalamusProtocol",
-    "LLMBrainProtocol", "AmygdalaProtocol", "FrontalCortexProtocol",
-    "HypothalamusProtocol", "CortexProtocol",
+    "Diagnosable",
+    "OrganProtocol",
+    "BrainStemProtocol",
+    "HippocampusProtocol",
+    "ThalamusProtocol",
+    "LLMBrainProtocol",
+    "AmygdalaProtocol",
+    "FrontalCortexProtocol",
+    "HypothalamusProtocol",
+    "CortexProtocol",
     "LLMProviderProtocol",
-    "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
-    "CrystallizerProtocol", "RoleEmergenceProtocol",
+    "AnomalyGrowthProtocol",
+    "CorrectionGrowthProtocol",
+    "CrystallizerProtocol",
+    "RoleEmergenceProtocol",
 ]
 
 # -- Basic --------------------------------------------------------
@@ -62,6 +70,7 @@ class OrganProtocol(Diagnosable, Protocol):
 
     name: str
 
+
 # -- LLM ----------------------------------------------------------
 
 
@@ -76,10 +85,21 @@ class LLMProviderProtocol(Protocol):
     **Implementor**: Application layer (LLM Provider)
     """
 
-    async def completion(self, messages: list[dict[str, str]], temperature: float | None = None, max_tokens: int |
-                         None = None, tools: list[dict[str, Any]] | None = None, tool_choice: str | None = None) -> dict[str, Any]: ...
-    async def stream_completion(self, messages: list[dict[str, str]], temperature: float |
-                                None = None, max_tokens: int | None = None) -> AsyncIterator[str]: ...
+    async def completion(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
+    ) -> dict[str, Any]: ...
+    async def stream_completion(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> AsyncIterator[str]: ...
+
 
 # -- Brain Areas ----------------------------------------------------
 
@@ -109,7 +129,9 @@ class BrainStemProtocol(Protocol):
     inject_cat_self: bool
 
     async def build_system_prompt(
-        self, organ: str, route: str,
+        self,
+        organ: str,
+        route: str,
         cat_self_snapshot: Any | None = None,
     ) -> str: ...
     def cancel_current(self) -> bool: ...
@@ -126,33 +148,28 @@ class HippocampusProtocol(Protocol):
     via BRAINSTEM
     **Implementor**: Application layer (brain-area organ)
     """
+
     entities: dict[str, Any]  # EntityShape
     episodes: list[Any]  # EpisodeShape
-    async def remember(self, user_msg: str, ai_reply: str,
-                       cat_uid: str, model: str) -> Any: ...
+
+    async def remember(self, user_msg: str, ai_reply: str, cat_uid: str, model: str) -> Any: ...
 
     def decay(self, now: Any | None = None) -> int: ...
 
-    def add_episode(
-        self, episode: Any) -> str: ...  # EpisodeShape, returns episode_id
+    def add_episode(self, episode: Any) -> str: ...  # EpisodeShape, returns episode_id
 
-    def get_episode(
-        self, episode_id: str) -> Any | None: ...  # EpisodeShape | None
-    def get_episodes(self, ids: list[str]
-                     ) -> list[Any]: ...  # list[EpisodeShape]
+    def get_episode(self, episode_id: str) -> Any | None: ...  # EpisodeShape | None
+    def get_episodes(self, ids: list[str]) -> list[Any]: ...  # list[EpisodeShape]
 
     def add_entity(self, entity: Any) -> None: ...  # EntityShape
-    def fts_search(self, cat_uid: str, keywords: str,
-                   limit: int) -> list[dict[str, Any]]: ...
+    def fts_search(self, cat_uid: str, keywords: str, limit: int) -> list[dict[str, Any]]: ...
 
     def get_entity(self, entity_id: str) -> Any | None: ...  # EntityShape
     def get_by_name(self, name: str) -> Any | None: ...  # EntityShape
     def get_all(self) -> list[Any]: ...  # list[EntityShape]
 
-    def get_related(
-        self, entity_id: str) -> list[Any]: ...  # list[EntityShape]
-    def connect(self, from_id: str, to_id: str,
-                relation: str, strength: float) -> None: ...
+    def get_related(self, entity_id: str) -> list[Any]: ...  # list[EntityShape]
+    def connect(self, from_id: str, to_id: str, relation: str, strength: float) -> None: ...
 
     def weaken_connections(self, entity_id: str, factor: float) -> None: ...
     def cleanup_orphan_connections(self, days_threshold: int = 7) -> int: ...
@@ -163,8 +180,7 @@ class HippocampusProtocol(Protocol):
     # v0.5.26 Wrapper methods (replace bare field access)
     def record_access(self, entity_id: str, delta: int = 1) -> None: ...
     def set_dormant(self, entity_id: str, dormant: bool) -> None: ...
-    def append_content(self, entity_id: str, text: str,
-                       max_total: int | None = None) -> None: ...
+    def append_content(self, entity_id: str, text: str, max_total: int | None = None) -> None: ...
 
     def update_importance(self, entity_id: str, importance: float) -> None: ...
     def set_last_seen(self, entity_id: str, ts: str) -> None: ...
@@ -176,11 +192,9 @@ class HippocampusProtocol(Protocol):
 
     def set_colony_memory(self, memory_pool: Any) -> None: ...
 
-    def snapshot(self, *topics: str,
-                 scope: str = "colony") -> dict[str, Any]: ...
+    def snapshot(self, *topics: str, scope: str = "colony") -> dict[str, Any]: ...
 
-    def locate(self, query: str,
-               scope: str = "self") -> list[dict[str, Any]]: ...
+    def locate(self, query: str, scope: str = "self") -> list[dict[str, Any]]: ...
 
 
 @runtime_checkable
@@ -214,12 +228,23 @@ class LLMBrainProtocol(Protocol):
     **Reflex**: text_dialogue, visual, action_order
     **Implementor**: Application layer (brain-area organ)
     """
+
     name: str
 
-    async def generate(self, prompt: str, system_prompt: str | None = None,
-                       temperature: float = 0.7, max_tokens: int | None = None) -> str: ...
-    async def stream_generate(self, prompt: str, system_prompt: str | None = None,
-                              temperature: float = 0.7, max_tokens: int | None = None) -> AsyncIterator[str]: ...
+    async def generate(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
+    ) -> str: ...
+    async def stream_generate(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int | None = None,
+    ) -> AsyncIterator[str]: ...
 
     def reload_config(self) -> None: ...
 
@@ -241,14 +266,13 @@ class AmygdalaProtocol(Protocol):
     def parse_correction(self, msg: str) -> tuple[str, str] | None: ...
 
     async def handle_rejection(
-        self, msg: str, last_candidates: list[Any], hippocampus: Any) -> str: ...
-    async def handle_correction(
-        self, msg: str, hippocampus: Any) -> tuple[str, str] | None: ...
+        self, msg: str, last_candidates: list[Any], hippocampus: Any
+    ) -> str: ...
+    async def handle_correction(self, msg: str, hippocampus: Any) -> tuple[str, str] | None: ...
 
     async def assess_safety(self, user_input: str) -> dict[str, Any]: ...
 
-    async def assess_tool_risk(
-        self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
+    async def assess_tool_risk(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
 
 
 @runtime_checkable
@@ -284,8 +308,7 @@ class HypothalamusProtocol(Protocol):
     **Implementor**: Application layer (brain-area organ)
     """
 
-    async def run_maintenance(
-        self, country_code: str | None = None) -> Any: ...
+    async def run_maintenance(self, country_code: str | None = None) -> Any: ...
 
     def decay_memories(self, now: Any | None = None) -> dict[str, Any]: ...
     def compress_long_history(self) -> dict[str, Any]: ...
@@ -302,12 +325,12 @@ class CortexProtocol(Protocol):
     **Implementor**: Application layer (brain-area organ)
     """
 
-    def ingest(self, source: str, layer: str,
-               key: str, value: Any) -> None: ...
+    def ingest(self, source: str, layer: str, key: str, value: Any) -> None: ...
 
     def record_weakness(self, kind: str, detail: str) -> None: ...
     def weaknesses(self) -> list[dict[str, Any]]: ...
     def synthesize(self, max_tokens: int = 400) -> str: ...
+
 
 # -- Growth Organs — v1.0.8 named ---------------------------------
 
@@ -322,10 +345,17 @@ class AnomalyGrowthProtocol(OrganProtocol, Protocol):
     **Reflex**: No direct reflex arc; triggered via BRAINSTEM
     **Implementor**: Application layer (growth organ)
     """
+
     name: str
 
-    def record(self, reason: str, snippet: str, confidence: float = 0.8,
-               phase: str = "input", session_id: str = "") -> Any: ...
+    def record(
+        self,
+        reason: str,
+        snippet: str,
+        confidence: float = 0.8,
+        phase: str = "input",
+        session_id: str = "",
+    ) -> Any: ...
 
     def diagnose(self) -> dict[str, Any]: ...
 
@@ -340,10 +370,10 @@ class CorrectionGrowthProtocol(OrganProtocol, Protocol):
     **Reflex**: No direct reflex arc; triggered via BRAINSTEM
     **Implementor**: Application layer (growth organ)
     """
+
     name: str
 
-    def record(self, wrong: str, correct: str, session_id: str = "",
-               topic: str = "") -> Any: ...
+    def record(self, wrong: str, correct: str, session_id: str = "", topic: str = "") -> Any: ...
 
     def diagnose(self) -> dict[str, Any]: ...
 
@@ -358,11 +388,11 @@ class CrystallizerProtocol(OrganProtocol, Protocol):
     **Reflex**: No direct reflex arc
     **Implementor**: Application layer (growth organ)
     """
+
     name: str
 
     def crystallize(self, slug: str, hit_count: int) -> bool: ...
-    def hotspots(self, threshold: int |
-                 None = None) -> list[tuple[str, int]]: ...
+    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]: ...
 
     def diagnose(self) -> dict[str, Any]: ...
 
@@ -377,6 +407,7 @@ class RoleEmergenceProtocol(OrganProtocol, Protocol):
     **Reflex**: No direct reflex arc
     **Implementor**: Application layer (growth organ)
     """
+
     name: str
 
     def record(self, pattern: str, evidence: str) -> Any: ...

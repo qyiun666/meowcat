@@ -13,8 +13,9 @@ App-layer: defines who approves, what requires approval, timeout/retry policies.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class ApprovalStatus(Enum):
     """Approval decision."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -33,6 +35,7 @@ class ApprovalStatus(Enum):
 @dataclass
 class ApprovalRequest:
     """A single approval request."""
+
     request_id: str
     action: str
     params: dict[str, Any] = field(default_factory=dict)
@@ -104,7 +107,9 @@ class AsyncApprovalGate:
                 if asyncio.iscoroutine(result):
                     logger.warning(
                         "AsyncApprovalGate hook '%s' returned coroutine; "
-                        "hooks should be sync for fire-and-forget", hook)
+                        "hooks should be sync for fire-and-forget",
+                        hook,
+                    )
             except Exception:
                 logger.exception("AsyncApprovalGate hook '%s' failed", hook)
 
@@ -143,11 +148,12 @@ class AsyncApprovalGate:
         async def _timeout() -> None:
             await asyncio.sleep(effective_timeout)
             if req.request_id in self._pending and req.status == ApprovalStatus.PENDING:
-                try:
-                    self._reject(req.request_id, reason=f"Timeout after {effective_timeout}s",
-                                 status=ApprovalStatus.TIMED_OUT)
-                except ValueError:
-                    pass  # request already resolved (approved/rejected)
+                with contextlib.suppress(ValueError):
+                    self._reject(
+                        req.request_id,
+                        reason=f"Timeout after {effective_timeout}s",
+                        status=ApprovalStatus.TIMED_OUT,
+                    )
 
         asyncio.create_task(_timeout())
         return req
@@ -164,8 +170,7 @@ class AsyncApprovalGate:
         if req is None:
             raise KeyError(f"Unknown request: {request_id}")
         if req.status != ApprovalStatus.PENDING:
-            raise ValueError(
-                f"Request {request_id} already resolved: {req.status}")
+            raise ValueError(f"Request {request_id} already resolved: {req.status}")
         req.status = ApprovalStatus.APPROVED
         req.approved_by = approver
         self._resolve(request_id, req)
@@ -178,14 +183,16 @@ class AsyncApprovalGate:
     # -- Internal --------------------------------------------------------
 
     def _reject(
-        self, request_id: str, reason: str, status: ApprovalStatus,
+        self,
+        request_id: str,
+        reason: str,
+        status: ApprovalStatus,
     ) -> ApprovalRequest:
         req = self._pending.get(request_id)
         if req is None:
             raise KeyError(f"Unknown request: {request_id}")
         if req.status != ApprovalStatus.PENDING:
-            raise ValueError(
-                f"Request {request_id} already resolved: {req.status}")
+            raise ValueError(f"Request {request_id} already resolved: {req.status}")
         req.status = status
         req.rejected_reason = reason
         self._resolve(request_id, req)
@@ -213,4 +220,3 @@ __all__ = [
     "ApprovalRequest",
     "AsyncApprovalGate",
 ]
-

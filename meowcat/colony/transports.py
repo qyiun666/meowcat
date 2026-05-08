@@ -10,18 +10,18 @@ Provides two built-in transports:
 All implement the FederationTransport protocol.
 """
 
-
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import ssl
 import uuid
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from meowcat.constants import TRANSPORT_REQUEST_TIMEOUT
-from meowcat.protocols_storage import FederationTransport
 
 logger = logging.getLogger("meowcat.colony.federation")
 
@@ -35,6 +35,7 @@ _MSG_DELIMITER = b"\n"
 # ---------------------------------------------------------------------------
 # TCPSocketTransport
 # ---------------------------------------------------------------------------
+
 
 class TCPSocketTransport:
     """TCP socket-based Colony federation transport.
@@ -67,7 +68,8 @@ class TCPSocketTransport:
     """
 
     def __init__(
-        self, *,
+        self,
+        *,
         host: str = "0.0.0.0",
         port: int = 9000,
         ssl_context: ssl.SSLContext | None = None,
@@ -81,8 +83,7 @@ class TCPSocketTransport:
         self._incoming: asyncio.Queue[dict] = asyncio.Queue()
         self._pending_requests: dict[str, asyncio.Future] = {}
         # peer_id → (reader, writer) connection pool
-        self._connections: dict[str,
-                                tuple[asyncio.StreamReader, asyncio.StreamWriter]] = {}
+        self._connections: dict[str, tuple[asyncio.StreamReader, asyncio.StreamWriter]] = {}
         self._conn_locks: dict[str, asyncio.Lock] = {}
 
     # -- Peer registration ----------------------------------------------
@@ -110,12 +111,13 @@ class TCPSocketTransport:
         If ``ssl_context`` was provided at construction, TLS is enabled.
         """
         self._server = await asyncio.start_server(
-            self._handle_connection, self._host, self._port,
+            self._handle_connection,
+            self._host,
+            self._port,
             ssl=self._ssl_context,
         )
         tls_status = "TLS " if self._ssl_context else ""
-        logger.info("TCPSocketTransport %slistening on %s:%d",
-                    tls_status, self._host, self._port)
+        logger.info("TCPSocketTransport %slistening on %s:%d", tls_status, self._host, self._port)
 
     async def stop(self) -> None:
         """Stop TCP server and close all pooled connections."""
@@ -125,11 +127,9 @@ class TCPSocketTransport:
             self._server = None
 
         # Close all pooled connections
-        for peer_id, (_reader, writer) in list(self._connections.items()):
-            try:
+        for _peer_id, (_reader, writer) in list(self._connections.items()):
+            with contextlib.suppress(Exception):
                 writer.close()
-            except Exception:
-                pass
         self._connections.clear()
         self._conn_locks.clear()
 
@@ -173,11 +173,9 @@ class TCPSocketTransport:
                 writer.write(line)
                 await writer.drain()
             except Exception:
-                logger.exception(
-                    "Failed to publish to %s (%s:%d)", topic, host, port)
+                logger.exception("Failed to publish to %s (%s:%d)", topic, host, port)
                 self._connections.pop(topic, None)
-                raise ConnectionError(
-                    f"Failed to publish to {topic}") from None
+                raise ConnectionError(f"Failed to publish to {topic}") from None
 
     async def request(self, topic: str, payload: dict) -> dict:
         """Send a request to a specified colony and wait for response.
@@ -231,7 +229,10 @@ class TCPSocketTransport:
     # -- Internal -------------------------------------------------------
 
     async def _get_writer(
-        self, peer_id: str, host: str, port: int,
+        self,
+        peer_id: str,
+        host: str,
+        port: int,
     ) -> asyncio.StreamWriter:
         """Get or create a pooled TCP writer for peer.
 
@@ -244,10 +245,8 @@ class TCPSocketTransport:
             if not writer.is_closing():
                 return writer
             # Stale — close and evict
-            try:
+            with contextlib.suppress(Exception):
                 writer.close()
-            except Exception:
-                pass
             self._connections.pop(peer_id, None)
 
         # Serialise connection creation per peer
@@ -266,12 +265,15 @@ class TCPSocketTransport:
             return writer
 
     async def _handle_connection(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         """Handle an inbound TCP connection."""
         try:
             data = await asyncio.wait_for(
-                reader.readline(), timeout=TRANSPORT_REQUEST_TIMEOUT,
+                reader.readline(),
+                timeout=TRANSPORT_REQUEST_TIMEOUT,
             )
             if not data:
                 return
@@ -304,6 +306,7 @@ class TCPSocketTransport:
 # ---------------------------------------------------------------------------
 # RedisPubSubTransport
 # ---------------------------------------------------------------------------
+
 
 class RedisPubSubTransport:
     """Redis pub/sub-based Colony federation transport.
@@ -396,4 +399,3 @@ class RedisPubSubTransport:
 
 
 __all__ = ["TCPSocketTransport", "RedisPubSubTransport"]
-

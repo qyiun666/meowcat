@@ -17,9 +17,10 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from meowcat.colony import Colony
@@ -78,7 +79,8 @@ class SharedMemoryPool:
         # Persist via colony namespace
         record = {"id": doc_id, "text": text, "metadata": meta}
         await self._colony.ns_set(
-            _MEMORY_NS, f"{_MEMORY_KEY_PREFIX}{doc_id}",
+            _MEMORY_NS,
+            f"{_MEMORY_KEY_PREFIX}{doc_id}",
             json.dumps(record, ensure_ascii=False),
         )
         logger.debug("SharedMemory: remembered %s", doc_id)
@@ -113,8 +115,7 @@ class SharedMemoryPool:
         vs = await self._ensure_vector()
         deleted = vs.delete(memory_id)
         if deleted:
-            await self._colony.ns_delete(
-                _MEMORY_NS, f"{_MEMORY_KEY_PREFIX}{memory_id}")
+            await self._colony.ns_delete(_MEMORY_NS, f"{_MEMORY_KEY_PREFIX}{memory_id}")
         return deleted
 
     async def list_all(self) -> list[dict[str, Any]]:
@@ -160,12 +161,14 @@ class SharedMemoryPool:
             text = record.get("text", "").lower()
             score = sum(1 for kw in kws if kw in text) / max(len(kws), 1)
             if score > 0:
-                results.append({
-                    "id": record.get("id", ""),
-                    "text": record.get("text", ""),
-                    "metadata": record.get("metadata", {}),
-                    "score": score,
-                })
+                results.append(
+                    {
+                        "id": record.get("id", ""),
+                        "text": record.get("text", ""),
+                        "metadata": record.get("metadata", {}),
+                        "score": score,
+                    }
+                )
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:k]
 
@@ -177,10 +180,11 @@ class SharedMemoryPool:
         storage backends (persistent backends must use async ``list_all()``).
         """
         import json as _json
-        storage = getattr(self._colony, '_storage', None)
+
+        storage = getattr(self._colony, "_storage", None)
         if storage is None:
             return []
-        if not hasattr(storage, '_data'):
+        if not hasattr(storage, "_data"):
             raise NotImplementedError(
                 "keyword_search requires InMemorySharedStore backend; "
                 f"got {type(storage).__name__}. Use async recall() instead."
@@ -190,13 +194,8 @@ class SharedMemoryPool:
         results: list[dict[str, Any]] = []
         for key, value in data.items():
             if isinstance(key, str) and key.startswith(prefix):
-                try:
-                    results.append(
-                        _json.loads(value) if isinstance(
-                            value, str) else value
-                    )
-                except (_json.JSONDecodeError, TypeError):
-                    pass
+                with contextlib.suppress(_json.JSONDecodeError, TypeError):
+                    results.append(_json.loads(value) if isinstance(value, str) else value)
         return results
 
     # -- Internal ------------------------------------------------------
@@ -204,10 +203,10 @@ class SharedMemoryPool:
     async def _ensure_vector(self) -> VectorStore:
         """Lazy-init vector store if not provided."""
         if self._vector is None:
-            from meowcat.storage.vector_store import VectorStore  # noqa: PLC0415
+            from meowcat.storage.vector_store import VectorStore
+
             self._vector = VectorStore()
             # Load existing persisted memories into vector store
             for record in await self.list_all():
                 self._vector.add(record["text"], record["metadata"])
         return self._vector
-

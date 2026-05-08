@@ -34,6 +34,7 @@ def is_debug() -> bool:
 
 # -- Command handlers ----------------------------------------------------------
 
+
 def cmd_help(ctx: CommandContext) -> str:
     """``/help`` — display all commands grouped by category."""
     t = ctx.i18n
@@ -91,14 +92,15 @@ def _make_cmd_inject(cat: Any):
             if "=" in kv:
                 k, v = kv.split("=", 1)
                 kwargs[k.strip()] = v.strip()
-        category, name = organ_str.split(
-            ":") if ":" in organ_str else ("brain", organ_str)
+        category, name = organ_str.split(":") if ":" in organ_str else ("brain", organ_str)
         try:
             result = needle.poke((category, name), method, **kwargs)
             # poke returns sync; unwrap if coroutine
             import inspect
+
             if inspect.isawaitable(result):
                 import asyncio
+
                 result = asyncio.get_event_loop().run_until_complete(result)
             return f"{t.t('inject_result')}: {result}"
         except Exception as exc:
@@ -117,6 +119,7 @@ def cmd_debug(ctx: CommandContext) -> str:
 
 # -- Registration --------------------------------------------------------------
 
+
 def register_system_commands(router: CommandRouter, cat: Any | None = None) -> None:
     """Register all five system commands on the router.
 
@@ -126,40 +129,69 @@ def register_system_commands(router: CommandRouter, cat: Any | None = None) -> N
              (``/wiring``, ``/inject``). When ``None``, those commands
              return an error message.
     """
-    router.register(Command(
-        name="/help", handler=cmd_help, group="System",
-        description="Show help",
-    ))
-    router.register(Command(
-        name="/version", handler=cmd_version, group="System",
-        description="Show version",
-    ))
-    router.register(Command(
-        name="/debug", handler=cmd_debug, group="System",
-        description="Toggle debug mode",
-    ))
+    router.register(
+        Command(
+            name="/help",
+            handler=cmd_help,
+            group="System",
+            description="Show help",
+        )
+    )
+    router.register(
+        Command(
+            name="/version",
+            handler=cmd_version,
+            group="System",
+            description="Show version",
+        )
+    )
+    router.register(
+        Command(
+            name="/debug",
+            handler=cmd_debug,
+            group="System",
+            description="Toggle debug mode",
+        )
+    )
 
     if cat is not None:
-        router.register(Command(
-            name="/wiring", handler=_make_cmd_wiring(cat), group="System",
-            description="Show wiring topology",
-        ))
-        router.register(Command(
-            name="/inject", handler=_make_cmd_inject(cat), group="System",
-            description="Needle injection debug",
-        ))
+        router.register(
+            Command(
+                name="/wiring",
+                handler=_make_cmd_wiring(cat),
+                group="System",
+                description="Show wiring topology",
+            )
+        )
+        router.register(
+            Command(
+                name="/inject",
+                handler=_make_cmd_inject(cat),
+                group="System",
+                description="Needle injection debug",
+            )
+        )
     else:
-        router.register(Command(
-            name="/wiring", handler=lambda _: "No cat attached",
-            group="System", description="Show wiring topology",
-        ))
-        router.register(Command(
-            name="/inject", handler=lambda _: "No cat attached",
-            group="System", description="Needle injection debug",
-        ))
+        router.register(
+            Command(
+                name="/wiring",
+                handler=lambda _: "No cat attached",
+                group="System",
+                description="Show wiring topology",
+            )
+        )
+        router.register(
+            Command(
+                name="/inject",
+                handler=lambda _: "No cat attached",
+                group="System",
+                description="Needle injection debug",
+            )
+        )
 
 
 # -- Colony commands (v1.1.12) ------------------------------------------------
+
 
 def register_colony_commands(
     router: CommandRouter,
@@ -182,10 +214,9 @@ def register_colony_commands(
         cat_uids = colony.list_cats()
         if not cat_uids:
             return t.t("cats_no_cats")
-        max_cats = colony.max_cats if colony.max_cats is not None else t.t(
-            "colony_unlimited")
+        max_cats = colony.max_cats if colony.max_cats is not None else t.t("colony_unlimited")
         lines = [
-            f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_uids), max_cats=max_cats)}**",
+            f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_uids), max_cats=max_cats)}**",  # noqa: E501
             "",
         ]
         active_id = active_cat_ref[0].cat_uid if active_cat_ref[0] else None
@@ -196,8 +227,7 @@ def register_colony_commands(
                 organs = len(cat.list_all_organs())
                 lines.append(f"  {cid} ({organs} organs){marker}")
             except Exception:
-                _log.debug("Failed to list organs for cat '%s'",
-                           cid, exc_info=True)
+                _log.debug("Failed to list organs for cat '%s'", cid, exc_info=True)
                 lines.append(f"  {cid}{marker}")
         return "\n".join(lines)
 
@@ -292,33 +322,58 @@ def register_colony_commands(
 
     # -- Register --------------------------------------------------------
 
-    router.register(Command(
-        name="/cats", handler=cmd_cats, group="Colony",
-        description="List all cats",
-    ))
-    router.register(Command(
-        name="/adopt", handler=cmd_adopt, group="Colony",
-        description="Adopt a new cat",
-    ))
-    router.register(Command(
-        name="/release", handler=cmd_release, group="Colony",
-        description="Release a cat",
-    ))
-    router.register(Command(
-        name="/switch", handler=cmd_switch, group="Colony",
-        description="Switch active cat",
-    ))
-    router.register(Command(
-        name="/health", handler=cmd_health, group="Diagnose",
-        description="Health check all cats",
-    ))
-    router.register(Command(
-        name="/brain", handler=cmd_brain, group="Diagnose",
-        description="Brain check a cat",
-    ))
+    router.register(
+        Command(
+            name="/cats",
+            handler=cmd_cats,
+            group="Colony",
+            description="List all cats",
+        )
+    )
+    router.register(
+        Command(
+            name="/adopt",
+            handler=cmd_adopt,
+            group="Colony",
+            description="Adopt a new cat",
+        )
+    )
+    router.register(
+        Command(
+            name="/release",
+            handler=cmd_release,
+            group="Colony",
+            description="Release a cat",
+        )
+    )
+    router.register(
+        Command(
+            name="/switch",
+            handler=cmd_switch,
+            group="Colony",
+            description="Switch active cat",
+        )
+    )
+    router.register(
+        Command(
+            name="/health",
+            handler=cmd_health,
+            group="Diagnose",
+            description="Health check all cats",
+        )
+    )
+    router.register(
+        Command(
+            name="/brain",
+            handler=cmd_brain,
+            group="Diagnose",
+            description="Brain check a cat",
+        )
+    )
 
 
 # -- Health / Brain formatters ------------------------------------------------
+
 
 def _health_sync(t: Any, colony: Any) -> str:
     """Sync fallback: return basic cat info when async loop is running."""
@@ -327,11 +382,9 @@ def _health_sync(t: Any, colony: Any) -> str:
         try:
             cat = colony.get_cat(cid)
             organs = cat.list_all_organs()
-            lines.append(t.t("health_cat_status", cat_uid=cid,
-                         status=len(organs), errors=0))
-        except Exception as exc:
-            lines.append(
-                t.t("health_cat_status", cat_uid=cid, status=0, errors=1))
+            lines.append(t.t("health_cat_status", cat_uid=cid, status=len(organs), errors=0))
+        except Exception:
+            lines.append(t.t("health_cat_status", cat_uid=cid, status=0, errors=1))
     return "\n".join(lines) if lines else t.t("health_no_cats")
 
 
@@ -342,16 +395,13 @@ def _format_health_results(t: Any, results: dict) -> str:
     total_errors = 0
     for cat_uid, organs in results.items():
         if isinstance(organs, dict):
-            errs = sum(1 for v in organs.values()
-                       if isinstance(v, dict) and "error" in v)
+            errs = sum(1 for v in organs.values() if isinstance(v, dict) and "error" in v)
             total_organs += len(organs)
             total_errors += errs
-            lines.append(t.t("health_cat_status", cat_uid=cat_uid,
-                         status=len(organs), errors=errs))
+            lines.append(t.t("health_cat_status", cat_uid=cat_uid, status=len(organs), errors=errs))
         else:
             total_errors += 1
-            lines.append(
-                t.t("health_cat_status", cat_uid=cat_uid, status=0, errors=1))
+            lines.append(t.t("health_cat_status", cat_uid=cat_uid, status=0, errors=1))
     lines.append("")
     if total_errors == 0:
         lines.append(t.t("health_all_ok"))
@@ -372,12 +422,15 @@ def _format_brain_results(t: Any, cat_uid: str, results: dict) -> str:
             summary = json.dumps(data, default=str) if data else "OK"
             lines.append(f"  {organ_name}: {summary}")
     lines.append("")
-    lines.append(t.t("health_all_ok") if err_count ==
-                 0 else t.t("health_issues"))
+    lines.append(t.t("health_all_ok") if err_count == 0 else t.t("health_issues"))
     return "\n".join(lines)
 
 
-__all__ = ["cmd_help", "cmd_version", "cmd_debug",
-           "register_system_commands", "is_debug",
-           "register_colony_commands"]
-
+__all__ = [
+    "cmd_help",
+    "cmd_version",
+    "cmd_debug",
+    "register_system_commands",
+    "is_debug",
+    "register_colony_commands",
+]

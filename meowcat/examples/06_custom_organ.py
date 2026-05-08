@@ -10,7 +10,6 @@ via wiring and the signal system.
 Run: ``python -m meowcat.examples.06_custom_organ``
 """
 
-
 from __future__ import annotations
 
 import anyio
@@ -62,4 +61,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
-

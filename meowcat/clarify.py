@@ -41,7 +41,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ── Configuration ─────────────────────────────────────────────────────
 
 
@@ -64,12 +63,14 @@ class ClarifyConfig:
     ambiguity_threshold: float = 0.5
     min_chars: int = 10
     max_clarify_rounds: int = 3
-    vague_patterns: list[str] = field(default_factory=lambda: [
-        r"\b(it|that|this|those|these|them|they)\b.*\b(fix|change|update|do|make|set|get)\b",
-        r"\b(fix|change|update|do|make|set|get)\b.*\b(it|that|this|those|these|them|they)\b",
-        r"\b(the (one|same|other|first|last|previous|next))\b",
-        r"^(what about|and|or|but|so|then)\b",
-    ])
+    vague_patterns: list[str] = field(
+        default_factory=lambda: [
+            r"\b(it|that|this|those|these|them|they)\b.*\b(fix|change|update|do|make|set|get)\b",
+            r"\b(fix|change|update|do|make|set|get)\b.*\b(it|that|this|those|these|them|they)\b",
+            r"\b(the (one|same|other|first|last|previous|next))\b",
+            r"^(what about|and|or|but|so|then)\b",
+        ]
+    )
 
 
 # ── Result dataclass ──────────────────────────────────────────────────
@@ -143,9 +144,7 @@ class ClarifyManager:
             min_chars=min_chars,
             max_clarify_rounds=max_clarify_rounds,
             vague_patterns=(
-                list(vague_patterns)
-                if vague_patterns is not None
-                else self.DEFAULT_VAGUE_PATTERNS
+                list(vague_patterns) if vague_patterns is not None else self.DEFAULT_VAGUE_PATTERNS
             ),
         )
         self._vague_re: list[re.Pattern[str]] = [
@@ -190,7 +189,7 @@ class ClarifyManager:
                 return ClarifyResult(
                     needs_clarification=False,
                     ambiguity_score=score,
-                    reason=f"Max clarify rounds ({self._config.max_clarify_rounds}) reached; proceeding with best-effort.",
+                    reason=f"Max clarify rounds ({self._config.max_clarify_rounds}) reached; proceeding with best-effort.",  # noqa: E501
                 )
 
             self._clarify_count += 1

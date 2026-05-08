@@ -16,8 +16,9 @@ from __future__ import annotations
 import json
 import logging
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 import anyio
 
@@ -42,6 +43,7 @@ class ProviderEntry:
             default_base_url="https://api.openai.com/v1",
         )
     """
+
     display_name: str
     """Human-readable provider name, e.g. ``"OpenAI"``, ``"DeepSeek"``."""
 
@@ -184,8 +186,7 @@ class ModelShelf:
         entry = self._providers.get(key)
         if entry is None:
             raise KeyError(
-                f"Provider '{key}' not found in catalog. "
-                f"Available: {list(self._providers.keys())}"
+                f"Provider '{key}' not found in catalog. Available: {list(self._providers.keys())}"
             )
         return entry.default_base_url
 
@@ -200,13 +201,9 @@ class ModelShelf:
                 body = resp.read().decode("utf-8")
                 return json.loads(body)  # type: ignore[no-any-return]
         except urllib.error.HTTPError as exc:
-            raise RuntimeError(
-                f"HTTP {exc.code} from {url}: {exc.reason}"
-            ) from exc
+            raise RuntimeError(f"HTTP {exc.code} from {url}: {exc.reason}") from exc
         except urllib.error.URLError as exc:
-            raise RuntimeError(
-                f"Cannot reach {url}: {exc.reason}"
-            ) from exc
+            raise RuntimeError(f"Cannot reach {url}: {exc.reason}") from exc
 
     async def discover(
         self,
@@ -266,14 +263,14 @@ class ModelShelf:
             headers["Authorization"] = f"Bearer {api_key}"
 
         # Ollama special case — detect by auth_type (none) or provider key
-        is_ollama = (
-            resolved.auth_type == "none"
-            or (isinstance(entry, str) and entry == "ollama")
-        )
+        is_ollama = resolved.auth_type == "none" or (isinstance(entry, str) and entry == "ollama")
         if is_ollama:
             url = f"{base_url}/api/tags"
             data = await anyio.to_thread.run_sync(
-                self._http_get_json, url, headers, timeout,
+                self._http_get_json,
+                url,
+                headers,
+                timeout,
             )
             # Ollama format: {"models": [{"name": "llama3.2:latest", ...}, ...]}
             models: list[dict] = data.get("models", [])
@@ -282,7 +279,10 @@ class ModelShelf:
         # OpenAI-compatible /models endpoint
         url = f"{base_url}/models"
         data = await anyio.to_thread.run_sync(
-            self._http_get_json, url, headers, timeout,
+            self._http_get_json,
+            url,
+            headers,
+            timeout,
         )
         # OpenAI format: {"data": [{"id": "gpt-4o", ...}, ...]}
         items: list[dict] = data.get("data", [])
@@ -316,8 +316,7 @@ class ModelShelf:
         """
         if name not in self._models:
             raise KeyError(
-                f"Model '{name}' not found on shelf. "
-                f"Available: {list(self._models.keys())}"
+                f"Model '{name}' not found on shelf. Available: {list(self._models.keys())}"
             )
         return self._models[name]
 
@@ -361,9 +360,7 @@ class FallbackChain:
         if not model_names:
             raise ValueError("FallbackChain requires at least one model name")
         # Resolve all configs eagerly — fail fast if any name is unknown
-        self._configs: list[ModelConfig] = [
-            shelf.get_model(name) for name in model_names
-        ]
+        self._configs: list[ModelConfig] = [shelf.get_model(name) for name in model_names]
 
     @property
     def model_names(self) -> list[str]:
@@ -410,7 +407,8 @@ class FallbackChain:
             except Exception as exc:
                 logger.warning(
                     "FallbackChain: model '%s' failed: %s",
-                    cfg.model, exc,
+                    cfg.model,
+                    exc,
                 )
                 errors.append((cfg.model, str(exc)))
 
@@ -420,5 +418,4 @@ class FallbackChain:
         )
 
 
-__all__ = ["ProviderEntry", "AuthType",
-           "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]
+__all__ = ["ProviderEntry", "AuthType", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]

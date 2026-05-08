@@ -44,4 +44,3 @@ class TailAgent(AgentOrgan):
 
 
 __all__ = ["MouthAgent", "PurrAgent", "TailAgent"]
-

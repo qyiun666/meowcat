@@ -19,14 +19,14 @@ types for each event.  Annotate handler signatures with e.g.
 ``def on_signal(payload: NerveSignalPayload) -> None`` for IDE autocompletion.
 """
 
-
 from __future__ import annotations
 
 import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from typing import Any, Callable, Final
+from collections.abc import Callable
+from typing import Any, Final
 
 _logger = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ class RememberEvent:
 
 # -- Loop B: Orchestration ----------------------------------------------
 
+
 class OrchestrateEvent:
     """TaskOrchestrator related hooks."""
 
@@ -96,6 +97,7 @@ class OrchestrateEvent:
 
 
 # -- Loop C: Growth/Crystallization --------------------------------------
+
 
 class GrowthEvent:
     """Anomaly/correction/crystallize/role emergence hooks."""
@@ -115,6 +117,7 @@ class GrowthEvent:
 
 # -- Nerve synapse ---------------------------------------------------
 
+
 class NerveEvent:
     """Neural potential event triggered during ``cat.signal()`` dispatch."""
 
@@ -126,6 +129,7 @@ class NerveEvent:
 
 
 # -- Kitten lifecycle -----------------------------------------
+
 
 class KittenEvent:
     """Kitten spawn/execute/reclaim hooks. See design.md §12.9."""
@@ -151,11 +155,12 @@ class KittenEvent:
 
 # -- Self / Reflection lifecycle ---------------------------------------
 
+
 class SelfEvent:
     """CatSelf self-awareness loop hooks."""
 
     SNAPSHOT: Final[str] = "self.snapshot"
-    """Fired after ``CatSelf.before_act()`` builds SelfSnapshot, payload :class:`~meowcat.events_payloads.SelfSnapshotPayload`."""
+    """Fired after ``CatSelf.before_act()`` builds SelfSnapshot, payload :class:`~meowcat.events_payloads.SelfSnapshotPayload`."""  # noqa: E501
 
     REFLECT: Final[str] = "self.reflect"
     """Fired after ``CatSelf.after_act()`` writes back, payload :class:`~meowcat.events_payloads.SelfReflectPayload`."""
@@ -163,14 +168,16 @@ class SelfEvent:
 
 # -- PinealGland insight fusion ----------------------------------------
 
+
 class FusionEvent:
     """PinealGland insight fusion hooks."""
 
     FUSE_SELF: Final[str] = "fusion.self"
-    """Fired when insights are fused into cat's own self, payload :class:`~meowcat.events_payloads.FusionSelfPayload`."""
+    """Fired when insights are fused into cat's own self, payload
+    :class:`~meowcat.events_payloads.FusionSelfPayload`."""
 
     FUSE_COLONY: Final[str] = "fusion.colony"
-    """Fired when insights are fused into colony shared knowledge, payload :class:`~meowcat.events_payloads.FusionColonyPayload`."""
+    """Fired when insights are fused into colony shared knowledge, payload :class:`~meowcat.events_payloads.FusionColonyPayload`."""  # noqa: E501
 
     TRIGGER_START: Final[str] = "fusion.trigger_start"
     """Fired at ``PinealGland.trigger()`` start, payload :class:`~meowcat.events_payloads.FusionTriggerStartPayload`."""
@@ -180,6 +187,7 @@ class FusionEvent:
 
 
 # -- Telemetry / Observability (v1.2.21) -----------------------------------
+
 
 class TelemetryEvent:
     """Observability trace events emitted by :class:`~meowcat.telemetry.Tracer`."""
@@ -192,39 +200,59 @@ class TelemetryEvent:
 
 ALL_EVENTS: Final[tuple[str, ...]] = (
     # Loop A
-    LocateEvent.PRE, LocateEvent.POST, LocateEvent.ROUTE_DECIDED,
-    RememberEvent.PRE, RememberEvent.POST,
-    RememberEvent.COMPRESS_PRE, RememberEvent.COMPRESS_POST,
+    LocateEvent.PRE,
+    LocateEvent.POST,
+    LocateEvent.ROUTE_DECIDED,
+    RememberEvent.PRE,
+    RememberEvent.POST,
+    RememberEvent.COMPRESS_PRE,
+    RememberEvent.COMPRESS_POST,
     # Loop B
-    OrchestrateEvent.START, OrchestrateEvent.END,
+    OrchestrateEvent.START,
+    OrchestrateEvent.END,
     # Loop C
-    GrowthEvent.ANOMALY, GrowthEvent.CORRECTION,
-    GrowthEvent.CRYSTALLIZE, GrowthEvent.ROLE_EMERGE,
+    GrowthEvent.ANOMALY,
+    GrowthEvent.CORRECTION,
+    GrowthEvent.CRYSTALLIZE,
+    GrowthEvent.ROLE_EMERGE,
     # Lifecycle
-    Lifecycle.START, Lifecycle.SHUTDOWN,
-    Lifecycle.PERCEIVE_START, Lifecycle.PERCEIVE_END,
+    Lifecycle.START,
+    Lifecycle.SHUTDOWN,
+    Lifecycle.PERCEIVE_START,
+    Lifecycle.PERCEIVE_END,
     # Nerve synapse
     NerveEvent.SIGNAL,
     # Kitten
-    KittenEvent.SPAWNED, KittenEvent.EXECUTING, KittenEvent.COMPLETED,
-    KittenEvent.STUCK, KittenEvent.DISMISSED, KittenEvent.MERGE_ABSORBED,
+    KittenEvent.SPAWNED,
+    KittenEvent.EXECUTING,
+    KittenEvent.COMPLETED,
+    KittenEvent.STUCK,
+    KittenEvent.DISMISSED,
+    KittenEvent.MERGE_ABSORBED,
     # Self / Fusion
-    SelfEvent.SNAPSHOT, SelfEvent.REFLECT,
-    FusionEvent.FUSE_SELF, FusionEvent.FUSE_COLONY,
-    FusionEvent.TRIGGER_START, FusionEvent.TRIGGER_END,
+    SelfEvent.SNAPSHOT,
+    SelfEvent.REFLECT,
+    FusionEvent.FUSE_SELF,
+    FusionEvent.FUSE_COLONY,
+    FusionEvent.TRIGGER_START,
+    FusionEvent.TRIGGER_END,
     # Telemetry
     TelemetryEvent.SPAN,
 )
 
 
 __all__ = [
-    "EventBus", "Handler",
+    "EventBus",
+    "Handler",
     "Lifecycle",
-    "LocateEvent", "RememberEvent",
-    "OrchestrateEvent", "GrowthEvent",
+    "LocateEvent",
+    "RememberEvent",
+    "OrchestrateEvent",
+    "GrowthEvent",
     "NerveEvent",
     "KittenEvent",
-    "SelfEvent", "FusionEvent",
+    "SelfEvent",
+    "FusionEvent",
     "TelemetryEvent",
     "ALL_EVENTS",
 ]
@@ -253,10 +281,12 @@ class EventBus:
             def my_handler(payload): ...
         """
         if handler is None:
+
             def decorator(fn: Handler) -> Handler:
                 self._handlers[event].append(fn)
                 self._handler_info[id(fn)] = self._precompute(fn)
                 return fn
+
             return decorator
         self._handlers[event].append(handler)
         self._handler_info[id(handler)] = self._precompute(handler)
@@ -303,10 +333,7 @@ class EventBus:
                 if inspect.isawaitable(result):
                     await result
                 continue
-            if info["takes_payload"]:
-                result = handler(payload)
-            else:
-                result = handler()
+            result = handler(payload) if info["takes_payload"] else handler()
             if info["is_async"]:
                 await result
 
@@ -353,24 +380,30 @@ class EventBus:
                 try:
                     handler(payload)
                 except Exception:
-                    _logger.debug("emit_nowait handler '%s' failed",
-                                  getattr(handler, "__name__", handler),
-                                  exc_info=True)
+                    _logger.debug(
+                        "emit_nowait handler '%s' failed",
+                        getattr(handler, "__name__", handler),
+                        exc_info=True,
+                    )
                 continue
             if info["takes_payload"]:
                 try:
                     handler(payload)
                 except Exception:
-                    _logger.debug("emit_nowait handler '%s' failed",
-                                  getattr(handler, "__name__", handler),
-                                  exc_info=True)
+                    _logger.debug(
+                        "emit_nowait handler '%s' failed",
+                        getattr(handler, "__name__", handler),
+                        exc_info=True,
+                    )
             else:
                 try:
                     handler()
                 except Exception:
-                    _logger.debug("emit_nowait handler '%s' failed",
-                                  getattr(handler, "__name__", handler),
-                                  exc_info=True)
+                    _logger.debug(
+                        "emit_nowait handler '%s' failed",
+                        getattr(handler, "__name__", handler),
+                        exc_info=True,
+                    )
 
     # -- Introspection --------------------------------------------------------
 
@@ -381,4 +414,3 @@ class EventBus:
     def events(self) -> list[str]:
         """Return names of all events that have handlers."""
         return [e for e, hs in self._handlers.items() if hs]
-

@@ -20,21 +20,27 @@ Developer experience::
 This file has zero third-party dependencies, zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
 from meowcat.chain import (
-    BUILTIN_CHAINS, Chain,
-    MAINTENANCE_CHAIN as _MC,
     DIAGNOSTIC_CHAIN as _DC,
+)
+from meowcat.chain import (
     GROWTH_CHAIN as _GC,
+)
+from meowcat.chain import (
+    MAINTENANCE_CHAIN as _MC,
+)
+from meowcat.chain import (
     REFLECTION_CHAIN as _RC,
 )
+from meowcat.chain import (
+    Chain,
+)
 from meowcat.events import Lifecycle
-
 
 # -- Lookup reusable Chains from BUILTIN_CHAINS -------------------------
 
@@ -45,6 +51,7 @@ _REFLECTION_CHAIN: Chain = _RC
 
 
 # -- Loop dataclass -------------------------------------------------
+
 
 @dataclass(frozen=True)
 class Loop:
@@ -145,7 +152,7 @@ BUILTIN_LOOPS: tuple[Loop, ...] = (
 
 
 def register_default_loops(
-    loop_registry: "LoopRegistry",
+    loop_registry: LoopRegistry,
     chain_registry: Any,
 ) -> None:
     """Register the 5 default loops and their associated Chains into the registries.
@@ -165,6 +172,7 @@ def register_default_loops(
 
 
 # -- LoopRegistry ---------------------------------------------------
+
 
 @dataclass
 class LoopRegistry:
@@ -243,7 +251,9 @@ class LoopRegistry:
 
         # Execute chain
         result = await cat.chain_registry.run(
-            cat, loop.chain.name, **initial_input,
+            cat,
+            loop.chain.name,
+            **initial_input,
         )
 
         # Exit event
@@ -254,6 +264,7 @@ class LoopRegistry:
 
 
 # -- LoopSequence dataclass (v1.0.4) ----------------------------------
+
 
 @dataclass(frozen=True)
 class LoopSequence:
@@ -286,10 +297,7 @@ class LoopSequence:
 
     def __post_init__(self) -> None:
         if self.mode not in ("sequential", "event_driven"):
-            raise ValueError(
-                f"mode must be 'sequential' or 'event_driven', "
-                f"got {self.mode!r}"
-            )
+            raise ValueError(f"mode must be 'sequential' or 'event_driven', got {self.mode!r}")
 
 
 # -- Built-in LoopSequence -----------------------------------------------
@@ -301,12 +309,11 @@ DAILY_MAINTENANCE_SEQ: LoopSequence = LoopSequence(
     mode="sequential",
 )
 
-BUILTIN_LOOPSEQS: tuple[LoopSequence, ...] = (
-    DAILY_MAINTENANCE_SEQ,
-)
+BUILTIN_LOOPSEQS: tuple[LoopSequence, ...] = (DAILY_MAINTENANCE_SEQ,)
 
 
 # -- LoopSequenceRegistry (v1.0.4) ------------------------------------
+
 
 @dataclass
 class LoopSequenceRegistry:
@@ -334,9 +341,7 @@ class LoopSequenceRegistry:
             TypeError: seq is not a LoopSequence instance
         """
         if not isinstance(seq, LoopSequence):
-            raise TypeError(
-                f"Expected LoopSequence instance, got {type(seq).__name__}"
-            )
+            raise TypeError(f"Expected LoopSequence instance, got {type(seq).__name__}")
         if seq.name in self._seqs:
             self._seqs_list.remove(self._seqs[seq.name])
         self._seqs[seq.name] = seq
@@ -358,7 +363,10 @@ class LoopSequenceRegistry:
         return list(self._seqs_list)
 
     async def run(
-        self, cat: Any, name: str, **initial_input: Any,
+        self,
+        cat: Any,
+        name: str,
+        **initial_input: Any,
     ) -> dict[str, Any]:
         """Execute a meta-loop.
 
@@ -381,7 +389,6 @@ class LoopSequenceRegistry:
             KeyError: Meta-loop not found, or referenced Loop not found
             Exception: A Loop failed and ``stop_on_error=True``
         """
-        import asyncio
 
         seq = self.get(name)
         if seq is None:
@@ -392,14 +399,21 @@ class LoopSequenceRegistry:
 
         if seq.mode == "sequential":
             return await self._run_sequential(
-                cat, seq, **initial_input,
+                cat,
+                seq,
+                **initial_input,
             )
         return await self._run_event_driven(
-            cat, seq, **initial_input,
+            cat,
+            seq,
+            **initial_input,
         )
 
     async def _run_sequential(
-        self, cat: Any, seq: LoopSequence, **initial_input: Any,
+        self,
+        cat: Any,
+        seq: LoopSequence,
+        **initial_input: Any,
     ) -> dict[str, Any]:
         """Execute loops sequentially, passing previous result to next step."""
         current_input: dict[str, Any] = dict(initial_input)
@@ -408,12 +422,11 @@ class LoopSequenceRegistry:
         for loop_name in seq.loops:
             try:
                 last_result = await cat.loop_registry.run(
-                    cat, loop_name, **current_input,
+                    cat,
+                    loop_name,
+                    **current_input,
                 )
-                if isinstance(last_result, dict):
-                    current_input = last_result
-                else:
-                    current_input = {"_result": last_result}
+                current_input = last_result if isinstance(last_result, dict) else {"_result": last_result}
             except Exception:
                 if seq.stop_on_error:
                     raise
@@ -425,7 +438,10 @@ class LoopSequenceRegistry:
         return {"_result": last_result}
 
     async def _run_event_driven(
-        self, cat: Any, seq: LoopSequence, **initial_input: Any,
+        self,
+        cat: Any,
+        seq: LoopSequence,
+        **initial_input: Any,
     ) -> dict[str, Any]:
         """Execute loops concurrently, each receives the same initial_input."""
         import asyncio
@@ -433,7 +449,9 @@ class LoopSequenceRegistry:
         async def _run_one(loop_name: str) -> tuple[str, Any]:
             try:
                 result = await cat.loop_registry.run(
-                    cat, loop_name, **initial_input,
+                    cat,
+                    loop_name,
+                    **initial_input,
                 )
                 return (loop_name, result)
             except Exception as e:
@@ -441,10 +459,7 @@ class LoopSequenceRegistry:
                     raise
                 return (loop_name, {"_error": str(e)})
 
-        pending = {
-            asyncio.ensure_future(_run_one(ln)): ln
-            for ln in seq.loops
-        }
+        pending = {asyncio.ensure_future(_run_one(ln)): ln for ln in seq.loops}
         results: dict[str, Any] = {}
 
         if seq.stop_on_error:
@@ -462,23 +477,43 @@ class LoopSequenceRegistry:
 
 
 __all__ = [
-    "Loop", "LoopRegistry",
-    "CONVERSATION_LOOP", "TOOL_EXECUTION_LOOP",
-    "DANGER_RESPONSE_LOOP", "MAINTENANCE_LOOP", "DIAGNOSTIC_LOOP",
-    "GROWTH_LOOP", "REFLECTION_LOOP",
-    "BUILTIN_LOOPS", "register_default_loops",
-    "LoopSequence", "LoopSequenceRegistry",
-    "DAILY_MAINTENANCE_SEQ", "BUILTIN_LOOPSEQS",
+    "Loop",
+    "LoopRegistry",
+    "CONVERSATION_LOOP",
+    "TOOL_EXECUTION_LOOP",
+    "DANGER_RESPONSE_LOOP",
+    "MAINTENANCE_LOOP",
+    "DIAGNOSTIC_LOOP",
+    "GROWTH_LOOP",
+    "REFLECTION_LOOP",
+    "BUILTIN_LOOPS",
+    "register_default_loops",
+    "LoopSequence",
+    "LoopSequenceRegistry",
+    "DAILY_MAINTENANCE_SEQ",
+    "BUILTIN_LOOPSEQS",
 ]
 
 
 # -- Import protection: intercept wrong imports by hinting correct path ------
 
-_EVENTS_HELD_IN_MEOWCAT_EVENTS: frozenset[str] = frozenset({
-    "LocateEvent", "RememberEvent", "OrchestrateEvent", "GrowthEvent",
-    "Lifecycle", "KittenEvent", "NerveEvent", "SelfEvent", "FusionEvent",
-    "TelemetryEvent", "EventBus", "Handler", "ALL_EVENTS",
-})
+_EVENTS_HELD_IN_MEOWCAT_EVENTS: frozenset[str] = frozenset(
+    {
+        "LocateEvent",
+        "RememberEvent",
+        "OrchestrateEvent",
+        "GrowthEvent",
+        "Lifecycle",
+        "KittenEvent",
+        "NerveEvent",
+        "SelfEvent",
+        "FusionEvent",
+        "TelemetryEvent",
+        "EventBus",
+        "Handler",
+        "ALL_EVENTS",
+    }
+)
 
 
 def __getattr__(name: str):
@@ -489,4 +524,3 @@ def __getattr__(name: str):
             f"or: from meowcat import {name}"
         )
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-

@@ -21,7 +21,6 @@ For external developers::
 This file has zero third-party dependencies and zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
 import inspect
@@ -38,7 +37,6 @@ from meowcat.anatomy import (
     CORTEX,
     CRYSTALLIZER,
     EARS,
-    FRONTAL,
     HIPPOCAMPUS,
     HYPOTHALAMUS,
     MOUTH,
@@ -76,89 +74,108 @@ class Path:
 
     def __post_init__(self) -> None:
         if self.mode not in ("read", "write"):
-            raise ValueError(
-                f"mode must be 'read' or 'write', got {self.mode!r}")
+            raise ValueError(f"mode must be 'read' or 'write', got {self.mode!r}")
 
 
 # -- Builtin path table ------------------------------------------------------
 
 BUILTIN_PATHS: tuple[Path, ...] = (
     # -- Memory domain --
-    Path("locate",             THALAMUS,    THALAMUS,
-         "locate",             "read",  "Retrieve memories (thalamus self-loop)"),
-    Path("remember",           BRAINSTEM,   HIPPOCAMPUS,
-         "remember",           "write", "Store memory"),
-    Path("get_entity",         THALAMUS,    HIPPOCAMPUS,
-         "get_entity",         "read",  "Read single entity"),
-    Path("get_all",            THALAMUS,    HIPPOCAMPUS,
-         "get_all",            "read",  "Read all entities"),
-    Path("fts_search",         THALAMUS,    HIPPOCAMPUS,
-         "fts_search",         "read",  "Full-text search"),
-    Path("add_entity",         BRAINSTEM,   HIPPOCAMPUS,
-         "add_entity",         "write", "Add entity"),
-    Path("add_episode",        BRAINSTEM,   HIPPOCAMPUS,
-         "add_episode",        "write", "Add episode"),
-    Path("connect",            BRAINSTEM,   HIPPOCAMPUS,
-         "connect",            "write", "Connect entities"),
-    Path("record_access",      BRAINSTEM,   HIPPOCAMPUS,
-         "record_access",      "write", "Record access"),
-    Path("set_dormant",        BRAINSTEM,   HIPPOCAMPUS,
-         "set_dormant",        "write", "Set dormant"),
-    Path("append_content",     BRAINSTEM,   HIPPOCAMPUS,
-         "append_content",     "write", "Append content"),
-    Path("update_importance",  BRAINSTEM,   HIPPOCAMPUS,
-         "update_importance",  "write", "Update importance"),
-    Path("set_last_seen",      BRAINSTEM,   HIPPOCAMPUS,
-         "set_last_seen",      "write", "Set last seen"),
+    Path("locate", THALAMUS, THALAMUS, "locate", "read", "Retrieve memories (thalamus self-loop)"),
+    Path("remember", BRAINSTEM, HIPPOCAMPUS, "remember", "write", "Store memory"),
+    Path("get_entity", THALAMUS, HIPPOCAMPUS, "get_entity", "read", "Read single entity"),
+    Path("get_all", THALAMUS, HIPPOCAMPUS, "get_all", "read", "Read all entities"),
+    Path("fts_search", THALAMUS, HIPPOCAMPUS, "fts_search", "read", "Full-text search"),
+    Path("add_entity", BRAINSTEM, HIPPOCAMPUS, "add_entity", "write", "Add entity"),
+    Path("add_episode", BRAINSTEM, HIPPOCAMPUS, "add_episode", "write", "Add episode"),
+    Path("connect", BRAINSTEM, HIPPOCAMPUS, "connect", "write", "Connect entities"),
+    Path("record_access", BRAINSTEM, HIPPOCAMPUS, "record_access", "write", "Record access"),
+    Path("set_dormant", BRAINSTEM, HIPPOCAMPUS, "set_dormant", "write", "Set dormant"),
+    Path("append_content", BRAINSTEM, HIPPOCAMPUS, "append_content", "write", "Append content"),
+    Path(
+        "update_importance",
+        BRAINSTEM,
+        HIPPOCAMPUS,
+        "update_importance",
+        "write",
+        "Update importance",
+    ),
+    Path("set_last_seen", BRAINSTEM, HIPPOCAMPUS, "set_last_seen", "write", "Set last seen"),
     # -- Reasoning domain --
-    Path("deep_reason",        THALAMUS,    CEREBRUM,
-         "generate",           "read",  "Deep reason"),
+    Path("deep_reason", THALAMUS, CEREBRUM, "generate", "read", "Deep reason"),
     # -- Output domain --
-    Path("speak",              CEREBELLUM,  MOUTH,
-         "speak",              "write", "Output reply"),
-    Path("hear",               EARS,        THALAMUS,
-         "hear",               "read",  "Receive input"),
+    Path("speak", CEREBELLUM, MOUTH, "speak", "write", "Output reply"),
+    Path("hear", EARS, THALAMUS, "hear", "read", "Receive input"),
     # -- Maintenance domain --
-    Path("decay",              HYPOTHALAMUS, HIPPOCAMPUS,
-         "decay",             "write", "Decay memory"),
-    Path("weaken_connections", HYPOTHALAMUS, HIPPOCAMPUS,
-         "weaken_connections", "write", "Weaken connections"),
-    Path("cleanup_orphans",    HYPOTHALAMUS, HIPPOCAMPUS,
-         "cleanup_orphan_connections", "write", "Cleanup orphan connections"),
+    Path("decay", HYPOTHALAMUS, HIPPOCAMPUS, "decay", "write", "Decay memory"),
+    Path(
+        "weaken_connections",
+        HYPOTHALAMUS,
+        HIPPOCAMPUS,
+        "weaken_connections",
+        "write",
+        "Weaken connections",
+    ),
+    Path(
+        "cleanup_orphans",
+        HYPOTHALAMUS,
+        HIPPOCAMPUS,
+        "cleanup_orphan_connections",
+        "write",
+        "Cleanup orphan connections",
+    ),
     # -- Tool execution domain --
-    Path("execute_tool",       CEREBELLUM,  PAWS,
-         "execute",             "write", "Execute tool"),
+    Path("execute_tool", CEREBELLUM, PAWS, "execute", "write", "Execute tool"),
     # -- Self-loop paths (v0.5.28b added, from == to, bypass wiring) --
-    Path("decide_route",       THALAMUS,    THALAMUS,
-         "decide_route",        "read",  "Routing decision"),
-    Path("assess_safety",      AMYGDALA,    AMYGDALA,
-         "assess_safety",       "read",  "Safety assessment"),
+    Path("decide_route", THALAMUS, THALAMUS, "decide_route", "read", "Routing decision"),
+    Path("assess_safety", AMYGDALA, AMYGDALA, "assess_safety", "read", "Safety assessment"),
     # -- Synthesis domain --
-    Path("synthesize",         BRAINSTEM,   CORTEX,
-         "synthesize",          "read",  "Worldview synthesis"),
+    Path("synthesize", BRAINSTEM, CORTEX, "synthesize", "read", "Worldview synthesis"),
     # -- Orchestration domain (v1.0.15) --
-    Path("workflow_create",     BRAINSTEM,   HIPPOCAMPUS,
-         "add_entity",          "write", "Create workflow"),
-    Path("workflow_checkpoint", BRAINSTEM,   HIPPOCAMPUS,
-         "append_content",      "write", "Write checkpoint"),
-    Path("workflow_resume",     BRAINSTEM,   HIPPOCAMPUS,
-         "get_entity",          "read",  "Resume workflow"),
+    Path("workflow_create", BRAINSTEM, HIPPOCAMPUS, "add_entity", "write", "Create workflow"),
+    Path(
+        "workflow_checkpoint", BRAINSTEM, HIPPOCAMPUS, "append_content", "write", "Write checkpoint"
+    ),
+    Path("workflow_resume", BRAINSTEM, HIPPOCAMPUS, "get_entity", "read", "Resume workflow"),
     # -- Context compression (v1.3.0) --
-    Path("compress_context",    BRAINSTEM,   BRAINSTEM,
-         "compress_context",    "write", "Compress conversation context"),
+    Path(
+        "compress_context",
+        BRAINSTEM,
+        BRAINSTEM,
+        "compress_context",
+        "write",
+        "Compress conversation context",
+    ),
     # -- Growth domain (v1.3.0) --
-    Path("record_anomaly",      BRAINSTEM,   ANOMALY_GROWTH,
-         "record",              "write", "Record anomaly pattern"),
-    Path("record_correction",   BRAINSTEM,   CORRECTION_GROWTH,
-         "record",              "write", "Record user correction"),
-    Path("crystallize",         BRAINSTEM,   CRYSTALLIZER,
-         "crystallize",          "write", "Crystallize skill from usage"),
-    Path("record_pattern",      BRAINSTEM,   ROLE_EMERGENCE,
-         "record",              "write", "Record role behavior pattern"),
+    Path("record_anomaly", BRAINSTEM, ANOMALY_GROWTH, "record", "write", "Record anomaly pattern"),
+    Path(
+        "record_correction",
+        BRAINSTEM,
+        CORRECTION_GROWTH,
+        "record",
+        "write",
+        "Record user correction",
+    ),
+    Path(
+        "crystallize",
+        BRAINSTEM,
+        CRYSTALLIZER,
+        "crystallize",
+        "write",
+        "Crystallize skill from usage",
+    ),
+    Path(
+        "record_pattern",
+        BRAINSTEM,
+        ROLE_EMERGENCE,
+        "record",
+        "write",
+        "Record role behavior pattern",
+    ),
 )
 
 
-def register_builtin_paths(registry: "PathRegistry") -> None:
+def register_builtin_paths(registry: PathRegistry) -> None:
     """Register builtin paths into a PathRegistry.
 
     Args:
@@ -169,6 +186,7 @@ def register_builtin_paths(registry: "PathRegistry") -> None:
 
 
 # -- PathRegistry -------------------------------------------------
+
 
 @dataclass
 class PathRegistry:
@@ -200,9 +218,7 @@ class PathRegistry:
             TypeError: path is not a Path instance
         """
         if not isinstance(path, Path):
-            raise TypeError(
-                f"Expected Path instance, got {type(path).__name__}"
-            )
+            raise TypeError(f"Expected Path instance, got {type(path).__name__}")
         # Overwrite old value (same-named path: later registration wins)
         if path.name in self._paths:
             self._paths_list.remove(self._paths[path.name])
@@ -258,7 +274,8 @@ class PathRegistry:
                 and path.method in cat.nervous.forbidden_methods
             ):
                 raise IllegalNeuralPathError(
-                    path.from_organ, path.to_organ,
+                    path.from_organ,
+                    path.to_organ,
                     reason=f"forbidden method '{path.method}'",
                 )
             organ = cat.organ(*path.to_organ)
@@ -269,7 +286,10 @@ class PathRegistry:
             return result
 
         return await cat.signal(
-            path.from_organ, path.to_organ, path.method, **kwargs,
+            path.from_organ,
+            path.to_organ,
+            path.method,
+            **kwargs,
         )
 
 

@@ -44,6 +44,7 @@ class MCPServerConfig:
         url: HTTP endpoint URL for http transport
         enabled: Whether this server is active
     """
+
     name: str
     transport: str = "stdio"
     command: str = ""
@@ -62,6 +63,7 @@ class MCPTool:
         parameters: JSON Schema for tool input (from ``inputSchema``)
         server_name: Owning server name
     """
+
     name: str
     description: str = ""
     parameters: dict[str, Any] = field(default_factory=dict)
@@ -101,9 +103,7 @@ class MCPClient:
     def remove_server(self, name: str) -> None:
         """Unregister an MCP server and clear its tools."""
         self._servers.pop(name, None)
-        self._tools = {
-            k: v for k, v in self._tools.items() if v.server_name != name
-        }
+        self._tools = {k: v for k, v in self._tools.items() if v.server_name != name}
 
     def list_servers(self) -> list[MCPServerConfig]:
         """List all registered servers."""
@@ -112,8 +112,7 @@ class MCPClient:
     def list_tools(self, server_name: str = "") -> list[MCPTool]:
         """List discovered tools, optionally filtered by server."""
         if server_name:
-            return [t for t in self._tools.values()
-                    if t.server_name == server_name]
+            return [t for t in self._tools.values() if t.server_name == server_name]
         return list(self._tools.values())
 
     # -- Discovery ---------------------------------------------------
@@ -158,7 +157,8 @@ class MCPClient:
     async def _discover_stdio(self, cfg: MCPServerConfig) -> list[MCPTool]:
         try:
             proc = await asyncio.create_subprocess_exec(
-                cfg.command, *cfg.args,
+                cfg.command,
+                *cfg.args,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -176,11 +176,14 @@ class MCPClient:
                 return []
 
             # Send initialize handshake
-            req = _jsonrpc_request("initialize", {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "MeowCat", "version": "1.0"},
-            })
+            req = _jsonrpc_request(
+                "initialize",
+                {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "MeowCat", "version": "1.0"},
+                },
+            )
             proc.stdin.write((req + "\n").encode())
             await proc.stdin.drain()
 
@@ -225,20 +228,23 @@ class MCPClient:
                 logger.debug("MCP process termination error", exc_info=True)
 
     async def _call_tool_stdio(
-        self, cfg: MCPServerConfig, tool_name: str,
+        self,
+        cfg: MCPServerConfig,
+        tool_name: str,
         arguments: dict[str, Any],
     ) -> str:
         try:
             proc = await asyncio.create_subprocess_exec(
-                cfg.command, *cfg.args,
+                cfg.command,
+                *cfg.args,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            req = _jsonrpc_request(
-                "tools/call", {"name": tool_name, "arguments": arguments})
+            req = _jsonrpc_request("tools/call", {"name": tool_name, "arguments": arguments})
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(input=req.encode()), timeout=MCP_DEFAULT_TIMEOUT,
+                proc.communicate(input=req.encode()),
+                timeout=MCP_DEFAULT_TIMEOUT,
             )
             if proc.returncode != 0:
                 return f"MCP error: {stderr.decode()[:500]}"
@@ -248,10 +254,7 @@ class MCPClient:
             result = resp.get("result", {})
             content = result.get("content", [])
             if isinstance(content, list) and content:
-                texts = [
-                    c.get("text", "") for c in content
-                    if isinstance(c, dict)
-                ]
+                texts = [c.get("text", "") for c in content if isinstance(c, dict)]
                 return "\n".join(texts) if texts else json.dumps(result)
             return json.dumps(result)
         except asyncio.TimeoutError:
@@ -271,11 +274,14 @@ class MCPClient:
 
         try:
             async with httpx.AsyncClient(timeout=MCP_DEFAULT_TIMEOUT) as client:
-                init_req = _jsonrpc_request("initialize", {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "clientInfo": {"name": "MeowCat", "version": "1.0"},
-                })
+                init_req = _jsonrpc_request(
+                    "initialize",
+                    {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "clientInfo": {"name": "MeowCat", "version": "1.0"},
+                    },
+                )
                 init_resp = await client.post(
                     cfg.url,
                     json=json.loads(init_req),
@@ -296,8 +302,7 @@ class MCPClient:
                 list_resp.raise_for_status()
                 list_data = list_resp.json()
                 if "error" in list_data:
-                    logger.error("MCP tools/list error: %s",
-                                 list_data["error"])
+                    logger.error("MCP tools/list error: %s", list_data["error"])
                     return []
 
                 tools_data = list_data.get("result", {}).get("tools", [])
@@ -317,7 +322,9 @@ class MCPClient:
             return []
 
     async def _call_tool_http(
-        self, cfg: MCPServerConfig, tool_name: str,
+        self,
+        cfg: MCPServerConfig,
+        tool_name: str,
         arguments: dict[str, Any],
     ) -> str:
         try:
@@ -326,8 +333,7 @@ class MCPClient:
             return "httpx not installed. Run: pip install httpx"
 
         try:
-            req = _jsonrpc_request(
-                "tools/call", {"name": tool_name, "arguments": arguments})
+            req = _jsonrpc_request("tools/call", {"name": tool_name, "arguments": arguments})
             async with httpx.AsyncClient(timeout=MCP_DEFAULT_TIMEOUT) as client:
                 resp = await client.post(
                     cfg.url,
@@ -345,10 +351,11 @@ class MCPClient:
 
 def _jsonrpc_request(method: str, params: dict[str, Any]) -> str:
     """Build a JSON-RPC 2.0 request string."""
-    return json.dumps({
-        "jsonrpc": "2.0",
-        "method": method,
-        "params": params,
-        "id": 1,
-    })
-
+    return json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+            "id": 1,
+        }
+    )

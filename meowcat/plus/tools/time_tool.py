@@ -42,4 +42,3 @@ plus_current_time = Tool(
 )
 
 __all__ = ["plus_current_time"]
-

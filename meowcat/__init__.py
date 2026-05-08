@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat — An agent framework built on the biological blueprint of a cat. Depends on pydantic>=2.0 + anyio>=4.0, zero meowagent imports."""
+"""meowcat — An agent framework built on the biological blueprint of a cat. Depends on pydantic>=2.0 + anyio>=4.0, zero meowagent imports."""  # noqa: E501
 
 from __future__ import annotations
 
@@ -9,19 +9,20 @@ import importlib
 import pathlib
 import re
 
-from meowcat._exports import __all__, _LAZY_MAP, _SUBMODULES
+from meowcat._exports import _LAZY_MAP, _SUBMODULES, __all__  # noqa: F401 (defines package __all__ for import *)
 
 # -- Version -----------------------------------------------------------
 # Use importlib.metadata for pip-installed packages;
 # fall back to pyproject.toml for editable/dev installs.
 try:
     from importlib.metadata import version as _pkg_version
+
     __version__ = _pkg_version("meowcat")
 except Exception:
-    _pyproject = pathlib.Path(
-        __file__).resolve().parent.parent / "pyproject.toml"
-    _match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']',
-                       _pyproject.read_text(encoding="utf-8"), re.MULTILINE)
+    _pyproject = pathlib.Path(__file__).resolve().parent.parent / "pyproject.toml"
+    _match = re.search(
+        r'^version\s*=\s*["\']([^"\']+)["\']', _pyproject.read_text(encoding="utf-8"), re.MULTILINE
+    )
     __version__ = _match.group(1) if _match else "0.0.0"
 
 
@@ -47,4 +48,3 @@ def __getattr__(name: str):
         return value
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-

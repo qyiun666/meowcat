@@ -11,7 +11,6 @@ breaking the biology ↔ protocols circular dependency.
 This file has zero third-party dependencies, zero meowagent imports.
 """
 
-
 from __future__ import annotations
 
 from enum import Enum
@@ -30,10 +29,12 @@ class ImplementationStyle(str, Enum):
 
     器官 = 插槽 (入口出口 Protocol), 实现 = 插头 (任选风格).
     """
+
     ALGORITHM = "algorithm"
     RULE = "rule"
     MODEL = "model"
     HYBRID = "hybrid"
+
 
 # -- Node category constants -----------------------------------------------
 
@@ -86,8 +87,15 @@ SENSORS: Final[tuple[Organ, ...]] = (EARS, EYES, WHISKERS)
 VOICES: Final[tuple[Organ, ...]] = (MOUTH, PURR, TAIL)
 EFFECTORS: Final[tuple[Organ, ...]] = (PAWS, MOUTH, PURR, TAIL)
 BRAIN_REGIONS: Final[tuple[Organ, ...]] = (
-    THALAMUS, HIPPOCAMPUS, CEREBRUM, CEREBELLUM,
-    AMYGDALA, FRONTAL, HYPOTHALAMUS, CORTEX, BRAINSTEM,
+    THALAMUS,
+    HIPPOCAMPUS,
+    CEREBRUM,
+    CEREBELLUM,
+    AMYGDALA,
+    FRONTAL,
+    HYPOTHALAMUS,
+    CORTEX,
+    BRAINSTEM,
 )
 
 # -- Organ name → coordinate reverse mapping ----------------------------------
@@ -124,19 +132,40 @@ ORGAN_BY_NAME: Final[dict[str, Organ]] = {
 __all__ = [
     "ImplementationStyle",
     # category constants
-    "BRAIN", "SENSE", "VOICE", "STORAGE", "GROWTH",
+    "BRAIN",
+    "SENSE",
+    "VOICE",
+    "STORAGE",
+    "GROWTH",
     # brain region coordinates
-    "THALAMUS", "HIPPOCAMPUS", "CEREBRUM", "CEREBELLUM", "AMYGDALA",
-    "FRONTAL", "HYPOTHALAMUS", "CORTEX", "BRAINSTEM",
+    "THALAMUS",
+    "HIPPOCAMPUS",
+    "CEREBRUM",
+    "CEREBELLUM",
+    "AMYGDALA",
+    "FRONTAL",
+    "HYPOTHALAMUS",
+    "CORTEX",
+    "BRAINSTEM",
     # sense coordinates
-    "EARS", "EYES", "WHISKERS", "PAWS",
+    "EARS",
+    "EYES",
+    "WHISKERS",
+    "PAWS",
     # voice coordinates
-    "MOUTH", "PURR", "TAIL",
+    "MOUTH",
+    "PURR",
+    "TAIL",
     # growth coordinates
-    "ANOMALY_GROWTH", "CORRECTION_GROWTH", "CRYSTALLIZER", "ROLE_EMERGENCE",
+    "ANOMALY_GROWTH",
+    "CORRECTION_GROWTH",
+    "CRYSTALLIZER",
+    "ROLE_EMERGENCE",
     # aggregate tuples
-    "SENSORS", "VOICES", "EFFECTORS", "BRAIN_REGIONS",
+    "SENSORS",
+    "VOICES",
+    "EFFECTORS",
+    "BRAIN_REGIONS",
     # Organ name → coordinate
     "ORGAN_BY_NAME",
 ]
-

@@ -7,19 +7,20 @@ Every cat has paws, and paws can execute tools. The framework defines what a too
 how to register, and how to execute. The application layer provides concrete tool implementations.
 """
 
-
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Awaitable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class RiskLevel(Enum):
     """Tool execution risk level."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -28,6 +29,7 @@ class RiskLevel(Enum):
 @dataclass
 class ToolSpec:
     """Tool spec — framework-layer common format."""
+
     name: str
     description: str
     parameters: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -165,8 +167,7 @@ class ToolRegistry:
     def register(self, tool: Tool) -> None:
         """Register a tool. Same-named tool will be overwritten."""
         if tool.name in self._tools:
-            logger.warning(
-                "Tool '%s' already registered, overwriting", tool.name)
+            logger.warning("Tool '%s' already registered, overwriting", tool.name)
         self._tools[tool.name] = tool
         cat = tool.spec.category
         self._by_category.setdefault(cat, []).append(tool.name)
@@ -220,4 +221,3 @@ class ToolRegistry:
             tool.disable()
             return True
         return False
-

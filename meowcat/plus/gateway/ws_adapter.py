@@ -9,17 +9,18 @@ Supports text frame send/receive + streaming push.
 Moved from ``meowcat.gateway`` to ``meowcat.plus.gateway`` in v1.2.22 as an optional battery.
 """
 
-
 from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import hashlib
 import json
 import struct
-from typing import Any, AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
-from meowcat.gateway.protocol import IoAdapterProtocol, SignalContext
+from meowcat.gateway.protocol import SignalContext
 
 # WebSocket frame opcodes
 _OP_TEXT = 0x1
@@ -70,21 +71,21 @@ def _decode_frame(data: bytes) -> tuple[int, bytes, bool]:
 
     offset = 2
     if length == 126:
-        length = struct.unpack(">H", data[offset:offset + 2])[0]
+        length = struct.unpack(">H", data[offset : offset + 2])[0]
         offset += 2
     elif length == 127:
-        length = struct.unpack(">Q", data[offset:offset + 8])[0]
+        length = struct.unpack(">Q", data[offset : offset + 8])[0]
         offset += 8
 
     if masked:
-        mask_key = data[offset:offset + 4]
+        mask_key = data[offset : offset + 4]
         offset += 4
-        payload = bytearray(data[offset:offset + length])
+        payload = bytearray(data[offset : offset + length])
         for i in range(len(payload)):
             payload[i] ^= mask_key[i % 4]
         return opcode, bytes(payload), fin
     else:
-        return opcode, data[offset:offset + length], fin
+        return opcode, data[offset : offset + length], fin
 
 
 class WsAdapter:
@@ -114,14 +115,18 @@ class WsAdapter:
             await self._handle_connection(reader, writer)
 
         self._server = await asyncio.start_server(
-            handler, host=self.host, port=self.port,
+            handler,
+            host=self.host,
+            port=self.port,
         )
 
         async with self._server:
             await self._server.serve_forever()
 
     async def _handle_connection(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         """Handle WebSocket connection: handshake → message loop."""
         session_id = f"ws-{id(writer)}"
@@ -187,14 +192,12 @@ class WsAdapter:
                         result = await self._on_stream(text, ctx)
                         if result is not None:
                             async for chunk_text in result:
-                                writer.write(_encode_frame(
-                                    chunk_text.encode("utf-8")))
+                                writer.write(_encode_frame(chunk_text.encode("utf-8")))
                                 await writer.drain()
                         else:
                             reply = await self._on_message(text, ctx)
                             if reply:
-                                writer.write(_encode_frame(
-                                    reply.encode("utf-8")))
+                                writer.write(_encode_frame(reply.encode("utf-8")))
                                 await writer.drain()
                         writer.write(_encode_frame(b"[DONE]"))
                         await writer.drain()
@@ -203,10 +206,8 @@ class WsAdapter:
             pass
         finally:
             self._connections.pop(session_id, None)
-            try:
+            with contextlib.suppress(OSError):
                 writer.close()
-            except OSError:
-                pass
 
     @staticmethod
     def _parse_http_headers(request_text: str) -> dict[str, str]:
@@ -245,9 +246,11 @@ class WsAdapter:
         """Send complete message frame."""
         writer = self._connections.get(session_id)
         if writer:
-            writer.write(_encode_frame(
-                json.dumps({"reply": output}).encode("utf-8"),
-            ))
+            writer.write(
+                _encode_frame(
+                    json.dumps({"reply": output}).encode("utf-8"),
+                )
+            )
             await writer.drain()
 
     async def stream_chunk(self, chunk: str, session_id: str, **meta: Any) -> None:
@@ -280,4 +283,3 @@ class WsAdapter:
 
 
 __all__ = ["WsAdapter"]
-

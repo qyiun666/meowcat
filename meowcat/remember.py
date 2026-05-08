@@ -40,7 +40,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # ── Configuration ─────────────────────────────────────────────────────
 
 
@@ -109,9 +108,7 @@ class RememberPolicy:
             recent_window_size=recent_window_size,
             noise_patterns=list(noise_patterns or []),
         )
-        self._noise_re: list[re.Pattern[str]] = [
-            re.compile(p) for p in self._config.noise_patterns
-        ]
+        self._noise_re: list[re.Pattern[str]] = [re.compile(p) for p in self._config.noise_patterns]
         # Internal tracking: list of (timestamp, user_msg, ai_reply)
         self._history: list[tuple[float, str, str]] = []
 
@@ -161,7 +158,7 @@ class RememberPolicy:
         self._history.append((time.monotonic(), user_msg, ai_reply))
         # Trim history to recent window
         if len(self._history) > self._config.recent_window_size:
-            self._history = self._history[-self._config.recent_window_size:]
+            self._history = self._history[-self._config.recent_window_size :]
 
     # ── Pre-filter (overridable) ───────────────────────────────────
 
@@ -178,11 +175,7 @@ class RememberPolicy:
             return False
 
         # Noise pattern matching
-        for pat in self._noise_re:
-            if pat.search(combined):
-                return False
-
-        return True
+        return all(not pat.search(combined) for pat in self._noise_re)
 
     # ── Tier evaluation (overridable) ──────────────────────────────
 
@@ -233,7 +226,9 @@ class RememberPolicy:
     # ── Similarity helpers ─────────────────────────────────────────
 
     def _count_similar(
-        self, user_msg: str, ai_reply: str,
+        self,
+        user_msg: str,
+        ai_reply: str,
     ) -> tuple[int, float]:
         """Count similar entries in recent history.
 
@@ -251,8 +246,10 @@ class RememberPolicy:
 
     def _is_similar(
         self,
-        msg1: str, reply1: str,
-        msg2: str, reply2: str,
+        msg1: str,
+        reply1: str,
+        msg2: str,
+        reply2: str,
     ) -> bool:
         """Check whether two exchanges are considered similar.
 

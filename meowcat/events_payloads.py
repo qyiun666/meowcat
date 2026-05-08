@@ -21,35 +21,41 @@ from typing import Any, TypedDict
 
 from meowcat.wiring import Organ
 
-
 # -- Lifecycle payloads --------------------------------------------------
+
 
 class LifecycleStartPayload(TypedDict):
     """Payload for ``Lifecycle.START`` event."""
+
     cat: Any  # CatBase — circular import avoided
 
 
 class LifecycleShutdownPayload(TypedDict):
     """Payload for ``Lifecycle.SHUTDOWN`` event."""
+
     cat: Any  # CatBase — circular import avoided
 
 
 class PerceiveStartPayload(TypedDict):
     """Payload for ``Lifecycle.PERCEIVE_START`` event."""
+
     input: Any
     reflex_name: str
 
 
 class PerceiveEndPayload(TypedDict):
     """Payload for ``Lifecycle.PERCEIVE_END`` event."""
+
     reflex_name: str
     reply: Any
 
 
 # -- Nerve signal payload ------------------------------------------------
 
+
 class NerveSignalPayload(TypedDict):
     """Payload for ``NerveEvent.SIGNAL`` event."""
+
     from_: Organ  # 'from' is reserved
     to: Organ
     method: str
@@ -57,66 +63,80 @@ class NerveSignalPayload(TypedDict):
 
 # -- Locate (Thalamus) payloads ------------------------------------------
 
+
 class LocatePrePayload(TypedDict):
     """Payload for ``LocateEvent.PRE`` event."""
+
     msg: str
     session_id: str
 
 
 class LocatePostPayload(TypedDict):
     """Payload for ``LocateEvent.POST`` event."""
+
     msg: str
     result: Any
 
 
 class RouteDecidedPayload(TypedDict):
     """Payload for ``LocateEvent.ROUTE_DECIDED`` event."""
+
     route: str
     confidence: float
 
 
 # -- Remember (Hippocampus) payloads -------------------------------------
 
+
 class RememberPrePayload(TypedDict, total=False):
     """Payload for ``RememberEvent.PRE`` event."""
+
     msg: str
     session_id: str
 
 
 class RememberPostPayload(TypedDict, total=False):
     """Payload for ``RememberEvent.POST`` event."""
+
     msg: str
     result: Any
 
 
 class CompressPrePayload(TypedDict, total=False):
     """Payload for ``RememberEvent.COMPRESS_PRE`` event."""
+
     pass
 
 
 class CompressPostPayload(TypedDict, total=False):
     """Payload for ``RememberEvent.COMPRESS_POST`` event."""
+
     pass
 
 
 # -- Orchestrate (Loop B) payloads ---------------------------------------
 
+
 class OrchestrateStartPayload(TypedDict):
     """Payload for ``OrchestrateEvent.START`` event."""
+
     orchestration_id: str
     plan: Any
 
 
 class OrchestrateEndPayload(TypedDict):
     """Payload for ``OrchestrateEvent.END`` event."""
+
     orchestration_id: str
     report: Any
 
 
 # -- Growth / Crystallization (Loop C) payloads --------------------------
 
+
 class GrowthAnomalyPayload(TypedDict, total=False):
     """Payload for ``GrowthEvent.ANOMALY`` event."""
+
     anomaly_type: str
     detail: str
     severity: str
@@ -124,26 +144,31 @@ class GrowthAnomalyPayload(TypedDict, total=False):
 
 class GrowthCorrectionPayload(TypedDict, total=False):
     """Payload for ``GrowthEvent.CORRECTION`` event."""
+
     correction_type: str
     detail: str
 
 
 class CrystallizePayload(TypedDict, total=False):
     """Payload for ``GrowthEvent.CRYSTALLIZE`` event."""
+
     skill_name: str
     skill_content: str
 
 
 class RoleEmergePayload(TypedDict, total=False):
     """Payload for ``GrowthEvent.ROLE_EMERGE`` event."""
+
     role: str
     confidence: float
 
 
 # -- Kitten lifecycle payloads -------------------------------------------
 
+
 class KittenSpawnedPayload(TypedDict):
     """Payload for ``KittenEvent.SPAWNED`` event."""
+
     kitten_id: str
     parent_id: str
     task: Any
@@ -152,75 +177,90 @@ class KittenSpawnedPayload(TypedDict):
 
 class KittenExecutingPayload(TypedDict):
     """Payload for ``KittenEvent.EXECUTING`` event."""
+
     kitten_id: str
     task_id: str
 
 
 class KittenCompletedPayload(TypedDict):
     """Payload for ``KittenEvent.COMPLETED`` event."""
+
     kitten_id: str
     result: Any
 
 
 class KittenStuckPayload(TypedDict):
     """Payload for ``KittenEvent.STUCK`` event."""
+
     kitten_id: str
     error_detail: str
 
 
 class KittenDismissedPayload(TypedDict):
     """Payload for ``KittenEvent.DISMISSED`` event."""
+
     kitten_id: str
 
 
 class KittenMergeAbsorbedPayload(TypedDict):
     """Payload for ``KittenEvent.MERGE_ABSORBED`` event."""
+
     kitten_id: str
     proposal: Any
 
 
 # -- Self / Reflection payloads ------------------------------------------
 
+
 class SelfSnapshotPayload(TypedDict):
     """Payload for ``SelfEvent.SNAPSHOT`` event."""
+
     cat: Any  # CatBase
     snapshot: Any  # SelfSnapshot
 
 
 class SelfReflectPayload(TypedDict):
     """Payload for ``SelfEvent.REFLECT`` event."""
+
     cat: Any  # CatBase
     result: Any
 
 
 # -- PinealGland fusion payloads -----------------------------------------
 
+
 class FusionSelfPayload(TypedDict):
     """Payload for ``FusionEvent.FUSE_SELF`` event."""
+
     insights: list[Any]
     fusion_id: str
 
 
 class FusionColonyPayload(TypedDict):
     """Payload for ``FusionEvent.FUSE_COLONY`` event."""
+
     insights: list[Any]
     fusion_id: str
 
 
 class FusionTriggerStartPayload(TypedDict, total=False):
     """Payload for ``FusionEvent.TRIGGER_START`` event."""
+
     reason: str
 
 
 class FusionTriggerEndPayload(TypedDict):
     """Payload for ``FusionEvent.TRIGGER_END`` event."""
+
     insights_count: int
 
 
 # -- Telemetry / Observability payloads (v1.2.21) -------------------
 
+
 class TelemetrySpanPayload(TypedDict):
     """Payload for ``TelemetryEvent.SPAN`` event."""
+
     trace_id: str
     from_: Organ  # 'from' is reserved
     to: Organ
@@ -280,20 +320,36 @@ EVENT_PAYLOAD_MAP: dict[str, type] = {
 
 
 __all__ = [
-    "LifecycleStartPayload", "LifecycleShutdownPayload",
-    "PerceiveStartPayload", "PerceiveEndPayload",
+    "LifecycleStartPayload",
+    "LifecycleShutdownPayload",
+    "PerceiveStartPayload",
+    "PerceiveEndPayload",
     "NerveSignalPayload",
-    "LocatePrePayload", "LocatePostPayload", "RouteDecidedPayload",
-    "RememberPrePayload", "RememberPostPayload",
-    "CompressPrePayload", "CompressPostPayload",
-    "OrchestrateStartPayload", "OrchestrateEndPayload",
-    "GrowthAnomalyPayload", "GrowthCorrectionPayload",
-    "CrystallizePayload", "RoleEmergePayload",
-    "KittenSpawnedPayload", "KittenExecutingPayload", "KittenCompletedPayload",
-    "KittenStuckPayload", "KittenDismissedPayload", "KittenMergeAbsorbedPayload",
-    "SelfSnapshotPayload", "SelfReflectPayload",
-    "FusionSelfPayload", "FusionColonyPayload",
-    "FusionTriggerStartPayload", "FusionTriggerEndPayload",
+    "LocatePrePayload",
+    "LocatePostPayload",
+    "RouteDecidedPayload",
+    "RememberPrePayload",
+    "RememberPostPayload",
+    "CompressPrePayload",
+    "CompressPostPayload",
+    "OrchestrateStartPayload",
+    "OrchestrateEndPayload",
+    "GrowthAnomalyPayload",
+    "GrowthCorrectionPayload",
+    "CrystallizePayload",
+    "RoleEmergePayload",
+    "KittenSpawnedPayload",
+    "KittenExecutingPayload",
+    "KittenCompletedPayload",
+    "KittenStuckPayload",
+    "KittenDismissedPayload",
+    "KittenMergeAbsorbedPayload",
+    "SelfSnapshotPayload",
+    "SelfReflectPayload",
+    "FusionSelfPayload",
+    "FusionColonyPayload",
+    "FusionTriggerStartPayload",
+    "FusionTriggerEndPayload",
     "TelemetrySpanPayload",
     "EVENT_PAYLOAD_MAP",
 ]

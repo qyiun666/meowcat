@@ -9,7 +9,6 @@ not concerned with organs / pathways / reflexes.
 Run: ``python -m meowcat.examples.03_event_bus_only``
 """
 
-
 from __future__ import annotations
 
 import anyio
@@ -41,4 +40,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     anyio.run(main)
-

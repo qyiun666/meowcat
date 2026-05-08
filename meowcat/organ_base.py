@@ -41,7 +41,6 @@ can continue explicitly writing ``self.cat.signal(...)`` with no issues.
             wv = await self._signal_to(CORTEX, "synthesize", max_tokens=200)
 """
 
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -93,7 +92,11 @@ class OrganMixin:
             OrganNotMountedError: target organ not mounted.
         """
         return await self._cat_ref.signal(
-            self._self_coord, to, method, *args, **kwargs,
+            self._self_coord,
+            to,
+            method,
+            *args,
+            **kwargs,
         )
 
     async def _probe(self, to: Organ) -> dict[str, Any]:
@@ -110,4 +113,3 @@ class OrganMixin:
 
 
 __all__ = ["OrganMixin"]
-

@@ -87,9 +87,7 @@ class CompressionManager:
         max_tokens: int = 4000,
         chars_per_token: float = 4.0,
         summarizer: (
-            Callable[[list[dict[str, str]], int],
-                     Awaitable[list[dict[str, str]]]]
-            | None
+            Callable[[list[dict[str, str]], int], Awaitable[list[dict[str, str]]]] | None
         ) = None,
     ) -> None:
         self._config = CompressionConfig(
@@ -148,7 +146,7 @@ class CompressionManager:
         max_tokens: int,
     ) -> list[dict[str, str]]:
         """Light tier: pass-through (no compression)."""
-        return list(dict(m) for m in messages)
+        return [dict(m) for m in messages]
 
     def _medium_compress(
         self,
@@ -193,8 +191,7 @@ class CompressionManager:
                 return await self._summarizer(messages, max_tokens)
             except Exception:
                 logger.warning(
-                    "_heavy_compress: summarizer failed, "
-                    "falling back to medium compression",
+                    "_heavy_compress: summarizer failed, falling back to medium compression",
                     exc_info=True,
                 )
         return self._medium_compress(messages, max_tokens)

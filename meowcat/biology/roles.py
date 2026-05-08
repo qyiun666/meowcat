@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import time as _time
 from collections import Counter
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from meowcat.pluggable import Pluggable
 
@@ -91,7 +91,8 @@ class CollectiveEmergence(Pluggable):
 
     @staticmethod
     def _default_detect(
-        events: list[dict[str, Any]], min_events: int,
+        events: list[dict[str, Any]],
+        min_events: int,
     ) -> list[dict[str, Any]]:
         """Default role detector — keyword + cat_uid clustering."""
         # Group by cat_uid → reasons
@@ -108,19 +109,24 @@ class CollectiveEmergence(Pluggable):
             counter = Counter(reasons)
             top_reason, top_count = counter.most_common(1)[0]
             role = _infer_role(top_reason)
-            roles.append({
-                "cat_uid": cid,
-                "role": role,
-                "confidence": min(top_count / max(len(reasons), 1), 1.0),
-                "evidence_count": len(reasons),
-                "top_reason": top_reason,
-            })
+            roles.append(
+                {
+                    "cat_uid": cid,
+                    "role": role,
+                    "confidence": min(top_count / max(len(reasons), 1), 1.0),
+                    "evidence_count": len(reasons),
+                    "top_reason": top_reason,
+                }
+            )
 
         # Persist detected roles to growth namespace
         return roles
 
     async def record_pattern(
-        self, cat_uid: str, pattern: str, evidence: str = "",
+        self,
+        cat_uid: str,
+        pattern: str,
+        evidence: str = "",
     ) -> str:
         """Record a behaviour pattern for role emergence in colony storage.
 
@@ -134,17 +140,22 @@ class CollectiveEmergence(Pluggable):
         """
         ts = str(_time.time())
         key = f"{_ROLE_PREFIX}{ts}"
-        record = json.dumps({
-            "cat_uid": cat_uid,
-            "pattern": pattern,
-            "evidence": evidence[:500],
-            "ts": ts,
-        }, ensure_ascii=False)
+        record = json.dumps(
+            {
+                "cat_uid": cat_uid,
+                "pattern": pattern,
+                "evidence": evidence[:500],
+                "ts": ts,
+            },
+            ensure_ascii=False,
+        )
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
 
     async def list_patterns(
-        self, limit: int = 50, cat_uid: str | None = None,
+        self,
+        limit: int = 50,
+        cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List role patterns, newest first.
 
@@ -174,6 +185,7 @@ class CollectiveEmergence(Pluggable):
     async def diagnose(self) -> dict[str, Any]:
         """Return a diagnostic snapshot."""
         from meowcat.biology.growth import CollectiveGrowth
+
         growth = CollectiveGrowth(self._colony)
         counts = await growth.count()
         patterns = await self.list_patterns(limit=5)
@@ -213,4 +225,3 @@ def _infer_role(reason: str) -> str:
 
 
 __all__ = ["CollectiveEmergence"]
-

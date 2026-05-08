@@ -17,7 +17,6 @@ P-02 philosophy: minimal code. OrganHost does no events, no wiring, no protocol
 lookup — those are the responsibility of Nervous / assembly.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -54,7 +53,10 @@ class OrganHost:
         """
         if protocol is not None and not isinstance(organ, protocol):
             raise OrganProtocolMismatchError(
-                category, name, protocol, organ,
+                category,
+                name,
+                protocol,
+                organ,
             )
         self._organs.setdefault(category, {})[name] = organ
 
@@ -95,7 +97,8 @@ class OrganHost:
         return result
 
     def assert_organs_mounted(
-        self, required: list[tuple[str, str]],
+        self,
+        required: list[tuple[str, str]],
     ) -> None:
         """Assert required organs are mounted, otherwise raises :class:`OrganNotMountedError`.
 
@@ -112,4 +115,3 @@ class OrganHost:
 
 
 __all__ = ["OrganHost"]
-

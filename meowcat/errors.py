@@ -6,7 +6,6 @@
 Only defines framework-internal error types, no business exceptions.
 """
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -43,9 +42,7 @@ class StageTimeoutError(MeowCatError):
     def __init__(self, stage_name: str, timeout: float) -> None:
         self.stage_name = stage_name
         self.timeout = timeout
-        super().__init__(
-            f"Stage '{stage_name}' timed out after {timeout}s"
-        )
+        super().__init__(f"Stage '{stage_name}' timed out after {timeout}s")
 
 
 # -- v0.5.1 added: nervous system exceptions ----------------------------------
@@ -86,10 +83,7 @@ class ReflexPathInvalidError(MeowCatError):
         self.reflex_name = reflex_name
         self.hop = hop
         frm, to = hop
-        super().__init__(
-            f"Reflex '{reflex_name}' hop illegal: "
-            f"{frm[0]}/{frm[1]} → {to[0]}/{to[1]}"
-        )
+        super().__init__(f"Reflex '{reflex_name}' hop illegal: {frm[0]}/{frm[1]} → {to[0]}/{to[1]}")
 
 
 class NoReflexMatchedError(MeowCatError):
@@ -106,8 +100,7 @@ class StandaloneCatError(MeowCatError):
     def __init__(self, cat_uid: str) -> None:
         self.cat_uid = cat_uid
         super().__init__(
-            f"Cat '{cat_uid}' must belong to a Colony — "
-            f"pass container=colony to CatBase()"
+            f"Cat '{cat_uid}' must belong to a Colony — pass container=colony to CatBase()"
         )
 
 
@@ -189,4 +182,3 @@ __all__ = [
     "OrganDelegateError",
     "CircuitOpenError",
 ]
-

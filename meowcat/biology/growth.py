@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import time as _time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from meowcat.pluggable import Pluggable
 
@@ -78,7 +78,8 @@ class CollectiveGrowth(Pluggable):
         """
         # Strategy hook — can veto recording
         async for _name, r in self._run_plugs(
-            "strategy", cat_uid,
+            "strategy",
+            cat_uid,
             {"type": "anomaly", "reason": reason, "confidence": confidence},
         ):
             if r is False:
@@ -86,14 +87,17 @@ class CollectiveGrowth(Pluggable):
 
         ts = str(_time.time())
         key = f"{_ANOMALY_PREFIX}{ts}"
-        record = json.dumps({
-            "cat_uid": cat_uid,
-            "reason": reason,
-            "snippet": snippet[:500],
-            "confidence": confidence,
-            "phase": phase,
-            "ts": ts,
-        }, ensure_ascii=False)
+        record = json.dumps(
+            {
+                "cat_uid": cat_uid,
+                "reason": reason,
+                "snippet": snippet[:500],
+                "confidence": confidence,
+                "phase": phase,
+                "ts": ts,
+            },
+            ensure_ascii=False,
+        )
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
 
@@ -117,7 +121,8 @@ class CollectiveGrowth(Pluggable):
         """
         # Strategy hook — can veto recording
         async for _name, r in self._run_plugs(
-            "strategy", cat_uid,
+            "strategy",
+            cat_uid,
             {"type": "correction", "wrong": wrong, "topic": topic},
         ):
             if r is False:
@@ -125,20 +130,25 @@ class CollectiveGrowth(Pluggable):
 
         ts = str(_time.time())
         key = f"{_CORRECTION_PREFIX}{ts}"
-        record = json.dumps({
-            "cat_uid": cat_uid,
-            "wrong": wrong[:500],
-            "correct": correct[:500],
-            "topic": topic,
-            "ts": ts,
-        }, ensure_ascii=False)
+        record = json.dumps(
+            {
+                "cat_uid": cat_uid,
+                "wrong": wrong[:500],
+                "correct": correct[:500],
+                "topic": topic,
+                "ts": ts,
+            },
+            ensure_ascii=False,
+        )
         await self._colony.ns_set(_GROWTH_NS, key, record)
         return key
 
     # -- Query ---------------------------------------------------------
 
     async def list_anomalies(
-        self, limit: int = 20, cat_uid: str | None = None,
+        self,
+        limit: int = 20,
+        cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List recent anomalies, newest first.
 
@@ -166,7 +176,9 @@ class CollectiveGrowth(Pluggable):
         return results[:limit]
 
     async def list_corrections(
-        self, limit: int = 20, cat_uid: str | None = None,
+        self,
+        limit: int = 20,
+        cat_uid: str | None = None,
     ) -> list[dict[str, Any]]:
         """List recent corrections, newest first.
 
@@ -213,4 +225,3 @@ class CollectiveGrowth(Pluggable):
 
 
 __all__ = ["CollectiveGrowth"]
-
