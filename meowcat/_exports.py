@@ -101,7 +101,8 @@ __all__ = [
     "FederationTransport", "TCPSocketTransport", "RedisPubSubTransport",
     # v1.0.10 Gateway
     "Gateway", "SignalContext",
-    "IoAdapterProtocol", "GatewayProtocol",
+    "IoAdapterProtocol", "FrontDeskProtocol", "GatewayProtocol",
+    "DefaultFrontDesk",
     "HttpAdapter", "WsAdapter", "WebhookAdapter", "CliAdapter", "IpcAdapter",
     # v1.0.13 Signal Middleware
     "SignalCall", "SignalMiddleware",
@@ -461,7 +462,9 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "Gateway":           ("meowcat.gateway", "Gateway"),
     "SignalContext":     ("meowcat.gateway.protocol", "SignalContext"),
     "IoAdapterProtocol": ("meowcat.gateway.protocol", "IoAdapterProtocol"),
+    "FrontDeskProtocol": ("meowcat.gateway.protocol", "FrontDeskProtocol"),
     "GatewayProtocol":   ("meowcat.gateway.protocol", "GatewayProtocol"),
+    "DefaultFrontDesk":  ("meowcat.gateway.front_desk", "DefaultFrontDesk"),
     "HttpAdapter":       ("meowcat.plus.gateway", "HttpAdapter"),
     "WsAdapter":         ("meowcat.plus.gateway", "WsAdapter"),
     "WebhookAdapter":    ("meowcat.plus.gateway", "WebhookAdapter"),

@@ -169,7 +169,7 @@ class LifecycleMixin:
 
         Examples:
 
-            >>> cat.on_start(lambda c: c.gateway.start(c))
+            >>> cat.on_start(lambda c: c.colony.gateway.start())
         """
         self._start_hooks.append(hook)  # type: ignore[attr-defined]
 
@@ -188,7 +188,7 @@ class LifecycleMixin:
 
         Examples:
 
-            >>> cat.on_shutdown(lambda c: c.gateway.stop())
+            >>> cat.on_shutdown(lambda c: c.colony.gateway.stop())
         """
         self._shutdown_hooks.append(hook)  # type: ignore[attr-defined]
 

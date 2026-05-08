@@ -1,10 +1,10 @@
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-"""meowcat Gateway protocol layer — I/O abstraction between cat and outside world.
+"""meowcat Gateway protocol layer — I/O abstraction between colony and outside world.
 
-Gateway = the cat's skin, all protocol adapters plug into the same Gateway.
-1 cat : 1 Gateway : N Adapters.
+Gateway = the colony's skin, all protocol adapters plug into the same Gateway.
+1 Colony : 1 Gateway : N Adapters.
 """
 
 
@@ -30,6 +30,14 @@ class SignalContext:
 
     user_id: str = "unknown"
     """External user identifier."""
+
+    target_cat: str | None = None
+    """Target cat uid within the colony. None = delegate to FrontDesk.
+
+    Set by Adapters that know which cat to route to (e.g. a Feishu bot
+    always routes to analyst).  When None, Gateway delegates to FrontDesk
+    for routing decision.
+    """
 
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -78,8 +86,37 @@ class IoAdapterProtocol(Protocol):
 
 
 @runtime_checkable
+class FrontDeskProtocol(Protocol):
+    """FrontDesk protocol — Gateway's built-in receptionist.
+
+    All external messages flow through the FrontDesk.  When ``ctx.target_cat``
+    is set, the default implementation forwards to that cat via
+    ``colony.get_cat().perceive()``.  When unset, returns a placeholder reply.
+
+    Application layer can subclass :class:`DefaultFrontDesk` or implement
+    this protocol directly to add security gates, audit logging, rate
+    limiting, or custom routing logic.
+    """
+
+    async def route(
+        self, text: str, ctx: SignalContext, colony: Any,
+    ) -> str | None:
+        """Route an external message to a cat or return a placeholder reply.
+
+        Args:
+            text: Incoming message text.
+            ctx: Signal context (session_id, platform, target_cat, etc.).
+            colony: The Colony instance owning all cats.
+
+        Returns:
+            Reply string, or None for no reply.
+        """
+        ...
+
+
+@runtime_checkable
 class GatewayProtocol(Protocol):
-    """Gateway protocol — sole external I/O entry. 1:1 bound to one cat."""
+    """Gateway protocol — sole external I/O entry. 1:1 bound to one colony."""
 
     async def start(self) -> None:
         """Start gateway, begin receiving messages from all Adapters."""
@@ -98,7 +135,10 @@ class GatewayProtocol(Protocol):
         ...
 
 
-__all__ = ["SignalContext", "IoAdapterProtocol", "GatewayProtocol", "HTTP_REASONS"]
+__all__ = [
+    "SignalContext", "IoAdapterProtocol", "FrontDeskProtocol",
+    "GatewayProtocol", "HTTP_REASONS",
+]
 
 
 # RFC 7230 HTTP reason phrases — shared by all HTTP-based adapters

@@ -1,12 +1,16 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat Gateway subsystem — the cat's skin (sole external I/O entry/exit).
+"""meowcat Gateway subsystem — the colony's skin (sole external I/O entry/exit).
 
-Gateway is the only I/O abstraction layer between the cat and the outside world.
+Gateway is the only I/O abstraction layer between the colony and the outside world.
 All protocol adapters (HTTP / WebSocket / Webhook / CLI / IPC) plug into the same Gateway.
 
-**1 cat : 1 Gateway : N Adapters.**
+**1 Colony : 1 Gateway : N Adapters.**
+
+All messages pass through the FrontDesk (a Protocol + Pluggable receptionist).
+When ``ctx.target_cat`` is set, the default FrontDesk forwards to that cat.
+When unset, it returns a placeholder reply.
 
 Concrete adapters (HttpAdapter, WsAdapter, etc.) moved to ``meowcat.plus.gateway``
 in v1.2.22 as optional batteries. Use::
@@ -15,13 +19,13 @@ in v1.2.22 as optional batteries. Use::
 
 Usage example::
 
-    from meowcat import create_cat, Gateway
-    from meowcat.plus.gateway import HttpAdapter, CliAdapter
+    from meowcat import Colony, Gateway
+    from meowcat.plus.gateway import HttpAdapter
+    from meowcat.gateway.front_desk import DefaultFrontDesk
 
-    cat = create_cat("my-cat", cerebrum=MyBrain())
-    gw = Gateway(cat)
+    colony = Colony("my-colony")
+    gw = Gateway(colony)  # uses DefaultFrontDesk
     gw.mount_adapter(HttpAdapter(port=8000))
-    gw.mount_adapter(CliAdapter())
     await gw.start()  # blocking, all Adapters run in parallel
 """
 
@@ -31,25 +35,42 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict
 
+from meowcat.gateway.front_desk import DefaultFrontDesk
 from meowcat.gateway.protocol import (
+    FrontDeskProtocol,
     IoAdapterProtocol,
     GatewayProtocol,
     SignalContext,
 )
 
 if TYPE_CHECKING:
-    from meowcat.assembly import CatBase
+    from meowcat.colony import Colony
 
 
 class Gateway:
-    """The cat's skin — sole external I/O entry/exit.
+    """The colony's skin — sole external I/O entry/exit.
 
-    Not an organ (not mounted to OrganHost); an independent subsystem composing with CatBase, not inheriting.
+    Not an organ (not mounted to OrganHost); an independent subsystem
+    composing with Colony, not inheriting.
+
+    All messages pass through the FrontDesk (Protocol + Pluggable).
+    Application layer swaps ``front_desk`` to add security gates,
+    audit logging, rate limiting, or custom routing.
     """
 
-    def __init__(self, cat: CatBase) -> None:
-        self.cat = cat
+    def __init__(
+        self,
+        colony: Colony,
+        front_desk: FrontDeskProtocol | None = None,
+    ) -> None:
+        self.colony = colony
+        self._front_desk: FrontDeskProtocol = front_desk or DefaultFrontDesk()
         self._adapters: Dict[str, IoAdapterProtocol] = {}
+
+    @property
+    def front_desk(self) -> FrontDeskProtocol:
+        """The FrontDesk receptionist (read-only after construction)."""
+        return self._front_desk
 
     # -- Adapter management --------------------------------------------------
 
@@ -85,36 +106,33 @@ class Gateway:
         for adapter in self._adapters.values():
             await adapter.stop()
 
-    # -- Internal callbacks (Adapter → cat nervous system) -----------------------------
+    # -- Internal callbacks (Adapter → FrontDesk → cat nervous system) --------
 
     async def _on_message(self, text: str, ctx: SignalContext) -> str | None:
-        """Receive external message → inject into cat → return reply."""
-        async for event in self.cat.perceive(text, context=ctx):
-            if event.kind == "output":
-                return event.content
-            if event.kind == "short_circuit" and event.reply:
-                return event.reply
-        return None
+        """Receive external message → FrontDesk.route() → return reply."""
+        return await self._front_desk.route(text, ctx, self.colony)
 
     async def _on_stream(
         self, text: str, ctx: SignalContext,
     ) -> AsyncIterator[str] | None:
-        """Streaming version — iterate event by event.
+        """Streaming version — currently delegates to non-streaming route().
 
-        Concrete behavior depends on how Purr.stream() / Mouth.speak() yield
-        in Pipeline Stages. This only iterates perceive() results.
+        Future: FrontDesk may gain a ``route_stream()`` method for
+        streaming-to-streaming pass-through.
         """
-        async for event in self.cat.perceive(text, context=ctx):
-            if event.kind == "output":
-                yield event.content
-            elif event.kind == "thinking":
-                yield event.content
+        reply = await self._front_desk.route(text, ctx, self.colony)
+        if reply is not None:
+            async def _wrap():
+                yield reply
+            return _wrap()
+        return None
 
 
 __all__ = [
     "Gateway",
     "SignalContext",
     "IoAdapterProtocol",
+    "FrontDeskProtocol",
     "GatewayProtocol",
 ]
 

@@ -30,7 +30,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
+from meowcat.testing import make_cat, make_test_colony
 from meowcat.plus.gateway import (
     CliAdapter,
     HttpAdapter,
@@ -39,7 +39,9 @@ from meowcat.plus.gateway import (
     WsAdapter,
 )
 from meowcat.gateway import Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
 from meowcat.gateway.protocol import (
+    FrontDeskProtocol,
     IoAdapterProtocol,
     GatewayProtocol,
     SignalContext,
@@ -91,7 +93,8 @@ class TestProtocols:
     def test_gateway_is_gateway_protocol(self) -> None:
         """Gateway 实例满足 GatewayProtocol。"""
         cat = make_cat("test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        colony = cat.container
+        gw = Gateway(colony)
         assert isinstance(gw, GatewayProtocol)
 
     def test_cli_adapter_is_adapter_protocol(self) -> None:
@@ -123,14 +126,14 @@ class TestGatewayMount:
     def test_mount_adapter(self) -> None:
         """挂载适配器后出现在 adapter_names 中。"""
         cat = make_cat("test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        gw = Gateway(cat.container)
         gw.mount_adapter(HttpAdapter())
         assert "http" in gw.adapter_names
 
     def test_unmount_adapter(self) -> None:
         """卸载后 adapter_names 中移除。"""
         cat = make_cat("test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        gw = Gateway(cat.container)
         gw.mount_adapter(HttpAdapter())
         gw.unmount_adapter("http")
         assert "http" not in gw.adapter_names
@@ -138,13 +141,13 @@ class TestGatewayMount:
     def test_unmount_nonexistent_noop(self) -> None:
         """卸载不存在的 adapter 不抛异常。"""
         cat = make_cat("test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        gw = Gateway(cat.container)
         gw.unmount_adapter("nonexistent")  # no-op
 
     def test_same_name_overwrite(self) -> None:
         """同名挂载覆盖旧 adapter。"""
         cat = make_cat("test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        gw = Gateway(cat.container)
         a1 = HttpAdapter(port=8000)
         a2 = HttpAdapter(port=9000)
         gw.mount_adapter(a1)
@@ -934,7 +937,7 @@ class TestMultiAdapter:
     def test_two_adapters_coexist(self) -> None:
         """两个不同 Adapter 可同时挂载到 Gateway。"""
         cat = make_cat("multi", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        gw = Gateway(cat.container)
         gw.mount_adapter(HttpAdapter(port=8000))
         gw.mount_adapter(CliAdapter())
         assert set(gw.adapter_names) == {"http", "cli"}
@@ -978,16 +981,15 @@ class TestSignalContextInjection:
         assert isinstance(extras["context"], SignalContext)
         assert extras["context"].session_id == "s1"
 
-    def test_gateway_on_message_uses_perceive(self) -> None:
-        """Gateway._on_message 调用 cat.perceive(text, context=ctx)。"""
+    def test_gateway_on_message_uses_front_desk(self) -> None:
+        """Gateway._on_message delegates to FrontDesk."""
         cat = make_cat("gw-test", enable_wiring=False, enable_reflex=False)
-        gw = Gateway(cat)
+        colony = cat.container
+        gw = Gateway(colony)
         ctx = SignalContext(session_id="gw-s1", platform="test")
 
-        # Gateway._on_message 会调用 cat.perceive(text, context=ctx)
-        # 但因为没有安装 reflex，perceive 会抛 RuntimeError
-        # 这里验证 SignalContext 正确传递
         assert isinstance(gw, Gateway)
+        assert isinstance(gw.front_desk, DefaultFrontDesk)
 
     def test_signalcontext_fields_correct_types(self) -> None:
         """SignalContext 字段类型正确。"""
@@ -1002,3 +1004,118 @@ class TestSignalContextInjection:
         assert isinstance(ctx.timestamp, str)
         # timestamp 是 ISO 8601 格式
         assert "T" in ctx.timestamp
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 11. SignalContext target_cat
+# ═══════════════════════════════════════════════════════════════════
+
+class TestSignalContextTargetCat:
+    """SignalContext target_cat 字段。"""
+
+    def test_target_cat_default_none(self) -> None:
+        """默认 target_cat=None。"""
+        ctx = SignalContext(session_id="s1", platform="http")
+        assert ctx.target_cat is None
+
+    def test_target_cat_set(self) -> None:
+        """显式设置 target_cat。"""
+        ctx = SignalContext(
+            session_id="s1", platform="feishu",
+            target_cat="01",
+        )
+        assert ctx.target_cat == "01"
+
+    def test_target_cat_frozen(self) -> None:
+        """target_cat 不可变。"""
+        ctx = SignalContext(session_id="s1", platform="http", target_cat="01")
+        with pytest.raises(Exception):
+            ctx.target_cat = "02"  # type: ignore[misc]
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 12. FrontDesk
+# ═══════════════════════════════════════════════════════════════════
+
+class TestFrontDesk:
+    """DefaultFrontDesk — Pluggable + Protocol。"""
+
+    def test_is_front_desk_protocol(self) -> None:
+        """DefaultFrontDesk 满足 FrontDeskProtocol。"""
+        fd = DefaultFrontDesk()
+        assert isinstance(fd, FrontDeskProtocol)
+
+    def test_is_pluggable(self) -> None:
+        """DefaultFrontDesk 继承 Pluggable。"""
+        from meowcat.pluggable import Pluggable
+        fd = DefaultFrontDesk()
+        assert isinstance(fd, Pluggable)
+
+    @pytest.mark.anyio
+    async def test_no_target_returns_placeholder(self) -> None:
+        """无 target_cat 返回占位消息。"""
+        fd = DefaultFrontDesk()
+        colony = make_test_colony()
+        ctx = SignalContext(session_id="s1", platform="http")
+        result = await fd.route("hello", ctx, colony)
+        assert result == "喵？我不知道你要找谁..."
+
+    @pytest.mark.anyio
+    async def test_target_cat_forwards(self) -> None:
+        """有 target_cat 转发到指定猫（猫无 reflex 时也不崩）。"""
+        fd = DefaultFrontDesk()
+        colony = make_test_colony()
+        cat = colony.create_cat(
+            name="target", enable_wiring=False, enable_reflex=False,
+        )
+        ctx = SignalContext(
+            session_id="s1", platform="http",
+            target_cat=cat.cat_uid,
+        )
+        # cat 无 reflex → perceive 抛 RuntimeError
+        # FrontDesk 不应让异常外泄
+        with pytest.raises(RuntimeError, match="perceive unavailable"):
+            await fd.route("hello target", ctx, colony)
+
+    @pytest.mark.anyio
+    async def test_unknown_target_cat(self) -> None:
+        """target_cat 不存在返回提示。"""
+        fd = DefaultFrontDesk()
+        colony = make_test_colony()
+        ctx = SignalContext(
+            session_id="s1", platform="http",
+            target_cat="99",
+        )
+        result = await fd.route("hello", ctx, colony)
+        assert "找不到猫" in result
+
+    @pytest.mark.anyio
+    async def test_plug_on_route_short_circuits(self) -> None:
+        """on_route hook 先于默认逻辑执行，非 None 返回值短路。"""
+        fd = DefaultFrontDesk()
+        colony = make_test_colony()
+
+        def gate(text, ctx, col):
+            return "拦截"
+
+        fd.plug("on_route", gate)
+        ctx = SignalContext(session_id="s1", platform="http")
+        result = await fd.route("hello", ctx, colony)
+        assert result == "拦截"
+
+    @pytest.mark.anyio
+    async def test_plug_on_route_passes_through(self) -> None:
+        """on_route 返回 None 时穿透到默认逻辑。"""
+        fd = DefaultFrontDesk()
+        colony = make_test_colony()
+        calls = []
+
+        def audit(text, ctx, col):
+            calls.append(text)
+            return None
+
+        fd.plug("on_route", audit)
+        ctx = SignalContext(session_id="s1", platform="http")
+        result = await fd.route("hello", ctx, colony)
+        assert calls == ["hello"]
+        assert result == "喵？我不知道你要找谁..."
