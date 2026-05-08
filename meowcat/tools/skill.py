@@ -134,7 +134,8 @@ class SkillRegistry:
     def register(self, skill: Skill) -> None:
         """Register a Skill. Same name will be overwritten."""
         if skill.name in self._skills:
-            logger.warning("Skill '%s' already registered, overwriting", skill.name)
+            logger.warning(
+                "Skill '%s' already registered, overwriting", skill.name)
         self._skills[skill.name] = skill
 
     def get(self, name: str) -> Skill | None:

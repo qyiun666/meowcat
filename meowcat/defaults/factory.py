@@ -268,7 +268,8 @@ def create_cat(
 
     if cat is None:
         if container is None:
-            raise TypeError("create_cat() requires 'container' when 'cat' is None")
+            raise TypeError(
+                "create_cat() requires 'container' when 'cat' is None")
         cat = container.create_cat(
             name=name,
             register_default_paths=register_default_paths,
@@ -324,7 +325,8 @@ def create_cat(
     # type: ignore[attr-defined]
     cat.cerebellum = cerebrum if cerebellum is _UNSET else cerebellum
     cat.cerebrum = cerebrum  # type: ignore[attr-defined]
-    cat.cortex = cortex or _pick_no_init(NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
+    cat.cortex = cortex or _pick_no_init(
+        NoopCortex, RenovatedCortex, "cortex")  # type: ignore[attr-defined]
     cat.brainstem = brainstem  # type: ignore[attr-defined]
 
     # -- Senses ----------------------------------------------------------
@@ -335,19 +337,24 @@ def create_cat(
         "ears",
         keyword=keyword,
     )
-    cat.eyes = eyes or _pick_no_init(NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
+    cat.eyes = eyes or _pick_no_init(
+        NoopEyes, RenovatedEyes, "eyes")  # type: ignore[attr-defined]
     cat.whiskers = whiskers or _pick_no_init(
         # type: ignore[attr-defined]
         NoopWhiskers,
         RenovatedWhiskers,
         "whiskers",
     )
-    cat.paws = paws or _pick_no_init(NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
+    cat.paws = paws or _pick_no_init(
+        NoopPaws, RenovatedPaws, "paws")  # type: ignore[attr-defined]
 
     # -- Outputs ---------------------------------------------------------
-    cat.mouth = mouth or _pick_no_init(NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
-    cat.purr = purr or _pick_no_init(NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
-    cat.tail = tail or _pick_no_init(NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
+    cat.mouth = mouth or _pick_no_init(
+        NoopMouth, RenovatedMouth, "mouth")  # type: ignore[attr-defined]
+    cat.purr = purr or _pick_no_init(
+        NoopPurr, RenovatedPurr, "purr")  # type: ignore[attr-defined]
+    cat.tail = tail or _pick_no_init(
+        NoopTail, RenovatedTail, "tail")  # type: ignore[attr-defined]
 
     # -- Growth organs ---------------------------------------------------
     from meowcat.defaults.organs import (

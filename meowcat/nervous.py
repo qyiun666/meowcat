@@ -184,7 +184,8 @@ class Nervous:
 
         # telemetry (v1.2.21)
         self._telemetry_enabled = enable_telemetry
-        self.tracer: Tracer | None = Tracer(event_bus=events) if enable_telemetry else None
+        self.tracer: Tracer | None = Tracer(
+            event_bus=events) if enable_telemetry else None
         self.metrics: Metrics | None = Metrics() if enable_telemetry else None
 
     # -- Synapse ------------------------------------------------------
@@ -205,7 +206,8 @@ class Nervous:
             info["after_is_async"] = inspect.iscoroutinefunction(mw.after)
         if hasattr(mw, "on_error"):
             info["has_on_error"] = True
-            info["on_error_is_async"] = inspect.iscoroutinefunction(mw.on_error)
+            info["on_error_is_async"] = inspect.iscoroutinefunction(
+                mw.on_error)
         self._mw_info.append(info)
 
     # -- Circuit breaker helpers (v1.2.19) ------------------------------
@@ -448,7 +450,8 @@ class Nervous:
         target = self.host.organ(*to_organ)
 
         if not isinstance(target, Diagnosable):
-            raise TypeError(f"Organ {to_organ} does not implement Diagnosable protocol")
+            raise TypeError(
+                f"Organ {to_organ} does not implement Diagnosable protocol")
 
         fn = target.diagnose
         result = fn()

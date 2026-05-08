@@ -226,7 +226,8 @@ class BaseWorker(ABC):
                 self.state = saved
                 completed_steps = int(self.state.progress)
                 steps = steps[completed_steps:]
-                logger.info("Worker %s resumed at step %d", self.worker_id, completed_steps)
+                logger.info("Worker %s resumed at step %d",
+                            self.worker_id, completed_steps)
 
         self.state.task_id = task_id
         self.state.status = WorkerStatus.RUNNING
@@ -253,7 +254,8 @@ class BaseWorker(ABC):
             await self.store.save(self.state)
             self._fire("on_error", self.state, exc)
             logger.exception(
-                "Worker %s failed at step %d", self.worker_id, int(self.state.progress)
+                "Worker %s failed at step %d", self.worker_id, int(
+                    self.state.progress)
             )
 
         finally:

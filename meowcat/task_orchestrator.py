@@ -241,9 +241,11 @@ class TaskOrchestrator:
             KeyError: Either *task_id* or *depends_on* is not registered.
         """
         if task_id not in self._nodes:
-            raise KeyError(f"Task '{task_id}' not found. Register it via add_task() first.")
+            raise KeyError(
+                f"Task '{task_id}' not found. Register it via add_task() first.")
         if depends_on not in self._nodes:
-            raise KeyError(f"Task '{depends_on}' not found. Register it via add_task() first.")
+            raise KeyError(
+                f"Task '{depends_on}' not found. Register it via add_task() first.")
         node = self._nodes[task_id]
         if depends_on not in node.depends_on:
             node.depends_on.append(depends_on)
@@ -304,11 +306,13 @@ class TaskOrchestrator:
         for tid, node in nodes.items():
             for dep in node.depends_on:
                 if dep not in nodes:
-                    raise ValueError(f"Task '{tid}' depends on '{dep}', which is not registered.")
+                    raise ValueError(
+                        f"Task '{tid}' depends on '{dep}', which is not registered.")
                 adj[dep].append(tid)
                 in_degree[tid] = in_degree.get(tid, 0) + 1
 
-        queue: deque[str] = deque(tid for tid, deg in in_degree.items() if deg == 0)
+        queue: deque[str] = deque(
+            tid for tid, deg in in_degree.items() if deg == 0)
         levels: list[list[str]] = []
         visited_count = 0
 

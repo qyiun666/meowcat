@@ -152,8 +152,10 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         self._storage = storage
         self._llm_shelf: dict[str, ModelConfig] = dict(llm_shelf or {})
         self._cats: dict[str, CatBase] = {}
-        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set()
-        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set()
+        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set(
+        )
+        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set(
+        )
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
@@ -346,7 +348,8 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         Returns:
             Registered CatBase instance with ``_llm_config`` attribute.
         """
-        llm_config = llm if isinstance(llm, ModelConfig) else self.pick_llm(llm)
+        llm_config = llm if isinstance(
+            llm, ModelConfig) else self.pick_llm(llm)
 
         cat = self.create_cat(
             name=name,
@@ -630,7 +633,7 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         """List all shared storage keys for a cat (prefix stripped)."""
         prefix = f"{cat_uid}/"
         all_keys = await self._ensure_storage().list_keys()
-        return [k[len(prefix) :] for k in all_keys if k.startswith(prefix)]
+        return [k[len(prefix):] for k in all_keys if k.startswith(prefix)]
 
     async def storage_watch(
         self,
@@ -783,7 +786,8 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         """
         parts = address.split("_", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
-            raise ValueError(f"Invalid address '{address}': expected 'colony_id_cat_uid'")
+            raise ValueError(
+                f"Invalid address '{address}': expected 'colony_id_cat_uid'")
         colony_id, cat_uid = parts
         if colony_id != self.colony_id:
             raise ValueError(
@@ -830,10 +834,12 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
             KeyError: Cat not found.
         """
         if scope not in ("self", "colony"):
-            raise ValueError(f"Invalid search scope '{scope}': must be 'self' or 'colony'")
+            raise ValueError(
+                f"Invalid search scope '{scope}': must be 'self' or 'colony'")
         # Ensure cat exists
         if cat_uid not in self._cats:
-            raise KeyError(f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
+            raise KeyError(
+                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
 
     # -- Inter-cat communication --------------------------------------
 

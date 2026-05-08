@@ -53,7 +53,8 @@ class EyesProtocol(Protocol):
 
     name: str
 
-    async def see(self, image_data: bytes, mime_type: str = "image/png") -> dict[str, Any]: ...
+    async def see(self, image_data: bytes,
+                  mime_type: str = "image/png") -> dict[str, Any]: ...
 
 
 @runtime_checkable
@@ -72,13 +73,15 @@ class WhiskersProtocol(Protocol):
     name: str
 
     async def feel_input(self, text: str) -> dict[str, Any]: ...
+
     async def feel_output(
         self, output: str, expected_schema: dict[str, Any] | None = None
     ) -> dict[str, Any]: ...
 
     def detect_drift(self, recent_outputs: list[str]) -> dict[str, Any]: ...
 
-    def check_hallucination(self, reply: str, session_id: str | None = None) -> dict[str, Any]: ...
+    def check_hallucination(
+        self, reply: str, session_id: str | None = None) -> dict[str, Any]: ...
 
     # v1.1.26 active growth: curiosity-driven blind spot detection
     def detect_blind_spot(
@@ -101,7 +104,8 @@ class PawsProtocol(Protocol):
 
     name: str
 
-    async def execute(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
+    async def execute(self, tool_name: str,
+                      params: dict[str, Any]) -> dict[str, Any]: ...
 
     # v1.1.26 active growth: learn from tool execution failures
     def on_tool_failure(
@@ -113,9 +117,11 @@ class PawsProtocol(Protocol):
     ) -> dict[str, Any]: ...
 
     # -- deprecated (v1.0.8, internally delegates to execute) -----------
-    async def touch_file(self, path: str, content: str | None = None) -> dict[str, Any]: ...
+    async def touch_file(self, path: str, content: str |
+                         None = None) -> dict[str, Any]: ...
 
-    async def run_command(self, command: str, **kwargs: Any) -> dict[str, Any]: ...
+    async def run_command(self, command: str, **
+                          kwargs: Any) -> dict[str, Any]: ...
 
     async def interact_with_tool(
         self, skill_name: str, params: dict[str, Any]

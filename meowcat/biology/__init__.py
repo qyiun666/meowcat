@@ -273,7 +273,8 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             coord=AMYGDALA,
             protocol=AmygdalaProtocol,
             in_edges=(THALAMUS, BRAINSTEM),
-            out_edges=(CEREBELLUM, MOUTH, CEREBRUM, ANOMALY_GROWTH, CORRECTION_GROWTH),
+            out_edges=(CEREBELLUM, MOUTH, CEREBRUM,
+                       ANOMALY_GROWTH, CORRECTION_GROWTH),
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.RULE,
@@ -296,7 +297,8 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             coord=HYPOTHALAMUS,
             protocol=HypothalamusProtocol,
             in_edges=(BRAINSTEM,),
-            out_edges=(HYPOTHALAMUS, HIPPOCAMPUS, CORTEX),  # includes self-loop
+            out_edges=(HYPOTHALAMUS, HIPPOCAMPUS,
+                       CORTEX),  # includes self-loop
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.RULE,

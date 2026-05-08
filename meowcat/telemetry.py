@@ -97,7 +97,7 @@ class Tracer:
             span.error = f"{type(error).__name__}: {error}"
         self._spans.append(span)
         if len(self._spans) > self._max_spans:
-            self._spans = self._spans[-self._max_spans :]
+            self._spans = self._spans[-self._max_spans:]
 
         if self._event_bus is not None:
             from meowcat.events import TelemetryEvent
@@ -137,9 +137,12 @@ class Metrics:
     """
 
     def __init__(self) -> None:
-        self._latency: dict[tuple[Organ, Organ, str], list[float]] = defaultdict(list)
-        self._errors: dict[tuple[Organ, Organ, str, str], int] = defaultdict(int)
-        self._call_count: dict[tuple[Organ, Organ, str], int] = defaultdict(int)
+        self._latency: dict[tuple[Organ, Organ, str],
+                            list[float]] = defaultdict(list)
+        self._errors: dict[tuple[Organ, Organ,
+                                 str, str], int] = defaultdict(int)
+        self._call_count: dict[tuple[Organ, Organ, str],
+                               int] = defaultdict(int)
 
     def record(self, span: SignalSpan) -> None:
         """Record metrics from a completed :class:`SignalSpan`.
@@ -151,7 +154,8 @@ class Metrics:
         if span.finished_at is not None:
             self._latency[key].append(span.finished_at - span.started_at)
         if span.status == "error" and span.error:
-            err_type = span.error.split(":")[0] if ":" in span.error else span.error
+            err_type = span.error.split(
+                ":")[0] if ":" in span.error else span.error
             error_key = (*key, err_type)
             self._errors[error_key] += 1
 

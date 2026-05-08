@@ -228,7 +228,8 @@ class TopicClosureDetector:
             (w, re.compile(re.escape(w), re.IGNORECASE)) for w in self._config.closure_signal_words
         ]
         # Per-word weight overrides (merged with DEFAULT_SIGNAL_WEIGHTS)
-        self._signal_weights: dict[str, float] = dict(self.DEFAULT_SIGNAL_WEIGHTS)
+        self._signal_weights: dict[str, float] = dict(
+            self.DEFAULT_SIGNAL_WEIGHTS)
         # Internal tracking
         self._exchange_count: int = 0
         self._recent_context: list[str] = []  # sliding window of exchanges
@@ -394,7 +395,8 @@ class TopicClosureDetector:
         """
         if word not in self._config.closure_signal_words:
             self._config.closure_signal_words.append(word)
-            self._signal_re.append((word, re.compile(re.escape(word), re.IGNORECASE)))
+            self._signal_re.append(
+                (word, re.compile(re.escape(word), re.IGNORECASE)))
         self._signal_weights[word] = weight
 
     def unregister_signal_word(self, word: str) -> None:

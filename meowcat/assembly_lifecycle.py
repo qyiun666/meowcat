@@ -82,14 +82,16 @@ class LifecycleMixin:
         try:
             # type: ignore[attr-defined]
             hippo = self.organ("brain", "hippocampus")
-            active = hippo.list_active_workflows(self.cat_uid)  # type: ignore[attr-defined]
+            active = hippo.list_active_workflows(
+                self.cat_uid)  # type: ignore[attr-defined]
             for wf in active:
                 eid = wf.get("entity_id", wf.get("id", ""))
                 if eid:
                     # type: ignore[attr-defined]
                     self._active_workflows[eid] = wf
         except Exception:
-            _log.debug("_resume_workflows: failed to load workflows", exc_info=True)
+            _log.debug(
+                "_resume_workflows: failed to load workflows", exc_info=True)
 
     async def _checkpoint_workflows(self) -> None:
         """Iterate all active Workflows and write checkpoint to Hippocampus.
@@ -119,7 +121,8 @@ class LifecycleMixin:
                     text="\n[checkpoint] " + _json.dumps(checkpoint_data),
                 )
         except Exception:
-            _log.debug("_checkpoint_workflows: failed to write checkpoint", exc_info=True)
+            _log.debug(
+                "_checkpoint_workflows: failed to write checkpoint", exc_info=True)
 
     # -- Organs mounted hooks (v1.2.36) ------------------------------------
 

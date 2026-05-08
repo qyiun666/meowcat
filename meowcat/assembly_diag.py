@@ -68,7 +68,8 @@ class DiagnosticMixin:
         from meowcat.diagnose import render_wiring
 
         # Collect all mounted organs as input for orphan node detection
-        mounted: frozenset[Organ] = frozenset(self._host.list_all_organs())  # type: ignore[attr-defined]
+        mounted: frozenset[Organ] = frozenset(
+            self._host.list_all_organs())  # type: ignore[attr-defined]
         return render_wiring(
             # type: ignore[attr-defined]
             self.wiring,

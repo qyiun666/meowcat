@@ -358,4 +358,3 @@ class TestIntegrationScenarios:
         await router.route("/a")
 
         assert log == ["/a", "/b", "/a"]
-

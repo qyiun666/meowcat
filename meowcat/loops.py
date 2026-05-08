@@ -297,7 +297,8 @@ class LoopSequence:
 
     def __post_init__(self) -> None:
         if self.mode not in ("sequential", "event_driven"):
-            raise ValueError(f"mode must be 'sequential' or 'event_driven', got {self.mode!r}")
+            raise ValueError(
+                f"mode must be 'sequential' or 'event_driven', got {self.mode!r}")
 
 
 # -- Built-in LoopSequence -----------------------------------------------
@@ -341,7 +342,8 @@ class LoopSequenceRegistry:
             TypeError: seq is not a LoopSequence instance
         """
         if not isinstance(seq, LoopSequence):
-            raise TypeError(f"Expected LoopSequence instance, got {type(seq).__name__}")
+            raise TypeError(
+                f"Expected LoopSequence instance, got {type(seq).__name__}")
         if seq.name in self._seqs:
             self._seqs_list.remove(self._seqs[seq.name])
         self._seqs[seq.name] = seq
@@ -426,7 +428,8 @@ class LoopSequenceRegistry:
                     loop_name,
                     **current_input,
                 )
-                current_input = last_result if isinstance(last_result, dict) else {"_result": last_result}
+                current_input = last_result if isinstance(last_result, dict) else {
+                    "_result": last_result}
             except Exception:
                 if seq.stop_on_error:
                     raise

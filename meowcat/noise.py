@@ -66,7 +66,8 @@ class NoiseFilterConfig:
         check_repetition:    Whether to perform repetition checking.
     """
 
-    noise_patterns: list[str] = field(default_factory=lambda: list(_DEFAULT_NOISE_PATTERNS))
+    noise_patterns: list[str] = field(
+        default_factory=lambda: list(_DEFAULT_NOISE_PATTERNS))
     min_chars: int = 8
     max_rep_ratio: float = 0.5
     check_repetition: bool = True
@@ -98,7 +99,8 @@ class NoiseFilter:
     ) -> None:
         self._config = NoiseFilterConfig(
             noise_patterns=(
-                list(noise_patterns) if noise_patterns is not None else _DEFAULT_NOISE_PATTERNS
+                list(
+                    noise_patterns) if noise_patterns is not None else _DEFAULT_NOISE_PATTERNS
             ),
             min_chars=min_chars,
             max_rep_ratio=max_rep_ratio,

@@ -84,12 +84,14 @@ class _DelegationMixin:
             "method": method,
             "started_at": started_at,
         }
-        await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))
 
         async def _runner() -> None:
             try:
                 payload["status"] = "running"
-                await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                await self.ns_set(self._TASKS_NS, task_id, json.dumps(payload))
                 result = await self.signal_between(  # type: ignore[attr-defined]
                     from_id,
                     to_id,
@@ -101,7 +103,8 @@ class _DelegationMixin:
                     **kw,
                 )
                 # Store actual result in memory (non-serialized)
-                self._task_results[task_id] = result  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                self._task_results[task_id] = result
                 payload["status"] = "done"
                 payload["result"] = repr(result)
                 payload["finished_at"] = time.monotonic()
@@ -182,7 +185,8 @@ class _DelegationMixin:
         start = time.monotonic()
 
         while True:
-            status = await self.task_status(task_id)  # type: ignore[attr-defined]
+            # type: ignore[attr-defined]
+            status = await self.task_status(task_id)
             st = status.get("status", "unknown")
 
             if st == "done":
@@ -192,7 +196,8 @@ class _DelegationMixin:
                     status.get("result"),
                 )
             if st in ("errored", "timed_out"):
-                raise RuntimeError(f"Task {task_id} {st}: {status.get('error', 'no detail')}")
+                raise RuntimeError(
+                    f"Task {task_id} {st}: {status.get('error', 'no detail')}")
 
             elapsed = time.monotonic() - start
             if elapsed >= max_wait:
@@ -203,9 +208,11 @@ class _DelegationMixin:
             # Check kitten health if we know who the kitten is
             to_id = status.get("to_id", "")
             if to_id and st == "running":
-                cat_health = await self.check_cat(str(to_id))  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                cat_health = await self.check_cat(str(to_id))
                 if cat_health == "dead":
-                    raise RuntimeError(f"Kitten cat '{to_id}' is dead (task {task_id})")
+                    raise RuntimeError(
+                        f"Kitten cat '{to_id}' is dead (task {task_id})")
 
             await asyncio.sleep(poll_interval)
 

@@ -149,7 +149,8 @@ class ChainRegistry:
             TypeError: chain is not a Chain instance
         """
         if not isinstance(chain, Chain):
-            raise TypeError(f"Expected Chain instance, got {type(chain).__name__}")
+            raise TypeError(
+                f"Expected Chain instance, got {type(chain).__name__}")
         if chain.name in self._chains:
             self._chains_list.remove(self._chains[chain.name])
         self._chains[chain.name] = chain
@@ -205,7 +206,8 @@ class ChainRegistry:
                     **current_input,
                 )
                 # previous step return value becomes next step kwargs
-                current_input = last_result if isinstance(last_result, dict) else {"_result": last_result}
+                current_input = last_result if isinstance(last_result, dict) else {
+                    "_result": last_result}
         except Exception:
             # execute rollback paths in reverse; rollback exceptions do not mask the original
             for rollback_name in reversed(chain.rollback_paths):

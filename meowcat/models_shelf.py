@@ -201,7 +201,8 @@ class ModelShelf:
                 body = resp.read().decode("utf-8")
                 return json.loads(body)  # type: ignore[no-any-return]
         except urllib.error.HTTPError as exc:
-            raise RuntimeError(f"HTTP {exc.code} from {url}: {exc.reason}") from exc
+            raise RuntimeError(
+                f"HTTP {exc.code} from {url}: {exc.reason}") from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f"Cannot reach {url}: {exc.reason}") from exc
 
@@ -364,7 +365,8 @@ class FallbackChain:
         if not model_names:
             raise ValueError("FallbackChain requires at least one model name")
         # Resolve all configs eagerly — fail fast if any name is unknown
-        self._configs: list[ModelConfig] = [shelf.get_model(name) for name in model_names]
+        self._configs: list[ModelConfig] = [
+            shelf.get_model(name) for name in model_names]
 
     @property
     def model_names(self) -> list[str]:
@@ -422,4 +424,5 @@ class FallbackChain:
         )
 
 
-__all__ = ["ProviderEntry", "AuthType", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]
+__all__ = ["ProviderEntry", "AuthType",
+           "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain"]

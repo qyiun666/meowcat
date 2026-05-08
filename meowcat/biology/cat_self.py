@@ -230,9 +230,11 @@ class CatSelf(Pluggable):
                 }
             )
         else:
-            _log.warning("after_act: scribble_pad is None, growth write-back disabled")
+            _log.warning(
+                "after_act: scribble_pad is None, growth write-back disabled")
         _log.debug("after_act", summary=summary[:80])
-        _log.info(SelfEvent.REFLECT, summary=summary[:80], impact_keys=list(impact.keys()))
+        _log.info(SelfEvent.REFLECT,
+                  summary=summary[:80], impact_keys=list(impact.keys()))
 
     # -- Default loops (framework prefabs) --------------------------
 
@@ -285,26 +287,30 @@ class CatSelf(Pluggable):
             try:
                 snap.beliefs = self._cortex.get_beliefs()
             except Exception as e:
-                _log.warning("_build_snapshot: cortex.get_beliefs() failed", error=str(e)[:120])
+                _log.warning(
+                    "_build_snapshot: cortex.get_beliefs() failed", error=str(e)[:120])
 
         if self._skills is not None:
             try:
                 snap.skill_names = [s.name for s in self._skills.list_all()]
             except Exception as e:
-                _log.warning("_build_snapshot: skills.list_all() failed", error=str(e)[:120])
+                _log.warning(
+                    "_build_snapshot: skills.list_all() failed", error=str(e)[:120])
 
         if self._reflexes is not None:
             try:
                 snap.reflex_names = [r.name for r in self._reflexes.all()]
             except Exception as e:
-                _log.warning("_build_snapshot: reflexes access failed", error=str(e)[:120])
+                _log.warning(
+                    "_build_snapshot: reflexes access failed", error=str(e)[:120])
 
         if self._metacognition is not None:
             try:
                 snap.capable_domains = self._metacognition.capable_domains()
                 snap.incapable_domains = self._metacognition.incapable_domains()
             except Exception as e:
-                _log.warning("_build_snapshot: metacognition access failed", error=str(e)[:120])
+                _log.warning(
+                    "_build_snapshot: metacognition access failed", error=str(e)[:120])
 
         if self._scribble_pad is not None:
             snap.scribble_count = self._scribble_pad.count()
@@ -447,7 +453,8 @@ class DefaultConversationLoop:
             )
             cat.cat_self.pineal_gland.trigger_if(strategy)
         else:
-            _log.debug("conversation loop: pineal_gland is None, fusion skipped")
+            _log.debug(
+                "conversation loop: pineal_gland is None, fusion skipped")
         return reply
 
     async def _run_organ_pipeline(self, cat: Any, message: str) -> str:
@@ -476,7 +483,8 @@ class DefaultConversationLoop:
             if pipeline_events:
                 return str(pipeline_events[-1])
         except Exception as e:
-            _log.debug("organ_pipeline: perceive failed, falling back", error=str(e)[:120])
+            _log.debug(
+                "organ_pipeline: perceive failed, falling back", error=str(e)[:120])
 
         # Fallback: use LoopRegistry's conversation loop
         try:
@@ -485,7 +493,8 @@ class DefaultConversationLoop:
                 return str(result.get("reply", result.get("result", str(result))))
             return str(result)
         except Exception as e:
-            _log.warning("organ_pipeline: run_loop also failed", error=str(e)[:120])
+            _log.warning("organ_pipeline: run_loop also failed",
+                         error=str(e)[:120])
             return f"[conversation] received: {message[:100]}"
 
 
@@ -562,7 +571,8 @@ class DefaultTaskLoop:
         if cat.cat_self.pineal_gland:
             from meowcat.biology.fusion_cycle import FusionCycle
 
-            strategy = self._fusion if self._fusion is not None else FusionCycle.on_full(50)
+            strategy = self._fusion if self._fusion is not None else FusionCycle.on_full(
+                50)
             cat.cat_self.pineal_gland.trigger_if(strategy)
         else:
             _log.debug("task loop: pineal_gland is None, fusion skipped")
@@ -584,7 +594,8 @@ class DefaultTaskLoop:
                 return result
             return {"task": task, "status": "completed", "result": result}
         except Exception as e:
-            _log.warning("organ_pipeline: task run_loop failed", error=str(e)[:120])
+            _log.warning("organ_pipeline: task run_loop failed",
+                         error=str(e)[:120])
             return {"task": task, "status": "planned"}
 
 
@@ -687,7 +698,8 @@ class DefaultLearnLoop:
                 "diagnostic": diag if isinstance(diag, dict) else {"result": diag},
             }
         except Exception as e:
-            _log.warning("organ_pipeline: learn run_loop failed", error=str(e)[:120])
+            _log.warning("organ_pipeline: learn run_loop failed",
+                         error=str(e)[:120])
             return {"topic": topic, "learned": True}
 
 

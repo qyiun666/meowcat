@@ -195,7 +195,8 @@ class SharedMemoryPool:
         for key, value in data.items():
             if isinstance(key, str) and key.startswith(prefix):
                 with contextlib.suppress(_json.JSONDecodeError, TypeError):
-                    results.append(_json.loads(value) if isinstance(value, str) else value)
+                    results.append(_json.loads(value)
+                                   if isinstance(value, str) else value)
         return results
 
     # -- Internal ------------------------------------------------------

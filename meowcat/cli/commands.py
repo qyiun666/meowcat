@@ -92,7 +92,8 @@ def _make_cmd_inject(cat: Any):
             if "=" in kv:
                 k, v = kv.split("=", 1)
                 kwargs[k.strip()] = v.strip()
-        category, name = organ_str.split(":") if ":" in organ_str else ("brain", organ_str)
+        category, name = organ_str.split(
+            ":") if ":" in organ_str else ("brain", organ_str)
         try:
             result = needle.poke((category, name), method, **kwargs)
             # poke returns sync; unwrap if coroutine
@@ -214,7 +215,8 @@ def register_colony_commands(
         cat_uids = colony.list_cats()
         if not cat_uids:
             return t.t("cats_no_cats")
-        max_cats = colony.max_cats if colony.max_cats is not None else t.t("colony_unlimited")
+        max_cats = colony.max_cats if colony.max_cats is not None else t.t(
+            "colony_unlimited")
         lines = [
             f"**{t.t('colony_info', name=colony.name, colony_id=colony.colony_id, count=len(cat_uids), max_cats=max_cats)}**",  # noqa: E501
             "",
@@ -227,7 +229,8 @@ def register_colony_commands(
                 organs = len(cat.list_all_organs())
                 lines.append(f"  {cid} ({organs} organs){marker}")
             except Exception:
-                _log.debug("Failed to list organs for cat '%s'", cid, exc_info=True)
+                _log.debug("Failed to list organs for cat '%s'",
+                           cid, exc_info=True)
                 lines.append(f"  {cid}{marker}")
         return "\n".join(lines)
 
@@ -382,9 +385,11 @@ def _health_sync(t: Any, colony: Any) -> str:
         try:
             cat = colony.get_cat(cid)
             organs = cat.list_all_organs()
-            lines.append(t.t("health_cat_status", cat_uid=cid, status=len(organs), errors=0))
+            lines.append(t.t("health_cat_status", cat_uid=cid,
+                         status=len(organs), errors=0))
         except Exception:
-            lines.append(t.t("health_cat_status", cat_uid=cid, status=0, errors=1))
+            lines.append(
+                t.t("health_cat_status", cat_uid=cid, status=0, errors=1))
     return "\n".join(lines) if lines else t.t("health_no_cats")
 
 
@@ -395,13 +400,16 @@ def _format_health_results(t: Any, results: dict) -> str:
     total_errors = 0
     for cat_uid, organs in results.items():
         if isinstance(organs, dict):
-            errs = sum(1 for v in organs.values() if isinstance(v, dict) and "error" in v)
+            errs = sum(1 for v in organs.values()
+                       if isinstance(v, dict) and "error" in v)
             total_organs += len(organs)
             total_errors += errs
-            lines.append(t.t("health_cat_status", cat_uid=cat_uid, status=len(organs), errors=errs))
+            lines.append(t.t("health_cat_status", cat_uid=cat_uid,
+                         status=len(organs), errors=errs))
         else:
             total_errors += 1
-            lines.append(t.t("health_cat_status", cat_uid=cat_uid, status=0, errors=1))
+            lines.append(
+                t.t("health_cat_status", cat_uid=cat_uid, status=0, errors=1))
     lines.append("")
     if total_errors == 0:
         lines.append(t.t("health_all_ok"))
@@ -422,7 +430,8 @@ def _format_brain_results(t: Any, cat_uid: str, results: dict) -> str:
             summary = json.dumps(data, default=str) if data else "OK"
             lines.append(f"  {organ_name}: {summary}")
     lines.append("")
-    lines.append(t.t("health_all_ok") if err_count == 0 else t.t("health_issues"))
+    lines.append(t.t("health_all_ok") if err_count ==
+                 0 else t.t("health_issues"))
     return "\n".join(lines)
 
 

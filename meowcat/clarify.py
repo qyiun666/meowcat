@@ -144,7 +144,8 @@ class ClarifyManager:
             min_chars=min_chars,
             max_clarify_rounds=max_clarify_rounds,
             vague_patterns=(
-                list(vague_patterns) if vague_patterns is not None else self.DEFAULT_VAGUE_PATTERNS
+                list(
+                    vague_patterns) if vague_patterns is not None else self.DEFAULT_VAGUE_PATTERNS
             ),
         )
         self._vague_re: list[re.Pattern[str]] = [

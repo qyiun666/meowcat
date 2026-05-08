@@ -62,8 +62,9 @@ class _NamespaceMixin:
             List of keys within the namespace, without prefix.
         """
         prefix = self._ns_prefix(namespace)
-        all_keys = await self._ensure_storage().list_keys()  # type: ignore[attr-defined]
-        return [k[len(prefix) :] for k in all_keys if k.startswith(prefix)]
+        # type: ignore[attr-defined]
+        all_keys = await self._ensure_storage().list_keys()
+        return [k[len(prefix):] for k in all_keys if k.startswith(prefix)]
 
     async def ns_watch(self, namespace: str, pattern: str) -> Any:
         """Watch namespace key changes matching pattern.
@@ -76,7 +77,8 @@ class _NamespaceMixin:
             ``(key, value)`` tuples.
         """
         ns_pattern = f"{self._ns_prefix(namespace)}{pattern}"
-        async for item in self._ensure_storage().watch(ns_pattern):  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        async for item in self._ensure_storage().watch(ns_pattern):
             yield item
 
     @property

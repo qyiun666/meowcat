@@ -129,7 +129,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
         self._host = OrganHost(cat_uid)
         self._events = EventBus()
         self._nervous: Nervous | None = (
-            Nervous(self._host, self._events, forbidden_methods=forbidden_methods)
+            Nervous(self._host, self._events,
+                    forbidden_methods=forbidden_methods)
             if enable_wiring
             else None
         )
@@ -659,7 +660,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin):
                 ``None`` means empty list.
             reflexes: Reflex list; ``None`` means register no reflexes.
         """
-        assemble_default_cat(self, reflex_stages=reflex_stages, reflexes=reflexes)
+        assemble_default_cat(
+            self, reflex_stages=reflex_stages, reflexes=reflexes)
         self.freeze_nervous_system()
 
 

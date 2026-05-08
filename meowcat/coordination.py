@@ -170,7 +170,8 @@ class AsyncApprovalGate:
         if req is None:
             raise KeyError(f"Unknown request: {request_id}")
         if req.status != ApprovalStatus.PENDING:
-            raise ValueError(f"Request {request_id} already resolved: {req.status}")
+            raise ValueError(
+                f"Request {request_id} already resolved: {req.status}")
         req.status = ApprovalStatus.APPROVED
         req.approved_by = approver
         self._resolve(request_id, req)
@@ -192,7 +193,8 @@ class AsyncApprovalGate:
         if req is None:
             raise KeyError(f"Unknown request: {request_id}")
         if req.status != ApprovalStatus.PENDING:
-            raise ValueError(f"Request {request_id} already resolved: {req.status}")
+            raise ValueError(
+                f"Request {request_id} already resolved: {req.status}")
         req.status = status
         req.rejected_reason = reason
         self._resolve(request_id, req)
