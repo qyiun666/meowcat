@@ -31,3 +31,15 @@ packages = ["meowcat"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+exclude = ["tests/"]
+disable_error_code = ["attr-defined"]
+
+[[tool.mypy.overrides]]
+module = ["pydantic", "anyio", "httpx", "playwright", "chromadb", "textual"]
+ignore_missing_imports = true
