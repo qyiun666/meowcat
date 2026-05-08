@@ -3,7 +3,7 @@
 [![中文文档](https://img.shields.io/badge/文档-中文-red.svg)](README_CN.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.2-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-1.3.7-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
@@ -142,35 +142,45 @@ Framework defines the **Slot** (Protocol interface + OrganSpec contract). You pr
 ## 🏗️ Architecture at a Glance
 
 ```
-                             ┌────────────────────┐
-  External World ──────────► │  Gateway (Skin)     │  HTTP / WebSocket / CLI / IPC / Webhook
-                             └────────┬───────────┘
-                                      │
-  ┌───────────────────────────────────▼───────────────────────────────────┐
-  │                         cat.perceive()                                │
-  │                                                                       │
-  │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │
-  │   │ SENSES   │───►│ THALAMUS │───►│         BRAIN REGIONS        │   │
-  │   │ Ears     │    │ (Relay)  │    │ Cerebrum Cerebellum Amygdala  │   │
-  │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │
-  │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │
-  │   └──────────┘                    └──────────────┬───────────────┘   │
-  │                                                  │                    │
-  │                              ┌───────────────────▼───────────────┐   │
-  │                              │           EFFECTORS               │   │
-  │                              │  Mouth (speak)  Purr (stream)     │   │
-  │                              │  Tail (status)  Paws (tools)      │   │
-  │                              └───────────────────────────────────┘   │
-  │                                                                       │
-  │   ┌──────────────────────────────────────────────────────────────┐   │
-  │   │  GROWTH: PinealGland · AnomalyGrowth · CorrectionGrowth     │   │
-  │   │          Crystallizer · RoleEmergence                        │   │
-  │   └──────────────────────────────────────────────────────────────┘   │
-  └───────────────────────────────────────────────────────────────────────┘
-                                      │
-                             ┌────────▼───────────┐
-                             │  Colony (Multi-Cat) │  SharedStorage · Federation · Cross-Cat Signals
-                             └────────────────────┘
+                             ┌──────────────────────────────┐
+  External World ──────────► │  Gateway (Skin)               │  HTTP / WebSocket / CLI / IPC / Webhook
+                             │  ┌────────────────────────┐   │
+                             │  │  FrontDesk (Reception)  │   │  on_route plugins: security gate, audit, rate-limit
+                             │  └────────┬───────────────┘   │
+                             └───────────┼───────────────────┘
+                                         │
+                           1 Colony : 1 Gateway : N Adapters
+                                         │
+  ┌──────────────────────────────────────▼──────────────────────────────────────┐
+  │                           Colony (Multi-Cat Container)                       │
+  │                                                                              │
+  │   ┌─────────────────────────────────────┐   ┌────────────────────────────┐  │
+  │   │  Shared Board (猫舍大看板)            │   │  Federation (跨容器)        │  │
+  │   │  owner/ rules/ knowledge/ cats/       │   │  P2P request-response       │  │
+  │   │  growth/ [custom...]                  │   │  30s timeout                 │  │
+  │   └─────────────────────────────────────┘   └────────────────────────────┘  │
+  │                                                                              │
+  │   ┌─ cat.perceive() ────────────────────────────────────────────────────┐   │
+  │   │                                                                       │   │
+  │   │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │   │
+  │   │   │ SENSES   │───►│ THALAMUS │───►│         BRAIN REGIONS        │   │   │
+  │   │   │ Ears     │    │ (Relay)  │    │ Cerebrum Cerebellum Amygdala  │   │   │
+  │   │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │   │
+  │   │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │   │
+  │   │   └──────────┘                    └──────────────┬───────────────┘   │   │
+  │   │                                                  │                    │   │
+  │   │                              ┌───────────────────▼───────────────┐   │   │
+  │   │                              │           EFFECTORS               │   │   │
+  │   │                              │  Mouth (speak)  Purr (stream)     │   │   │
+  │   │                              │  Tail (status)  Paws (tools)      │   │   │
+  │   │                              └───────────────────────────────────┘   │   │
+  │   │                                                                       │   │
+  │   │   ┌──────────────────────────────────────────────────────────────┐   │   │
+  │   │   │  GROWTH: PinealGland · AnomalyGrowth · CorrectionGrowth     │   │   │
+  │   │   │          Crystallizer · RoleEmergence                        │   │   │
+  │   │   └──────────────────────────────────────────────────────────────┘   │   │
+  │   └───────────────────────────────────────────────────────────────────────┘   │
+  └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -527,6 +537,7 @@ pytest tests/
 | `meowcat/tools/`      | Tool/Skill/Paws core (zero I/O abstractions)                 |
 | `meowcat/plus/`       | Optional I/O: browser, ChromaDB, MCP, gateway, crystallizer  |
 | `meowcat/colony/`     | Colony multi-cat container + federation                      |
+| `meowcat/gateway/`    | Gateway — colony's skin, FrontDesk + protocol adapters       |
 | `meowcat/defaults/`   | Noop stubs, Renovated implants, presets, factory             |
 
 ---

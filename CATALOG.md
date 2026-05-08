@@ -475,7 +475,7 @@ print(cat.wiring.describe())                        # 接线图描述
 | Plus 内置工具 (8)                           | `meowcat/plus/tools/`                         |
 | Colony 多猫容器 + 联邦                      | `meowcat/colony/`                             |
 | Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
-| Gateway 协议                                | `meowcat/gateway/`                            |
+| Gateway 协议（皮肤 + FrontDesk 前台）        | `meowcat/gateway/`                            |
 | 测试 (60+ 用例)                             | `tests/`                                      |
 
 ### v1.3.6 新增模块

@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.6-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-1.3.7-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -143,35 +143,45 @@ Harness 解决的是**"怎么让 LLM 干活"**，meowcat 回答的是**"Agent �
 ## 🏗️ 架构一瞥
 
 ```
-                             ┌────────────────────┐
-  外部世界 ─────────────────► │  Gateway (皮肤)     │  HTTP / WebSocket / CLI / IPC / Webhook
-                             └────────┬───────────┘
-                                      │
-  ┌───────────────────────────────────▼───────────────────────────────────┐
-  │                         cat.perceive()                                │
-  │                                                                       │
-  │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │
-  │   │ 感官     │───►│ THALAMUS │───►│          脑区                │   │
-  │   │ Ears     │    │ (中继)   │    │ Cerebrum Cerebellum Amygdala  │   │
-  │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │
-  │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │
-  │   └──────────┘                    └──────────────┬───────────────┘   │
-  │                                                  │                    │
-  │                              ┌───────────────────▼───────────────┐   │
-  │                              │           效应器                  │   │
-  │                              │  Mouth (说话)  Purr (流式)       │   │
-  │                              │  Tail (状态)   Paws (工具)        │   │
-  │                              └───────────────────────────────────┘   │
-  │                                                                       │
-  │   ┌──────────────────────────────────────────────────────────────┐   │
-  │   │  生长: PinealGland · AnomalyGrowth · CorrectionGrowth       │   │
-  │   │        Crystallizer · RoleEmergence                          │   │
-  │   └──────────────────────────────────────────────────────────────┘   │
-  └───────────────────────────────────────────────────────────────────────┘
-                                      │
-                             ┌────────▼───────────┐
-                             │  Colony (猫舍)      │  共享存储 · 联邦 · 跨猫信号
-                             └────────────────────┘
+                             ┌──────────────────────────────┐
+  外部世界 ─────────────────► │  Gateway (皮肤)               │  HTTP / WebSocket / CLI / IPC / Webhook
+                             │  ┌────────────────────────┐   │
+                             │  │  FrontDesk (前台)       │   │  on_route 插件: 安全门、审计、限流
+                             │  └────────┬───────────────┘   │
+                             └───────────┼───────────────────┘
+                                         │
+                           1 猫舍 : 1 皮肤 : N 适配器
+                                         │
+  ┌──────────────────────────────────────▼──────────────────────────────────────┐
+  │                        Colony (猫舍 · 多猫容器)                              │
+  │                                                                              │
+  │   ┌─────────────────────────────────────┐   ┌────────────────────────────┐  │
+  │   │  猫舍大看板 (Shared Board)           │   │  联邦 (Federation)          │  │
+  │   │  owner/ rules/ knowledge/ cats/       │   │  P2P 请求-响应              │  │
+  │   │  growth/ [自定义...]                  │   │  30s 超时                   │  │
+  │   └─────────────────────────────────────┘   └────────────────────────────┘  │
+  │                                                                              │
+  │   ┌─ cat.perceive() ────────────────────────────────────────────────────┐   │
+  │   │                                                                       │   │
+  │   │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │   │
+  │   │   │ 感官     │───►│ THALAMUS │───►│          脑区                │   │   │
+  │   │   │ Ears     │    │ (中继)   │    │ Cerebrum Cerebellum Amygdala  │   │   │
+  │   │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │   │
+  │   │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │   │
+  │   │   └──────────┘                    └──────────────┬───────────────┘   │   │
+  │   │                                                  │                    │   │
+  │   │                              ┌───────────────────▼───────────────┐   │   │
+  │   │                              │           效应器                  │   │   │
+  │   │                              │  Mouth (说话)  Purr (流式)       │   │   │
+  │   │                              │  Tail (状态)   Paws (工具)        │   │   │
+  │   │                              └───────────────────────────────────┘   │   │
+  │   │                                                                       │   │
+  │   │   ┌──────────────────────────────────────────────────────────────┐   │   │
+  │   │   │  生长: PinealGland · AnomalyGrowth · CorrectionGrowth       │   │   │
+  │   │   │        Crystallizer · RoleEmergence                          │   │   │
+  │   │   └──────────────────────────────────────────────────────────────┘   │   │
+  │   └───────────────────────────────────────────────────────────────────────┘   │
+  └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -529,6 +539,7 @@ pytest tests/
 | `meowcat/tools/`      | Tool/Skill/Paws 核心（零 I/O 抽象）                          |
 | `meowcat/plus/`       | 可选 I/O：浏览器、ChromaDB、MCP、网关、晶化器                |
 | `meowcat/colony/`     | Colony 多猫容器 + 联邦                                       |
+| `meowcat/gateway/`    | Gateway — 猫舍皮肤，FrontDesk + 协议适配器                   |
 | `meowcat/defaults/`   | Noop 空桩、Renovated 简装实现、预设、工厂                    |
 
 ---

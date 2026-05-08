@@ -50,6 +50,74 @@ All cats can see this board. Read/write via `colony.ns_get/set("namespace", "key
 
 ---
 
+## 3.5 Colony Gate (Gateway + FrontDesk) — Sole External Entry
+
+The Colony interacts with the outside world through a Gateway. **1 Colony : 1 Gateway : N Adapters.**
+
+```
+External World (HTTP/WS/CLI/IPC/Webhook)
+    │
+    ▼
+┌─ Gateway ──────────────────────┐
+│  ┌─ FrontDesk ─────────────┐  │
+│  │  on_route plugin chain:   │  │
+│  │  → security gate          │  │
+│  │  → audit log              │  │
+│  │  → rate limit             │  │
+│  │  → custom routing         │  │
+│  └──────────┬───────────────┘  │
+└─────────────┼──────────────────┘
+              │
+              ▼
+     Colony.cat.perceive()
+```
+
+### Core Design
+
+- **Gateway is not an organ**: Not mounted on OrganHost — it's an independent Colony subsystem (the skin)
+- **FrontDesk is the receptionist**: Protocol + Pluggable, all external messages must pass through `route()`
+- **Plugin chain first-hit**: `on_route` plugins run in registration order, first non-None return short-circuits
+- **Default routing**: `ctx.target_cat` set → forward to that cat via `cat.perceive()`; unset → placeholder reply
+
+### Usage
+
+```python
+from meowcat import Colony, Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
+from meowcat.plus.gateway import HttpAdapter
+
+colony = Colony("my-colony")
+
+# Default front desk
+fd = DefaultFrontDesk()
+
+# Mount security gate plugin (first-hit — blocks dangerous content)
+fd.plug("on_route", lambda text, ctx, colony:
+    "⚠️ Dangerous operation blocked" if "DROP TABLE" in text.upper() else None)
+
+# Mount audit log plugin
+fd.plug("on_route", lambda text, ctx, colony: print(f"[audit] {ctx.user_id}: {text[:50]}"))
+
+# Create gateway, mount adapters
+gw = Gateway(colony, front_desk=fd)
+gw.mount_adapter(HttpAdapter(port=8000))
+await gw.start()  # blocking, all adapters run in parallel
+```
+
+### Custom FrontDesk
+
+```python
+class MyFrontDesk(DefaultFrontDesk):
+    async def route(self, text, ctx, colony):
+        if ctx.platform == "slack":
+            return await self._slack_dispatch(text, ctx, colony)
+        return await super().route(text, ctx, colony)
+
+gw = Gateway(colony, front_desk=MyFrontDesk())
+```
+
+---
+
 ## 4. Private Room — Per-Cat Private Area
 
 Each cat has its own room with fixed furniture:
@@ -363,6 +431,17 @@ await colony.signal_between("analyst", "executor", "brain", "amygdala", "assess_
 # CatSelf self-evolution
 snapshot = cat.cat_self.before_act("conversation")
 cat.cat_self.after_act("Answered user question", {"topic": "weather"})
+
+# Gateway + FrontDesk
+from meowcat import Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
+from meowcat.plus.gateway import HttpAdapter
+
+fd = DefaultFrontDesk()
+fd.plug("on_route", lambda text, ctx, colony: print(f"[audit] {ctx.user_id}: {text[:50]}"))
+gw = Gateway(colony, front_desk=fd)
+gw.mount_adapter(HttpAdapter(port=8000))
+await gw.start()
 ```
 
 > Full assembly flow and all default configs → **[CATALOG.md](CATALOG.md)**

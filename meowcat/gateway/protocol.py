@@ -149,4 +149,3 @@ HTTP_REASONS: dict[int, str] = {
     404: "Not Found",
     500: "Internal Server Error",
 }
-

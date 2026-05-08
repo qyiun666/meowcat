@@ -51,6 +51,74 @@ meowcat 是 **纯抽象的 AI Agent 骨架**。它只定义"猫有什么器官�
 
 ---
 
+## 3.5 猫舍大门（Gateway + FrontDesk）— 唯一外部入口
+
+猫舍（Colony）通过大门（Gateway）与外部世界交互。**1 猫舍 : 1 大门 : N 适配器。**
+
+```
+外部世界 (HTTP/WS/CLI/IPC/Webhook)
+    │
+    ▼
+┌─ Gateway (大门) ────────────────┐
+│  ┌─ FrontDesk (前台) ────────┐  │
+│  │  on_route 插件链:           │  │
+│  │  → 安全门 (security gate)  │  │
+│  │  → 审计日志 (audit)        │  │
+│  │  → 限流 (rate limit)       │  │
+│  │  → 自定义路由 (custom)     │  │
+│  └──────────┬────────────────┘  │
+└─────────────┼───────────────────┘
+              │
+              ▼
+     Colony.cat.perceive()
+```
+
+### 核心设计
+
+- **Gateway 不是器官**：不挂在 OrganHost 上，是 Colony 的独立子系统（皮肤）
+- **FrontDesk 是前台接待员**：Protocol + Pluggable，所有外部消息必经 `route()` 方法
+- **插件链 first-hit**：`on_route` 插件按注册顺序执行，第一个返回非 None 的插件短路线
+- **默认路由**：`ctx.target_cat` 指定 → 转发给那只猫 → `cat.perceive()`；未指定 → 返回占位回复
+
+### 用法
+
+```python
+from meowcat import Colony, Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
+from meowcat.plus.gateway import HttpAdapter
+
+colony = Colony("my-colony")
+
+# 默认前台
+fd = DefaultFrontDesk()
+
+# 挂安全门插件（first-hit — 拦截危险内容）
+fd.plug("on_route", lambda text, ctx, colony:
+    "⚠️ 危险操作已拦截" if "DROP TABLE" in text.upper() else None)
+
+# 挂审计日志插件
+fd.plug("on_route", lambda text, ctx, colony: print(f"[audit] {ctx.user_id}: {text[:50]}"))
+
+# 创建大门，挂适配器
+gw = Gateway(colony, front_desk=fd)
+gw.mount_adapter(HttpAdapter(port=8000))
+await gw.start()  # 阻塞，所有适配器并行运行
+```
+
+### 自定义 FrontDesk
+
+```python
+class MyFrontDesk(DefaultFrontDesk):
+    async def route(self, text, ctx, colony):
+        if ctx.platform == "feishu":
+            return await self._feishu_dispatch(text, ctx, colony)
+        return await super().route(text, ctx, colony)
+
+gw = Gateway(colony, front_desk=MyFrontDesk())
+```
+
+---
+
 ## 4. 单人宿舍（Cat Private Room）— 私有区域
 
 每只猫有自己的小房间，里面固定有这些家具：
@@ -385,6 +453,17 @@ await colony.signal_between("analyst", "executor", "brain", "amygdala", "assess_
 # CatSelf 自我进化
 snapshot = cat.cat_self.before_act("conversation")
 cat.cat_self.after_act("回答了用户问题", {"topic": "天气"})
+
+# Gateway 大门 + FrontDesk 前台
+from meowcat import Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
+from meowcat.plus.gateway import HttpAdapter
+
+fd = DefaultFrontDesk()
+fd.plug("on_route", lambda text, ctx, colony: print(f"[audit] {ctx.user_id}: {text[:50]}"))
+gw = Gateway(colony, front_desk=fd)
+gw.mount_adapter(HttpAdapter(port=8000))
+await gw.start()
 ```
 
 > 完整装配流程和所有默认配置 → **[CATALOG.md](CATALOG.md)**
