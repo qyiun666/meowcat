@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
@@ -139,35 +138,3 @@ class NoopPaws(Pluggable):
             if isinstance(r, dict):
                 return r
         return {"recorded": False}
-
-    async def touch_file(
-        self,
-        path: str,
-        content: str | None = None,
-    ) -> dict[str, Any]:
-        warnings.warn(
-            "touch_file() is deprecated, use execute('touch_file', {...}) instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return await self.execute("touch_file", {"path": path, "content": content})
-
-    async def run_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
-        warnings.warn(
-            "run_command() is deprecated, use execute('run_command', {...}) instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return await self.execute("run_command", {"command": command, **kwargs})
-
-    async def interact_with_tool(
-        self,
-        skill_name: str,
-        params: dict[str, Any],
-    ) -> dict[str, Any]:
-        warnings.warn(
-            "interact_with_tool() is deprecated, use execute(skill_name, params) instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return await self.execute(skill_name, params)

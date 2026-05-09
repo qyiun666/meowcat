@@ -27,7 +27,7 @@ from meowcat.protocols import (
     AmygdalaProtocol, BrainStemProtocol, CatProtocol, CortexProtocol,
     EarsProtocol, EyesProtocol, FrontalCortexProtocol, GraphStorageProtocol,
     HippocampusProtocol, HypothalamusProtocol, KittenProtocol,
-    L6StorageProtocol, LLMBrainProtocol, LLMProviderProtocol,
+    LLMBrainProtocol, LLMProviderProtocol,
     PawsProtocol, SharedStorageProtocol, ThalamusProtocol,
     VectorStorageProtocol, WhiskersProtocol,
 )
@@ -99,17 +99,6 @@ class TestRuntimeCheckable:
             async def load(self, cat_uid: str) -> dict: return {}
             async def save(self, cat_uid: str, data: dict) -> None: pass
         assert isinstance(Dummy(), GraphStorageProtocol)
-
-    def test_l6_storage_checkable(self) -> None:
-        class Dummy:
-            def append(self, cat_uid: str, turn: int,
-                       u: str, a: str) -> None: pass
-
-            def load_all(self, cat_uid: str) -> list: return []
-            def load_recent(self, cat_uid: str, n: int = 20) -> list: return []
-            def total_chars(self, cat_uid: str) -> int: return 0
-            def get_stats(self, cat_uid: str) -> dict: return {}
-        assert isinstance(Dummy(), L6StorageProtocol)
 
     def test_vector_storage_checkable(self) -> None:
         class Dummy:

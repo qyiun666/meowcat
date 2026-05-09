@@ -31,7 +31,6 @@ __all__ = [
     "MergeProposalShape",
     "KittenCapability",
     "WorkflowShape",
-    "LLMConfig",
     "ModelConfig",
 ]
 
@@ -349,9 +348,7 @@ class ModelConfig(BaseModel):
     layer maps this to concrete provider SDK calls.
 
     .. versionchanged:: 1.2.12
-        Added ``api_key``, ``base_url`` fields; now supersedes ``LLMConfig``.
-                .. deprecated:: 1.2.17
-                    Use :class:`ModelConfig` instead of ``LLMConfig``.
+        Added ``api_key``, ``base_url`` fields.
 
     Usage::
 
@@ -377,34 +374,4 @@ class ModelConfig(BaseModel):
         fields = ", ".join(f"{k}={v!r}" for k, v in d.items())
         return f"ModelConfig({fields})"
 
-    def to_llm_config(self) -> ModelConfig:
-        """Convert to a :class:`ModelConfig` for the colony shelf.
 
-        .. deprecated:: 1.2.17
-            Use :class:`ModelConfig` directly.  ``LLMConfig`` is now an alias
-            for ``ModelConfig``.
-        """
-        import warnings
-
-        warnings.warn(
-            "ModelConfig.to_llm_config() is deprecated. "
-            "Use ModelConfig directly — LLMConfig is now an alias.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return ModelConfig(
-            model=self.model,
-            provider=self.provider,
-            api_key=self.api_key,
-            base_url=self.base_url,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            top_p=self.top_p,
-            stop=list(self.stop),
-            extra=self.extra,
-        )
-
-
-# v1.2.17: LLMConfig is now a deprecated alias for ModelConfig.
-# Use ModelConfig directly.  The two classes were unified in v1.2.12.
-LLMConfig = ModelConfig  # deprecated — use ModelConfig directly

@@ -242,15 +242,6 @@ class TestModelConfig:
         assert cfg.provider == "anthropic"
         assert cfg.stop == ["\n\n"]
 
-    def test_to_llm_config(self):
-        cfg = ModelConfig(model="gpt-4o-mini", temperature=0.3)
-        with pytest.warns(DeprecationWarning):
-            llm = cfg.to_llm_config()
-        assert isinstance(llm, ModelConfig)
-        assert llm.model == "gpt-4o-mini"
-        assert llm.temperature == 0.3
-        assert llm.provider == "openai"
-
 
 # ════════════════════════════════════════════════════════════════════
 # 4. Theme

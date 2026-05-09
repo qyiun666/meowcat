@@ -115,14 +115,3 @@ class PawsProtocol(Protocol):
         error: str,
         elapsed_ms: float = 0,
     ) -> dict[str, Any]: ...
-
-    # -- deprecated (v1.0.8, internally delegates to execute) -----------
-    async def touch_file(self, path: str, content: str |
-                         None = None) -> dict[str, Any]: ...
-
-    async def run_command(self, command: str, **
-                          kwargs: Any) -> dict[str, Any]: ...
-
-    async def interact_with_tool(
-        self, skill_name: str, params: dict[str, Any]
-    ) -> dict[str, Any]: ...

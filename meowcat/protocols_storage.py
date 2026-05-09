@@ -8,13 +8,11 @@ All typing.Protocol (duck typing), zero third-party dependencies.
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import AsyncIterator
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = [
     "GraphStorageProtocol",
-    "L6StorageProtocol",
     "VectorStorageProtocol",
     "SharedStorageProtocol",
     "FederationTransport",
@@ -37,44 +35,6 @@ class GraphStorageProtocol(Protocol):
 
 
 @runtime_checkable
-class L6StorageProtocol(Protocol):
-    """L6 raw dialogue persistence storage interface.
-
-    .. deprecated:: 1.3.6
-        ``L6StorageProtocol`` is superseded by episode persistence via
-        :class:`~meowcat.storage.JsonlEpisodeStore` integrated into the
-        Hippocampus lifecycle (``on_start`` load, ``on_shutdown`` flush).
-        See :class:`~meowcat.defaults.renovated.RenovatedHippocampus`
-        for the new approach.
-
-    **Position**: none (storage layer, no organ coordinate)
-    **Inbound**: held directly by BrainStem, not called via wiring
-    **Outbound**: none
-    **Reflex Arc**: none
-    **Implemented by**: app layer (storage backend)
-    """
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        warnings.warn(
-            "L6StorageProtocol is deprecated since v1.3.6. "
-            "Use JsonlEpisodeStore with RenovatedHippocampus instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init_subclass__(**kwargs)
-
-    def append(self, cat_uid: str, turn: int,
-               user_msg: str, ai_reply: str) -> None: ...
-
-    def load_all(self, cat_uid: str) -> list[dict[str, Any]]: ...
-    def load_recent(self, cat_uid: str,
-                    n: int = 20) -> list[dict[str, Any]]: ...
-
-    def total_chars(self, cat_uid: str) -> int: ...
-    def get_stats(self, cat_uid: str) -> dict[str, Any]: ...
-
-
-@runtime_checkable
 class VectorStorageProtocol(Protocol):
     """Vector search storage interface (semantic search).
 
@@ -92,23 +52,15 @@ class VectorStorageProtocol(Protocol):
 
 @runtime_checkable
 class SharedStorageProtocol(Protocol):
-    """Deprecated: use :class:`meowcat.storage.SharedStore` instead.
+    """Compatibility protocol for shared storage.
 
-    This protocol only covers sync load/save/merge. Colony now requires
-    async get/set/delete/list_keys/watch from SharedStore.
+    Covers sync load/save/merge. For new code, prefer extending
+    :class:`meowcat.storage.SharedStore` which provides async get/set/delete/list_keys/watch.
     """
 
     def load(self) -> dict[str, Any]: ...
     def save(self, data: dict[str, Any]) -> None: ...
     def merge(self, delta: dict[str, Any]) -> dict[str, Any]: ...
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        warnings.warn(
-            "SharedStorageProtocol is deprecated. Extend meowcat.storage.SharedStore instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init_subclass__(**kwargs)
 
 
 @runtime_checkable

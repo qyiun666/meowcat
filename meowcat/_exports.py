@@ -22,7 +22,7 @@ __all__ = [
     "AnomalyGrowthProtocol", "CorrectionGrowthProtocol",
     "CrystallizerProtocol", "RoleEmergenceProtocol",
     "SecurityPolicyProtocol",
-    "PawsProtocol", "GraphStorageProtocol", "L6StorageProtocol",
+    "PawsProtocol", "GraphStorageProtocol",
     "VectorStorageProtocol", "SharedStorageProtocol", "StageProtocol",
     "LLMProviderProtocol", "Diagnosable",
     # Models
@@ -30,7 +30,7 @@ __all__ = [
     "SubTaskShape", "TaskResultShape", "OrchestratorReportShape",
     "CandidateShape", "LocateResultShape", "MaintenanceReportShape",
     "StageEvent", "PipelineContext", "LoopEvent",
-    "MergeProposalShape", "KittenCapability", "WorkflowShape", "LLMConfig", "ModelConfig",
+    "MergeProposalShape", "KittenCapability", "WorkflowShape", "ModelConfig",
     # Errors
     "MeowCatError", "OrganNotMountedError", "LoopFailedError",
     "StageTimeoutError",
@@ -260,7 +260,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "SecurityPolicyProtocol": ("meowcat.protocols", "SecurityPolicyProtocol"),
     "PawsProtocol": ("meowcat.protocols", "PawsProtocol"),
     "GraphStorageProtocol": ("meowcat.protocols", "GraphStorageProtocol"),
-    "L6StorageProtocol": ("meowcat.protocols", "L6StorageProtocol"),
     "VectorStorageProtocol": ("meowcat.protocols", "VectorStorageProtocol"),
     "SharedStorageProtocol": ("meowcat.protocols", "SharedStorageProtocol"),
     "StageProtocol": ("meowcat.protocols", "StageProtocol"),
@@ -284,7 +283,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "MergeProposalShape": ("meowcat.models", "MergeProposalShape"),
     "KittenCapability": ("meowcat.models", "KittenCapability"),
     "WorkflowShape": ("meowcat.models", "WorkflowShape"),
-    "LLMConfig": ("meowcat.models", "LLMConfig"),
     "ModelConfig": ("meowcat.models", "ModelConfig"),
     # — errors —
     "MeowCatError": ("meowcat.errors", "MeowCatError"),

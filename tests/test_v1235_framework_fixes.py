@@ -88,7 +88,7 @@ class Test_T2_LoopsImportProtection:
 # ──────────────────────────────────────────────────────────────────────
 
 class Test_T3_StorageProtocolMigration:
-    """T3: Colony 接受 SharedStore; SharedStorageProtocol deprecated。"""
+    """T3: Colony 接受 SharedStore; SharedStorageProtocol 保留兼容。"""
 
     def test_colony_with_inmemory_shared_store_works(self):
         colony = make_test_colony("t3-colony")
@@ -104,23 +104,14 @@ class Test_T3_StorageProtocolMigration:
         store = colony._ensure_storage()
         assert store is not None
 
-    def test_shared_storage_protocol_deprecated_warning(self):
-        import warnings
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            from meowcat.protocols_storage import SharedStorageProtocol
+    def test_shared_storage_protocol_still_exists(self):
+        from meowcat.protocols_storage import SharedStorageProtocol
 
-            class _DeprecatedImpl(SharedStorageProtocol):
-                def load(self): return {}
-                def save(self, data): pass
-                def merge(self, delta): return {}
-        # 子类化应触发 DeprecationWarning
-        dep_warnings = [x for x in w if issubclass(
-            x.category, DeprecationWarning)]
-        # Note: __init_subclass__ may not trigger if Protocol metaclass
-        # doesn't call it. The deprecation is mainly a doc + type signal.
-        # At minimum verify the protocol still exists and has the docstring.
-        assert "Deprecated" in SharedStorageProtocol.__doc__ or True
+        class _CompatImpl(SharedStorageProtocol):
+            def load(self): return {}
+            def save(self, data): pass
+            def merge(self, delta): return {}
+        assert isinstance(_CompatImpl(), SharedStorageProtocol)
 
 
 # ──────────────────────────────────────────────────────────────────────

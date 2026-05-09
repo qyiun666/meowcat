@@ -138,7 +138,8 @@ class NoopHypothalamus(Pluggable):
         Pluggable.__init__(self)
 
     async def run_maintenance(self, country_code: str | None = None) -> Any:
-        result: dict[str, Any] = {"decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
+        result: dict[str, Any] = {
+            "decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
         async for _name, r in self._run_plugs("run_maintenance", country_code):
             if isinstance(r, dict):
                 result.update(r)
@@ -436,7 +437,8 @@ class NoopThalamus(Pluggable):
         return result
 
     async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
-        result: dict[str, Any] = {"route": "chat", "entities": [], "snippets": []}
+        result: dict[str, Any] = {
+            "route": "chat", "entities": [], "snippets": []}
         async for _name, r in self._run_plugs("locate", msg, session_id):
             if isinstance(r, dict):
                 result.update(r)
@@ -549,7 +551,8 @@ class NoopHippocampus(Pluggable):
         return [ep for ep in self.episodes if ep.get("id") in id_set]
 
     def add_entity(self, entity: dict[str, Any]) -> None:
-        eid = entity.get("id", entity.get("entity_id", str(len(self.entities))))
+        eid = entity.get("id", entity.get(
+            "entity_id", str(len(self.entities))))
         self.entities[eid] = entity
 
     # -- Memory retrieval --------------------------------------------
@@ -564,7 +567,8 @@ class NoopHippocampus(Pluggable):
         results: list[dict[str, Any]] = []
         kws = keywords.lower().split()
         for ep in self.episodes:
-            text = (ep.get("user_msg", "") + " " + ep.get("ai_reply", "")).lower()
+            text = (ep.get("user_msg", "") + " " +
+                    ep.get("ai_reply", "")).lower()
             if any(kw in text for kw in kws):
                 results.append(ep)
                 if len(results) >= limit:
@@ -596,7 +600,8 @@ class NoopHippocampus(Pluggable):
             ValueError: Invalid scope value.
         """
         if scope not in ("self", "colony"):
-            raise ValueError(f"Invalid search scope '{scope}': must be 'self' or 'colony'")
+            raise ValueError(
+                f"Invalid search scope '{scope}': must be 'self' or 'colony'")
         if scope == "self":
             return self.fts_search("", query)
         # scope == "colony": cross-cat search via colony SharedMemoryPool (v1.1.21)
@@ -773,7 +778,8 @@ class NoopHippocampus(Pluggable):
 
     def update_importance(self, entity_id: str, importance: float) -> None:
         if entity_id in self.entities:
-            self.entities[entity_id]["importance"] = max(0.0, min(1.0, importance))
+            self.entities[entity_id]["importance"] = max(
+                0.0, min(1.0, importance))
 
     def set_last_seen(self, entity_id: str, ts: str) -> None:
         if entity_id in self.entities:

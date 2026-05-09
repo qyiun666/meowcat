@@ -29,7 +29,8 @@ class NoopEars(Pluggable):
         Pluggable.__init__(self)
 
     async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
-        result: dict[str, Any] = {"text": str(raw_input), "keywords": [], "language": "unknown"}
+        result: dict[str, Any] = {"text": str(
+            raw_input), "keywords": [], "language": "unknown"}
         async for _name, r in self._run_plugs("hear", raw_input):
             if isinstance(r, dict):
                 result.update(r)

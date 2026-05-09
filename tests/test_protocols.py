@@ -31,7 +31,7 @@ from meowcat.defaults.organs import (
     NoopTail,
     NoopWhiskers,
 )
-from meowcat.defaults.stores import InMemoryGraphStore, InMemoryL6Store
+from meowcat.defaults.stores import InMemoryGraphStore
 from meowcat.protocols import (
     AmygdalaProtocol,
     AnomalyGrowthProtocol,
@@ -47,7 +47,6 @@ from meowcat.protocols import (
     HippocampusProtocol,
     HypothalamusProtocol,
     KittenProtocol,
-    L6StorageProtocol,
     LLMBrainProtocol,
     LLMProviderProtocol,
     OrchestratorProtocol,
@@ -68,7 +67,7 @@ class TestProtocolImport:
 
     def test_all_protocols_importable(self) -> None:
         protocols = [
-            OrganProtocol, GraphStorageProtocol, L6StorageProtocol,
+            OrganProtocol, GraphStorageProtocol,
             VectorStorageProtocol, SharedStorageProtocol,
             LLMProviderProtocol, BrainStemProtocol, HippocampusProtocol,
             ThalamusProtocol, LLMBrainProtocol, AmygdalaProtocol,
@@ -214,14 +213,6 @@ class TestInMemoryStores:
             assert data == {"entities": {}}
 
         anyio.run(_test)
-
-    def test_inmemory_l6_store(self) -> None:
-        s = InMemoryL6Store()
-        assert isinstance(s, L6StorageProtocol)
-        s.append("cat1", 1, "hello", "hi")
-        assert s.total_chars("cat1") > 0
-        assert len(s.load_all("cat1")) == 1
-        assert len(s.load_recent("cat1", n=10)) == 1
 
 
 class TestProtocolRuntimeCheckable:

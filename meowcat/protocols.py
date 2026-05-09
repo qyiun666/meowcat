@@ -40,7 +40,6 @@ from meowcat.protocols_sense import (
 from meowcat.protocols_storage import (
     FederationTransport,
     GraphStorageProtocol,
-    L6StorageProtocol,
     SharedStorageProtocol,
     VectorStorageProtocol,
 )
@@ -64,7 +63,6 @@ __all__ = [
     "OrganProtocol",
     "FederationTransport",
     "GraphStorageProtocol",
-    "L6StorageProtocol",
     "VectorStorageProtocol",
     "SharedStorageProtocol",
     "LLMProviderProtocol",

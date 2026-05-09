@@ -247,57 +247,6 @@ class RenovatedFrontal(NoopFrontal):
         self._topics.append(", ".join(sorted(self._current_keywords)))
         self._current_keywords.clear()
 
-    def save(self, path: Any | None = None) -> None:
-        """Save focus state via the configured store (sync wrapper).
-
-        .. deprecated:: 1.3.6
-            Use :meth:`_save_to_store` instead.  This method uses
-            ``anyio.run()`` which crashes inside an async event loop.
-            Kept for backward compatibility only.
-
-        v1.3.6: When ``_focus_store`` is set, delegates to the store.
-        Otherwise no-op (backward-compatible).
-        """
-        if self._focus_store is None:
-            return
-        import warnings
-
-        warnings.warn(
-            "RenovatedFrontal.save() is deprecated since v1.3.6. Use _save_to_store() instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        import anyio
-
-        state = self._export_state()
-        anyio.run(self._focus_store.save, state)
-
-    def load(self, path: Any | None = None) -> None:
-        """Load focus state via the configured store (sync wrapper).
-
-        .. deprecated:: 1.3.6
-            Use :meth:`_load_from_store` instead.  This method uses
-            ``anyio.run()`` which crashes inside an async event loop.
-            Kept for backward compatibility only.
-
-        v1.3.6: When ``_focus_store`` is set, delegates to the store.
-        Otherwise no-op (backward-compatible).
-        """
-        if self._focus_store is None:
-            return
-        import warnings
-
-        warnings.warn(
-            "RenovatedFrontal.load() is deprecated since v1.3.6. Use _load_from_store() instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        import anyio
-
-        state = anyio.run(self._focus_store.load)
-        if state is not None:
-            self._import_state(state)
-
     # ── Lifecycle helpers (used by factory.py) ────────────────────
 
     async def _load_from_store(self) -> None:

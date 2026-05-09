@@ -3,8 +3,7 @@
 
 """JsonlL6Store — JSONL-based persistent L6 conversation storage.
 
-Implements :class:`~meowcat.protocols_storage.L6StorageProtocol` using
-stdlib ``json`` + ``pathlib``, zero external dependencies.  Each cat's
+Uses stdlib ``json`` + ``pathlib``, zero external dependencies.  Each cat's
 raw dialogue turns are appended as one JSON line per turn in
 ``{data_dir}/{cat_uid}.jsonl``.
 
@@ -25,8 +24,8 @@ from typing import Any
 class JsonlL6Store:
     """Persistent L6 raw-dialogue store backed by JSONL files.
 
-    Implements ``L6StorageProtocol``: append / load_all / load_recent /
-    total_chars / get_stats.  Thread-safe as each append writes a
+    append / load_all / load_recent / total_chars / get_stats.
+    Thread-safe as each append writes a
     complete line atomically (``write`` + ``flush``).
     """
 
@@ -34,7 +33,7 @@ class JsonlL6Store:
         self._dir = Path(data_dir).resolve()
         self._dir.mkdir(parents=True, exist_ok=True)
 
-    # -- Protocol (L6StorageProtocol) -----------------------------------
+    # -- Storage API ---------------------------------------------------
 
     def append(self, cat_uid: str, turn: int, user_msg: str, ai_reply: str) -> None:
         """Append one dialogue turn to the cat's JSONL file."""

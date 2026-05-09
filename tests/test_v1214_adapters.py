@@ -498,7 +498,7 @@ class TestPawsAgent:
     def test_touch_file_delegates_to_execute(self):
         a = PawsAgent(MockToolExecutor())
         import asyncio
-        result = asyncio.run(a.touch_file("/tmp/x"))
+        result = asyncio.run(a.execute("touch_file", {"path": "/tmp/x"}))
         assert result["output"] == "executed touch_file"
 
 

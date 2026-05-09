@@ -5,7 +5,7 @@
 
 import pytest
 
-from meowcat.protocols_storage import GraphStorageProtocol, L6StorageProtocol
+from meowcat.protocols_storage import GraphStorageProtocol
 from meowcat.storage.sqlite_graph_store import SqliteGraphStore
 from meowcat.storage.jsonl_l6_store import JsonlL6Store
 
@@ -73,9 +73,6 @@ class TestJsonlL6Store:
     @pytest.fixture
     def store(self, tmp_path):
         return JsonlL6Store(tmp_path / "convos")
-
-    def test_implements_protocol(self, store):
-        assert isinstance(store, L6StorageProtocol)
 
     def test_load_all_empty(self, store):
         assert store.load_all("no-cat") == []

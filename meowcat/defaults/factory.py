@@ -49,7 +49,6 @@ from meowcat.defaults.renovated import (
 )
 from meowcat.defaults.stores import (
     InMemoryGraphStore,
-    InMemoryL6Store,
     InMemorySharedStore,
     InMemoryVectorStore,
 )
@@ -63,7 +62,6 @@ from meowcat.protocols import (
     GraphStorageProtocol,
     HippocampusProtocol,
     HypothalamusProtocol,
-    L6StorageProtocol,
     LLMBrainProtocol,
     PawsProtocol,
     SharedStorageProtocol,
@@ -176,7 +174,6 @@ def create_cat(
     hotspot_threshold: int = 3,
     # ━━ Storage ━━
     graph_store: GraphStorageProtocol | None = None,
-    l6_store: L6StorageProtocol | None = None,
     vector_store: VectorStorageProtocol | None = None,
     shared_store: SharedStorageProtocol | None = None,
     # ━━ Reflex arcs ━━
@@ -394,7 +391,6 @@ def create_cat(
     # -- Storage ---------------------------------------------------------
     # type: ignore[attr-defined]
     cat._graph_store = graph_store or InMemoryGraphStore()
-    cat._l6_store = l6_store or InMemoryL6Store()  # type: ignore[attr-defined]
     # type: ignore[attr-defined]
     cat._vector_store = vector_store or InMemoryVectorStore()
     # type: ignore[attr-defined]

@@ -106,8 +106,6 @@ class PawsAgent(AgentOrgan):
     """Adapter for PawsProtocol — delegates tool execution to an external agent.
 
     The backing agent should implement ``execute(tool_name, params) -> dict``.
-    Deprecated methods ``touch_file``, ``run_command``, ``interact_with_tool``
-    delegate to ``execute`` internally.
 
     Mode C — hooks can fully replace execute.
     """
@@ -147,23 +145,6 @@ class PawsAgent(AgentOrgan):
             )
             return result if isinstance(result, dict) else {"recorded": False}
         return {"recorded": False}
-
-    async def touch_file(
-        self,
-        path: str,
-        content: str | None = None,
-    ) -> dict[str, Any]:
-        return await self.execute("touch_file", {"path": path, "content": content})
-
-    async def run_command(self, command: str, **kwargs: Any) -> dict[str, Any]:
-        return await self.execute("run_command", {"command": command, **kwargs})
-
-    async def interact_with_tool(
-        self,
-        skill_name: str,
-        params: dict[str, Any],
-    ) -> dict[str, Any]:
-        return await self.execute(skill_name, params)
 
 
 __all__ = ["EarsAgent", "EyesAgent", "WhiskersAgent", "PawsAgent"]
