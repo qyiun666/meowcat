@@ -1,23 +1,10 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat loops — Loop dataclass + LoopRegistry + 5 default loops.
+"""meowcat loops — Loop dataclass + LoopRegistry + LoopSequence + built-in registries.
 
-Loop = Chain + trigger event + exit event. Loop composes existing Chains, mounting them
-into the cat's lifecycle via events to form automated execution cycles.
-
-Developer experience::
-
-    from meowcat.loops import Loop, BUILTIN_LOOPS, CONVERSATION_LOOP
-
-    # inspect built-in loops
-    for lp in BUILTIN_LOOPS:
-        print(f"{lp.name}: trigger={lp.trigger}, chain={lp.chain.name}")
-
-    # execute via cat
-    result = await cat.run_loop("conversation", message="hello")
-
-This file has zero third-party dependencies, zero meowagent imports.
+Loop = Chain + trigger event + exit event.  LoopSequence composes multiple loops sequentially or
+event-driven.
 """
 
 from __future__ import annotations
@@ -174,6 +161,17 @@ def register_default_loops(
 # -- LoopRegistry ---------------------------------------------------
 
 
+def _register_item(registry: dict, registry_list: list, item: Any, expected_type: type) -> None:
+    """Register an item in dict + list registry, overwriting by name if exists."""
+    if not isinstance(item, expected_type):
+        raise TypeError(f"Expected {expected_type.__name__} instance, got {type(item).__name__}")
+    name = item.name
+    if name in registry:
+        registry_list.remove(registry[name])
+    registry[name] = item
+    registry_list.append(item)
+
+
 @dataclass
 class LoopRegistry:
     """Loop registry — manages Loop registration, lookup, and execution.
@@ -195,22 +193,8 @@ class LoopRegistry:
     _loops_list: list[Loop] = field(default_factory=list, init=False)
 
     def register(self, loop: Loop) -> None:
-        """Register a loop. Same name overwrites old value.
-
-        Args:
-            loop: Loop instance
-
-        Raises:
-            TypeError: loop is not a Loop instance
-        """
-        if not isinstance(loop, Loop):
-            raise TypeError(
-                f"Expected Loop instance, got {type(loop).__name__}",
-            )
-        if loop.name in self._loops:
-            self._loops_list.remove(self._loops[loop.name])
-        self._loops[loop.name] = loop
-        self._loops_list.append(loop)
+        """Register a loop. Same name overwrites."""
+        _register_item(self._loops, self._loops_list, loop, Loop)
 
     def get(self, name: str) -> Loop | None:
         """Look up a loop by name.
@@ -224,7 +208,7 @@ class LoopRegistry:
         return self._loops.get(name)
 
     def list_all(self) -> list[Loop]:
-        """Return list of all registered loops (registration order)."""
+        """Return all registered items (registration order)."""
         return list(self._loops_list)
 
     async def run(self, cat: Any, name: str, **initial_input: Any) -> dict[str, Any]:
@@ -270,23 +254,14 @@ class LoopRegistry:
 class LoopSequence:
     """Meta-loop — sequential/event-driven composition of multiple Loops.
 
-    Composition model layer 5::
-
-        Path → Chain → Loop → LoopSequence
-
-    LoopSequence assembles multiple registered loops into a larger execution unit.
+    Composition: Path → Chain → Loop → LoopSequence.
 
     Attributes:
-        name: Unique meta-loop name
-        description: Human-readable description
-        loops: Sequence of registered ``Loop`` names
-        mode: ``"sequential"`` — execute sequentially, previous result
-              passed to next step;
-              ``"event_driven"`` — execute concurrently, each
-              listens for its own trigger event
-        stop_on_error: ``True`` — any Loop failure immediately raises
-                       exception, stopping subsequent loops;
-                       ``False`` — skip failed Loop and continue
+        name: Unique meta-loop name.
+        description: Human-readable description.
+        loops: Sequence of registered ``Loop`` names.
+        mode: ``"sequential"`` (pass result to next) or ``"event_driven"`` (concurrent).
+        stop_on_error: ``True`` — any failure raises; ``False`` — skip and continue.
     """
 
     name: str
@@ -333,21 +308,8 @@ class LoopSequenceRegistry:
     _seqs_list: list[LoopSequence] = field(default_factory=list, init=False)
 
     def register(self, seq: LoopSequence) -> None:
-        """Register a meta-loop. Same name overwrites old value.
-
-        Args:
-            seq: LoopSequence instance
-
-        Raises:
-            TypeError: seq is not a LoopSequence instance
-        """
-        if not isinstance(seq, LoopSequence):
-            raise TypeError(
-                f"Expected LoopSequence instance, got {type(seq).__name__}")
-        if seq.name in self._seqs:
-            self._seqs_list.remove(self._seqs[seq.name])
-        self._seqs[seq.name] = seq
-        self._seqs_list.append(seq)
+        """Register a meta-loop. Same name overwrites."""
+        _register_item(self._seqs, self._seqs_list, seq, LoopSequence)
 
     def get(self, name: str) -> LoopSequence | None:
         """Look up a meta-loop by name.
@@ -361,7 +323,7 @@ class LoopSequenceRegistry:
         return self._seqs.get(name)
 
     def list_all(self) -> list[LoopSequence]:
-        """Return list of all registered meta-loops (registration order)."""
+        """Return all registered items (registration order)."""
         return list(self._seqs_list)
 
     async def run(
@@ -372,24 +334,14 @@ class LoopSequenceRegistry:
     ) -> dict[str, Any]:
         """Execute a meta-loop.
 
-        **sequential mode**: Execute in ``loops`` order, previous step result
-        becomes next step kwargs, last result is returned.
-
-        **event_driven mode**: All Loops execute concurrently, each receives
-        the same ``initial_input``. Results collected by Loop name as key.
-
-        Args:
-            cat: CatBase instance (must support ``cat.loop_registry.run(cat, name, **kw)``)
-            name: Meta-loop name
-            **initial_input: Initial input
+        **sequential**: execute in order, previous result → next step kwargs.
+        **event_driven**: all loops concurrently, same ``initial_input``.
 
         Returns:
-            Last step result (sequential) or ``{loop_name: result, ...}``
-            (event_driven)
+            Last result dict (sequential) or ``{loop_name: result}`` (event_driven).
 
         Raises:
-            KeyError: Meta-loop not found, or referenced Loop not found
-            Exception: A Loop failed and ``stop_on_error=True``
+            KeyError: Meta-loop or referenced Loop not found.
         """
 
         seq = self.get(name)
@@ -498,32 +450,18 @@ __all__ = [
 ]
 
 
-# -- Import protection: intercept wrong imports by hinting correct path ------
+# -- Import protection: redirect wrong imports to correct path ------
 
-_EVENTS_HELD_IN_MEOWCAT_EVENTS: frozenset[str] = frozenset(
-    {
-        "LocateEvent",
-        "RememberEvent",
-        "OrchestrateEvent",
-        "GrowthEvent",
-        "Lifecycle",
-        "KittenEvent",
-        "NerveEvent",
-        "SelfEvent",
-        "FusionEvent",
-        "TelemetryEvent",
-        "EventBus",
-        "Handler",
-        "ALL_EVENTS",
-    }
-)
+_EVENTS_HELD_IN_MEOWCAT_EVENTS: frozenset[str] = frozenset({
+    "LocateEvent", "RememberEvent", "OrchestrateEvent", "GrowthEvent",
+    "Lifecycle", "KittenEvent", "NerveEvent", "SelfEvent",
+    "FusionEvent", "TelemetryEvent", "EventBus", "Handler", "ALL_EVENTS",
+})
 
 
 def __getattr__(name: str):
     if name in _EVENTS_HELD_IN_MEOWCAT_EVENTS:
         raise AttributeError(
-            f"{name!r} is not in meowcat.loops. "
-            f"Use: from meowcat.events import {name}  "
-            f"or: from meowcat import {name}"
+            f"{name!r} is not in meowcat.loops. Use: from meowcat.events import {name}"
         )
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

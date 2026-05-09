@@ -3,44 +3,15 @@
 
 """TaskOrchestrator — DAG-based task orchestration with topological sort and parallel dispatch.
 
-T-26 (v1.3.6): Framework-level DAG executor.  Application layer defines task
-nodes with dependencies; the orchestrator topologically sorts them into levels
-and dispatches each level concurrently.
-
-The framework provides the DAG infrastructure and execution core.  It does
-**not** provide SubTask, Kitten, or any specific task-semantics — those are
-app-layer concerns.
-
-Architecture::
-
-    ┌──────────────────────────────────────────────────┐
-    │  TaskOrchestrator                                │
-    │                                                  │
-    │  tasks: [Task₁, Task₂, Task₃, ...]              │
-    │                                                  │
-    │  add_task(node)          → register node         │
-    │  add_dependency(a, b)    → a depends on b        │
-    │  topological_sort()      → [[level₀], [level₁]]  │
-    │  execute(executor_fn)    → {id: TaskResult}      │
-    │    for each level:                               │
-    │      gather(executor_fn(node) for node in level) │
-    └──────────────────────────────────────────────────┘
+The orchestrator topologically sorts tasks into levels and dispatches each level concurrently.
+Framework provides DAG infrastructure; SubTask/Kitten/task-semantics are app-layer concerns.
 
 Usage::
 
     orch = TaskOrchestrator(max_concurrent=5)
-
-    orch.add_task(TaskNode(task_id="fetch", name="Fetch data"))
+    orch.add_task(TaskNode(task_id="fetch", name="Fetch"))
     orch.add_task(TaskNode(task_id="parse", name="Parse", depends_on=["fetch"]))
-    orch.add_task(TaskNode(task_id="store", name="Store", depends_on=["parse"]))
-
-    async def run_task(node: TaskNode) -> Any:
-        # app-layer logic
-        return f"done: {node.name}"
-
     results = await orch.execute(run_task)
-    for tid, r in results.items():
-        print(f"{tid}: {r.status.value} → {r.output}")
 """
 
 from __future__ import annotations
@@ -143,40 +114,16 @@ Return value is stored in :attr:`TaskResult.output`.
 class TaskOrchestrator:
     """DAG-based task orchestrator with topological sort and parallel dispatch.
 
-    Tasks are registered via :meth:`add_task`.  Dependencies are declared
-    on each :class:`TaskNode` via ``depends_on`` or added via
-    :meth:`add_dependency`.
-
-    :meth:`topological_sort` produces levels where tasks within the same
-    level have no mutual dependencies and can run concurrently.
-
-    :meth:`execute` runs the DAG level-by-level: all tasks in level *k*
-    are dispatched concurrently; level *k+1* starts only after all tasks
-    in level *k* complete.
+    Tasks are registered via :meth:`add_task`. Dependencies declared via
+    :meth:`add_dependency` or ``TaskNode.depends_on``.
+    :meth:`topological_sort` produces concurrent-safe levels.
+    :meth:`execute` dispatches level-by-level with bounded concurrency.
 
     Design decisions:
-
-    - **Cycle detection**: ``topological_sort`` raises :exc:`ValueError`
-      if the DAG contains a cycle.
-    - **Failure policy**: By default, a failed task cancels all downstream
-      dependents.  Set ``abort_on_failure=False`` to continue executing
-      independent branches.
-    - **Framework only provides infrastructure**: The five classic
-      task types (SubTask, Kitten, etc.) are app-layer concerns.
-      The framework gives the DAG engine.
-
-    Usage::
-
-        orch = TaskOrchestrator(max_concurrent=5)
-
-        orch.add_task(TaskNode("a", "Task A"))
-        orch.add_task(TaskNode("b", "Task B", depends_on=["a"]))
-        orch.add_task(TaskNode("c", "Task C", depends_on=["a"]))
-
-        async def my_executor(node: TaskNode) -> str:
-            return f"Executed {node.name}"
-
-        results = await orch.execute(my_executor)
+    - **Cycle detection**: :meth:`topological_sort` raises :exc:`ValueError` on cycles.
+    - **Failure policy**: by default, a failed task cancels downstream dependents.
+      Set ``abort_on_failure=False`` to continue independent branches.
+    - **Framework only provides infrastructure**: task semantics are app-layer concerns.
     """
 
     def __init__(
@@ -275,18 +222,10 @@ class TaskOrchestrator:
 
     @staticmethod
     def _kahn_sort(nodes: dict[str, TaskNode]) -> list[list[str]]:
-        """Kahn's algorithm: topologically sort nodes into execution levels.
+        """Kahn's algorithm: topological sort into execution levels.
 
-        **Single source of truth** for topological sorting.  Called by both:
-
-        - :meth:`topological_sort` — public inspection API (always on
-          ``self._nodes``).
-        - :meth:`_execute_levels` — private execution engine (on a
-          *filtered subgraph* when ``execute(tasks=[...])`` is used).
-
-        Because ``_execute_levels`` may receive a different node set than
-        ``self._nodes``, the two callers keep independent call-sites rather
-        than chaining through ``topological_sort``.
+        Single source of truth for topological sort, called by both
+        :meth:`topological_sort` (public) and :meth:`_execute_levels` (private).
 
         Args:
             nodes: Task nodes keyed by task_id.
@@ -295,7 +234,7 @@ class TaskOrchestrator:
             A list of levels, each being a list of ``task_id`` strings.
 
         Raises:
-            ValueError: The task graph contains a cycle.
+            ValueError: The task graph contains a cycle or missing dependency.
         """
         in_degree: dict[str, int] = {}
         adj: dict[str, list[str]] = defaultdict(list)
@@ -374,26 +313,19 @@ class TaskOrchestrator:
         *,
         tasks: Sequence[str] | None = None,
     ) -> dict[str, TaskResult]:
-        """Execute the task DAG.
-
-        Topologically sorts tasks into levels, then dispatches each
-        level with bounded concurrency.  Level *k+1* starts only after
-        all tasks in level *k* have completed (successfully or not,
-        depending on :attr:`abort_on_failure`).
+        """Execute the task DAG level-by-level.
 
         Args:
-            executor:  Async callable ``(TaskNode) -> Any`` invoked for
-                       each task when dispatched.
-            tasks:     Optional subset of ``task_id`` strings to execute.
-                       If ``None``, all registered tasks are executed.
+            executor: Async callable ``(TaskNode) -> Any`` per task.
+            tasks: Optional subset of task_ids; None = all registered.
 
         Returns:
-            A dict mapping ``task_id`` → :class:`TaskResult` for every
-            task that was scheduled (including cancelled tasks).
+            Dict ``task_id`` → :class:`TaskResult` for all scheduled tasks
+            (including cancelled).
 
         Raises:
-            ValueError: The DAG contains a cycle or missing dependency.
-            KeyError:   A task in *tasks* is not registered.
+            ValueError: DAG contains a cycle or missing dependency.
+            KeyError: A task in *tasks* is not registered.
         """
         if tasks is not None:
             subset_ids = set(tasks)
@@ -428,24 +360,16 @@ class TaskOrchestrator:
     ) -> dict[str, TaskResult]:
         """Execute tasks level-by-level with topological ordering.
 
-        **Private execution engine** — called by :meth:`execute`.
-        Performs the full lifecycle: topological sort → concurrent
-        dispatch per level → status tracking → failure propagation.
+        Delegates to :meth:`_kahn_sort` for sort, dispatches each level
+        concurrently with semaphore-bounded concurrency, tracks status,
+        and propagates failures.
 
-        Calls :meth:`_kahn_sort` directly (not :meth:`topological_sort`)
-        because it operates on *nodes*, which is a filtered subgraph
-        when ``execute(tasks=[...])`` is used.  The two methods serve
-        complementary roles:
+        Args:
+            nodes: Subgraph of TaskNodes to execute.
+            executor: Async callback ``(TaskNode) -> Any``.
 
-        ======================  =======================  =====================
-        Method                  Role                      Operates on
-        ======================  =======================  =====================
-        :meth:`topological_sort`  Public inspection API    ``self._nodes`` (all)
-        :meth:`_execute_levels`   Private execution engine  *nodes* (subgraph)
-        ======================  =======================  =====================
-
-        Both delegate to :meth:`_kahn_sort` — the single source of
-        truth for Kahn's algorithm — but with different input sets.
+        Returns:
+            Dict mapping ``task_id`` → :class:`TaskResult` for all scheduled tasks.
         """
         results: dict[str, TaskResult] = {}
         failed_ids: set[str] = set()

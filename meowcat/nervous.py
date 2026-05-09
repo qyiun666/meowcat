@@ -1,40 +1,19 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat nervous system — Nervous subsystem (extracted in v0.5.9).
+"""Nervous system — signal dispatch + probe diagnostics + wiring lifecycle.
 
-Communication conventions (v0.5.20+):
-- signal(): formal channel with wiring validation
-- probe(): read-only diagnostic, no wiring edge check
-- inject(): bypass-validation writes via Needle (debug/admin only)
-- direct call: allowed. As long as wiring has the corresponding edge,
-  not all calls are forced through signal(). Direct calls are a performance optimization.
+Holds :class:`Wiring`, adjudicates inter-organ access via ``signal()``,
+read-only diagnostic via ``probe()``.  Depends on :class:`OrganHost` +
+:class:`EventBus`.
 
-What truly needs to be prevented are FORBIDDEN paths absent from the wiring table.
+Usage::
 
-Responsibility: holds :class:`Wiring`, adjudicates inter-organ access via ``signal()``,
-read-only diagnostic via ``probe()``. Depends on explicitly injected :class:`OrganHost` +
-:class:`EventBus`, can be instantiated independently for "signals only, no reflex arcs" scenarios::
-
-    host = OrganHost("toy")
-    events = EventBus()
     nervous = Nervous(host, events)
     nervous.wire_default()
-    host.mount("brain", "cerebrum", brain)
-    host.mount("brain", "hippocampus", hippo)
     nervous.freeze()
-    await nervous.signal(
-        ("brain", "cerebrum"), ("brain", "hippocampus"),
-        "remember", msg="hi",
-    )
-
-Kitten scenario: pass ``forbidden_methods`` at construction to disable specific method names::
-
-    nervous = Nervous(
-        host, events,
-        forbidden_methods=frozenset({"spawn_kitten", "absorb_merge"}),
-    )
-    await nervous.signal(..., "spawn_kitten")  # -> IllegalNeuralPathError
+    await nervous.signal(from_organ, to_organ, "method", **kwargs)
+    snapshot = await nervous.probe(to_organ)
 """
 
 from __future__ import annotations
@@ -43,7 +22,10 @@ import inspect
 import time
 from dataclasses import dataclass, field
 from functools import cache
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from meowcat.biology.organ_spec import OrganSpec  # noqa: F401
 
 from meowcat.errors import CircuitOpenError, IllegalNeuralPathError
 from meowcat.events import EventBus, NerveEvent
@@ -150,24 +132,13 @@ class Nervous:
         """Construct nervous system.
 
         Args:
-            host: organ container (for resolving target organ instances)
-            events: event bus (for emitting ``nerve.signal`` for debugging instrumentation)
-            forbidden_methods: method-level blocklist. ``signal(..., method=X)`` raises
-                :class:`IllegalNeuralPathError` when ``X in forbidden_methods``.
-                Kittens use this to disable main-cat-only methods like ``spawn_kitten`` / ``absorb_merge``.
-            circuit_breaker: enable signal-level circuit breaker (default False for
-                backward compatibility). When enabled, consecutive failures on a
-                ``(to_organ, method)`` pair will open the circuit after ``cb_threshold``
-                failures, blocking further calls for ``cb_timeout`` seconds.
-            cb_threshold: number of consecutive failures before circuit opens (default 5).
-            cb_timeout: seconds the circuit stays open before transitioning to half-open
-                to allow one probe call (default 30.0).
-            enable_telemetry: enable observability tracing (default False for
-                backward compatibility). When enabled, each ``signal()`` call produces
-                a :class:`~meowcat.telemetry.SignalSpan` tracked by an internal
-                :class:`~meowcat.telemetry.Tracer` and :class:`~meowcat.telemetry.Metrics`.
-                Span-completion events are emitted through the event bus as
-                ``TelemetryEvent.SPAN``.
+            host: organ container for resolving target organ instances.
+            events: event bus for emitting ``nerve.signal`` debug events.
+            forbidden_methods: method-level blocklist; raises :class:`IllegalNeuralPathError`.
+            circuit_breaker: enable signal-level circuit breaker (default False).
+            cb_threshold: consecutive failures before circuit opens (default 5).
+            cb_timeout: seconds circuit stays open (default 30.0).
+            enable_telemetry: enable observability tracing (default False).
         """
         self.host = host
         self.events = events
@@ -285,25 +256,10 @@ class Nervous:
     ) -> Any:
         """The only legal channel for inter-organ calls.
 
-        Flow:
-
-        1. **Method blocklist**: ``method in forbidden_methods`` raises
-           :class:`IllegalNeuralPathError`
-        2. **Pathway validation**: ``wiring.assert_allowed(from, to)`` raises
-           :class:`IllegalNeuralPathError` if illegal
-        3. emit ``nerve.signal`` event (for debugging/instrumentation)
-        4. Retrieve target organ from ``host.organ(*to_organ)``
-        5. ``getattr(target, method)(*args, **kwargs)``, auto-awaits if awaitable
-
-        Args:
-            from_organ: caller organ coordinate ``(category, name)``
-            to_organ: target organ coordinate ``(category, name)``
-            method: method name to call on target
-            *args, **kwargs: forwarded to target method
-
-        Returns:
-            target method's return value (already unwrapped if awaitable)
+        Validates pathway, checks circuit breaker, runs before/after middleware,
+        executes target method, records telemetry/circuit state.
         """
+
         if method in self.forbidden_methods:
             raise IllegalNeuralPathError(
                 from_organ,
