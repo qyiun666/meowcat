@@ -3,7 +3,7 @@
 [![中文文档](https://img.shields.io/badge/文档-中文-red.svg)](README_CN.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.7-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-1.3.10-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!

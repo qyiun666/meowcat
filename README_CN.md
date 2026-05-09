@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.7-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-1.3.10-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -498,6 +498,10 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 | 版本       | 时间       | 亮点                                                                                                                                                                                                                                    |
 | :--------- | :--------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.3.10** | 2026.05.09 | CI lint 修复 + Release 重构为 workflow_dispatch 手动发包 · pypi/github-release 独立 job |
+| **v1.3.9** | 2026.05.09 | 代码健康整理 — 12 文件拆至 ≤500 行 · deprecated 清理 · 版本文档补全 |
+| **v1.3.8** | 2026.05.08 | mypy + ruff 静态检查 · CI lint job + 矩阵 3.10-3.13 · pre-commit · 10 蓝修复 · 大文件拆分 |
+| **v1.3.7** | 2026.05.08 | Gateway 绑定 Colony · FrontDesk 新物种 — on_route 插件链（安全门/审计/限流） |
 | **v1.3.6** | 2026.05.07 | OrganPrompt 提示插槽 · Hippocampus episodes 持久化 · LLM 模型货架 12 供应商 · 管理器基类 5 件套 · PeriodicScheduler/FocusStore/CheckpointStore · PlanReviser 策略链 · TaskOrchestrator DAG · Async 生命周期钩子 · Telemetry/CB 公开 API |
 | **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                                                                                          |
 | **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                                                                                           |
