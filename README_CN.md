@@ -335,21 +335,21 @@ cat = create_cat(container=colony, cerebrum=MockBrain(),
 
 ```python
 # L1: Path
-await cat.path_registry.run("deep_reason", prompt="...")
+await cat.path_registry.run(cat, "deep_reason", prompt="...")
 
 # L2: Chain 带回滚
-await cat.chain_registry.run("full_reasoning", prompt="...")
+await cat.chain_registry.run(cat, "full_reasoning", prompt="...")
 # = deep_reason → speak  （speak 失败则回滚）
 
-await cat.chain_registry.run("maintenance")
+await cat.chain_registry.run(cat, "maintenance")
 # = decay → cleanup_orphans
 
 # L3: Loop — 事件驱动的自治执行
-await cat.loop_registry.start("conversation")
+await cat.loop_registry.run(cat, "conversation", message="你好")
 # 由 perceive.start 触发，conversation.end 退出
 
 # L4: LoopSequence
-await cat.loopseq_registry.run("daily_maintenance")
+await cat.loopseq_registry.run(cat, "daily_maintenance")
 # = maintenance → diagnostic  （顺序执行）
 ```
 

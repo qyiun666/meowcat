@@ -334,21 +334,21 @@ cat = create_cat(container=colony, cerebrum=MockBrain(),
 
 ```python
 # L1: Path
-await cat.path_registry.run("deep_reason", prompt="...")
+await cat.path_registry.run(cat, "deep_reason", prompt="...")
 
 # L2: Chain with rollback
-await cat.chain_registry.run("full_reasoning", prompt="...")
+await cat.chain_registry.run(cat, "full_reasoning", prompt="...")
 # = deep_reason → speak  (if speak fails, nothing to roll back)
 
-await cat.chain_registry.run("maintenance")
+await cat.chain_registry.run(cat, "maintenance")
 # = decay → cleanup_orphans
 
 # L3: Loop — event-driven autonomous execution
-await cat.loop_registry.start("conversation")
+await cat.loop_registry.run(cat, "conversation", message="hello")
 # Runs on perceive.start event, exits on conversation.end
 
 # L4: LoopSequence
-await cat.loopseq_registry.run("daily_maintenance")
+await cat.loopseq_registry.run(cat, "daily_maintenance")
 # = maintenance → diagnostic  (sequential)
 ```
 
