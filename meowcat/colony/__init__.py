@@ -24,6 +24,8 @@ v1.3.0: Task Delegation — delegate_async (fire-and-forget, non-blocking)
     + await_task (poll with kitten health check) + check_cat (alive/stuck/dead)
     + signal_between timeout.
 v1.3.8: File split — Namespace storage → namespace.py, Task delegation → delegation.py.
+v1.3.9: File split — LLM shelf → llm_shelf.py, Cat ops → cat_ops.py,
+    Communication + Storage → communication.py.
 
 Orthogonal to Kitten (master/slave mode):
 - Kitten: master cat spawns kitten → result delivered back (parent → child)
@@ -39,9 +41,12 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from meowcat.assembly import CatBase
+from meowcat.colony.cat_ops import _CatOpsMixin
+from meowcat.colony.communication import _CommunicationMixin
 from meowcat.colony.config import ColonyConfig, ColonyOwner
 from meowcat.colony.delegation import _DelegationMixin
 from meowcat.colony.federation import _FederationMixin
+from meowcat.colony.llm_shelf import _LLMShelfMixin
 from meowcat.colony.namespace import _NamespaceMixin
 from meowcat.colony.registry import GlobalColonyRegistry
 from meowcat.colony.rules import ColonyRules
@@ -58,7 +63,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger("meowcat.colony")
 
 
-class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
+class Colony(
+    Pluggable,
+    _FederationMixin,
+    _NamespaceMixin,
+    _DelegationMixin,
+    _LLMShelfMixin,
+    _CatOpsMixin,
+    _CommunicationMixin,
+):
     """Cat container — manages peer-to-peer collaboration + shared storage.
 
     Typical usage::
@@ -152,10 +165,8 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         self._storage = storage
         self._llm_shelf: dict[str, ModelConfig] = dict(llm_shelf or {})
         self._cats: dict[str, CatBase] = {}
-        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set(
-        )
-        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set(
-        )
+        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set()
+        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set()
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
@@ -274,92 +285,6 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
     def rules(self) -> ColonyRules:
         """Colony rules (safety/approval/rate-limit). Extends Pluggable."""
         return self._rules
-    # -- LLM shelf (v1.1.5) -------------------------------------------
-
-    @property
-    def llm_shelf(self) -> dict[str, ModelConfig]:
-        """Read-only copy of the shared LLM shelf."""
-        return dict(self._llm_shelf)
-
-    def stock_llm(self, name: str, config: ModelConfig) -> None:
-        """Stock a new LLM config on the shelf (overwrite if exists)."""
-        self._llm_shelf[name] = config
-
-    def unstock_llm(self, name: str) -> bool:
-        """Remove an LLM from the shelf. Returns True if removed."""
-        return self._llm_shelf.pop(name, None) is not None
-
-    def pick_llm(self, name: str | None = None) -> ModelConfig:
-        """Pick an LLM config from the shelf with cascade fallback.
-
-        Cascade order:
-        1. Named lookup — ``pick_llm("smart")``
-        2. First available — ``pick_llm()`` returns any entry
-        3. Plugin hook — ``on_pick`` plugin can override (first-hit)
-
-        Raises:
-            ValueError: Shelf is empty and no name specified.
-            KeyError: Named LLM not found on shelf.
-        """
-        # Plugin hook (first-hit)
-        for _hook, r in self._run_plugs_sync("on_pick", name, dict(self._llm_shelf)):
-            if isinstance(r, ModelConfig):
-                return r
-
-        if name is not None:
-            if name not in self._llm_shelf:
-                raise KeyError(
-                    f"LLM '{name}' not found on shelf. Available: {list(self._llm_shelf.keys())}"
-                )
-            return self._llm_shelf[name]
-
-        if not self._llm_shelf:
-            raise ValueError(
-                f"LLM shelf is empty in colony '{self.colony_id}'. "
-                f"Stock at least one LLM or pass llm=... explicitly."
-            )
-        return next(iter(self._llm_shelf.values()))
-
-    def assemble_cat(
-        self,
-        *,
-        name: str | None = None,
-        llm: str | ModelConfig | None = None,
-        parent_id: str | None = None,
-        allowed_organs: frozenset[str] | None = None,
-        memory_snapshot: dict | None = None,
-        **cat_kwargs: Any,
-    ) -> CatBase:
-        """Create a cat with LLM picked from shelf (or own config).
-
-        LLM resolution order:
-        1. ``llm=ModelConfig(...)`` — cat brings its own LLM
-        2. ``llm="smart"`` — pick named LLM from shelf
-        3. ``llm=None`` — pick first available from shelf
-
-        Args:
-            name: Optional display name (defaults to cat_uid).
-            llm: LLM config or shelf name. None = auto-pick from shelf.
-            parent_id: Parent cat identifier.
-            allowed_organs: Organ access allowlist.
-            memory_snapshot: Context slice assigned by parent cat.
-            **cat_kwargs: Additional arguments passed to CatBase.
-
-        Returns:
-            Registered CatBase instance with ``_llm_config`` attribute.
-        """
-        llm_config = llm if isinstance(
-            llm, ModelConfig) else self.pick_llm(llm)
-
-        cat = self.create_cat(
-            name=name,
-            parent_id=parent_id,
-            allowed_organs=allowed_organs,
-            memory_snapshot=memory_snapshot,
-            **cat_kwargs,
-        )
-        cat._llm_config = llm_config  # type: ignore[attr-defined]
-        return cat
 
     # -- Pluggable aliases ---------------------------------------------
 
@@ -372,17 +297,6 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
         self.unmount_plug(slot, handler)
 
     # -- Factory -------------------------------------------------------
-
-    def _inject_colony_memory(self, cat: CatBase) -> None:
-        """v1.2.36: Inject colony shared memory pool after organs are mounted.
-
-        Called by the on_organs_mounted hook — at this point
-        has_organ("brain", "hippocampus") is guaranteed to work.
-        """
-        if cat.has_organ("brain", "hippocampus"):
-            hippo = cat.organ("brain", "hippocampus")
-            if hasattr(hippo, "set_colony_memory"):
-                hippo.set_colony_memory(self.memory)
 
     @classmethod
     def default(cls, colony_id: str, **kwargs: Any) -> Colony:
@@ -436,471 +350,6 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
                 reason=f"cross-cat signal not allowed: {from_id} → {to_id}",
             )
 
-    # -- Create -------------------------------------------------------
-
-    def create_cat(
-        self,
-        *,
-        name: str | None = None,
-        parent_id: str | None = None,
-        allowed_organs: frozenset[str] | None = None,
-        memory_snapshot: dict | None = None,
-        **cat_kwargs: Any,
-    ) -> CatBase:
-        """Create a cat in the colony and auto-register it.
-
-        The ``cat_uid`` is auto-generated (2-digit increment).
-
-        Args:
-            name: Optional display name (defaults to cat_uid).
-            parent_id: Parent cat identifier (string, no object reference).
-            allowed_organs: Organ access allowlist, None = allow all.
-            memory_snapshot: Context slice assigned by parent cat.
-            **cat_kwargs: Additional arguments passed to CatBase.
-
-        Returns:
-            Registered CatBase instance.
-        """
-        if self.is_full:
-            raise RuntimeError(
-                f"Colony '{self.colony_id}' is full ({len(self._cats)}/{self._max_cats} cats)"
-            )
-
-        cat_uid = self._next_cat_uid()
-        cat = CatBase(
-            cat_uid,
-            container=self,
-            parent_id=parent_id,
-            allowed_organs=allowed_organs,
-            **cat_kwargs,
-        )
-        if name is not None:
-            cat._name = name  # type: ignore[attr-defined]
-        # type: ignore[attr-defined]
-        cat._address = f"{self.colony_id}_{cat_uid}"
-
-        # Inject shared storage reference
-        if self._storage is not None:
-            cat._colony_storage = self._storage  # type: ignore[attr-defined]
-
-        # Inject memory_snapshot (context slice)
-        if memory_snapshot:
-            # type: ignore[attr-defined]
-            cat._memory_snapshot = memory_snapshot
-
-        # v1.2.36: Register hook to inject colony memory after organs are mounted.
-        # Replaces the dead code that called set_colony_memory before organs existed.
-        cat.on_organs_mounted(lambda c: self._inject_colony_memory(c))
-
-        self.register(cat)
-        return cat
-
-    # -- v1.1.21 Delegation: spawn cat with memory snapshot ----------
-
-    def spawn_cat(
-        self,
-        *,
-        name: str | None = None,
-        parent_id: str | None = None,
-        memory_snapshot: dict | None = None,
-        allowed_organs: frozenset[str] | None = None,
-        **cat_kwargs: Any,
-    ) -> CatBase:
-        """Create a kitten with inherited memory context.
-
-        Convenience wrapper around :meth:`create_cat` that explicitly
-        names the delegation intent.
-
-        Usage::
-
-            slice = parent.hippocampus.snapshot("users表", "auth模块")
-            kitten = colony.spawn_cat(
-                parent_id=parent.cat_uid,
-                memory_snapshot=slice,
-            )
-
-        Args:
-            name: Optional display name (defaults to cat_uid).
-            parent_id: Parent cat identifier.
-            memory_snapshot: Context slice from parent's hippocampus.
-            allowed_organs: Organ access allowlist.
-            **cat_kwargs: Forwarded to CatBase.
-        """
-        return self.create_cat(
-            name=name,
-            parent_id=parent_id,
-            memory_snapshot=memory_snapshot,
-            allowed_organs=allowed_organs,
-            **cat_kwargs,
-        )
-
-    # -- Register / Remove --------------------------------------------
-
-    def register(self, cat: CatBase) -> None:
-        """Register a cat into the colony (overwrites if already exists).
-
-        Args:
-            cat: CatBase instance.
-        """
-        if self._storage is not None:
-            cat._colony_storage = self._storage  # type: ignore[attr-defined]
-        self._cats[cat.cat_uid] = cat
-
-    def unregister(self, cat_uid: str) -> None:
-        """Remove a cat from the colony.
-
-        Args:
-            cat_uid: Unique identifier for the cat.
-
-        Raises:
-            KeyError: Cat does not exist.
-        """
-        del self._cats[cat_uid]
-
-    def get_cat(self, cat_uid: str) -> CatBase:
-        """Get a cat by uid.
-
-        Args:
-            cat_uid: Unique identifier for the cat.
-
-        Returns:
-            CatBase instance.
-
-        Raises:
-            KeyError: Cat does not exist.
-        """
-        return self._cats[cat_uid]
-
-    def list_cats(self) -> list[str]:
-        """List all cat uids in the colony.
-
-        Returns:
-            List of cat_uid strings.
-        """
-        return list(self._cats.keys())
-
-    # -- Alias methods (v1.0.9) ---------------------------------------
-
-    def adopt(self, cat: CatBase) -> None:
-        """Adopt a cat (semantic alias for register).
-
-        Args:
-            cat: CatBase instance.
-        """
-        self.register(cat)
-
-    def release(self, cat_uid: str) -> None:
-        """Release a cat (semantic alias for unregister).
-
-        Args:
-            cat_uid: Unique identifier for the cat.
-
-        Raises:
-            KeyError: Cat does not exist.
-        """
-        self.unregister(cat_uid)
-
-    # -- Shared storage (namespace isolation) -------------------------
-
-    def _ensure_storage(self) -> SharedStore:
-        """Lazy-init storage if not provided."""
-        if self._storage is None:
-            from meowcat.defaults.stores import InMemorySharedStore
-
-            self._storage = InMemorySharedStore()
-        return self._storage
-
-    def _cat_key(self, cat_uid: str, key: str) -> str:
-        """Construct a cat-isolated storage key: ``cat_uid/key``.
-
-        cat_uid prefix provides automatic isolation.
-        """
-        return f"{cat_uid}/{key}"
-
-    async def storage_get(self, cat_uid: str, key: str) -> Any:
-        """Cat reads from shared storage (auto cat_uid prefix isolation)."""
-        return await self._ensure_storage().get(self._cat_key(cat_uid, key))
-
-    async def storage_set(self, cat_uid: str, key: str, value: Any) -> None:
-        """Cat writes to shared storage (auto cat_uid prefix isolation)."""
-        await self._ensure_storage().set(self._cat_key(cat_uid, key), value)
-
-    async def storage_delete(self, cat_uid: str, key: str) -> None:
-        """Cat deletes a shared storage entry."""
-        await self._ensure_storage().delete(self._cat_key(cat_uid, key))
-
-    async def storage_list_keys(self, cat_uid: str) -> list[str]:
-        """List all shared storage keys for a cat (prefix stripped)."""
-        prefix = f"{cat_uid}/"
-        all_keys = await self._ensure_storage().list_keys()
-        return [k[len(prefix):] for k in all_keys if k.startswith(prefix)]
-
-    async def storage_watch(
-        self,
-        cat_uid: str,
-        pattern: str,
-    ) -> Any:
-        """Watch shared storage key changes matching pattern.
-
-        Delegates to the underlying storage.watch(). Returns AsyncIterator.
-        """
-        ns_pattern = f"{cat_uid}/{pattern}"
-        # type: ignore[attr-defined]
-        async for item in self._ensure_storage().watch(ns_pattern):
-            yield item
-
-    # -- Result delivery ---------------------------------------------
-
-    async def deliver_result(
-        self,
-        parent_id: str,
-        from_kitten: str,
-        result: Any,
-    ) -> None:
-        """Kitten delivers result back to parent cat.
-
-        Writes to shared storage ``{parent_id}/kitten:{from_kitten}/result``.
-
-        Args:
-            parent_id: Parent cat ID.
-            from_kitten: Kitten ID.
-            result: Arbitrary result to deliver.
-        """
-        key = f"kitten:{from_kitten}/result"
-        await self.storage_set(parent_id, key, result)
-
-    # -- Broadcast ----------------------------------------------------
-
-    async def broadcast(self, event: str, **data: Any) -> None:
-        """Broadcast an event to all cats in the colony (fire-and-forget).
-
-        Args:
-            event: Event name.
-            **data: Event data.
-        """
-        for cat in self._cats.values():
-            await cat.emit(event, data)
-
-    async def broadcast_request(
-        self,
-        method: str,
-        *,
-        to_category: str = "brain",
-        to_name: str = "amygdala",
-        ignore_errors: bool = True,
-        **kw: Any,
-    ) -> dict[str, Any]:
-        """Broadcast a request to all cats and collect responses (group chat).
-
-        Calls ``method`` on ``to_category:to_name`` organ of every cat,
-        collecting results keyed by cat_uid. This is the 1→many request-response
-        pattern — group chat where every cat responds.
-
-        Unlike :meth:`broadcast` (fire-and-forget event), this method waits
-        for all cats to respond and returns a result dict. Unlike
-        :meth:`signal_between` (1→1 private chat), this sends to everyone.
-
-        Bypasses cross-wiring (colony-level operation, not cat-to-cat).
-
-        Usage::
-
-            # Safety assessment — every cat weighs in
-            results = await colony.broadcast_request(
-                "assess_safety", sql="DROP TABLE users"
-            )
-            # → {"planner": {"safe": True}, "executor": {"safe": False}}
-
-            # Custom organ target
-            results = await colony.broadcast_request(
-                "diagnose", to_category="brain", to_name="hippocampus"
-            )
-
-        Args:
-            method: Method name to call on the target organ.
-            to_category: Target organ category (default: ``"brain"``).
-            to_name: Target organ name (default: ``"amygdala"``).
-            ignore_errors: If True, cat errors become ``{"error": str(exc)}``
-                in results. If False, re-raises the first exception.
-            **kw: Keyword arguments forwarded to the target method.
-
-        Returns:
-            ``{cat_uid: result, ...}`` — each cat's response keyed by cat_uid.
-            Cat errors become ``{"error": "..."}`` when ``ignore_errors=True``.
-        """
-        results: dict[str, Any] = {}
-        for cat_uid, cat in self._cats.items():
-            try:
-                organ = cat.organ(to_category, to_name)
-                fn = getattr(organ, method)
-                result = fn(**kw)
-                import inspect as _inspect
-
-                if _inspect.isawaitable(result):
-                    result = await result
-                results[cat_uid] = result
-            except Exception as exc:
-                if not ignore_errors:
-                    raise
-                results[cat_uid] = {"error": str(exc)}
-        return results
-
-    async def health_check_all(self) -> dict[str, dict]:
-        """Run health check on all cats.
-
-        Returns:
-            ``{cat_uid: {...diagnose...}, ...}``
-        """
-        results: dict[str, dict] = {}
-        for cat_uid, cat in self._cats.items():
-            try:
-                results[cat_uid] = await cat.health_check()
-            except Exception as exc:
-                results[cat_uid] = {"error": str(exc)}
-        return results
-
-    # -- Unified External Entry (v1.1.8) ------------------------------
-
-    async def receive_external(self, address: str, **kwargs: Any) -> Any:
-        """Receive external message addressed to a specific cat.
-
-        This is the **unified external entry point** for a colony — any external
-        system (CLI, HTTP, WebSocket, etc.) delivers messages through this method
-        by specifying a cat address.
-
-        Address format: ``colony_id/cat_uid``, e.g. ``"feishu/planner"``.
-
-        Usage::
-
-        result = await colony.receive_external("feishu_planner", message="查询表结构")
-
-        Args:
-            address: Cat address in ``colony_id_cat_uid`` format.
-            **kwargs: Message payload — forwarded to the target cat as an event.
-
-        Returns:
-            ``{"status": "delivered", "cat_uid": ..., "cats_count": ...}``
-
-        Raises:
-            ValueError: Invalid address format or colony mismatch.
-            KeyError: Target cat not found in colony.
-        """
-        parts = address.split("_", 1)
-        if len(parts) != 2 or not parts[0] or not parts[1]:
-            raise ValueError(
-                f"Invalid address '{address}': expected 'colony_id_cat_uid'")
-        colony_id, cat_uid = parts
-        if colony_id != self.colony_id:
-            raise ValueError(
-                f"Address colony '{colony_id}' does not match this colony '{self.colony_id}'"
-            )
-        cat = self.get_cat(cat_uid)
-        await cat.emit("external_message", {"address": address, **kwargs})
-        return {
-            "status": "delivered",
-            "cat_uid": cat_uid,
-            "cats_count": len(self._cats),
-        }
-
-    def list_cat_capabilities(self) -> dict[str, list[dict[str, Any]]]:
-        """List capabilities of every cat in the colony.
-
-        Each cat's capabilities are its mounted organ coordinates
-        ``(category, name)``.
-
-        Usage::
-
-            caps = colony.list_cat_capabilities()
-            # → {"planner": [{"category": "brain", "name": "cerebrum"}, ...]}
-
-        Returns:
-            ``{cat_uid: [{"category": ..., "name": ...}, ...], ...}``
-        """
-        result: dict[str, list[dict[str, Any]]] = {}
-        for cat_uid, cat in self._cats.items():
-            organs = cat.list_all_organs()
-            result[cat_uid] = [{"category": c, "name": n} for c, n in organs]
-        return result
-
-    def search_scope_guard(self, cat_uid: str, scope: str) -> None:
-        """Validate search scope boundaries (v1.1.8).
-
-        Enforces the search boundary contract defined in §2.2:
-
-        - ``scope="self"``   → cat's own Hippocampus + public area (optional)
-        - ``scope="colony"`` → SharedStorage ONLY, **never** other cats' private data
-
-        Raises:
-            ValueError: Invalid scope value.
-            KeyError: Cat not found.
-        """
-        if scope not in ("self", "colony"):
-            raise ValueError(
-                f"Invalid search scope '{scope}': must be 'self' or 'colony'")
-        # Ensure cat exists
-        if cat_uid not in self._cats:
-            raise KeyError(
-                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
-
-    # -- Inter-cat communication --------------------------------------
-
-    async def signal_between(
-        self,
-        from_id: str,
-        to_id: str,
-        to_category: str,
-        to_name: str,
-        method: str,
-        *args: Any,
-        timeout: float | None = None,
-        **kw: Any,
-    ) -> Any:
-        """Inter-cat signal communication.
-
-        One cat sends a signal to another cat's organ via the colony.
-
-        Flow:
-        1. Validate cross-cat wiring (if cross_wiring is set)
-        2. Retrieve target organ from target cat
-        3. Directly invoke method on target organ
-
-        Args:
-            from_id: Sender cat ID.
-            to_id: Receiver cat ID.
-            to_category: Target organ category (e.g. "brain").
-            to_name: Target organ name (e.g. "hippocampus").
-            method: Target method name.
-            *args, **kw: Forwarded to target method.
-            timeout: Optional timeout in seconds.  None = no timeout.
-
-        Returns:
-            Return value of target method.
-
-        Raises:
-            KeyError: Sender or receiver cat does not exist.
-            IllegalNeuralPathError: Cross-cat edge is not allowed.
-            OrganNotMountedError: Target organ does not exist.
-            asyncio.TimeoutError: If timeout is set and exceeded.
-        """
-        # 1. Cross-cat wiring validation
-        self._assert_cross_allowed(from_id, to_id)
-
-        # 2. Get target cat
-        target_cat = self._cats[to_id]
-
-        # 3. Retrieve target organ
-        target_organ = target_cat.organ(to_category, to_name)
-
-        # 4. Invoke method
-        fn = getattr(target_organ, method)
-        import inspect as _inspect
-
-        result = fn(*args, **kw)
-        if _inspect.isawaitable(result):
-            if timeout is not None:
-                result = await asyncio.wait_for(result, timeout=timeout)
-            else:
-                result = await result
-        return result
     # -- Convenience methods ------------------------------------------
 
     @property
@@ -911,7 +360,7 @@ class Colony(Pluggable, _FederationMixin, _NamespaceMixin, _DelegationMixin):
     # -- Shared Memory (v1.1.20) --------------------------------------
 
     @property
-    def memory(self) -> SharedMemoryPool:  # noqa: F821
+    def memory(self):  # noqa: F821
         """Colony-level shared memory pool (lazy-init).
 
         Usage::

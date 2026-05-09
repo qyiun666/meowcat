@@ -1,0 +1,368 @@
+# Copyright (c) 2026 Axonant
+# SPDX-License-Identifier: MIT
+
+"""meowcat default hippocampus stub — in-memory graph store implementing HippocampusProtocol."""
+
+from __future__ import annotations
+
+import time as _time
+from typing import Any
+
+from meowcat.anatomy import ImplementationStyle
+from meowcat.pluggable import Pluggable
+
+
+class NoopHippocampus(Pluggable):
+    """Default hippocampus: pure in-memory graph store, lost on process restart.
+
+    Wraps InMemoryGraphStore, implements full HippocampusProtocol methods.
+    Mode B — remember / recall merge enhancement.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "remember": {
+            "in": "user_msg: str, ai_reply: str, cat_uid: str, model: str",
+            "out": "Any",
+        },
+        "recall": {
+            "in": "query: str, limit: int",
+            "out": "list[dict]",
+        },
+    }
+
+    name: str = "noop_hippocampus"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+
+    _entities: dict[str, dict[str, Any]] | None = None
+    _episodes: list[dict[str, Any]] | None = None
+
+    def __init__(self) -> None:
+        Pluggable.__init__(self)
+        self._colony_memory: Any = None  # v1.1.21: SharedMemoryPool for scope=colony
+
+    # -- Lazy-init properties (subclasses that super().__init__()
+    #    avoid creating unused InMemoryGraphStore) -------------------
+
+    @property
+    def entities(self) -> dict[str, dict[str, Any]]:
+        if self._entities is None:
+            self._entities = {}
+        return self._entities
+
+    @entities.setter
+    def entities(self, value: dict[str, dict[str, Any]]) -> None:
+        self._entities = value
+
+    @property
+    def episodes(self) -> list[dict[str, Any]]:
+        if self._episodes is None:
+            self._episodes = []
+        return self._episodes
+
+    @episodes.setter
+    def episodes(self, value: list[dict[str, Any]]) -> None:
+        self._episodes = value
+
+    # -- v1.1.21 Colony memory injection -----------------------------
+
+    def set_colony_memory(self, memory_pool: Any) -> None:
+        """Inject colony shared memory pool for cross-cat search.
+
+        Called by Colony during cat creation.  When set, ``locate(scope='colony')``
+        searches the colony's ``SharedMemoryPool`` instead of returning empty.
+        """
+        self._colony_memory = memory_pool
+
+    # -- Memory storage -----------------------------------------------
+
+    async def remember(
+        self,
+        user_msg: str,
+        ai_reply: str,
+        cat_uid: str,
+        model: str,
+    ) -> Any:
+        result: dict[str, Any] = {"user_msg": user_msg, "ai_reply": ai_reply}
+        async for _name, r in self._run_plugs(
+            "remember",
+            user_msg,
+            ai_reply,
+            cat_uid,
+            model,
+        ):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
+
+    def add_episode(self, episode: dict[str, Any]) -> str:
+        """Add an episode, auto-assign id if missing, return episode_id."""
+        eid = episode.get("id") or f"ep_{len(self.episodes)}"
+        if "id" not in episode:
+            episode["id"] = eid
+        self.episodes.append(episode)
+        return eid
+
+    def get_episode(self, episode_id: str) -> dict[str, Any] | None:
+        """Get a single episode by id."""
+        for ep in self.episodes:
+            if ep.get("id") == episode_id:
+                return ep
+        return None
+
+    def get_episodes(self, ids: list[str]) -> list[dict[str, Any]]:
+        """Batch get episodes by ids."""
+        id_set = set(ids)
+        return [ep for ep in self.episodes if ep.get("id") in id_set]
+
+    def add_entity(self, entity: dict[str, Any]) -> None:
+        eid = entity.get("id", entity.get(
+            "entity_id", str(len(self.entities))))
+        self.entities[eid] = entity
+
+    # -- Memory retrieval --------------------------------------------
+
+    def fts_search(
+        self,
+        cat_uid: str,
+        keywords: str,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Full-text search memory (simple keyword matching)."""
+        results: list[dict[str, Any]] = []
+        kws = keywords.lower().split()
+        for ep in self.episodes:
+            text = (ep.get("user_msg", "") + " " +
+                    ep.get("ai_reply", "")).lower()
+            if any(kw in text for kw in kws):
+                results.append(ep)
+                if len(results) >= limit:
+                    break
+        return results
+
+    async def recall(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
+        """Semantic recall memory (simple impl: delegates to fts_search)."""
+        base = self.fts_search("", query, limit)
+        async for _name, r in self._run_plugs("recall", query, limit):
+            if isinstance(r, list):
+                return r
+        return base
+
+    # -- Search boundary (v1.1.8) + cross-cat (v1.1.21) ------------
+
+    def locate(self, query: str, scope: str = "self") -> list[dict[str, Any]]:
+        """Search with scope boundary enforcement.
+
+        Args:
+            query: Search query string.
+            scope: ``"self"`` to search own hippocampus,
+                   ``"colony"`` to search colony shared storage only.
+
+        Returns:
+            List of matching entries.
+
+        Raises:
+            ValueError: Invalid scope value.
+        """
+        if scope not in ("self", "colony"):
+            raise ValueError(
+                f"Invalid search scope '{scope}': must be 'self' or 'colony'")
+        if scope == "self":
+            return self.fts_search("", query)
+        # scope == "colony": cross-cat search via colony SharedMemoryPool (v1.1.21)
+        if self._colony_memory is not None:
+            return self._colony_memory.keyword_search(query)
+        return []
+
+    # -- v1.1.21 Delegation snapshot ---------------------------------
+
+    def snapshot(self, *topics: str, scope: str = "colony") -> dict[str, Any]:
+        """Extract a memory context slice for delegation.
+
+        Gathers relevant memories from own hippocampus and (optionally)
+        the colony shared memory pool, packaged as a portable snapshot
+        that can be injected into a kitten via ``memory_snapshot``.
+
+        Args:
+            *topics: Topic strings to gather context for.
+            scope: ``"self"`` for own hippocampus only,
+                   ``"colony"`` to include colony shared memories.
+
+        Returns:
+            ``{"topics": [...], "context": [...], "created_at": ...}``
+        """
+        import time as _time
+
+        context: list[dict[str, Any]] = []
+        for topic in topics:
+            # own hippocampus memories
+            for ep in self.fts_search("", topic, limit=5):
+                context.append(
+                    {
+                        "type": "self",
+                        "source": "episode",
+                        "topic": topic,
+                        "content": ep,
+                    }
+                )
+            # colony shared memories
+            if scope == "colony" and self._colony_memory is not None:
+                for cm in self._colony_memory.keyword_search(topic, k=5):
+                    context.append(
+                        {
+                            "type": "colony",
+                            "source": "shared_memory",
+                            "topic": topic,
+                            "content": cm,
+                        }
+                    )
+        return {
+            "topics": list(topics),
+            "context": context,
+            "created_at": _time.time(),
+        }
+
+    def get_entity(self, entity_id: str) -> dict[str, Any] | None:
+        return self.entities.get(entity_id)
+
+    def get_by_name(self, name: str) -> dict[str, Any] | None:
+        for e in self.entities.values():
+            if e.get("name") == name:
+                return e
+        return None
+
+    def get_all(self) -> list[dict[str, Any]]:
+        return list(self.entities.values())
+
+    def get_related(self, entity_id: str) -> list[dict[str, Any]]:
+        entity = self.entities.get(entity_id)
+        if not entity:
+            return []
+        related: list[dict[str, Any]] = []
+        for conn in entity.get("connections", []):
+            target_id = conn.get("to", conn.get("target"))
+            if target_id and target_id in self.entities:
+                related.append(self.entities[target_id])
+        return related
+
+    # -- Connection operations ---------------------------------------
+
+    def connect(
+        self,
+        from_id: str,
+        to_id: str,
+        relation: str,
+        strength: float = 1.0,
+    ) -> None:
+        if from_id in self.entities:
+            self.entities[from_id].setdefault("connections", []).append(
+                {
+                    "to": to_id,
+                    "relation": relation,
+                    "strength": strength,
+                }
+            )
+
+    def weaken_connections(self, entity_id: str, factor: float = 0.5) -> None:
+        entity = self.entities.get(entity_id)
+        if not entity:
+            return
+        for conn in entity.get("connections", []):
+            conn["strength"] = conn.get("strength", 1.0) * factor
+
+    def cleanup_orphan_connections(self, days_threshold: int = 7) -> int:
+        now = _time.time()
+        threshold_sec = days_threshold * 86400
+        removed = 0
+        for _eid, entity in list(self.entities.items()):
+            connections = entity.get("connections", [])
+            kept = []
+            for conn in connections:
+                target_id = conn.get("to", conn.get("target"))
+                if target_id and target_id in self.entities:
+                    last = self.entities[target_id].get("_last_accessed", 0)
+                    if now - last < threshold_sec:
+                        kept.append(conn)
+                    else:
+                        removed += 1
+                else:
+                    removed += 1
+            entity["connections"] = kept
+        return removed
+
+    # -- Maintenance ------------------------------------------------
+
+    def decay(self, now: Any | None = None) -> int:
+        if now is None:
+            now = _time.time()
+        decayed = 0
+        for entity in self.entities.values():
+            if entity.get("importance", 0.0) > 0:
+                entity["importance"] = max(0, entity["importance"] - 0.01)
+                decayed += 1
+        return decayed
+
+    def stats(self, session_id: str | None = None) -> dict[str, Any]:
+        return {
+            "entities": len(self.entities),
+            "episodes": len(self.episodes),
+            "connections": sum(len(e.get("connections", [])) for e in self.entities.values()),
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"entities": dict(self.entities), "episodes": list(self.episodes)}
+
+    def from_dict(self, d: dict[str, Any]) -> None:
+        self.entities = d.get("entities", {})
+        self.episodes = d.get("episodes", [])
+
+    # -- v0.5.26 wrapper methods ------------------------------------
+
+    def record_access(self, entity_id: str, delta: int = 1) -> None:
+        if entity_id in self.entities:
+            self.entities[entity_id]["_last_accessed"] = _time.time()
+            self.entities[entity_id].setdefault("access_count", 0)
+            self.entities[entity_id]["access_count"] += delta
+
+    def set_dormant(self, entity_id: str, dormant: bool) -> None:
+        if entity_id in self.entities:
+            self.entities[entity_id]["dormant"] = dormant
+
+    def append_content(
+        self,
+        entity_id: str,
+        text: str,
+        max_total: int | None = None,
+    ) -> None:
+        if entity_id in self.entities:
+            existing = self.entities[entity_id].get("content", "")
+            new_content = existing + text
+            if max_total is not None and len(new_content) > max_total:
+                new_content = new_content[-max_total:]
+            self.entities[entity_id]["content"] = new_content
+
+    def update_importance(self, entity_id: str, importance: float) -> None:
+        if entity_id in self.entities:
+            self.entities[entity_id]["importance"] = max(
+                0.0, min(1.0, importance))
+
+    def set_last_seen(self, entity_id: str, ts: str) -> None:
+        if entity_id in self.entities:
+            self.entities[entity_id]["last_seen"] = ts
+
+    # -- v1.0.15 long-workflow query --------------------------------
+
+    def list_active_workflows(self, cat_uid: str) -> list[dict[str, Any]]:
+        """List all incomplete workflow entities.
+
+        Filters entities with type="workflow" and status active/awaiting_user.
+        """
+        results: list[dict[str, Any]] = []
+        for eid, entity in self.entities.items():
+            if entity.get("type") != "workflow":
+                continue
+            if entity.get("status") not in ("active", "awaiting_user"):
+                continue
+            if entity.get("cat_uid") != cat_uid:
+                continue
+            results.append({"entity_id": eid, **entity})
+        return results

@@ -19,10 +19,10 @@ from meowcat.defaults.organs.brain import (
     NoopCerebrum,
     NoopCortex,
     NoopFrontal,
-    NoopHippocampus,
     NoopHypothalamus,
     NoopThalamus,
 )
+from meowcat.defaults.organs.hippocampus import NoopHippocampus
 from meowcat.defaults.organs.growth import (
     NoopAnomalyGrowth,
     NoopCorrectionGrowth,

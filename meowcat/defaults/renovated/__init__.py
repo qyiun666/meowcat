@@ -13,15 +13,17 @@ implementations — enough to run simple flows, test wiring, and prototype.
 
 from meowcat.defaults.renovated.brain import (
     RenovatedAmygdala,
-    RenovatedBrainstem,
-    RenovatedCerebellum,
-    RenovatedCerebrum,
     RenovatedCortex,
     RenovatedFrontal,
-    RenovatedHippocampus,
     RenovatedHypothalamus,
     RenovatedThalamus,
 )
+from meowcat.defaults.renovated.brainstem import RenovatedBrainstem
+from meowcat.defaults.renovated.cerebrum import (
+    RenovatedCerebellum,
+    RenovatedCerebrum,
+)
+from meowcat.defaults.renovated.hippocampus import RenovatedHippocampus
 from meowcat.defaults.renovated.growth import (
     RenovatedAnomalyGrowth,
     RenovatedCorrectionGrowth,

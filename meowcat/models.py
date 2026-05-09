@@ -319,7 +319,8 @@ class KittenCapability(BaseModel):
 
     # ━━ Memory inheritance (inherit state from main cat, full or partial) ━━
     inherit_memory: Literal["none", "partial", "full"] = "none"
-    inherit_entity_ids: list[str] = Field(default_factory=list)  # specify for partial inheritance
+    inherit_entity_ids: list[str] = Field(
+        default_factory=list)  # specify for partial inheritance
     inherit_l6_recent: int = 0  # inherit most recent N L6 history entries
     inherit_focus: bool = False  # whether to inherit main cat current focus
 
@@ -373,5 +374,3 @@ class ModelConfig(BaseModel):
         d["api_key"] = "sk-***" if self.api_key else ""
         fields = ", ".join(f"{k}={v!r}" for k, v in d.items())
         return f"ModelConfig({fields})"
-
-
