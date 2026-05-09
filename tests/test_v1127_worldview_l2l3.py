@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
+from meowcat.biology.cat_self import CatSelf
 from meowcat.biology.cortex import Cortex
-from meowcat.biology.metacognition import Metacognition
 
 # ════════════════════════════════════════════════════════════════════
 # Cortex L2: Beliefs
@@ -146,102 +146,99 @@ class TestCortexL1L2Coexistence:
 
 
 # ════════════════════════════════════════════════════════════════════
-# Metacognition L3: self-awareness
+# CatSelf L3: self-awareness (v2.0: merged from Metacognition)
 # ════════════════════════════════════════════════════════════════════
 
-class TestMetacognition:
-    """L3 worldview: cat's self-assessment of capabilities."""
+class TestCatSelfCapabilities:
+    """L3 worldview: cat's self-assessment of capabilities (built into CatSelf)."""
 
     def test_record_capability(self):
-        mc = Metacognition()
-        rec = mc.record_capability("sql_query", True, "has mysql tool")
+        cs = CatSelf()
+        rec = cs.record_capability("sql_query", True, "has mysql tool")
         assert rec["domain"] == "sql_query"
         assert rec["capable"] is True
         assert rec["confidence"] == 0.8  # default
         assert rec["evidence"] == "has mysql tool"
 
     def test_record_capability_custom_confidence(self):
-        mc = Metacognition()
-        rec = mc.record_capability("frontend", False, "no JS", 0.6)
+        cs = CatSelf()
+        rec = cs.record_capability("frontend", False, "no JS", 0.6)
         assert rec["confidence"] == 0.6
 
     def test_record_capability_confidence_clamped(self):
-        mc = Metacognition()
-        rec = mc.record_capability("x", True, "", 1.5)
+        cs = CatSelf()
+        rec = cs.record_capability("x", True, "", 1.5)
         assert rec["confidence"] == 1.0
-        rec2 = mc.record_capability("y", False, "", -0.5)
+        rec2 = cs.record_capability("y", False, "", -0.5)
         assert rec2["confidence"] == 0.0
 
     def test_self_assess_known_capable(self):
-        mc = Metacognition()
-        mc.record_capability("sql_query", True, "has mysql", 0.9)
-        result = mc.self_assess("sql_query")
+        cs = CatSelf()
+        cs.record_capability("sql_query", True, "has mysql", 0.9)
+        result = cs.self_assess("sql_query")
         assert result["capable"] is True
         assert result["confidence"] == 0.9
         assert result["evidence"] == "has mysql"
 
     def test_self_assess_known_incapable(self):
-        mc = Metacognition()
-        mc.record_capability("frontend", False, "no JS")
-        result = mc.self_assess("frontend")
+        cs = CatSelf()
+        cs.record_capability("frontend", False, "no JS")
+        result = cs.self_assess("frontend")
         assert result["capable"] is False
         assert result["confidence"] == 0.8
 
     def test_self_assess_unknown_domain(self):
-        mc = Metacognition()
-        result = mc.self_assess("k8s_deploy")
+        cs = CatSelf()
+        result = cs.self_assess("k8s_deploy")
         assert result["capable"] is None
         assert result["confidence"] == 0.0
         assert result["suggestion"] == "explore"
 
     def test_known_domains(self):
-        mc = Metacognition()
-        mc.record_capability("a", True, "")
-        mc.record_capability("b", False, "")
-        assert set(mc.known_domains()) == {"a", "b"}
+        cs = CatSelf()
+        cs.record_capability("a", True, "")
+        cs.record_capability("b", False, "")
+        assert set(cs.known_domains()) == {"a", "b"}
 
     def test_capable_domains(self):
-        mc = Metacognition()
-        mc.record_capability("a", True, "")
-        mc.record_capability("b", False, "")
-        mc.record_capability("c", True, "")
-        assert mc.capable_domains() == ["a", "c"]
+        cs = CatSelf()
+        cs.record_capability("a", True, "")
+        cs.record_capability("b", False, "")
+        cs.record_capability("c", True, "")
+        assert cs.capable_domains() == ["a", "c"]
 
     def test_incapable_domains(self):
-        mc = Metacognition()
-        mc.record_capability("a", True, "")
-        mc.record_capability("b", False, "")
-        assert mc.incapable_domains() == ["b"]
+        cs = CatSelf()
+        cs.record_capability("a", True, "")
+        cs.record_capability("b", False, "")
+        assert cs.incapable_domains() == ["b"]
 
     def test_list_capabilities_sorted(self):
-        mc = Metacognition()
-        mc.record_capability("low", True, "", 0.3)
-        mc.record_capability("high", True, "", 0.95)
-        caps = mc.list_capabilities()
+        cs = CatSelf()
+        cs.record_capability("low", True, "", 0.3)
+        cs.record_capability("high", True, "", 0.95)
+        caps = cs.list_capabilities()
         assert caps[0]["domain"] == "high"
         assert caps[1]["domain"] == "low"
 
-    def test_plug_assessor(self):
-        mc = Metacognition()
-        mc.record_capability("x", True, "")
-
-        def custom_assessor(domain, capabilities):
-            return {"domain": domain, "capable": "MAYBE", "confidence": 0.5}
-
-        mc.plug("assessor", custom_assessor)
-        result = mc.self_assess("x")
-        assert result["capable"] == "MAYBE"
-
     def test_pluggable_inheritance(self):
         from meowcat.pluggable import Pluggable
-        mc = Metacognition()
-        assert isinstance(mc, Pluggable)
+        cs = CatSelf()
+        assert isinstance(cs, Pluggable)
+
+    def test_self_assess_no_override_by_default(self):
+        """self_assess returns recorded capability without plugin override."""
+        cs = CatSelf()
+        cs.record_capability("x", True, "ev", 0.9)
+        result = cs.self_assess("x")
+        assert result["capable"] is True
+        assert result["evidence"] == "ev"
 
     def test_diagnose(self):
-        mc = Metacognition()
-        mc.record_capability("a", True, "ev", 0.9)
-        mc.record_capability("b", False, "ev", 0.5)
-        info = mc.diagnose()
+        cs = CatSelf()
+        cs.record_capability("a", True, "ev", 0.9)
+        cs.record_capability("b", False, "ev", 0.5)
+        info = cs.diagnose()
         assert info["known_domains"] == 2
         assert info["capable_count"] == 1
         assert info["incapable_count"] == 1
@@ -249,16 +246,16 @@ class TestMetacognition:
 
 
 # ════════════════════════════════════════════════════════════════════
-# Integration: BlindSpotDetector + Metacognition synergy
+# Integration: BlindSpotDetector + CatSelf synergy
 # ════════════════════════════════════════════════════════════════════
 
-class TestBlindSpotMetacognitionIntegration:
-    """When metacognition finds unknown domain → curiosity triggers blind spot detection."""
+class TestBlindSpotCatSelfIntegration:
+    """When self_assess finds unknown domain → curiosity triggers blind spot detection."""
 
     def test_unknown_domain_suggests_explore(self):
-        mc = Metacognition()
-        mc.record_capability("python", True, "expert")
-        result = mc.self_assess("rust")
+        cs = CatSelf()
+        cs.record_capability("python", True, "expert")
+        result = cs.self_assess("rust")
         assert result["suggestion"] == "explore"
         # This is the signal for BlindSpotDetector to analyse
 

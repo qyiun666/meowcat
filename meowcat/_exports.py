@@ -31,6 +31,8 @@ __all__ = [
     "CandidateShape", "LocateResultShape", "MaintenanceReportShape",
     "StageEvent", "PipelineContext", "LoopEvent",
     "MergeProposalShape", "KittenCapability", "WorkflowShape", "ModelConfig",
+    # v2.0 Models
+    "TreeNode",
     # Errors
     "MeowCatError", "OrganNotMountedError", "LoopFailedError",
     "StageTimeoutError",
@@ -78,7 +80,7 @@ __all__ = [
     # v0.5.23 Tools system
     "Tool", "ToolSpec", "RiskLevel", "ToolRegistry",
     "Skill", "SkillSpec", "SkillRegistry",
-    "BUILTIN_TOOLS", "PawsEngine",
+    "PawsEngine",
     # Builtin defaults
     "create_cat",
     "NoopAmygdala", "NoopBrainstem", "NoopFrontal", "NoopHypothalamus", "NoopCortex",
@@ -97,33 +99,18 @@ __all__ = [
     "InMemoryVectorStore", "InMemorySharedStore",
     # v1.0.7 Pluggable
     "Pluggable",
-    # v1.0.12 Colony federation
-    "FederationTransport", "TCPSocketTransport", "RedisPubSubTransport",
     # v1.0.10 Gateway
     "Gateway", "SignalContext",
     "IoAdapterProtocol", "FrontDeskProtocol", "GatewayProtocol",
     "DefaultFrontDesk",
-    "HttpAdapter", "WsAdapter", "WebhookAdapter", "CliAdapter", "IpcAdapter",
     # v1.0.13 Signal Middleware
     "SignalCall", "SignalMiddleware",
     "SignalLogger", "RateLimiter", "TimeoutGuard", "ContextInjector",
     "CircuitState",
-    # v1.1.9 I18n
-    "I18n",
-    # v1.1.10 CommandRouter
-    "Command", "CommandContext", "CommandRouter",
-    # v1.1.11 System commands
-    "register_system_commands", "is_debug",
-    # v1.1.12 Colony commands
-    "register_colony_commands",
-    # v1.1.13 Textual TUI
-    "MeowTui",
-    # v1.1.14 MCP Client
-    "MCPClient", "MCPServerConfig", "MCPTool",
     # v1.1.15 SKILL.md Loader
     "SkillLoader",
     # v1.1.16 General Tools
-    "BrowserTool", "ChromaStore", "get_shared_client", "close_shared_client",
+    "ChromaStore", "get_shared_client", "close_shared_client",
     # v1.1.17 Crystallizer
     "Crystallizer", "DefaultDetector",
     # v1.1.18 SharedStore + Log
@@ -137,38 +124,21 @@ __all__ = [
     # v1.1.23 ScribblePad
     "ScribblePad", "DefaultScribbleFilter", "DefaultScribbleLogger",
     "DefaultScribblePersister",
-    # v1.1.24 PinealGland + FusionCycle
+    # v1.1.24 PinealGland
     "PinealGland", "Insight",
     "DefaultMerger", "DefaultContradiction", "DefaultInsightFilter",
-    "FusionCycle",
     # v1.1.25 Cortex worldview L1
     "Cortex", "DefaultRuleExtractor",
     # v1.1.26 active growth
     "BlindSpotDetector", "ToolFailureLearner", "HotPathObserver",
     "ActiveGrowthPack",
-    # v1.1.27 metacognition L3
-    "Metacognition",
-    # v1.2.0 CatSelf + default closed loops
-    "CatSelf", "SelfSnapshot",
-    "DefaultConversationLoop", "DefaultTaskLoop", "DefaultLearnLoop",
-    # v1.1.28 GlobalColonyRegistry
-    "GlobalColonyRegistry",
+    # v2.0 CatSelf + unified ReflectionLoop
+    "CatSelf", "SelfSnapshot", "ReflectionLoop",
     # v1.1.29 skeleton abstraction
     "AsyncApprovalGate", "ApprovalRequest", "ApprovalStatus",
     "KeywordToolMatcher",
-    "Theme",
     "BaseWorker", "CheckpointStore", "InMemoryCheckpointStore",
     "WorkerState", "WorkerStatus", "WorkerScheduler",
-    # v1.2.9 Renovated organs
-    "RENOVATED_ORGAN_MAP",
-    "RenovatedAmygdala", "RenovatedBrainstem", "RenovatedFrontal",
-    "RenovatedHypothalamus", "RenovatedCortex",
-    "RenovatedCerebrum", "RenovatedCerebellum",
-    "RenovatedEars", "RenovatedEyes", "RenovatedMouth", "RenovatedPaws",
-    "RenovatedPurr", "RenovatedTail", "RenovatedWhiskers",
-    "RenovatedThalamus", "RenovatedHippocampus",
-    "RenovatedAnomalyGrowth", "RenovatedCorrectionGrowth",
-    "RenovatedCrystallizer", "RenovatedRoleEmergence",
     # v1.2.8 Presets
     "KeywordPreset", "PromptPreset", "OrganPrompt",
     "KW_EN", "KW_ZH", "KW_BILINGUAL",
@@ -177,7 +147,7 @@ __all__ = [
     "ImplementationStyle",
     "_UNSET",
     # v1.2.14 Organ adapters
-    "AgentOrgan", "SkillOrgan",
+    "AgentOrgan",
     "CerebrumAgent", "CerebellumAgent", "ThalamusAgent",
     "HippocampusAgent", "AmygdalaAgent", "BrainstemAgent",
     "FrontalAgent", "HypothalamusAgent", "CortexAgent",

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 import time as _time
 from typing import Any
 
@@ -13,9 +14,10 @@ from meowcat.pluggable import Pluggable
 
 
 class NoopHippocampus(Pluggable):
-    """Default hippocampus: pure in-memory graph store, lost on process restart.
+    """Default hippocampus: in-memory graph store with auto-indexing and optional persistence.
 
-    Wraps InMemoryGraphStore, implements full HippocampusProtocol methods.
+    Merged from NoopHippocampus + RenovatedHippocampus (v2.0).
+    Implements full HippocampusProtocol methods.
     Mode B — remember / recall merge enhancement.
     """
 
@@ -36,9 +38,14 @@ class NoopHippocampus(Pluggable):
     _entities: dict[str, dict[str, Any]] | None = None
     _episodes: list[dict[str, Any]] | None = None
 
-    def __init__(self) -> None:
+    # Instance-only: set by factory lifecycle hook before on_start
+    cat_uid: str = ""
+
+    def __init__(self, episode_store: Any | None = None) -> None:
         Pluggable.__init__(self)
         self._colony_memory: Any = None  # v1.1.21: SharedMemoryPool for scope=colony
+        self._keyword_index: dict[str, set[str]] = {}
+        self._episode_store = episode_store
 
     # -- Lazy-init properties (subclasses that super().__init__()
     #    avoid creating unused InMemoryGraphStore) -------------------
@@ -92,6 +99,9 @@ class NoopHippocampus(Pluggable):
         ):
             if isinstance(r, dict):
                 result.update(r)
+        kws = _extract_keywords(f"{user_msg} {ai_reply}", top_k=10)
+        for kw in kws:
+            self._keyword_index.setdefault(kw, set()).add(user_msg[:80])
         return result
 
     def add_episode(self, episode: dict[str, Any]) -> str:
@@ -100,6 +110,12 @@ class NoopHippocampus(Pluggable):
         if "id" not in episode:
             episode["id"] = eid
         self.episodes.append(episode)
+        if self._episode_store is not None:
+            try:
+                store_cat_uid = self.cat_uid or episode.get("cat_uid", "unknown")
+                self._episode_store.append(store_cat_uid, dict(episode))
+            except Exception:
+                pass
         return eid
 
     def get_episode(self, episode_id: str) -> dict[str, Any] | None:
@@ -315,6 +331,22 @@ class NoopHippocampus(Pluggable):
         self.entities = d.get("entities", {})
         self.episodes = d.get("episodes", [])
 
+    # -- Lifecycle ---------------------------------------------------
+
+    async def _load_from_store(self) -> None:
+        if self._episode_store is None or not self.cat_uid:
+            return
+        try:
+            records = self._episode_store.load_all(self.cat_uid)
+            for ep in records:
+                if ep.get("id") not in {e.get("id") for e in self.episodes}:
+                    self.episodes.append(ep)
+        except Exception:
+            pass
+
+    async def _flush_to_store(self) -> None:
+        pass  # write-through: add_episode already persists immediately
+
     # -- v0.5.26 wrapper methods ------------------------------------
 
     def record_access(self, entity_id: str, delta: int = 1) -> None:
@@ -366,3 +398,19 @@ class NoopHippocampus(Pluggable):
                 continue
             results.append({"entity_id": eid, **entity})
         return results
+
+
+def _extract_keywords(text, top_k=5, stop_words=None):
+    if stop_words is None:
+        return []
+    words = re.findall(r"[a-zA-Z\u4e00-\u9fff]+", text.lower())
+    filtered = [w for w in words if w not in stop_words and len(w) > 1]
+    seen = set()
+    result = []
+    for w in filtered:
+        if w not in seen:
+            seen.add(w)
+            result.append(w)
+            if len(result) >= top_k:
+                break
+    return result

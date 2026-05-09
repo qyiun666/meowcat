@@ -9,13 +9,10 @@ import pytest
 
 from meowcat.biology.cat_self import (
     CatSelf,
-    DefaultConversationLoop,
-    DefaultLearnLoop,
-    DefaultTaskLoop,
+    ReflectionLoop,
     SelfSnapshot,
 )
 from meowcat.biology.cortex import Cortex
-from meowcat.biology.metacognition import Metacognition
 from meowcat.biology.pineal_gland import PinealGland
 from meowcat.biology.scribble_pad import ScribblePad
 from meowcat.tools.skill import SkillRegistry
@@ -39,11 +36,6 @@ def cortex():
 
 
 @pytest.fixture
-def metacog():
-    return Metacognition()
-
-
-@pytest.fixture
 def skills():
     return SkillRegistry()
 
@@ -59,16 +51,18 @@ def basic_cat_self(pad, cortex):
 
 
 @pytest.fixture
-def full_cat_self(pad, gland, cortex, metacog, skills):
-    """Fully wired CatSelf."""
-    return CatSelf(
+def full_cat_self(pad, gland, cortex, skills):
+    """Fully wired CatSelf with built-in capabilities."""
+    cs = CatSelf(
         personality={"tone": "professional", "language": "en"},
         cortex=cortex,
         scribble_pad=pad,
         pineal_gland=gland,
-        metacognition=metacog,
         skills=skills,
     )
+    cs.record_capability("backend", True, "expert", 0.9)
+    cs.record_capability("frontend", False, "no js engine")
+    return cs
 
 
 # -- Mock Cat for loop tests ------------------------------------------
@@ -128,15 +122,14 @@ class TestCatSelfProperties:
         assert cs.reflexes is None
         assert cs.scribble_pad is None
         assert cs.pineal_gland is None
-        assert cs.metacognition is None
+        assert cs.known_domains() == []
 
-    def test_full_construction(self, pad, gland, cortex, metacog, skills):
+    def test_full_construction(self, pad, gland, cortex, skills):
         cs = CatSelf(
             personality={"tone": "friendly"},
             cortex=cortex,
             scribble_pad=pad,
             pineal_gland=gland,
-            metacognition=metacog,
             skills=skills,
         )
         assert cs.personality == {"tone": "friendly"}
@@ -144,8 +137,9 @@ class TestCatSelfProperties:
         assert cs.worldview is cortex  # defaults to cortex
         assert cs.scribble_pad is pad
         assert cs.pineal_gland is gland
-        assert cs.metacognition is metacog
         assert cs.skills is skills
+        assert cs.capable_domains() == []
+        assert cs.incapable_domains() == []
 
     def test_separate_worldview(self, pad, cortex):
         worldview_cortex = Cortex()
@@ -279,7 +273,7 @@ class TestCatSelfPlugs:
         assert diag["has_cortex"] is True
         assert diag["has_scribble_pad"] is True
         assert diag["has_pineal_gland"] is False
-        assert diag["has_metacognition"] is False
+        assert diag["known_domains"] == 0
         assert "personality_keys" in diag
         assert "plugs" in diag
 
@@ -288,37 +282,40 @@ class TestCatSelfPlugs:
 
 
 class TestCatSelfLoop:
-    """loop() returns correct default loop instances."""
+    """loop() returns ReflectionLoop instances parameterised by mode."""
 
     def test_loop_conversation(self, basic_cat_self):
         loop = basic_cat_self.loop("conversation")
-        assert isinstance(loop, DefaultConversationLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "conversation"
 
     def test_loop_task(self, basic_cat_self):
         loop = basic_cat_self.loop("task")
-        assert isinstance(loop, DefaultTaskLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "task"
 
     def test_loop_learn(self, basic_cat_self):
         loop = basic_cat_self.loop("learn")
-        assert isinstance(loop, DefaultLearnLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "learn"
 
     def test_loop_invalid(self, basic_cat_self):
         with pytest.raises(ValueError, match="Unknown loop"):
             basic_cat_self.loop("nonexistent")
 
 
-# -- 6. DefaultConversationLoop ---------------------------------------
+# -- 6. ReflectionLoop: conversation mode -----------------------------
 
 
-class TestDefaultConversationLoop:
-    """Default conversation closed loop."""
+class TestReflectionLoopConversation:
+    """ReflectionLoop in conversation mode."""
 
     @pytest.mark.anyio
     async def test_run_basic(self, pad):
         """Conversation loop fires before_act/after_act. PinealGland drains pad on trigger."""
         cs = CatSelf(scribble_pad=pad, pineal_gland=PinealGland(pad))
         cat = MockCat(cs)
-        loop = DefaultConversationLoop()
+        loop = ReflectionLoop(mode="conversation")
         response = await loop.run(cat, "hello world")
         assert "hello world" in response
         # Pad is drained by PinealGland trigger_if(on_event) → 0 entries remain
@@ -329,7 +326,7 @@ class TestDefaultConversationLoop:
         """Works without pineal gland."""
         cs = CatSelf(scribble_pad=pad)
         cat = MockCat(cs)
-        loop = DefaultConversationLoop()
+        loop = ReflectionLoop(mode="conversation")
         response = await loop.run(cat, "hi")
         assert isinstance(response, str)
 
@@ -338,22 +335,22 @@ class TestDefaultConversationLoop:
         """Works without scribble pad."""
         cs = CatSelf()
         cat = MockCat(cs)
-        loop = DefaultConversationLoop()
+        loop = ReflectionLoop(mode="conversation")
         response = await loop.run(cat, "hi")
         assert isinstance(response, str)
 
 
-# -- 7. DefaultTaskLoop -----------------------------------------------
+# -- 7. ReflectionLoop: task mode -------------------------------------
 
 
-class TestDefaultTaskLoop:
-    """Default task closed loop."""
+class TestReflectionLoopTask:
+    """ReflectionLoop in task mode."""
 
     @pytest.mark.anyio
     async def test_run_basic(self, pad):
         cs = CatSelf(scribble_pad=pad)
         cat = MockCat(cs)
-        loop = DefaultTaskLoop()
+        loop = ReflectionLoop(mode="task")
         result = await loop.run(cat, "deploy to prod")
         assert result["task"] == "deploy to prod"
         assert result["status"] == "planned"
@@ -363,23 +360,23 @@ class TestDefaultTaskLoop:
     async def test_run_without_pad(self):
         cs = CatSelf()
         cat = MockCat(cs)
-        loop = DefaultTaskLoop()
+        loop = ReflectionLoop(mode="task")
         result = await loop.run(cat, "test task")
         assert result["status"] == "planned"
 
 
-# -- 8. DefaultLearnLoop ----------------------------------------------
+# -- 8. ReflectionLoop: learn mode ------------------------------------
 
 
-class TestDefaultLearnLoop:
-    """Default learn closed loop."""
+class TestReflectionLoopLearn:
+    """ReflectionLoop in learn mode."""
 
     @pytest.mark.anyio
     async def test_run_basic(self, pad):
-        """Learn loop fires before_act/after_act. PinealGland trigger() drains pad."""
+        """Learn loop fires before_act/after_act. PinealGland immediate trigger drains pad."""
         cs = CatSelf(scribble_pad=pad, pineal_gland=PinealGland(pad))
         cat = MockCat(cs)
-        loop = DefaultLearnLoop()
+        loop = ReflectionLoop(mode="learn")
         result = await loop.run(cat, "Kubernetes networking")
         assert result["topic"] == "Kubernetes networking"
         assert result["learned"] is True
@@ -391,22 +388,22 @@ class TestDefaultLearnLoop:
         """Works without pineal gland."""
         cs = CatSelf(scribble_pad=pad)
         cat = MockCat(cs)
-        loop = DefaultLearnLoop()
+        loop = ReflectionLoop(mode="learn")
         result = await loop.run(cat, "something")
         assert result["learned"] is True
 
 
-# -- 9. CatSelf with metacognition ------------------------------------
+# -- 9. CatSelf with built-in capabilities (v2.0: metacognition merged)
 
 
-class TestCatSelfWithMetacognition:
-    """CatSelf snapshots include metacognition data."""
+class TestCatSelfCapabilities:
+    """CatSelf snapshots include capability data (v2.0: built-in)."""
 
     @pytest.mark.anyio
-    async def test_snapshot_includes_capable_domains(self, pad, metacog):
-        metacog.record_capability("sql", True, "has mysql tool")
-        metacog.record_capability("frontend", False, "no js engine")
-        cs = CatSelf(scribble_pad=pad, metacognition=metacog)
+    async def test_snapshot_includes_capable_domains(self, pad):
+        cs = CatSelf(scribble_pad=pad)
+        cs.record_capability("sql", True, "has mysql tool")
+        cs.record_capability("frontend", False, "no js engine")
         snap = await cs.before_act("task")
         assert "sql" in snap.capable_domains
         assert "frontend" in snap.incapable_domains

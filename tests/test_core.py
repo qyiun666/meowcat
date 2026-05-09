@@ -48,7 +48,7 @@ class TestProtocols:
     async def test_noop_satisfies_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)
-        assert await e.extract_keywords("hello") == []
+        assert e.extract_keywords("hello") == ["hello"]
 
 
 class TestWiring:

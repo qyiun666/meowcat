@@ -1,14 +1,14 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat standalone tests: v1.0.11 synthesize Path (worldview synthesis).
+"""meowcat standalone tests: crystallize Path (skill crystallization from usage).
 
 Validates:
-- synthesize path exists in BUILTIN_PATHS
+- crystallize path exists in BUILTIN_PATHS
 - Path attributes correct (from/to/method/mode)
-- BUILTIN_PATHS has no duplicates (with synthesize)
-- PathRegistry.run("synthesize") equivalent to cat.signal()
-- 1:1 mapping to CortexProtocol.synthesize()
+- BUILTIN_PATHS has no duplicates
+- PathRegistry.run("crystallize") equivalent to cat.signal()
+- 1:1 mapping to CrystallizerProtocol.crystallize()
 """
 
 from __future__ import annotations
@@ -16,40 +16,40 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from meowcat.anatomy import BRAINSTEM, CORTEX
+from meowcat.anatomy import BRAINSTEM, CRYSTALLIZER
 from meowcat.path import BUILTIN_PATHS, Path, PathRegistry, register_builtin_paths
 from meowcat.testing import make_cat
 
-# -- synthesize path exists in BUILTIN_PATHS ---------------------------------
+# -- crystallize path exists in BUILTIN_PATHS ---------------------------------
 
 
-class TestSynthesizePathExists:
-    """synthesize path registered in builtin path table."""
+class TestCrystallizePathExists:
+    """crystallize path registered in builtin path table."""
 
-    def test_synthesize_in_builtin_paths(self):
+    def test_crystallize_in_builtin_paths(self):
         names = {p.name for p in BUILTIN_PATHS}
-        assert "synthesize" in names, (
-            f"synthesize not in BUILTIN_PATHS. Got: {sorted(names)}"
+        assert "crystallize" in names, (
+            f"crystallize not in BUILTIN_PATHS. Got: {sorted(names)}"
         )
 
-    def test_synthesize_path_attributes(self):
+    def test_crystallize_path_attributes(self):
         for p in BUILTIN_PATHS:
-            if p.name == "synthesize":
+            if p.name == "crystallize":
                 assert p.from_organ == BRAINSTEM
-                assert p.to_organ == CORTEX
-                assert p.method == "synthesize"
-                assert p.mode == "read"
-                assert "Worldview synthesis" in p.description
+                assert p.to_organ == CRYSTALLIZER
+                assert p.method == "crystallize"
+                assert p.mode == "write"
+                assert "Crystallize" in p.description
                 break
         else:
-            pytest.fail("synthesize path not found in BUILTIN_PATHS")
+            pytest.fail("crystallize path not found in BUILTIN_PATHS")
 
 
-# -- BUILTIN_PATHS integrity (with synthesize) -------------------------------
+# -- BUILTIN_PATHS integrity -----------------------------------------------
 
 
-class TestBuiltinPathsWithSynthesize:
-    """Ensure path table still complete after adding synthesize."""
+class TestBuiltinPathsIntegrity:
+    """Ensure path table integrity."""
 
     def test_no_duplicate_names(self):
         names = [p.name for p in BUILTIN_PATHS]
@@ -64,91 +64,59 @@ class TestBuiltinPathsWithSynthesize:
             )
 
     def test_minimum_path_count(self):
-        """At least 23 paths after v1.0.11 (22 + synthesize = 23)."""
-        assert len(BUILTIN_PATHS) >= 23, (
-            f"Expected >= 23 paths, got {len(BUILTIN_PATHS)}"
+        """At least 19 paths in v2.0 (slimmed from 31)."""
+        assert len(BUILTIN_PATHS) >= 19, (
+            f"Expected >= 19 paths, got {len(BUILTIN_PATHS)}"
         )
 
 
-# -- PathRegistry.run("synthesize") -------------------------------
+# -- PathRegistry.run("crystallize") -------------------------------
 
 
-class TestSynthesizePathRun:
-    """PathRegistry.run("synthesize") equivalent to cat.signal(BRAINSTEM, CORTEX, "synthesize")."""
+class TestCrystallizePathRun:
+    """PathRegistry.run("crystallize")."""
 
-    def test_run_synthesize_via_registry(self):
-        """Execute synthesize path via registry."""
-        cat = make_cat("test-synth")
+    def test_run_crystallize_via_registry(self):
+        """Execute crystallize path via registry."""
+        cat = make_cat("test-crystal")
 
-        # Use unmapped coords to avoid Protocol validation
         BS = ("brain", "_brainstem")
-        CX = ("brain", "_cortex")
+        CY = ("growth", "_crystallizer")
 
         called: dict = {}
 
-        class FakeCortex:
-            name = "cortex"
+        class FakeCrystallizer:
+            name = "crystallizer"
 
-            def synthesize(self, max_tokens=400):
-                called["max_tokens"] = max_tokens
-                return "worldview: everything is connected"
+            def crystallize(self, slug="", hit_count=1):
+                called["slug"] = slug
+                called["hit_count"] = hit_count
+                return True
 
         cat.mount(*BS, object())
-        cat.mount(*CX, FakeCortex())
-        cat.wiring.connect(BS, CX)
+        cat.mount(*CY, FakeCrystallizer())
+        cat.wiring.connect(BS, CY)
 
         reg = cat.path_registry
         reg.register(
-            Path("synthesize", BS, CX, "synthesize", "read", "世界观综合"),
+            Path("crystallize", BS, CY, "crystallize", "write"),
         )
 
         async def _run():
-            result = await reg.run(cat, "synthesize", max_tokens=200)
-            assert result == "worldview: everything is connected"
-            assert called["max_tokens"] == 200
+            result = await reg.run(cat, "crystallize", slug="test", hit_count=1)
+            assert result is True
+            assert called["slug"] == "test"
+            assert called["hit_count"] == 1
 
         anyio.run(_run)
 
-    def test_run_synthesize_default_max_tokens(self):
-        """synthesize 默认 max_tokens=400 被正确传递。"""
-        cat = make_cat("test-synth-default")
-
-        BS = ("brain", "_brainstem")
-        CX = ("brain", "_cortex")
-
-        called: dict = {}
-
-        class FakeCortex:
-            name = "cortex"
-
-            def synthesize(self, max_tokens=400):
-                called["max_tokens"] = max_tokens
-                return "summary"
-
-        cat.mount(*BS, object())
-        cat.mount(*CX, FakeCortex())
-        cat.wiring.connect(BS, CX)
-
-        reg = cat.path_registry
-        reg.register(
-            Path("synthesize", BS, CX, "synthesize", "read"),
-        )
-
-        async def _run():
-            result = await reg.run(cat, "synthesize")
-            assert result == "summary"
-            assert called["max_tokens"] == 400  # 默认值被保留
-
-        anyio.run(_run)
-
-    def test_register_builtin_paths_includes_synthesize(self):
-        """register_builtin_paths 包含 synthesize。"""
+    def test_register_builtin_paths_includes_crystallize(self):
+        """register_builtin_paths includes crystallize."""
         reg = PathRegistry()
         register_builtin_paths(reg)
 
-        p = reg.get("synthesize")
-        assert p is not None, "synthesize not registered by register_builtin_paths"
+        p = reg.get("crystallize")
+        assert p is not None, "crystallize not registered by register_builtin_paths"
         assert p.from_organ == BRAINSTEM
-        assert p.to_organ == CORTEX
-        assert p.method == "synthesize"
-
+        assert p.to_organ == CRYSTALLIZER
+        assert p.method == "crystallize"

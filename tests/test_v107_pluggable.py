@@ -157,7 +157,7 @@ async def test_frontal_mode_a_detect_shift():
 async def test_ears_mode_b_hear():
     e = NoopEars()
     r = await e.hear("hello")
-    assert r == {"text": "hello", "keywords": [], "language": "unknown"}
+    assert r == {"text": "hello", "keywords": ["hello"], "language": "en"}
 
     e.mount_plug("hear", lambda raw: {"language": "zh", "keywords": ["hello"]})
     r = await e.hear("hello")
@@ -167,32 +167,33 @@ async def test_ears_mode_b_hear():
 @pytest.mark.anyio
 async def test_ears_mode_b_extract_keywords():
     e = NoopEars()
-    r = await e.extract_keywords("test")
-    assert r == []
+    r = e.extract_keywords("test")
+    assert r == ["test"]
 
     e.mount_plug("extract_keywords", lambda text, top_k: ["a", "b"])
-    r = await e.extract_keywords("test")
-    assert r == ["a", "b"]
+    r = e.extract_keywords("test")
+    assert r == ["test", "a", "b"]
 
 
 @pytest.mark.anyio
 async def test_whiskers_mode_b():
     w = NoopWhiskers()
     r = await w.feel_input("test")
-    assert r == {}
+    assert r.get("length") == 4
+    assert r.get("has_code") is False
     w.mount_plug("feel_input", lambda t: {"injection": True})
     r = await w.feel_input("test")
-    assert r == {"injection": True}
+    assert r["injection"] is True
 
 
 @pytest.mark.anyio
 async def test_whiskers_mode_b_hallucination():
     w = NoopWhiskers()
-    r = await w.check_hallucination("reply", "s1")
+    r = w.check_hallucination("reply", "s1")
     assert r == {"hallucination": False}
     w.mount_plug("check_hallucination", lambda reply,
                  sid: {"hallucination": True})
-    r = await w.check_hallucination("reply", "s1")
+    r = w.check_hallucination("reply", "s1")
     assert r == {"hallucination": True}
 
 
@@ -286,7 +287,7 @@ async def test_tail_mode_c():
 async def test_eyes_mode_c():
     e = NoopEyes()
     r = await e.see(b"img", "image/png")
-    assert r == {}
+    assert r == {"format": "image/png", "size_bytes": 3, "width_hint": "unknown", "height_hint": "unknown"}
     e.mount_plug("see", lambda data, mime: {"caption": "a cat"})
     r = await e.see(b"img", "image/png")
     assert r == {"caption": "a cat"}

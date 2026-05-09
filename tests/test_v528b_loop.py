@@ -96,7 +96,7 @@ class TestBuiltinLoops:
         assert lp.chain.name == "conversation_chain"
         assert "hear" in lp.chain.path_names
         assert "speak" in lp.chain.path_names
-        assert "remember" in lp.chain.path_names
+        assert "deep_reason" in lp.chain.path_names
 
     def test_diagnostic_loop_no_trigger(self):
         lp = next(lp for lp in BUILTIN_LOOPS if lp.name == "diagnostic")
@@ -492,8 +492,7 @@ class TestNewPathsForLoop:
         assert p.from_organ == p.to_organ
 
     def test_total_path_count(self):
-        """BUILTIN_PATHS currently 31 (v1.3.0 +4 growth +1 compress_context)."""
+        """BUILTIN_PATHS currently 23 (v2.0 slimmed from 31, +4 tree paths)."""
         cat = make_cat("test")
         all_paths = cat.path_registry.list_all()
-        assert len(all_paths) == 31
-
+        assert len(all_paths) == 23

@@ -12,20 +12,17 @@ All messages pass through the FrontDesk (a Protocol + Pluggable receptionist).
 When ``ctx.target_cat`` is set, the default FrontDesk forwards to that cat.
 When unset, it returns a placeholder reply.
 
-Concrete adapters (HttpAdapter, WsAdapter, etc.) moved to ``meowcat.plus.gateway``
-in v1.2.22 as optional batteries. Use::
-
-    from meowcat.plus.gateway import HttpAdapter, CliAdapter
+Concrete adapters (HttpAdapter, WsAdapter, etc.) are provided by the application layer.
+See the meowagent project for reference implementations.
 
 Usage example::
 
     from meowcat import Colony, Gateway
-    from meowcat.plus.gateway import HttpAdapter
     from meowcat.gateway.front_desk import DefaultFrontDesk
 
     colony = Colony("my-colony")
     gw = Gateway(colony)  # uses DefaultFrontDesk
-    gw.mount_adapter(HttpAdapter(port=8000))
+    gw.mount_adapter(MyHttpAdapter(port=8000))
     await gw.start()  # blocking, all Adapters run in parallel
 """
 

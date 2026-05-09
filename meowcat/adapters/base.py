@@ -1,13 +1,10 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat adapter base classes — AgentOrgan / SkillOrgan.
+"""meowcat adapter base class — AgentOrgan.
 
-v1.2.14: Two thin base classes that adapt any external agent or skill
-into a meowcat organ.  Both inherit :class:`Pluggable` so hooks still work.
-
-The only difference between ``AgentOrgan`` and ``SkillOrgan`` is semantic:
-*Use whichever name conveys intent* — the delegation mechanics are identical.
+v1.2.14: Thin base class that adapts any external agent or skill
+into a meowcat organ.  Inherits :class:`Pluggable` so hooks still work.
 """
 
 from __future__ import annotations
@@ -42,7 +39,8 @@ class AgentOrgan(Pluggable):
     def __init__(self, agent: Any, *, name: str | None = None) -> None:
         Pluggable.__init__(self)
         self._agent = agent
-        self.name: str = name or getattr(agent, "name", type(agent).__name__)  # type: ignore[assignment]
+        self.name: str = name or getattr(agent, "name", type(
+            agent).__name__)  # type: ignore[assignment]
 
     # ------------------------------------------------------------------
     # Core delegation
@@ -94,20 +92,4 @@ class AgentOrgan(Pluggable):
         }
 
 
-class SkillOrgan(AgentOrgan):
-    """Base class for organs backed by an external skill.
-
-    Identical to :class:`AgentOrgan` in mechanics; use this when the backing
-    implementation is semantically a "skill" (coarser-grained capability unit)
-    rather than a general agent.
-    """
-
-    def diagnose(self) -> dict[str, Any]:
-        return {
-            "adapter": type(self).__name__,
-            "skill": type(self._agent).__name__,
-            "skill_type": str(type(self._agent)),
-        }
-
-
-__all__ = ["AgentOrgan", "SkillOrgan"]
+__all__ = ["AgentOrgan"]

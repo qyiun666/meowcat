@@ -83,7 +83,8 @@ class ReflexPathInvalidError(MeowCatError):
         self.reflex_name = reflex_name
         self.hop = hop
         frm, to = hop
-        super().__init__(f"Reflex '{reflex_name}' hop illegal: {frm[0]}/{frm[1]} → {to[0]}/{to[1]}")
+        super().__init__(
+            f"Reflex '{reflex_name}' hop illegal: {frm[0]}/{frm[1]} → {to[0]}/{to[1]}")
 
 
 class NoReflexMatchedError(MeowCatError):
@@ -126,9 +127,9 @@ class OrganProtocolMismatchError(MeowCatError):
 
 
 class OrganDelegateError(MeowCatError):
-    """Raised when an AgentOrgan/SkillOrgan fails to delegate to its external agent/skill.
+    """Raised when an AgentOrgan fails to delegate to its external agent.
 
-    v1.2.14: Added for AgentOrgan/SkillOrgan adapter system.
+    v1.2.14: Added for AgentOrgan adapter system.
     """
 
     def __init__(self, adapter: str, method: str, detail: str = "") -> None:

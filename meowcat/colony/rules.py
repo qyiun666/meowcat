@@ -3,7 +3,7 @@
 
 """ColonyRules — safety policy, approval, rate limiting for a Colony.
 
-Extends Pluggable for custom rule checking via ``on_check`` hook.
+Simple configuration dataclass with Pluggable for extensibility.
 """
 
 from __future__ import annotations
@@ -16,20 +16,13 @@ from meowcat.pluggable import Pluggable
 class ColonyRules(Pluggable):
     """Colony rules — safety policy, approval, rate limiting.
 
-    Extends :class:`Pluggable` for custom rule checking via ``on_check`` hook.
+    Extends :class:`Pluggable` for custom hook extensions.
 
     Usage::
 
         ColonyRules(safety_policy="strict", approval_required=True, rate_limit_per_min=20)
         ColonyRules(extra={"custom_policy": "block_external_domains"})
-
-        # Custom rule checker
-        colony.rules.plug("on_check", my_multi_tenant_checker)
     """
-
-    HOOKS = {
-        "on_check": {"in": "action: str, context: dict | None", "out": "dict"},
-    }
 
     def __init__(
         self,
@@ -43,18 +36,3 @@ class ColonyRules(Pluggable):
         self.approval_required = approval_required
         self.rate_limit_per_min = rate_limit_per_min
         self.extra: dict[str, Any] = extra or {}
-
-    def check(self, action: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Check if an action passes rules. Runs ``on_check`` plugins (first-hit).
-
-        Args:
-            action: Action identifier string.
-            context: Optional context dict for the check.
-
-        Returns:
-            ``{"allowed": True/False, "reason": ...}``
-        """
-        for _name, r in self._run_plugs_sync("on_check", action, context):
-            if isinstance(r, dict) and not r.get("allowed", True):
-                return r
-        return {"allowed": True}

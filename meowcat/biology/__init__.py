@@ -78,19 +78,18 @@ from meowcat.anatomy import (
 _LAZY_BIOLOGY: dict[str, str] = {
     # v1.1.22 colony-level collective intelligence
     "CollectiveGrowth": "meowcat.biology.growth",
-    "CollectiveEmergence": "meowcat.biology.roles",
+    "CollectiveEmergence": "meowcat.biology.growth",
     # v1.1.23 scribble pad
     "ScribblePad": "meowcat.biology.scribble_pad",
     "DefaultScribbleFilter": "meowcat.biology.scribble_pad",
     "DefaultScribbleLogger": "meowcat.biology.scribble_pad",
     "DefaultScribblePersister": "meowcat.biology.scribble_pad",
-    # v1.1.24 pineal gland + fusion cycle
+    # v1.1.24 pineal gland
     "PinealGland": "meowcat.biology.pineal_gland",
     "Insight": "meowcat.biology.pineal_gland",
     "DefaultMerger": "meowcat.biology.pineal_gland",
     "DefaultContradiction": "meowcat.biology.pineal_gland",
     "DefaultInsightFilter": "meowcat.biology.pineal_gland",
-    "FusionCycle": "meowcat.biology.fusion_cycle",
     # v1.1.25 cortex worldview L1
     "Cortex": "meowcat.biology.cortex",
     "DefaultRuleExtractor": "meowcat.biology.cortex",
@@ -99,14 +98,10 @@ _LAZY_BIOLOGY: dict[str, str] = {
     "ToolFailureLearner": "meowcat.biology.active_growth",
     "HotPathObserver": "meowcat.biology.active_growth",
     "ActiveGrowthPack": "meowcat.biology.active_growth_pack",
-    # v1.1.27 metacognition L3
-    "Metacognition": "meowcat.biology.metacognition",
-    # v1.2.0 CatSelf + default closed loops
+    # v2.0 CatSelf + unified ReflectionLoop
     "CatSelf": "meowcat.biology.cat_self",
     "SelfSnapshot": "meowcat.biology.cat_self",
-    "DefaultConversationLoop": "meowcat.biology.cat_self_loops",
-    "DefaultTaskLoop": "meowcat.biology.cat_self_loops",
-    "DefaultLearnLoop": "meowcat.biology.cat_self_loops",
+    "ReflectionLoop": "meowcat.biology.cat_self_loops",
 }
 
 
@@ -183,13 +178,12 @@ __all__ = [
     "DefaultScribbleFilter",
     "DefaultScribbleLogger",
     "DefaultScribblePersister",
-    # v1.1.24 pineal gland + fusion cycle
+    # v1.1.24 pineal gland
     "PinealGland",
     "Insight",
     "DefaultMerger",
     "DefaultContradiction",
     "DefaultInsightFilter",
-    "FusionCycle",
     # v1.1.25 cortex worldview L1
     "Cortex",
     "DefaultRuleExtractor",
@@ -198,12 +192,8 @@ __all__ = [
     "ToolFailureLearner",
     "HotPathObserver",
     "ActiveGrowthPack",
-    # v1.1.27 metacognition L3
-    "Metacognition",
-    # v1.2.0 CatSelf + default closed loops
+    # v2.0 CatSelf + unified ReflectionLoop
     "CatSelf",
     "SelfSnapshot",
-    "DefaultConversationLoop",
-    "DefaultTaskLoop",
-    "DefaultLearnLoop",
+    "ReflectionLoop",
 ]

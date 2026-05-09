@@ -1,47 +1,214 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat default brain organ stubs — no-op implementations satisfying Protocols.
+"""meowcat default brain organ implementations — 8 classes with real behavior.
 
 Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
-_run_plugs plugin capability. HOOKS class variable declares mountable hooks and their suggested signatures.
+_run_plugs / _run_plugs_sync plugin capability. HOOKS class variable declares
+mountable hooks and their suggested signatures.
 
-Three execution modes:
-- A First-hit override: first non-default value is returned directly
-- B Merge enhancement: all plugin results are merged into the default value
-- C Full replacement: first plugin completely replaces default behavior
+Merged from renovated implementations — includes keyword routing, danger detection,
+focus tracking, memory maintenance, worldview accumulation, prompt building,
+and callable-based LLM adapters.
 """
 
 from __future__ import annotations
 
+import re
+import time as _time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
+from meowcat.defaults.presets import (
+    KW_BILINGUAL,
+    KeywordPreset,
+    OrganPrompt,
+    PROMPT_DEFAULT,
+    PromptPreset,
+)
+
+# =========================================================================
+# Helper functions (inline, previously in renovated/_helpers.py)
+# =========================================================================
+
+
+def _extract_keywords(
+    text: str, top_k: int = 5, stop_words: frozenset[str] | None = None
+) -> list[str]:
+    """Extract top-k keywords from text.
+
+    ``stop_words`` is required — callers must pass a keyword preset's stop_words.
+    """
+    if stop_words is None:
+        return []
+    words = re.findall(r"[a-zA-Z\u4e00-\u9fff]+", text.lower())
+    filtered = [w for w in words if w not in stop_words and len(w) > 1]
+    seen: set[str] = set()
+    result: list[str] = []
+    for w in filtered:
+        if w not in seen:
+            seen.add(w)
+            result.append(w)
+            if len(result) >= top_k:
+                break
+    return result
+
+
+def _detect_command(text: str, kw) -> str | None:
+    """Detect command pattern in text.
+
+    ``kw`` is required — callers must pass a keyword preset.
+    """
+    if kw is None:
+        return None
+    lower = text.lower().strip()
+    for cmd, route in kw.command_patterns.items():
+        if lower.startswith(cmd) or lower.startswith(f"/{cmd}"):
+            return route
+    return None
+
+
+# =========================================================================
+# Brain Regions
+# =========================================================================
+
+
+class NoopThalamus(Pluggable):
+    """Thalamus: keyword routing + command detection.
+
+    Accepts a :class:`KeywordPreset` for configurable command patterns and
+    priority keywords. Default: bilingual (zh+en).
+
+    Detects command patterns for routing, falls back to basic keyword analysis.
+
+    Mode B — locate merge enhancement; hear receives raw sensory input.
+    """
+
+    HOOKS: dict[str, dict[str, str]] = {
+        "hear": {"in": "raw_input: str | bytes", "out": "dict[str, Any]"},
+        "locate": {"in": "msg: str, session_id: str", "out": "LocateResultShape"},
+    }
+
+    name: str = "renovated_thalamus"
+    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+
+    def __init__(self, keyword: KeywordPreset | None = None) -> None:
+        Pluggable.__init__(self)
+        self._keyword = keyword or KW_BILINGUAL
+
+    async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
+        """Receive raw sensory input, run plugs for preprocessing."""
+        result: dict[str, Any] = {"raw_input": raw_input, "route": "chat"}
+        async for _name, r in self._run_plugs("hear", raw_input):
+            if isinstance(r, dict):
+                result.update(r)
+        return result
+
+    async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            "route": "chat", "entities": [], "snippets": []}
+        async for _name, r in self._run_plugs("locate", msg, session_id):
+            if isinstance(r, dict):
+                result.update(r)
+        cmd_route = _detect_command(msg, self._keyword)
+        if cmd_route:
+            result["route"] = cmd_route
+        return result
+
+    def decide_route(self, **kwargs: Any) -> dict[str, Any]:
+        msg = kwargs.get("text", kwargs.get("message", ""))
+        cmd_route = _detect_command(msg, self._keyword)
+        return {
+            "route": cmd_route or "chat",
+            "keywords": _extract_keywords(
+                msg, stop_words=self._keyword.stop_words
+            ),
+        }
 
 
 class NoopAmygdala(Pluggable):
-    """Default amygdala: never rejects, zero security risk.
+    """Amygdala: regex-based danger/safety assessment.
+
+    Accepts a :class:`KeywordPreset` for configurable danger patterns.
+    Default: bilingual (zh+en) danger patterns covering SQL injection,
+    shell injection, XSS, path traversal, and Chinese-specific threats.
+
+    .. note::
+
+        ``is_rejection`` / ``classify_rejection`` detect *dangerous* input
+        (not user negation/correction — that belongs to Whiskers).
+        Use ``is_dangerous`` for the same behavior with clearer naming.
+
+    Tool risk assessment is fully configurable via ``dangerous_tools``
+    and ``dangerous_paths``, and supports plugin override via the
+    ``assess_tool_risk`` hook.
 
     Mode A — assess_safety / assess_tool_risk first-hit override.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
         "assess_safety": {"in": "user_input: str", "out": "dict[str, Any]"},
-        "assess_tool_risk": {"in": "tool: str, params: dict", "out": "dict[str, Any]"},
+        "assess_tool_risk": {"in": "tool_name: str, params: dict", "out": "dict[str, Any]"},
     }
 
-    name: str = "noop_amygdala"
+    name: str = "renovated_amygdala"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        danger_patterns: list[re.Pattern] | None = None,
+        keyword: KeywordPreset | None = None,
+        dangerous_tools: set[str] | None = None,
+        dangerous_paths: list[str] | None = None,
+    ) -> None:
         Pluggable.__init__(self)
+        if danger_patterns:
+            self._patterns: list[re.Pattern] = list(danger_patterns)
+        elif keyword:
+            self._patterns = list(keyword.danger_patterns)
+        else:
+            self._patterns = list(KW_BILINGUAL.danger_patterns)
+        self._dangerous_tools: set[str] = (
+            dangerous_tools
+            if dangerous_tools is not None
+            else {"run_command", "eval", "exec", "shell"}
+        )
+        self._dangerous_paths: list[str] = (
+            dangerous_paths
+            if dangerous_paths is not None
+            else ["/etc/", "/root/", "~/.ssh/", "C:\\Windows\\"]
+        )
 
     def is_rejection(self, msg: str) -> bool:
-        return False
+        """Check if the input should be *rejected* as dangerous.
+
+        Matches against danger patterns (SQL injection, shell injection,
+        XSS, path traversal, etc.). Return ``True`` means the input
+        contains dangerous content that should be blocked.
+
+        For user negation/correction detection, use
+        :meth:`RenovatedWhiskers.is_negation` / :meth:`RenovatedWhiskers.parse_correction`.
+        """
+        return any(pat.search(msg) for pat in self._patterns)
+
+    def is_dangerous(self, msg: str) -> bool:
+        """Alias for :meth:`is_rejection` — semantically clearer.
+
+        Returns ``True`` if the input matches known danger patterns.
+        """
+        return self.is_rejection(msg)
 
     def classify_rejection(self, msg: str) -> str:
-        return "none"
+        """Classify the rejection type of dangerous input.
+
+        Returns:
+            ``"danger"`` if input matches danger patterns, ``"none"`` otherwise.
+        """
+        if not self.is_rejection(msg):
+            return "none"
+        return "danger"
 
     def parse_correction(self, msg: str) -> tuple[str, str] | None:
         return None
@@ -65,21 +232,53 @@ class NoopAmygdala(Pluggable):
         async for _name, r in self._run_plugs("assess_safety", user_input):
             if isinstance(r, dict) and not r.get("safe", True):
                 return r
-        return {"safe": True, "risk": "none"}
+        for pat in self._patterns:
+            m = pat.search(user_input)
+            if m:
+                return {
+                    "safe": False,
+                    "risk": "high",
+                    "pattern": pat.pattern,
+                    "match": m.group(),
+                }
+        return {"safe": True, "risk": "low"}
 
-    async def assess_tool_risk(
-        self,
-        tool_name: str,
-        params: dict[str, Any],
+    def assess_tool_risk(  # type: ignore[override]
+        self, tool_name: str, params: dict[str, Any]
     ) -> dict[str, Any]:
-        async for _name, r in self._run_plugs("assess_tool_risk", tool_name, params):
+        """Assess tool execution risk.
+
+        Configurable via ``dangerous_tools`` and ``dangerous_paths`` constructor
+        params, with plugin override via the ``assess_tool_risk`` hook.
+        """
+        for _name, r in self._run_plugs_sync("assess_tool_risk", tool_name, params):
             if isinstance(r, dict):
                 return r
-        return {"risk": "low", "reason": "noop"}
+        if tool_name in self._dangerous_tools:
+            return {"risk": "high", "reason": f"dangerous tool: {tool_name}"}
+        if tool_name == "write_file":
+            fp = str(params.get("path", params.get("file_path", "")))
+            for dp in self._dangerous_paths:
+                if dp in fp:
+                    return {
+                        "risk": "high",
+                        "reason": f"write to protected path: {fp}",
+                    }
+        return {"risk": "low", "reason": "ok"}
 
 
 class NoopFrontal(Pluggable):
-    """Default frontal cortex: does not detect focus shifts, does not save focus.
+    """Frontal: keyword topic shift detection + topic history.
+
+    Accepts a :class:`KeywordPreset` for domain-specific topic keywords
+    and priority keywords. Default: bilingual.
+
+    Tracks recent topics and detects significant shifts via keyword overlap.
+
+    v1.3.6: Accepts an optional :class:`~meowcat.focus.FocusStore` for
+    persistence.  ``save()`` / ``load()`` delegate to the store when
+    configured; ``_export_state()`` / ``_import_state()`` support
+    lifecycle-driven save/restore without path parameters.
 
     Mode A — is_continue / detect_shift first-hit override.
     """
@@ -89,29 +288,59 @@ class NoopFrontal(Pluggable):
         "detect_shift": {"in": "msg: str", "out": "bool"},
     }
 
-    name: str = "noop_frontal"
+    name: str = "renovated_frontal"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        keyword: KeywordPreset | None = None,
+        threshold: float = 0.3,
+        # FocusStore | None (lazy import to avoid circular)
+        focus_store: Any | None = None,
+    ) -> None:
         Pluggable.__init__(self)
+        self._keyword = keyword or KW_BILINGUAL
+        self._topics: list[str] = []
+        self._current_keywords: set[str] = set()
+        self._threshold: float = threshold
+        self._focus_store = focus_store
 
-    async def is_continue(self, msg: str) -> bool:
-        async for _name, r in self._run_plugs("is_continue", msg):
+    def is_continue(self, msg: str) -> bool:  # type: ignore[override]
+        for _name, r in self._run_plugs_sync("is_continue", msg):
             if isinstance(r, bool):
                 return r
-        return False
+        if not self._current_keywords:
+            return False
+        kws = set(
+            _extract_keywords(
+                msg, top_k=10, stop_words=self._keyword.stop_words
+            )
+        )
+        overlap = len(kws & self._current_keywords)
+        return overlap >= max(1, len(self._current_keywords) * self._threshold)
 
-    async def detect_shift(self, msg: str) -> bool:
-        async for _name, r in self._run_plugs("detect_shift", msg):
+    def detect_shift(self, msg: str) -> bool:  # type: ignore[override]
+        for _name, r in self._run_plugs_sync("detect_shift", msg):
             if isinstance(r, bool):
                 return r
-        return False
-
-    def archive_focus(self) -> None:
-        pass
+        return not self.is_continue(msg)
 
     def update_focus(self, result: Any) -> None:
-        pass
+        kw_source = ""
+        kw_source = (
+            str(result.get("text", result.get("reply", "")))
+            if isinstance(result, dict)
+            else str(result)
+        )
+        self._current_keywords = set(
+            _extract_keywords(
+                kw_source, top_k=10, stop_words=self._keyword.stop_words
+            )
+        )
+
+    def archive_focus(self) -> None:
+        self._topics.append(", ".join(sorted(self._current_keywords)))
+        self._current_keywords.clear()
 
     def save(self, path: Any | None = None) -> None:
         pass
@@ -119,9 +348,57 @@ class NoopFrontal(Pluggable):
     def load(self, path: Any | None = None) -> None:
         pass
 
+    # ── Lifecycle helpers (used by factory.py) ────────────────────
+
+    async def _load_from_store(self) -> None:
+        """Async load focus state from the configured store.
+
+        Called by lifecycle hook on ``on_start``.
+        """
+        if self._focus_store is None:
+            return
+        state = await self._focus_store.load()
+        if state is not None:
+            self._import_state(state)
+
+    async def _save_to_store(self) -> None:
+        """Async save focus state to the configured store.
+
+        Called by lifecycle hook on ``on_shutdown``.
+        """
+        if self._focus_store is None:
+            return
+        await self._focus_store.save(self._export_state())
+
+    def _export_state(self) -> Any:
+        """Export current focus state as a :class:`~meowcat.focus.FocusState`.
+
+        Returns a plain dataclass suitable for serialization.
+        """
+        from meowcat.focus import FocusState
+
+        return FocusState(
+            topics=list(self._topics),
+            current_keywords=sorted(self._current_keywords),
+            threshold=self._threshold,
+        )
+
+    def _import_state(self, state: Any) -> None:
+        """Import focus state from a :class:`~meowcat.focus.FocusState`.
+
+        Args:
+            state: A ``FocusState`` instance previously returned by
+                   ``_export_state()``.
+        """
+        self._topics = list(state.topics)
+        self._current_keywords = set(state.current_keywords)
+        self._threshold = state.threshold
+
 
 class NoopHypothalamus(Pluggable):
-    """Default hypothalamus: does not perform maintenance, does not wake entities.
+    """Hypothalamus: background maintenance with configurable TTL decay.
+
+    Runs memory decay on the hippocampus organ if accessible via cat ref.
 
     Mode B — run_maintenance merge enhancement.
     """
@@ -130,11 +407,13 @@ class NoopHypothalamus(Pluggable):
         "run_maintenance": {"in": "country_code: str|None", "out": "Any"},
     }
 
-    name: str = "noop_hypothalamus"
+    name: str = "renovated_hypothalamus"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
-    def __init__(self) -> None:
+    def __init__(self, decay_ttl_days: int = 30) -> None:
         Pluggable.__init__(self)
+        self._decay_ttl_days = decay_ttl_days
+        self._last_maintenance: float = 0.0
 
     async def run_maintenance(self, country_code: str | None = None) -> Any:
         result: dict[str, Any] = {
@@ -142,17 +421,21 @@ class NoopHypothalamus(Pluggable):
         async for _name, r in self._run_plugs("run_maintenance", country_code):
             if isinstance(r, dict):
                 result.update(r)
+        self._last_maintenance = _time.time()
         return result
 
     def decay_memories(self, now: Any | None = None) -> dict[str, Any]:
-        return {"decayed": 0}
+        return {"decayed": 0, "ttl_days": self._decay_ttl_days}
 
     def compress_long_history(self) -> dict[str, Any]:
         return {"compressed": 0}
 
 
 class NoopCortex(Pluggable):
-    """Default cortex: does not ingest worldviews, does not record weaknesses.
+    """Cortex: in-memory worldview accumulation.
+
+    Ingests key-value observations into four layers (axioms/others/values/self)
+    and synthesizes summary text on demand.
 
     Mode B — synthesize merge enhancement.
     """
@@ -161,54 +444,124 @@ class NoopCortex(Pluggable):
         "synthesize": {"in": "max_tokens: int", "out": "str"},
     }
 
-    name: str = "noop_cortex"
+    name: str = "renovated_cortex"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     def __init__(self) -> None:
         Pluggable.__init__(self)
+        self._worldview: dict[str, dict[str, Any]] = {
+            "axioms": {},
+            "others": {},
+            "values": {},
+            "self": {},
+        }
+        self._weakness_log: list[dict[str, Any]] = []
 
     def ingest(self, source: str, layer: str, key: str, value: Any) -> None:
-        pass
+        if layer in self._worldview:
+            self._worldview[layer][key] = {
+                "source": source,
+                "value": value,
+                "ts": _time.time(),
+            }
 
     def record_weakness(self, kind: str, detail: str) -> None:
-        pass
+        self._weakness_log.append(
+            {"kind": kind, "detail": detail, "ts": _time.time()}
+        )
 
     def weaknesses(self) -> list[dict[str, Any]]:
-        return []
+        return list(self._weakness_log)
 
-    async def synthesize(self, max_tokens: int = 400) -> str:
+    def synthesize(self, max_tokens: int = 400) -> str:  # type: ignore[override]
         result = ""
-        async for _name, r in self._run_plugs("synthesize", max_tokens):
+        for _name, r in self._run_plugs_sync("synthesize", max_tokens):
             if isinstance(r, str):
                 result += r
+        if not result:
+            parts: list[str] = []
+            for layer, entries in self._worldview.items():
+                if entries:
+                    summary = ", ".join(
+                        f"{k}={v['value']}"
+                        for k, v in list(entries.items())[:5]
+                    )
+                    parts.append(f"[{layer}] {summary}")
+            if parts:
+                result = "\n".join(parts)
         return result
 
 
 class NoopBrainstem(Pluggable):
-    """Default brainstem: does not build system prompt, does not cancel current task.
+    """Brainstem: customizable system prompt builder + lifecycle logging.
 
-    v1.3.6: ``build_system_prompt`` signature updated to match
-    :class:`BrainStemProtocol` — accepts ``organ``, ``route``, and
-    optional ``cat_self_snapshot``.
+    v1.3.6: 新增 per-organ prompt 拼装链路 + CatSelf 自动注入。
+
+    Accepts a :class:`PromptPreset` for route-specific prompt templates,
+    pre/post prompts, and variable substitution. Accepts
+    ``organ_prompts`` dict mapping organ name → :class:`OrganPrompt`
+    for per-organ identity/perspective/output_format injection.
+
+    7-step assembly chain:
+        1. Plugin override (full replacement)
+        2. PromptPreset.pre_prompt
+        3. OrganPrompt.identity + perspective
+        4. Route template (OrganPrompt → PromptPreset → fallback)
+        5. CatSelf injection (personality + beliefs + capabilities)
+        6. OrganPrompt.output_format
+        7. PromptPreset.post_prompt
+
+    Variable substitution: {name}, {language}, {domain}, {route}, {organ}, {tone}
 
     Mode B — build_system_prompt merge enhancement.
     """
 
     HOOKS: dict[str, dict[str, str]] = {
-        "build_system_prompt": {"in": "organ: str, route: str, snapshot: Any|None", "out": "str"},
-        "compress_context": {"in": "messages: list[dict], max_tokens: int", "out": "list[dict]"},
+        "build_system_prompt": {
+            "in": "organ: str, route: str, snapshot: Any|None",
+            "out": "str",
+        },
+        "compress_context": {
+            "in": "messages: list[dict], max_tokens: int",
+            "out": "list[dict]",
+        },
     }
 
-    name: str = "noop_brainstem"
+    name: str = "renovated_brainstem"
     impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
 
     inject_cat_self: bool = True
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        prompt: PromptPreset | None = None,
+        cat_name: str = "MeowCat",
+        language: str = "zh/en",
+        domain: str = "general",
+        organ_prompts: dict[str, OrganPrompt] | None = None,
+    ) -> None:
         Pluggable.__init__(self)
+        self._prompt = prompt or PROMPT_DEFAULT
+        self._cat_name = cat_name
+        self._language = language
+        self._domain = domain
+        self._organ_prompts = organ_prompts or {}
+        self._start_time: float = _time.time()
+
+    @property
+    def organ_prompts(self) -> dict[str, OrganPrompt]:
+        """Per-organ prompt slot map (v1.3.6)."""
+        return self._organ_prompts
 
     def diagnose(self) -> dict[str, Any]:
-        return {}
+        return {
+            "uptime_seconds": _time.time() - self._start_time,
+            "organ": "brainstem",
+            "renovated": True,
+            "prompt_preset": self._prompt.name,
+            "organ_prompts": list(self._organ_prompts.keys()),
+            "inject_cat_self": self.inject_cat_self,
+        }
 
     async def build_system_prompt(
         self,
@@ -216,13 +569,68 @@ class NoopBrainstem(Pluggable):
         route: str,
         cat_self_snapshot: Any | None = None,
     ) -> str:
+        """Build system prompt with 7-step assembly chain (v1.3.6).
+
+        Args:
+            organ: Organ name, e.g. ``"cerebrum"``, ``"cerebellum"``.
+            route: Route name, e.g. ``"chat"``, ``"tool"``.
+            cat_self_snapshot: Optional :class:`SelfSnapshot` for
+                CatSelf injection. ``None`` skips injection.
+
+        Returns:
+            Assembled system prompt string.
+        """
         parts: list[str] = []
+
+        # 1. Plugin chain (allow full override)
         async for _name, r in self._run_plugs(
-            "build_system_prompt", organ, route, cat_self_snapshot
+            "build_system_prompt",
+            organ,
+            route,
+            cat_self_snapshot,
         ):
             if isinstance(r, str) and r:
                 parts.append(r)
-        return "\n".join(parts) if parts else ""
+        if parts:
+            return "\n".join(parts)
+
+        # 2. PromptPreset.pre_prompt
+        if self._prompt.pre_prompt:
+            parts.append(self._fill_vars(self._prompt.pre_prompt))
+
+        # 3. OrganPrompt identity + perspective
+        op = self._organ_prompts.get(organ)
+        if op is not None:
+            if op.identity:
+                parts.append(self._fill_vars(op.identity))
+            if op.perspective:
+                parts.append(self._fill_vars(op.perspective))
+
+        # 4. Route template (OrganPrompt override → PromptPreset → fallback)
+        route_tmpl: str = ""
+        if op is not None:
+            route_tmpl = op.route_templates.get(route, "")
+        if not route_tmpl:
+            route_tmpl = self._prompt.templates.get(
+                route, self._prompt.fallback
+            )
+        if not route_tmpl:
+            route_tmpl = "You are MeowCat, a helpful AI assistant."
+        parts.append(self._fill_vars(route_tmpl))
+
+        # 5. CatSelf injection
+        if self.inject_cat_self and cat_self_snapshot is not None:
+            parts.append(self._inject_cat_self(cat_self_snapshot))
+
+        # 6. OrganPrompt.output_format
+        if op is not None and op.output_format:
+            parts.append(self._fill_vars(op.output_format))
+
+        # 7. PromptPreset.post_prompt
+        if self._prompt.post_prompt:
+            parts.append(self._fill_vars(self._prompt.post_prompt))
+
+        return "\n\n".join(parts)
 
     async def compress_context(
         self,
@@ -268,9 +676,92 @@ class NoopBrainstem(Pluggable):
     def cancel_current(self) -> bool:
         return False
 
+    # ── Helpers ────────────────────────────────────────────────────
+
+    def _fill_vars(self, template: str) -> str:
+        """Substitute {name} {language} {domain} {route} {organ} variables."""
+        return (
+            template.replace("{name}", self._cat_name)
+            .replace("{language}", self._language)
+            .replace("{domain}", self._domain)
+        )
+
+    def _inject_cat_self(self, snap: Any) -> str:
+        """Generate CatSelf injection block from snapshot.
+
+        Reads personality, beliefs (Cortex L2), and capabilities
+        (Metacognition L3) from the snapshot and formats them
+        as a self-awareness block.  Language-aware: uses Chinese
+        labels when ``_language`` starts with ``"zh"``, English otherwise.
+        """
+        is_zh = (self._language or "").startswith("zh")
+
+        lines: list[str] = []
+        lines = ["## 自我认知", ""] if is_zh else ["## Self-Awareness", ""]
+
+        # Personality
+        personality = getattr(snap, "personality", None) or {}
+        tone = personality.get("tone", "")
+        lang = personality.get("language", "")
+        if tone and lang:
+            if is_zh:
+                lines.append(f"性格：{tone} 的语气，使用 {lang} 交流。")
+            else:
+                lines.append(
+                    f"Personality: {tone} tone, communicates in {lang}."
+                )
+        elif tone:
+            if is_zh:
+                lines.append(f"性格：{tone} 的语气。")
+            else:
+                lines.append(f"Personality: {tone} tone.")
+
+        # Beliefs (Cortex L2)
+        beliefs = getattr(snap, "beliefs", None) or []
+        if beliefs:
+            lines.append("")
+            if is_zh:
+                lines.append("坚信的法则：")
+            else:
+                lines.append("Core Beliefs:")
+            for item in beliefs[:10]:
+                if isinstance(item, (tuple, list)) and len(item) >= 2:
+                    value = str(item[1])
+                    conf = item[2] if len(item) >= 3 else 1.0
+                    if is_zh:
+                        lines.append(f"- {value} (确信度: {conf:.0%})")
+                    else:
+                        lines.append(f"- {value} (confidence: {conf:.0%})")
+
+        # Capable domains (Metacognition L3)
+        capable = getattr(snap, "capable_domains", None) or []
+        if capable:
+            lines.append("")
+            domains = ", ".join(str(d) for d in capable[:10])
+            if is_zh:
+                lines.append(f"擅长的领域：{domains}")
+            else:
+                lines.append(f"Capable domains: {domains}")
+
+        # Incapable domains
+        incapable = getattr(snap, "incapable_domains", None) or []
+        if incapable:
+            domains = ", ".join(str(d) for d in incapable[:10])
+            if is_zh:
+                lines.append(f"不擅长的领域：{domains}")
+            else:
+                lines.append(f"Incapable domains: {domains}")
+
+        return "\n".join(lines)
+
 
 class NoopCerebrum(Pluggable):
-    """Default cerebrum: no deep reasoning, no stream generation.
+    """Cerebrum: callable-based LLM adapter with prompt preset support.
+
+    Accepts an optional ``llm_fn`` callable (sync or async), a
+    :class:`PromptPreset` for system prompt templates, and an
+    :class:`OrganPrompt` for per-organ identity/perspective/output_format.
+    Without ``llm_fn``, returns a helpful message.
 
     Mode C — generate / stream_generate full replacement.
     """
@@ -286,14 +777,34 @@ class NoopCerebrum(Pluggable):
         },
     }
 
-    name: str = "noop_cerebrum"
-    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+    name: str = "renovated_cerebrum"
+    impl_style: ImplementationStyle = ImplementationStyle.MODEL
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
+        default_model: str = "renovated",
+        prompt: PromptPreset | None = None,
+        organ_prompt: OrganPrompt | None = None,
+    ) -> None:
         Pluggable.__init__(self)
+        self._llm_fn = llm_fn
+        self._model = default_model
+        self._prompt = prompt
+        self._organ_prompt = organ_prompt
+
+    @property
+    def organ_prompt(self) -> OrganPrompt | None:
+        """Per-organ prompt slot (v1.3.6)."""
+        return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {}
+        return {
+            "model": self._model,
+            "has_llm": self._llm_fn is not None,
+            "prompt_preset": self._prompt.name if self._prompt else "none",
+            "organ_prompt": self._organ_prompt is not None,
+        }
 
     async def generate(
         self,
@@ -303,15 +814,23 @@ class NoopCerebrum(Pluggable):
         max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate",
-            prompt,
-            system_prompt,
-            temperature,
-            max_tokens,
+            "generate", prompt, system_prompt, temperature, max_tokens
         ):
             if isinstance(r, str):
                 return r
-        return ""
+        if self._llm_fn is not None:
+            import inspect
+
+            result = self._llm_fn(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            if inspect.isawaitable(result):
+                result = await result
+            return str(result)
+        return "(renovated cerebrum: no LLM configured)"
 
     async def stream_generate(
         self,
@@ -321,27 +840,27 @@ class NoopCerebrum(Pluggable):
         max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate",
-            prompt,
-            system_prompt,
-            temperature,
-            max_tokens,
+            "stream_generate", prompt, system_prompt, temperature, max_tokens
         ):
             return r
-        # empty async generator fallback
+        result = await self.generate(
+            prompt, system_prompt, temperature, max_tokens
+        )
 
-        async def _empty():
-            if False:
-                yield ""
+        async def _stream():
+            yield result
 
-        return _empty()
+        return _stream()
 
     def reload_config(self) -> None:
         pass
 
 
 class NoopCerebellum(Pluggable):
-    """Default cerebellum: no fast reasoning, no stream generation.
+    """Cerebellum: callable-based fast-response adapter with prompt preset.
+
+    Same pattern as NoopCerebrum — accepts optional ``llm_fn``,
+    :class:`PromptPreset`, and :class:`OrganPrompt`.
 
     Mode C — generate / stream_generate full replacement.
     """
@@ -357,14 +876,34 @@ class NoopCerebellum(Pluggable):
         },
     }
 
-    name: str = "noop_cerebellum"
-    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
+    name: str = "renovated_cerebellum"
+    impl_style: ImplementationStyle = ImplementationStyle.MODEL
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
+        default_model: str = "renovated",
+        prompt: PromptPreset | None = None,
+        organ_prompt: OrganPrompt | None = None,
+    ) -> None:
         Pluggable.__init__(self)
+        self._llm_fn = llm_fn
+        self._model = default_model
+        self._prompt = prompt
+        self._organ_prompt = organ_prompt
+
+    @property
+    def organ_prompt(self) -> OrganPrompt | None:
+        """Per-organ prompt slot (v1.3.6)."""
+        return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
-        return {}
+        return {
+            "model": self._model,
+            "has_llm": self._llm_fn is not None,
+            "prompt_preset": self._prompt.name if self._prompt else "none",
+            "organ_prompt": self._organ_prompt is not None,
+        }
 
     async def generate(
         self,
@@ -374,15 +913,23 @@ class NoopCerebellum(Pluggable):
         max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
-            "generate",
-            prompt,
-            system_prompt,
-            temperature,
-            max_tokens,
+            "generate", prompt, system_prompt, temperature, max_tokens
         ):
             if isinstance(r, str):
                 return r
-        return ""
+        if self._llm_fn is not None:
+            import inspect
+
+            result = self._llm_fn(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            if inspect.isawaitable(result):
+                result = await result
+            return str(result)
+        return "(renovated cerebellum: no LLM configured)"
 
     async def stream_generate(
         self,
@@ -392,56 +939,17 @@ class NoopCerebellum(Pluggable):
         max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
-            "stream_generate",
-            prompt,
-            system_prompt,
-            temperature,
-            max_tokens,
+            "stream_generate", prompt, system_prompt, temperature, max_tokens
         ):
             return r
+        result = await self.generate(
+            prompt, system_prompt, temperature, max_tokens
+        )
 
-        async def _empty():
-            if False:
-                yield ""
+        async def _stream():
+            yield result
 
-        return _empty()
+        return _stream()
 
     def reload_config(self) -> None:
         pass
-
-
-class NoopThalamus(Pluggable):
-    """Default thalamus: simple routing, no memory retrieval.
-
-    Mode B — locate merge enhancement; hear receives raw sensory input.
-    """
-
-    HOOKS: dict[str, dict[str, str]] = {
-        "hear": {"in": "raw_input: str | bytes", "out": "dict[str, Any]"},
-        "locate": {"in": "msg: str, session_id: str", "out": "LocateResultShape"},
-    }
-
-    name: str = "noop_thalamus"
-    impl_style: ImplementationStyle = ImplementationStyle.ALGORITHM
-
-    def __init__(self) -> None:
-        Pluggable.__init__(self)
-
-    async def hear(self, raw_input: str | bytes) -> dict[str, Any]:
-        """Receive raw sensory input, run plugs for preprocessing."""
-        result: dict[str, Any] = {"raw_input": raw_input, "route": "chat"}
-        async for _name, r in self._run_plugs("hear", raw_input):
-            if isinstance(r, dict):
-                result.update(r)
-        return result
-
-    async def locate(self, msg: str, session_id: str) -> dict[str, Any]:
-        result: dict[str, Any] = {
-            "route": "chat", "entities": [], "snippets": []}
-        async for _name, r in self._run_plugs("locate", msg, session_id):
-            if isinstance(r, dict):
-                result.update(r)
-        return result
-
-    def decide_route(self, **kwargs: Any) -> dict[str, Any]:
-        return {"route": "chat"}

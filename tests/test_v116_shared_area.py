@@ -23,6 +23,7 @@ from meowcat.defaults.stores import InMemorySharedStore
 
 # -- 1. ColonyOwner -------------------------------------------------------
 
+
 class TestColonyOwner:
     """ColonyOwner 基础构造和字段。"""
 
@@ -75,43 +76,6 @@ class TestColonyRules:
     def test_extra_fields(self) -> None:
         r = ColonyRules(extra={"custom_policy": "block_external_domains"})
         assert r.extra["custom_policy"] == "block_external_domains"
-
-    def test_check_default_allowed(self) -> None:
-        r = ColonyRules()
-        result = r.check("any_action")
-        assert result["allowed"] is True
-
-    def test_check_with_context(self) -> None:
-        r = ColonyRules()
-        result = r.check("tool_call", {"tool": "exec_sql"})
-        assert result["allowed"] is True
-
-    def test_on_check_plugin_blocks(self) -> None:
-        r = ColonyRules()
-        r.plug("on_check", lambda action, ctx: {
-               "allowed": False, "reason": "blocked"})
-
-        result = r.check("dangerous_action")
-        assert result["allowed"] is False
-        assert result["reason"] == "blocked"
-
-    def test_on_check_plugin_first_hit(self) -> None:
-        r = ColonyRules()
-        r.plug("on_check", lambda action, ctx: {
-               "allowed": False, "reason": "first"})
-        r.plug("on_check", lambda action, ctx: {
-               "allowed": False, "reason": "never-reached"})
-
-        result = r.check("any")
-        assert result["allowed"] is False
-        assert result["reason"] == "first"
-
-    def test_on_check_plugin_passthrough(self) -> None:
-        r = ColonyRules()
-        r.plug("on_check", lambda action, ctx: None)  # 不返回有效阻挡
-
-        result = r.check("any")
-        assert result["allowed"] is True
 
     def test_pluggable_inheritance(self) -> None:
         r = ColonyRules()
@@ -209,15 +173,15 @@ class TestNamespaceStorage:
     async def test_ns_namespace_isolation(self, colony: Colony) -> None:
         """不同命名空间之间不相互污染。"""
         await colony.ns_set("owner", "name", "admin")
-        await colony.ns_set("rules", "limit", 10)
+        await colony.ns_set("knowledge", "key", 10)
 
-        assert await colony.ns_get("owner", "limit") is None
-        assert await colony.ns_get("rules", "name") is None
+        assert await colony.ns_get("owner", "key") is None
+        assert await colony.ns_get("knowledge", "name") is None
 
     @pytest.mark.anyio
     async def test_ns_all_builtin_namespaces(self, colony: Colony) -> None:
-        """所有 5 个内置命名空间都可以正常读写。"""
-        namespaces = ["owner", "rules", "knowledge", "growth", "cats"]
+        """所有 3 个内置命名空间都可以正常读写。"""
+        namespaces = ["owner", "knowledge", "cats"]
         for ns in namespaces:
             await colony.ns_set(ns, "test_key", f"{ns}_value")
             assert await colony.ns_get(ns, "test_key") == f"{ns}_value"
@@ -251,14 +215,14 @@ class TestCustomNamespace:
     def test_registered_namespaces_default(self) -> None:
         c = Colony("test")
         assert c.registered_namespaces == frozenset(
-            {"owner", "rules", "knowledge", "growth", "cats", "__tasks__"})
+            {"owner", "knowledge", "cats"})
 
     def test_register_custom_namespace(self) -> None:
         c = Colony("test")
         c.storage_plug("namespace", "audit")
         assert "audit" in c.registered_namespaces
         assert c.registered_namespaces == frozenset(
-            {"owner", "rules", "knowledge", "growth", "cats", "__tasks__", "audit"})
+            {"owner", "knowledge", "cats", "audit"})
 
     def test_register_multiple_custom(self) -> None:
         c = Colony("test")
@@ -309,10 +273,9 @@ class TestNamespaceIsolation:
     @pytest.mark.anyio
     async def test_list_only_current_namespace(self, colony: Colony) -> None:
         await colony.ns_set("owner", "k1", 1)
-        await colony.ns_set("rules", "k2", 2)
-        await colony.ns_set("knowledge", "k3", 3)
+        await colony.ns_set("knowledge", "k2", 2)
+        await colony.ns_set("cats", "k3", 3)
 
         assert await colony.ns_list_keys("owner") == ["k1"]
-        assert await colony.ns_list_keys("rules") == ["k2"]
-        assert await colony.ns_list_keys("knowledge") == ["k3"]
-
+        assert await colony.ns_list_keys("knowledge") == ["k2"]
+        assert await colony.ns_list_keys("cats") == ["k3"]

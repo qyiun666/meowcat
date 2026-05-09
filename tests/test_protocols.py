@@ -132,8 +132,8 @@ class TestNoopSatisfiesProtocol:
     async def test_noop_ears(self) -> None:
         e = NoopEars()
         assert isinstance(e, EarsProtocol)
-        assert await e.extract_keywords("hello") == []
-        assert e.detect_language("hello") == "unknown"
+        assert e.extract_keywords("hello") == ["hello"]
+        assert e.detect_language("hello") == "en"
 
     def test_noop_eyes(self) -> None:
         e = NoopEyes()

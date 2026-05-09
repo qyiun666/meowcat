@@ -1,136 +1,193 @@
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-"""Default closed loops — framework prefabs for CatSelf.
+"""ReflectionLoop — unified closed loop for CatSelf (v2.0: 3 classes → 1).
 
-Extracted from ``biology/cat_self.py`` (v1.3.9 T-05) to keep both files ≤500 lines.
-
-Contains three loops that the ``CatSelf.loop()`` dispatcher returns:
-- :class:`DefaultConversationLoop` — conv. turn
-- :class:`DefaultTaskLoop` — task execution
-- :class:`DefaultLearnLoop` — learning cycle
+Replaces ``DefaultConversationLoop``, ``DefaultTaskLoop``, and
+``DefaultLearnLoop`` with a single ``ReflectionLoop`` class parameterised
+by ``mode`` and ``fusion_trigger``.
 
 Usage::
 
-    from meowcat.biology.cat_self_loops import DefaultConversationLoop
+    from meowcat.biology.cat_self_loops import ReflectionLoop
+
+    loop = ReflectionLoop(mode="conversation", fusion_trigger="event")
+    reply = await loop.run(cat, "你好")
+
+    loop = ReflectionLoop(mode="task", fusion_trigger="full:50")
+    result = await loop.run(cat, "部署到生产环境")
+
+    loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
+    result = await loop.run(cat, "Kubernetes 网络模型")
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
+from meowcat.biology.pineal_gland import PinealGland
 from meowcat.events import SelfEvent
 from meowcat.log import MeowLog
 
 _log = MeowLog.get("meowcat.cat_self_loops")
 
+LoopMode = Literal["conversation", "task", "learn"]
+FusionTrigger = Literal["auto", "event", "full:50", "immediate"]
 
-class DefaultConversationLoop:
-    """Default conversation closed loop.
+_DEFAULT_TRIGGERS: dict[LoopMode, str] = {
+    "conversation": "event",
+    "task": "full:50",
+    "learn": "immediate",
+}
 
-    Flow: read self → perceive dialogue → respond → scribble → reflect.
 
-    Fusion trigger: ``on_event("conversation_end")`` by default.
+class ReflectionLoop:
+    """Unified closed loop — replaces 3 default loop classes.
 
-    When ``use_organ_pipeline=True`` (v1.2.20), the loop bridges into
-    the physical LoopRegistry layer via ``cat.perceive()``, executing
-    actual organ-to-organ signals through the reflex arc.
+    Flow: read self → execute (perceive / task / diagnostic) → scribble →
+    reflect → fusion.
 
-    **Framework stub note** (v1.2.33): When ``use_organ_pipeline=False``
-    (default), the reply is a hardcoded placeholder string.  This is
-    intentional — the framework provides *skeleton* loops.  App layers
-    should either set ``use_organ_pipeline=True`` or subclass/replace
-    this loop to inject a real LLM brain.
+    Args:
+        mode: ``"conversation"`` / ``"task"`` / ``"learn"``.
+        fusion_trigger: When to trigger PinealGland fusion.
+            - ``"auto"``: use mode-default trigger (event / full:50 / immediate)
+            - ``"event"``: trigger on ``conversation_end`` event
+            - ``"full:50"``: trigger when ScribblePad has 50+ entries
+            - ``"immediate"``: trigger immediately after action
+            - Callable: explicit ``Callable[[ScribblePad], bool]`` condition
+        use_organ_pipeline: When True, bridges into LoopRegistry via
+            ``cat.perceive()`` or ``cat.run_loop()``. Default False.
 
     Usage::
 
         loop = cat.cat_self.loop("conversation")
         response = await loop.run(cat, "帮我查表结构")
-
-        # Bridged mode
-        loop = cat.cat_self.loop("conversation", use_organ_pipeline=True)
-        response = await loop.run(cat, "帮我查表结构")
     """
 
     def __init__(
         self,
-        fusion_strategy: Callable[[Any], bool] | None = None,
+        mode: LoopMode,
+        fusion_trigger: str
+        | Callable[[Any], bool]
+        | None = None,
         use_organ_pipeline: bool = False,
     ) -> None:
-        self._fusion = fusion_strategy
+        if mode not in _DEFAULT_TRIGGERS:
+            raise ValueError(
+                f"Unknown mode: {mode!r}. Choose from: {list(_DEFAULT_TRIGGERS)}"
+            )
+        self._mode = mode
         self._use_organ_pipeline = use_organ_pipeline
 
-    async def run(self, cat: Any, message: str) -> str:
-        """Execute one conversation turn.
+        # Resolve fusion trigger
+        if fusion_trigger is None or fusion_trigger == "auto":
+            trigger_str = _DEFAULT_TRIGGERS[mode]
+        elif callable(fusion_trigger):
+            self._fusion = fusion_trigger
+            return
+        elif isinstance(fusion_trigger, str):
+            trigger_str = fusion_trigger
+        else:
+            raise ValueError(
+                f"Invalid fusion_trigger: {fusion_trigger!r}"
+            )
+
+        # Convert string trigger to callable
+        self._fusion = _resolve_trigger(trigger_str)
+
+    async def run(self, cat: Any, input: str) -> Any:
+        """Execute one loop iteration.
 
         Args:
-            cat: CatBase instance (provides perceive + organs).
-            message: Incoming message text.
+            cat: CatBase instance.
+            input: Incoming message / task / topic.
 
         Returns:
-            Response string.
+            Response string (conversation) or result dict (task / learn).
         """
-        snap = await cat.cat_self.before_act("conversation")
+        snap = await cat.cat_self.before_act(self._mode)
         cat._current_snapshot = snap
         _log.debug(
-            "conversation_loop: snapshot",
+            f"{self._mode}_loop: snapshot",
             beliefs=len(snap.beliefs),
             skills=len(snap.skill_names),
             scribbles=snap.scribble_count,
         )
         _log.info(
             SelfEvent.SNAPSHOT,
-            reason="conversation",
+            reason=self._mode,
             beliefs=len(snap.beliefs),
             skills=len(snap.skill_names),
             scribbles=snap.scribble_count,
         )
 
-        # -- Bridge: organ pipeline (v1.2.20) ------------------------
+        # Execute mode-specific pipeline
         if self._use_organ_pipeline:
-            reply = await self._run_organ_pipeline(cat, message)
+            result = await self._run_organ_pipeline(cat, input)
         else:
-            reply = f"[conversation] received: {message[:100]}"
+            result = self._stub_result(input)
 
+        # Scribble
         if cat.cat_self.scribble_pad:
-            cat.cat_self.scribble_pad.scribble({"in": message[:200]})
-        await cat.cat_self.after_act(
-            "conversation_turn",
-            {"msg_len": len(message)},
-        )
-        _log.info(SelfEvent.REFLECT, reason="conversation")
-        if cat.cat_self.pineal_gland:
-            from meowcat.biology.fusion_cycle import FusionCycle
-
-            strategy = (
-                self._fusion
-                if self._fusion is not None
-                else FusionCycle.on_event("conversation_end")
+            cat.cat_self.scribble_pad.scribble(
+                {self._mode: input[:200]}
             )
-            cat.cat_self.pineal_gland.trigger_if(strategy)
+
+        # After-act
+        if self._mode == "conversation":
+            await cat.cat_self.after_act(
+                "conversation_turn", {"msg_len": len(input)}
+            )
+        elif self._mode == "task":
+            await cat.cat_self.after_act(
+                "task_completed",
+                {"task": input[:100], "status": result.get("status") if isinstance(result, dict) else None},
+            )
+        else:
+            await cat.cat_self.after_act(
+                "learn_completed", {"topic": input}
+            )
+
+        _log.info(SelfEvent.REFLECT, reason=self._mode)
+
+        # Fusion
+        if cat.cat_self.pineal_gland:
+            cat.cat_self.pineal_gland.trigger_if(self._fusion)
         else:
             _log.debug(
-                "conversation loop: pineal_gland is None, fusion skipped")
-        return reply
+                f"{self._mode} loop: pineal_gland is None, fusion skipped"
+            )
 
-    async def _run_organ_pipeline(self, cat: Any, message: str) -> str:
-        """Bridge: execute organ pipeline via cat.perceive() / cat.run_loop().
+        return result
 
-        v1.2.20: When ``use_organ_pipeline=True``, the cognitive loop
-        delegates to the physical LoopRegistry layer.  ``cat.perceive()``
-        fires the reflex arc; we collect stage events and extract the
-        final reply from the pipeline context.
+    def _stub_result(self, input: str) -> Any:
+        """Placeholder result when organ pipeline is disabled."""
+        if self._mode == "conversation":
+            return f"[conversation] received: {input[:100]}"
+        elif self._mode == "task":
+            return {"task": input, "status": "planned"}
+        else:
+            return {"topic": input, "learned": True}
 
-        Falls back to ``cat.run_loop("conversation", message=...)`` if
-        ReflexArc is disabled.
+    async def _run_organ_pipeline(self, cat: Any, input: str) -> Any:
+        """Bridge: execute via organ pipeline.
+
+        v1.2.20: Delegates to LoopRegistry layer via cat.perceive()
+        or cat.run_loop().
         """
-        # Try reflex arc first (perceive → reflex → stages → reply)
+        if self._mode == "conversation":
+            return await self._pipeline_conversation(cat, input)
+        elif self._mode == "task":
+            return await self._pipeline_task(cat, input)
+        else:
+            return await self._pipeline_learn(cat, input)
+
+    async def _pipeline_conversation(self, cat: Any, message: str) -> str:
         try:
             pipeline_events: list[Any] = []
             async for ev in cat.perceive(message):
                 pipeline_events.append(ev)
-            # Extract reply from pipeline context if available
             if pipeline_events:
                 last = pipeline_events[-1]
                 if hasattr(last, "reply"):
@@ -141,212 +198,35 @@ class DefaultConversationLoop:
                 return str(pipeline_events[-1])
         except Exception as e:
             _log.debug(
-                "organ_pipeline: perceive failed, falling back", error=str(e)[:120])
-
-        # Fallback: use LoopRegistry's conversation loop
+                "organ_pipeline: perceive failed, falling back",
+                error=str(e)[:120],
+            )
         try:
             result = await cat.run_loop("conversation", message=message)
             if isinstance(result, dict):
                 return str(result.get("reply", result.get("result", str(result))))
             return str(result)
         except Exception as e:
-            _log.warning("organ_pipeline: run_loop also failed",
-                         error=str(e)[:120])
+            _log.warning(
+                "organ_pipeline: run_loop also failed",
+                error=str(e)[:120],
+            )
             return f"[conversation] received: {message[:100]}"
 
-
-class DefaultTaskLoop:
-    """Default task closed loop.
-
-    Flow: read self → analyse task → decompose → execute → observe →
-    scribble → reflect.
-
-    Fusion trigger: ``on_full(50)`` by default.
-
-    When ``use_organ_pipeline=True`` (v1.2.20), the loop bridges into
-    the physical LoopRegistry layer via ``cat.run_loop("tool_execution")``,
-    executing actual organ-to-organ signals for task decomposition.
-
-    **Framework stub note** (v1.2.33): When ``use_organ_pipeline=False``
-    (default), the result is a hardcoded placeholder dict
-    ``{"task": ..., "status": "planned"}``.  App layers should either
-    set ``use_organ_pipeline=True`` or subclass/replace this loop.
-
-    Usage::
-
-        loop = cat.cat_self.loop("task")
-        result = await loop.run(cat, "部署到生产环境")
-    """
-
-    def __init__(
-        self,
-        fusion_strategy: Callable[[Any], bool] | None = None,
-        use_organ_pipeline: bool = False,
-    ) -> None:
-        self._fusion = fusion_strategy
-        self._use_organ_pipeline = use_organ_pipeline
-
-    async def run(self, cat: Any, task: str) -> dict[str, Any]:
-        """Execute one task.
-
-        Args:
-            cat: CatBase instance.
-            task: Task description.
-
-        Returns:
-            Task result dict.
-        """
-        snap = await cat.cat_self.before_act("task")
-        cat._current_snapshot = snap
-        _log.debug(
-            "task_loop: snapshot",
-            beliefs=len(snap.beliefs),
-            skills=len(snap.skill_names),
-            scribbles=snap.scribble_count,
-        )
-        _log.info(
-            SelfEvent.SNAPSHOT,
-            reason="task",
-            beliefs=len(snap.beliefs),
-            skills=len(snap.skill_names),
-            scribbles=snap.scribble_count,
-        )
-
-        # -- Bridge: organ pipeline (v1.2.20) ------------------------
-        if self._use_organ_pipeline:
-            result = await self._run_organ_pipeline(cat, task)
-        else:
-            result = {"task": task, "status": "planned"}
-
-        if cat.cat_self.scribble_pad:
-            cat.cat_self.scribble_pad.scribble({"task": task[:200]})
-        await cat.cat_self.after_act(
-            "task_completed",
-            {"task": task[:100], "status": result.get("status")},
-        )
-        _log.info(SelfEvent.REFLECT, reason="task")
-        if cat.cat_self.pineal_gland:
-            from meowcat.biology.fusion_cycle import FusionCycle
-
-            strategy = self._fusion if self._fusion is not None else FusionCycle.on_full(
-                50)
-            cat.cat_self.pineal_gland.trigger_if(strategy)
-        else:
-            _log.debug("task loop: pineal_gland is None, fusion skipped")
-        return result
-
-    async def _run_organ_pipeline(
-        self,
-        cat: Any,
-        task: str,
-    ) -> dict[str, Any]:
-        """Bridge: execute task via organ pipeline.
-
-        v1.2.20: Delegates to ``cat.run_loop("tool_execution", task=...)``
-        for actual organ-to-organ task decomposition.
-        """
+    async def _pipeline_task(self, cat: Any, task: str) -> dict[str, Any]:
         try:
             result = await cat.run_loop("tool_execution", task=task)
             if isinstance(result, dict):
                 return result
             return {"task": task, "status": "completed", "result": result}
         except Exception as e:
-            _log.warning("organ_pipeline: task run_loop failed",
-                         error=str(e)[:120])
+            _log.warning(
+                "organ_pipeline: task run_loop failed",
+                error=str(e)[:120],
+            )
             return {"task": task, "status": "planned"}
 
-
-class DefaultLearnLoop:
-    """Default learning closed loop.
-
-    Flow: detect blind spot → explore → learn → verify → scribble →
-    reflect → write back.
-
-    Fusion trigger: immediate ``trigger()`` when ``fusion_strategy`` is None;
-    ``trigger_if(fusion_strategy)`` otherwise.
-
-    When ``use_organ_pipeline=True`` (v1.2.20), the loop bridges into
-    the physical LoopRegistry layer via ``cat.run_loop("diagnostic")``
-    to run a full diagnostic checkup as part of the learning cycle.
-
-    **Framework stub note** (v1.2.33): When ``use_organ_pipeline=False``
-    (default), the result is a hardcoded placeholder dict
-    ``{"topic": ..., "learned": True}``.  App layers should either
-    set ``use_organ_pipeline=True`` or subclass/replace this loop.
-
-    Usage::
-
-        loop = cat.cat_self.loop("learn")
-        result = await loop.run(cat, "Kubernetes 网络模型")
-    """
-
-    def __init__(
-        self,
-        fusion_strategy: Callable[[Any], bool] | None = None,
-        use_organ_pipeline: bool = False,
-    ) -> None:
-        self._fusion = fusion_strategy
-        self._use_organ_pipeline = use_organ_pipeline
-
-    async def run(self, cat: Any, topic: str) -> dict[str, Any]:
-        """Execute one learning cycle.
-
-        Args:
-            cat: CatBase instance.
-            topic: Topic to learn about.
-
-        Returns:
-            Learning result dict.
-        """
-        snap = await cat.cat_self.before_act("learn")
-        cat._current_snapshot = snap
-        _log.debug(
-            "learn_loop: snapshot",
-            beliefs=len(snap.beliefs),
-            skills=len(snap.skill_names),
-            scribbles=snap.scribble_count,
-        )
-        _log.info(
-            SelfEvent.SNAPSHOT,
-            reason="learn",
-            beliefs=len(snap.beliefs),
-            skills=len(snap.skill_names),
-            scribbles=snap.scribble_count,
-        )
-
-        # -- Bridge: organ pipeline (v1.2.20) ------------------------
-        if self._use_organ_pipeline:
-            result = await self._run_organ_pipeline(cat, topic)
-        else:
-            result = {"topic": topic, "learned": True}
-
-        if cat.cat_self.scribble_pad:
-            cat.cat_self.scribble_pad.scribble({"learned": topic})
-        await cat.cat_self.after_act(
-            "learn_completed",
-            {"topic": topic},
-        )
-        _log.info(SelfEvent.REFLECT, reason="learn")
-        if cat.cat_self.pineal_gland:
-            if self._fusion is not None:
-                cat.cat_self.pineal_gland.trigger_if(self._fusion)
-            else:
-                cat.cat_self.pineal_gland.trigger()
-        else:
-            _log.debug("learn loop: pineal_gland is None, fusion skipped")
-        return result
-
-    async def _run_organ_pipeline(
-        self,
-        cat: Any,
-        topic: str,
-    ) -> dict[str, Any]:
-        """Bridge: execute learning via organ pipeline.
-
-        v1.2.20: Runs ``cat.run_loop("diagnostic")`` to perform a full
-        organ checkup, then records the diagnostic results as learning
-        output.
-        """
+    async def _pipeline_learn(self, cat: Any, topic: str) -> dict[str, Any]:
         try:
             diag = await cat.run_loop("diagnostic", topic=topic)
             return {
@@ -355,13 +235,26 @@ class DefaultLearnLoop:
                 "diagnostic": diag if isinstance(diag, dict) else {"result": diag},
             }
         except Exception as e:
-            _log.warning("organ_pipeline: learn run_loop failed",
-                         error=str(e)[:120])
+            _log.warning(
+                "organ_pipeline: learn run_loop failed",
+                error=str(e)[:120],
+            )
             return {"topic": topic, "learned": True}
 
 
-__all__ = [
-    "DefaultConversationLoop",
-    "DefaultTaskLoop",
-    "DefaultLearnLoop",
-]
+def _resolve_trigger(trigger_str: str) -> Callable[[Any], bool]:
+    """Convert string trigger name to a callable condition."""
+    if trigger_str == "event":
+        return PinealGland.on_event("conversation_end")
+    elif trigger_str == "full:50":
+        return PinealGland.on_full(50)
+    elif trigger_str == "immediate":
+        def _always(_pad: Any) -> bool:
+            return True
+        _always.__name__ = "immediate"  # type: ignore[attr-defined]
+        return _always
+    else:
+        raise ValueError(f"Unknown trigger: {trigger_str!r}")
+
+
+__all__ = ["ReflectionLoop"]

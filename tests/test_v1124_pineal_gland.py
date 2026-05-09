@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.biology.fusion_cycle import FusionCycle
 from meowcat.biology.pineal_gland import (
     DefaultContradiction,
     DefaultInsightFilter,
@@ -330,15 +329,15 @@ class TestPinealGlandDiagnose:
         assert d["has_fuse_colony"] is True
 
 
-# -- 6. FusionCycle strategies -------------------------------------------
+# -- 6. PinealGland trigger strategies (v2.0: from FusionCycle) ---------
 
-class TestFusionCycle:
-    """FusionCycle static factories."""
+class TestPinealGlandTriggers:
+    """PinealGland static factory trigger methods."""
 
     def test_on_full_triggers_when_enough(self):
         """on_full returns True when count >= min_count."""
         pad = ScribblePad(capacity=10)
-        cond = FusionCycle.on_full(3)
+        cond = PinealGland.on_full(3)
 
         assert not cond(pad)
         pad.scribble("a")
@@ -350,13 +349,13 @@ class TestFusionCycle:
     def test_on_full_invalid_arg(self):
         """on_full with min_count < 1 raises."""
         with pytest.raises(ValueError, match="min_count"):
-            FusionCycle.on_full(0)
+            PinealGland.on_full(0)
 
     def test_on_timer_triggers_after_elapsed(self):
         """on_timer returns True when enough time passed and pad has entries."""
         pad = ScribblePad()
         pad.scribble("test")
-        cond = FusionCycle.on_timer(minutes=1)
+        cond = PinealGland.on_timer(minutes=1)
 
         # First call: not enough time elapsed since creation (0.0 timestamp → now ~= 0)
         # For the test to work, we need to simulate elapsed time
@@ -377,7 +376,7 @@ class TestFusionCycle:
         """on_timer returns False if cooldown hasn't elapsed."""
         pad = ScribblePad()
         pad.scribble("test")
-        cond = FusionCycle.on_timer(minutes=60)  # 60 min cooldown
+        cond = PinealGland.on_timer(minutes=60)  # 60 min cooldown
 
         # First call: triggers (since last_trigger was 0 → elapsed > 60 min)
         first = cond(pad)
@@ -387,19 +386,19 @@ class TestFusionCycle:
     def test_on_timer_empty_pad_no_trigger(self):
         """on_timer won't trigger when pad is empty even if time elapsed."""
         pad = ScribblePad()
-        cond = FusionCycle.on_timer(minutes=1)
+        cond = PinealGland.on_timer(minutes=1)
 
         assert not cond(pad)  # empty pad → no trigger
 
     def test_on_timer_invalid_arg(self):
         """on_timer with minutes < 1 raises."""
         with pytest.raises(ValueError, match="minutes"):
-            FusionCycle.on_timer(0)
+            PinealGland.on_timer(0)
 
     def test_on_event_always_true(self):
         """on_event always returns True."""
         pad = ScribblePad()
-        cond = FusionCycle.on_event("conversation_end")
+        cond = PinealGland.on_event("conversation_end")
         assert cond(pad) is True
 
     def test_on_event_with_condition(self):
@@ -408,7 +407,7 @@ class TestFusionCycle:
         pad.scribble("hello world")
         gland = PinealGland(pad)
 
-        insights = gland.trigger_if(FusionCycle.on_event("some_event"))
+        insights = gland.trigger_if(PinealGland.on_event("some_event"))
         assert len(insights) > 0
         assert pad.count() == 0
 
@@ -485,7 +484,7 @@ class TestPinealGlandIntegration:
         assert len(colony_insights) == len(insights)
 
     def test_trigger_if_on_full_integration(self):
-        """trigger_if(FusionCycle.on_full(N)) works end-to-end."""
+        """trigger_if(PinealGland.on_full(N)) works end-to-end."""
         pad = ScribblePad(capacity=10)
         gland = PinealGland(pad)
 
@@ -494,7 +493,7 @@ class TestPinealGlandIntegration:
             pad.scribble(f"message {i}")
 
         # Not full enough: 3 < 5
-        result = gland.trigger_if(FusionCycle.on_full(5))
+        result = gland.trigger_if(PinealGland.on_full(5))
         assert result == []
         assert pad.count() == 3
 
@@ -503,7 +502,7 @@ class TestPinealGlandIntegration:
         pad.scribble("message 5")
 
         # Now full: 5 >= 5
-        result = gland.trigger_if(FusionCycle.on_full(5))
+        result = gland.trigger_if(PinealGland.on_full(5))
         assert len(result) > 0
         assert pad.count() == 0
 

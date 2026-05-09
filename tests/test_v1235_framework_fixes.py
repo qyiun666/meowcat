@@ -185,18 +185,10 @@ class Test_T5_VectorStoreMakeId:
 # ──────────────────────────────────────────────────────────────────────
 
 class Test_T6_ToolsLazyDelegation:
-    """T6: tools/__init__ 的 plus 懒加载委托到顶层 _LAZY_MAP。"""
+    """T6: tools/__init__ 的 plus 懒加载委托到顶层 _LAZY_MAP。
 
-    def test_import_builtin_tools_from_tools(self):
-        from meowcat.tools import BUILTIN_TOOLS  # noqa: F401
-
-    def test_import_browser_tool_from_tools(self):
-        from meowcat.tools import BrowserTool  # noqa: F401
-
-    def test_same_object_from_top_level_and_tools(self):
-        from meowcat import BUILTIN_TOOLS as BT_TOP
-        from meowcat.tools import BUILTIN_TOOLS as BT_TOOLS
-        assert BT_TOOLS is BT_TOP
+    v2.0: BUILTIN_TOOLS 和 BrowserTool 已移出框架，懒加载
+    只对保留符号 (ChromaStore, Crystallizer, SkillLoader 等) 有效。"""
 
     def test_unknown_attr_raises(self):
         """tools 模块未知属性通过 __getattr__ 抛出 AttributeError。"""

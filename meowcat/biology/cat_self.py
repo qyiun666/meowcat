@@ -34,18 +34,13 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
-from meowcat.biology.cat_self_loops import (
-    DefaultConversationLoop,
-    DefaultLearnLoop,
-    DefaultTaskLoop,
-)
+from meowcat.biology.cat_self_loops import ReflectionLoop
 from meowcat.events import SelfEvent
 from meowcat.log import MeowLog
 from meowcat.pluggable import Pluggable
 
 if TYPE_CHECKING:
     from meowcat.biology.cortex import Cortex
-    from meowcat.biology.metacognition import Metacognition
     from meowcat.biology.pineal_gland import PinealGland
     from meowcat.biology.scribble_pad import ScribblePad
 
@@ -105,7 +100,7 @@ class CatSelf(Pluggable):
         reflexes: ReflexRegistry for reflex awareness.
         scribble_pad: ScribblePad for fragment accumulation.
         pineal_gland: PinealGland for insight fusion.
-        metacognition: Metacognition for self-awareness.
+        default_confidence: Default confidence for recorded capabilities (v2.0: merged from Metacognition).
     """
 
     HOOKS: dict[str, dict[str, str]] = {
@@ -121,7 +116,8 @@ class CatSelf(Pluggable):
         "_reflexes",
         "_scribble_pad",
         "_pineal_gland",
-        "_metacognition",
+        "_capabilities",
+        "_default_confidence",
     )
 
     def __init__(
@@ -134,7 +130,7 @@ class CatSelf(Pluggable):
         reflexes: Any | None = None,
         scribble_pad: ScribblePad | None = None,
         pineal_gland: PinealGland | None = None,
-        metacognition: Metacognition | None = None,
+        default_confidence: float = 0.8,
     ) -> None:
         super().__init__()
         self._personality = personality or {}
@@ -144,7 +140,8 @@ class CatSelf(Pluggable):
         self._reflexes = reflexes
         self._scribble_pad = scribble_pad
         self._pineal_gland = pineal_gland
-        self._metacognition = metacognition
+        self._default_confidence = default_confidence
+        self._capabilities: dict[str, dict[str, Any]] = {}
 
     # -- Properties -------------------------------------------------
 
@@ -187,10 +184,67 @@ class CatSelf(Pluggable):
         """PinealGland for insight fusion."""
         return self._pineal_gland
 
-    @property
-    def metacognition(self) -> Metacognition | None:
-        """Metacognition for self-awareness."""
-        return self._metacognition
+    # -- Metacognition (v2.0: merged from metacognition.py) ----------
+
+    def record_capability(
+        self,
+        domain: str,
+        capable: bool,
+        evidence: str = "",
+        confidence: float | None = None,
+    ) -> dict[str, Any]:
+        """Record a known capability (or incapability)."""
+        conf = confidence if confidence is not None else self._default_confidence
+        record = {
+            "domain": domain,
+            "capable": capable,
+            "confidence": min(max(conf, 0.0), 1.0),
+            "evidence": evidence[:200],
+        }
+        self._capabilities[domain] = record
+        return dict(record)
+
+    def self_assess(self, domain: str) -> dict[str, Any]:
+        """Assess whether the cat is capable in a given domain.
+
+        Known domains return ``{capable, confidence, evidence}``.
+        Unknown domains return ``{capable: None, confidence: 0.0,
+        suggestion: "explore"}``.
+        """
+        cap = self._capabilities.get(domain)
+        if cap is not None:
+            return {
+                "domain": domain,
+                "capable": cap["capable"],
+                "confidence": cap["confidence"],
+                "evidence": cap["evidence"],
+            }
+        return {
+            "domain": domain,
+            "capable": None,
+            "confidence": 0.0,
+            "evidence": "",
+            "suggestion": "explore",
+        }
+
+    def list_capabilities(self) -> list[dict[str, Any]]:
+        """List all known capability records, sorted by confidence."""
+        return sorted(
+            [dict(v) for v in self._capabilities.values()],
+            key=lambda x: -x["confidence"],
+        )
+
+    def known_domains(self) -> list[str]:
+        """Return list of all known domain names."""
+        return list(self._capabilities.keys())
+
+    def capable_domains(self) -> list[str]:
+        """Return domains where the cat believes itself capable."""
+        return [d for d, r in self._capabilities.items() if r["capable"] is True]
+
+    def incapable_domains(self) -> list[str]:
+        """Return domains where the cat knows it's incapable."""
+        return [d for d, r in self._capabilities.items() if r["capable"] is False]
 
     # -- Loop nodes -------------------------------------------------
 
@@ -217,7 +271,7 @@ class CatSelf(Pluggable):
 
         Plugin ``"after_act"`` can override or extend the default.
         App layer should also trigger PinealGland fusion when
-        appropriate (e.g. via ``FusionCycle`` conditions).
+        appropriate (e.g. via ``PinealGland.on_full()`` conditions).
 
         Args:
             summary: One-line summary of what happened.
@@ -247,40 +301,35 @@ class CatSelf(Pluggable):
         self,
         name: Literal["conversation", "task", "learn"],
         *,
-        fusion_strategy: Callable[[Any], bool] | None = _UNSET_LOOP,  # type: ignore[assignment]
+        fusion_trigger: str | Callable[[Any], bool] | None = _UNSET_LOOP,  # type: ignore[assignment]
         use_organ_pipeline: bool = False,
     ) -> Any:
-        """Pick a default closed loop by name.
+        """Pick a default closed loop by name (v2.0: unified ReflectionLoop).
 
         Returns a loop instance; caller calls ``await loop.run(cat, ...)``.
 
         Args:
             name: One of ``"conversation"``, ``"task"``, ``"learn"``.
-            fusion_strategy: Optional FusionCycle predicate. When None,
-                conversation=tick-event, task=on-full-50, learn=immediate.
-                Pass a Callable to override the default fusion trigger.
-            use_organ_pipeline: When True, the loop bridges into
-                LoopRegistry (physical layer) via ``cat.perceive()`` or
-                ``cat.run_loop()``, executing actual organ-to-organ signals
-                instead of just self read/write. Default False (v1.2.20).
+            fusion_trigger: When to trigger PinealGland fusion.
+                - ``None`` / ``"auto"``: use mode-default trigger
+                - ``"event"``: trigger on conversation_end
+                - ``"full:50"``: trigger when ScribblePad has 50+ entries
+                - ``"immediate"``: trigger immediately
+                - Callable: explicit condition
+            use_organ_pipeline: When True, bridge into LoopRegistry (v1.2.20).
 
         Returns:
-            Loop instance with a ``run(cat, ...)`` async method.
+            ReflectionLoop instance with a ``run(cat, ...)`` async method.
         """
-        _loops: dict[str, type] = {
-            "conversation": DefaultConversationLoop,
-            "task": DefaultTaskLoop,
-            "learn": DefaultLearnLoop,
-        }
-        if name not in _loops:
+        if name not in ("conversation", "task", "learn"):
             raise ValueError(
-                f"Unknown loop: {name!r}. Choose from: {list(_loops)}",
+                f"Unknown loop: {name!r}. Choose from: conversation, task, learn",
             )
-        kwargs: dict[str, Any] = {}
-        if fusion_strategy is not _UNSET_LOOP:
-            kwargs["fusion_strategy"] = fusion_strategy
+        kwargs: dict[str, Any] = {"mode": name}
+        if fusion_trigger is not _UNSET_LOOP:
+            kwargs["fusion_trigger"] = fusion_trigger
         kwargs["use_organ_pipeline"] = use_organ_pipeline
-        return _loops[name](**kwargs)
+        return ReflectionLoop(**kwargs)
 
     # -- Internal ---------------------------------------------------
 
@@ -309,13 +358,9 @@ class CatSelf(Pluggable):
                 _log.warning(
                     "_build_snapshot: reflexes access failed", error=str(e)[:120])
 
-        if self._metacognition is not None:
-            try:
-                snap.capable_domains = self._metacognition.capable_domains()
-                snap.incapable_domains = self._metacognition.incapable_domains()
-            except Exception as e:
-                _log.warning(
-                    "_build_snapshot: metacognition access failed", error=str(e)[:120])
+        # v2.0: metacognition is now built-in (always available)
+        snap.capable_domains = self.capable_domains()
+        snap.incapable_domains = self.incapable_domains()
 
         if self._scribble_pad is not None:
             snap.scribble_count = self._scribble_pad.count()
@@ -331,7 +376,9 @@ class CatSelf(Pluggable):
             "has_reflexes": self._reflexes is not None,
             "has_scribble_pad": self._scribble_pad is not None,
             "has_pineal_gland": self._pineal_gland is not None,
-            "has_metacognition": self._metacognition is not None,
+            "known_domains": len(self._capabilities),
+            "capable_count": len(self.capable_domains()),
+            "incapable_count": len(self.incapable_domains()),
             "personality_keys": list(self._personality.keys()),
             "plugs": self.list_plugs(),
         }
@@ -343,8 +390,8 @@ class CatSelf(Pluggable):
         cortex: Cortex | None = None,
         scribble_pad: ScribblePad | None = None,
         pineal_gland: PinealGland | None = None,
-        metacognition: Metacognition | None = None,
         personality: dict[str, Any] | None = None,
+        default_confidence: float = 0.8,
     ) -> CatSelf:
         """Create a CatSelf with common defaults wired together.
 
@@ -355,8 +402,8 @@ class CatSelf(Pluggable):
             cortex: Cortex instance for worldview/beliefs.
             scribble_pad: ScribblePad for fragment accumulation.
             pineal_gland: PinealGland for insight fusion.
-            metacognition: Metacognition for self-awareness.
             personality: Initial personality dict.
+            default_confidence: Default confidence for recorded capabilities.
 
         Returns:
             A CatSelf instance with all provided organs wired.
@@ -367,14 +414,12 @@ class CatSelf(Pluggable):
             worldview=cortex,
             scribble_pad=scribble_pad,
             pineal_gland=pineal_gland,
-            metacognition=metacognition,
+            default_confidence=default_confidence,
         )
 
 
 __all__ = [
     "CatSelf",
     "SelfSnapshot",
-    "DefaultConversationLoop",
-    "DefaultTaskLoop",
-    "DefaultLearnLoop",
+    "ReflectionLoop",
 ]

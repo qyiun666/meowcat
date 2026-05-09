@@ -5,6 +5,8 @@
 
 All zero external dependencies (pure Python dict/list), for rapid prototyping and testing.
 For production, replace with meowagent or custom real organ implementations.
+
+v2.0: Noop + Renovated merged into a single set of default organs.
 """
 
 from meowcat.defaults.factory import _UNSET, create_cat
@@ -33,37 +35,12 @@ from meowcat.defaults.organs import (
 from meowcat.defaults.presets import (
     KW_BILINGUAL,
     KW_EN,
-    KW_PRESETS,
     KW_ZH,
     PROMPT_DEFAULT,
-    PROMPT_PRESETS,
     PROMPT_ZH,
     KeywordPreset,
     OrganPrompt,
     PromptPreset,
-)
-from meowcat.defaults.renovated import (
-    RENOVATED_ORGAN_MAP,
-    RenovatedAmygdala,
-    RenovatedAnomalyGrowth,
-    RenovatedBrainstem,
-    RenovatedCerebellum,
-    RenovatedCerebrum,
-    RenovatedCorrectionGrowth,
-    RenovatedCortex,
-    RenovatedCrystallizer,
-    RenovatedEars,
-    RenovatedEyes,
-    RenovatedFrontal,
-    RenovatedHippocampus,
-    RenovatedHypothalamus,
-    RenovatedMouth,
-    RenovatedPaws,
-    RenovatedPurr,
-    RenovatedRoleEmergence,
-    RenovatedTail,
-    RenovatedThalamus,
-    RenovatedWhiskers,
 )
 from meowcat.defaults.stages import (
     BaseStage,
@@ -101,34 +78,11 @@ __all__ = [
     "NoopWhiskers",
     "NoopThalamus",
     "NoopHippocampus",
-    # v1.0.16 Growth organs
     "NoopAnomalyGrowth",
     "NoopCorrectionGrowth",
     "NoopCrystallizer",
     "NoopRoleEmergence",
-    # Renovated organs (简装修)
-    "RenovatedAmygdala",
-    "RenovatedBrainstem",
-    "RenovatedFrontal",
-    "RenovatedHypothalamus",
-    "RenovatedCortex",
-    "RenovatedCerebrum",
-    "RenovatedCerebellum",
-    "RenovatedEars",
-    "RenovatedEyes",
-    "RenovatedMouth",
-    "RenovatedPaws",
-    "RenovatedPurr",
-    "RenovatedTail",
-    "RenovatedWhiskers",
-    "RenovatedThalamus",
-    "RenovatedHippocampus",
-    "RenovatedAnomalyGrowth",
-    "RenovatedCorrectionGrowth",
-    "RenovatedCrystallizer",
-    "RenovatedRoleEmergence",
-    "RENOVATED_ORGAN_MAP",
-    # Keyword & Prompt presets (二语 可挂载)
+    # Keyword & Prompt presets
     "KeywordPreset",
     "PromptPreset",
     "OrganPrompt",
@@ -137,9 +91,7 @@ __all__ = [
     "KW_BILINGUAL",
     "PROMPT_DEFAULT",
     "PROMPT_ZH",
-    "KW_PRESETS",
-    "PROMPT_PRESETS",
-    # v1.0.17 Pipeline Stages
+    # Pipeline Stages
     "BaseStage",
     "NoopIngestStage",
     "NoopLocateStage",

@@ -66,10 +66,10 @@ class Loop:
 
 CONVERSATION_LOOP: Loop = Loop(
     "conversation",
-    "Standard conversation loop — hear→route→find→reason→speak→remember",
+    "Standard conversation loop — hear→reason→speak",
     chain=Chain(
         "conversation_chain",
-        ("hear", "decide_route", "locate", "deep_reason", "speak", "remember"),
+        ("hear", "deep_reason", "speak"),
         "Conversation chain",
     ),
     trigger=Lifecycle.PERCEIVE_START,
@@ -77,10 +77,10 @@ CONVERSATION_LOOP: Loop = Loop(
 
 TOOL_EXECUTION_LOOP: Loop = Loop(
     "tool_execution",
-    "Tool execution loop — hear→route→execute→speak→remember",
+    "Tool execution loop — hear→execute→speak",
     chain=Chain(
         "tool_loop_chain",
-        ("hear", "decide_route", "execute_tool", "speak", "remember"),
+        ("hear", "execute_tool", "speak"),
         "Tool chain",
     ),
     trigger="orchestrate.start",
@@ -164,7 +164,8 @@ def register_default_loops(
 def _register_item(registry: dict, registry_list: list, item: Any, expected_type: type) -> None:
     """Register an item in dict + list registry, overwriting by name if exists."""
     if not isinstance(item, expected_type):
-        raise TypeError(f"Expected {expected_type.__name__} instance, got {type(item).__name__}")
+        raise TypeError(
+            f"Expected {expected_type.__name__} instance, got {type(item).__name__}")
     name = item.name
     if name in registry:
         registry_list.remove(registry[name])

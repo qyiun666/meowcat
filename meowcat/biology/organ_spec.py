@@ -57,7 +57,7 @@ class OrganSpec:
     - ``write_methods``: write method names (triggers write permission check)
     - ``write_callers``: organs allowed to call write_methods (empty = write check disabled)
     - ``supported_styles``: 器官支持的实现风格 — 插头类型
-      (algorithm / rule / model / hybrid). 开发者任选.
+      (algorithm / model). 开发者任选.
 
     器官 = 插槽(入口出口Protocol), 实现 = 插头(任选风格), 支持扩展.
 
@@ -117,9 +117,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             read_methods=("hear",),  # sensory relay entry point
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
-                ImplementationStyle.RULE,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -158,7 +156,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -168,7 +165,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             out_edges=(HIPPOCAMPUS, CEREBELLUM, FRONTAL),
             supported_styles=(
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -179,7 +175,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.MODEL,
                 ImplementationStyle.ALGORITHM,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -190,9 +185,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
                        ANOMALY_GROWTH, CORRECTION_GROWTH),
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
-                ImplementationStyle.RULE,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -203,7 +196,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -212,10 +204,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             in_edges=(BRAINSTEM,),
             out_edges=(HYPOTHALAMUS, HIPPOCAMPUS,
                        CORTEX),  # includes self-loop
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-                ImplementationStyle.RULE,
-            ),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         OrganSpec(
             coord=CORTEX,
@@ -225,7 +214,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -252,9 +240,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             ),
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
-                ImplementationStyle.RULE,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         # -- Senses ----------------------------------------------
@@ -273,7 +259,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -284,7 +269,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         # PAWS is an effector: only cerebellum→paws inbound (consistent with v0.5.9)
@@ -293,11 +277,7 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             protocol=PawsProtocol,
             in_edges=(CEREBELLUM,),
             out_edges=(),
-            supported_styles=(
-                ImplementationStyle.ALGORITHM,
-                ImplementationStyle.RULE,
-                ImplementationStyle.HYBRID,
-            ),
+            supported_styles=(ImplementationStyle.ALGORITHM,),
         ),
         # -- Voice (v1.0.7 completed Protocols)------------------------------
         OrganSpec(
@@ -330,7 +310,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -341,7 +320,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -352,7 +330,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
         OrganSpec(
@@ -363,7 +340,6 @@ def _build_organ_specs() -> tuple[OrganSpec, ...]:
             supported_styles=(
                 ImplementationStyle.ALGORITHM,
                 ImplementationStyle.MODEL,
-                ImplementationStyle.HYBRID,
             ),
         ),
     )

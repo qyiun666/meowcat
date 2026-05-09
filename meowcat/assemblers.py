@@ -101,13 +101,8 @@ def assemble_default_cat(
     mount_known_organs(cat)
     cat.wire_default_nervous_system()
 
-    # v0.5.23: Register generic builtin tools (every cat needs these)
-    # v1.2.10: Optional — skip when register_default_tools=False
-    if cat._register_default_tools:
-        from meowcat.plus.tools import BUILTIN_TOOLS
-
-        for t in BUILTIN_TOOLS:
-            cat.tool_registry.register(t)
+    # Builtin tools (v2.0: moved to application layer, removed BUILTIN_TOOLS
+    # registration. Application layer should register tools via cat.tool_registry.register().)
 
     # Reflexes (caller-provided)
     if reflexes:

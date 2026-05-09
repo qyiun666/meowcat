@@ -80,10 +80,13 @@ class TestBuiltinPaths:
         """确保核心路径存在。"""
         names = {p.name for p in BUILTIN_PATHS}
         expected = {
-            "locate", "remember", "get_entity", "get_all",
+            "locate", "remember", "append_content",
             "deep_reason", "speak", "hear",
-            "decay", "weaken_connections", "cleanup_orphans",
+            "decay", "cleanup_orphans",
             "execute_tool", "decide_route", "assess_safety",
+            "workflow_create", "workflow_checkpoint", "workflow_resume",
+            "compress_context",
+            "record_anomaly", "record_correction", "crystallize", "record_pattern",
         }
         missing = expected - names
         assert not missing, f"Missing builtin paths: {missing}"

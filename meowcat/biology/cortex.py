@@ -5,7 +5,7 @@
 
 - **L1**: extract rules from repeated L0 patterns (``extract_rules``)
 - **L2**: beliefs — promoted principles with confidence and challengeability (v1.1.27)
-- **L3**: metacognition — cat's awareness of its own capabilities (see :mod:`meowcat.biology.metacognition`)
+- **L3**: metacognition — cat's awareness of its own capabilities (v2.0: built into CatSelf)
 
 Extensible via ``"extractor"`` and ``"belief"`` plugin slots.
 
@@ -56,7 +56,7 @@ class Cortex(Pluggable):
     - **L0**: raw facts (Hippocampus entities/observations)
     - **L1**: rules inferred from repeated L0 patterns (this module)
     - **L2**: beliefs — principles with confidence and challengeability (v1.1.27)
-    - **L3**: metacognition — cat's awareness of its own capabilities (v1.1.27)
+    - **L3**: metacognition — cat's awareness of its own capabilities (v2.0: built into CatSelf)
     """
 
     HOOKS: dict[str, dict[str, str]] = {

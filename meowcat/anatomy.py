@@ -23,17 +23,13 @@ class ImplementationStyle(str, Enum):
     """器官内部实现风格 — 插头类型.
 
     - ALGORITHM: 纯算法 (正则, 字典查找, 字符串处理)
-    - RULE:      声明式规则 (黑白名单, 阈值触发)
     - MODEL:     ML模型 (LLM, 分类器, 嵌入)
-    - HYBRID:    混合 (算法 + 模型组合)
 
     器官 = 插槽 (入口出口 Protocol), 实现 = 插头 (任选风格).
     """
 
     ALGORITHM = "algorithm"
-    RULE = "rule"
     MODEL = "model"
-    HYBRID = "hybrid"
 
 
 # -- Node category constants -----------------------------------------------

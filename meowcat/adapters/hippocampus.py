@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from meowcat.adapters.base import AgentOrgan
+from meowcat.tree import TreeNode
 
 
 class HippocampusAgent(AgentOrgan):
@@ -202,6 +203,58 @@ class HippocampusAgent(AgentOrgan):
             result = fn(*topics, scope=scope)
             return result if isinstance(result, dict) else {}
         return {}
+
+    # -- v2.0 KnowledgeTree delegation ---------------------------------
+
+    def get_tree(self, entity_id: str) -> TreeNode | None:
+        fn = getattr(self._agent, "get_tree", None)
+        if fn:
+            result = fn(entity_id=entity_id)
+            return result if isinstance(result, TreeNode) else None
+        return None
+
+    def build_tree(self, entity_id: str, root: TreeNode) -> int:
+        fn = getattr(self._agent, "build_tree", None)
+        if fn:
+            result = fn(entity_id=entity_id, root=root)
+            return result if isinstance(result, int) else 0
+        return 0
+
+    def delete_tree(self, entity_id: str) -> None:
+        fn = getattr(self._agent, "delete_tree", None)
+        if fn:
+            fn(entity_id=entity_id)
+
+    def search_tree(
+        self,
+        entity_id: str,
+        keyword: str,
+        limit: int = 5,
+    ) -> list[TreeNode]:
+        fn = getattr(self._agent, "search_tree", None)
+        if fn:
+            result = fn(entity_id=entity_id, keyword=keyword, limit=limit)
+            return result if isinstance(result, list) else []
+        return []
+
+    def query_subtree(
+        self,
+        entity_id: str,
+        node_id: str,
+        max_depth: int = 2,
+    ) -> list[TreeNode]:
+        fn = getattr(self._agent, "query_subtree", None)
+        if fn:
+            result = fn(entity_id=entity_id, node_id=node_id, max_depth=max_depth)
+            return result if isinstance(result, list) else []
+        return []
+
+    def check_stale(self, entity_id: str) -> list[str]:
+        fn = getattr(self._agent, "check_stale", None)
+        if fn:
+            result = fn(entity_id=entity_id)
+            return result if isinstance(result, list) else []
+        return []
 
 
 __all__ = ["HippocampusAgent"]

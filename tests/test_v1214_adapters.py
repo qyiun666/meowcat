@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""Test v1.2.14 organ adapter system — AgentOrgan / SkillOrgan delegation."""
+"""Test v1.2.14 organ adapter system — AgentOrgan delegation."""
 
 import pytest
 
@@ -23,7 +23,7 @@ from meowcat.adapters import (
     ThalamusAgent,
     WhiskersAgent,
 )
-from meowcat.adapters.base import AgentOrgan, SkillOrgan
+from meowcat.adapters.base import AgentOrgan
 from meowcat.errors import OrganDelegateError
 from meowcat.pluggable import Pluggable
 
@@ -178,17 +178,6 @@ class TestAgentOrganBase:
         a.mount_plug("generate", lambda **kw: "plugged!")
         assert "generate" in a.list_plugs()
         assert a.list_plugs()["generate"] == 1
-
-
-class TestSkillOrgan:
-    def test_is_agentorgan_subclass(self):
-        assert issubclass(SkillOrgan, AgentOrgan)
-
-    def test_diagnose_uses_skill_key(self):
-        s = SkillOrgan(MockMemorySkill())
-        d = s.diagnose()
-        assert "skill" in d
-        assert "MemorySkill" in d["skill"]
 
 
 # ===================================================================
