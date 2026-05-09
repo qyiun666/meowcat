@@ -301,8 +301,7 @@ class CatSelf(Pluggable):
         self,
         name: Literal["conversation", "task", "learn"],
         *,
-        # type: ignore[assignment]
-        fusion_trigger: str | Callable[[Any], bool] | None = _UNSET_LOOP,
+        fusion_trigger: str | Callable[[Any], bool] | None | object = _UNSET_LOOP,
         use_organ_pipeline: bool = False,
     ) -> Any:
         """Pick a default closed loop by name (v2.0: unified ReflectionLoop).

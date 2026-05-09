@@ -274,10 +274,7 @@ def create_cat(
     cat.tail = tail or NoopTail()
 
     # -- Growth organs ---------------------------------------------------
-    from meowcat.defaults.organs import NoopAnomalyGrowth
-    from meowcat.defaults.organs import NoopCorrectionGrowth
-    from meowcat.defaults.organs import NoopCrystallizer
-    from meowcat.defaults.organs import NoopRoleEmergence
+    from meowcat.defaults.organs import NoopAnomalyGrowth, NoopCorrectionGrowth, NoopCrystallizer, NoopRoleEmergence
 
     # type: ignore[attr-defined]
     cat.anomaly_growth = anomaly_growth or NoopAnomalyGrowth()

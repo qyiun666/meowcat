@@ -25,7 +25,7 @@ from meowcat.pluggable import Pluggable
 from meowcat.storage import SharedStore
 
 if TYPE_CHECKING:
-    from meowcat.biology.growth import CollectiveGrowth, CollectiveEmergence
+    from meowcat.biology.growth import CollectiveEmergence, CollectiveGrowth
     from meowcat.colony.memory import SharedMemoryPool
 
 logger = logging.getLogger("meowcat.colony")

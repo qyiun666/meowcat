@@ -28,7 +28,6 @@ from meowcat.anatomy import ImplementationStyle
 from meowcat.defaults.presets import KW_BILINGUAL, KeywordPreset
 from meowcat.pluggable import Pluggable
 
-
 # =========================================================================
 # Ears — hear + keyword extraction + language detection
 # =========================================================================

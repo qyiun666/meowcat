@@ -22,10 +22,11 @@ class _CommunicationMixin:
         - ``self._assert_cross_allowed()`` (cross-wiring validator)
     """
 
+    _storage: Any = None  # type: ignore[assignment]  # lazy-init in _ensure_storage
+
     # -- Shared storage (namespace isolation) -------------------------
 
     def _ensure_storage(self):  # type: ignore[no-untyped-def]
-        # type: ignore[has-type]  # type: ignore[attr-defined]
         if self._storage is None:
             from meowcat.defaults.stores import InMemorySharedStore
             self._storage = InMemorySharedStore()  # type: ignore[attr-defined]

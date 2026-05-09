@@ -20,14 +20,14 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
-from meowcat.pluggable import Pluggable
 from meowcat.defaults.presets import (
     KW_BILINGUAL,
+    PROMPT_DEFAULT,
     KeywordPreset,
     OrganPrompt,
-    PROMPT_DEFAULT,
     PromptPreset,
 )
+from meowcat.pluggable import Pluggable
 
 # =========================================================================
 # Helper functions (inline, previously in renovated/_helpers.py)
