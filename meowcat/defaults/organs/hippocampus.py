@@ -116,7 +116,8 @@ class NoopHippocampus(Pluggable):
         self.episodes.append(episode)
         if self._episode_store is not None:
             try:
-                store_cat_uid = self.cat_uid or episode.get("cat_uid", "unknown")
+                store_cat_uid = self.cat_uid or episode.get(
+                    "cat_uid", "unknown")
                 self._episode_store.append(store_cat_uid, dict(episode))
             except Exception:
                 pass

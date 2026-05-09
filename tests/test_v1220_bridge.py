@@ -3,8 +3,10 @@
 
 """v1.2.20 — Two closed-loop systems bridge (A1).
 
-CatSelf DefaultLoops ↔ LoopRegistry bridge via ``use_organ_pipeline``.
+ReflectionLoop ↔ LoopRegistry bridge via ``use_organ_pipeline``.
 When True, the cognitive layer delegates to the physical organ pipeline.
+
+v2.0: Updated to use unified ReflectionLoop(mode=...) instead of Default*Loop classes.
 """
 
 from __future__ import annotations
@@ -13,9 +15,7 @@ import pytest
 
 from meowcat.biology.cat_self import (
     CatSelf,
-    DefaultConversationLoop,
-    DefaultLearnLoop,
-    DefaultTaskLoop,
+    ReflectionLoop,
 )
 from meowcat.biology.pineal_gland import PinealGland
 from meowcat.biology.scribble_pad import ScribblePad
@@ -51,18 +51,18 @@ class MockBridgeCat:
         return self._run_loop_result
 
 
-# -- 1. Bridge: DefaultConversationLoop -------------------------------
+# -- 1. Bridge: ReflectionLoop conversation mode ----------------------
 
 
 class TestBridgeConversationLoop:
-    """DefaultConversationLoop with use_organ_pipeline=True."""
+    """ReflectionLoop(mode="conversation") with use_organ_pipeline."""
 
     @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultConversationLoop(use_organ_pipeline=False)
+        loop = ReflectionLoop(mode="conversation", use_organ_pipeline=False)
         resp = await loop.run(cat, "hello")
         assert resp == "[conversation] received: hello"
         assert len(cat.perceive_calls) == 0
@@ -73,7 +73,7 @@ class TestBridgeConversationLoop:
         """Bridge mode calls cat.perceive() and returns pipeline result."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultConversationLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="conversation", use_organ_pipeline=True)
         resp = await loop.run(cat, "hello bridge")
         assert len(cat.perceive_calls) == 1
         assert cat.perceive_calls[0] == "hello bridge"
@@ -86,7 +86,7 @@ class TestBridgeConversationLoop:
         cat = MockBridgeCat(cs)
         cat._perceive_should_fail = True
         cat._run_loop_result = {"reply": "fallback reply"}
-        loop = DefaultConversationLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="conversation", use_organ_pipeline=True)
         resp = await loop.run(cat, "hello")
         assert len(cat.perceive_calls) == 1  # tried
         assert len(cat.run_loop_calls) == 1  # fell back
@@ -100,7 +100,7 @@ class TestBridgeConversationLoop:
         cat = MockBridgeCat(cs)
         cat._perceive_should_fail = True
         cat._run_loop_should_fail = True
-        loop = DefaultConversationLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="conversation", use_organ_pipeline=True)
         resp = await loop.run(cat, "hello")
         # Should still return something, not raise
         assert isinstance(resp, str)
@@ -112,24 +112,24 @@ class TestBridgeConversationLoop:
         gland = PinealGland(pad)
         cs = CatSelf(scribble_pad=pad, pineal_gland=gland)
         cat = MockBridgeCat(cs)
-        loop = DefaultConversationLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="conversation", use_organ_pipeline=True)
         await loop.run(cat, "hello")
         # PinealGland trigger_if fires → pad drained
         assert pad.count() >= 0  # may be 0 after drain
 
 
-# -- 2. Bridge: DefaultTaskLoop ---------------------------------------
+# -- 2. Bridge: ReflectionLoop task mode ------------------------------
 
 
 class TestBridgeTaskLoop:
-    """DefaultTaskLoop with use_organ_pipeline=True."""
+    """ReflectionLoop(mode="task") with use_organ_pipeline."""
 
     @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultTaskLoop(use_organ_pipeline=False)
+        loop = ReflectionLoop(mode="task", use_organ_pipeline=False)
         result = await loop.run(cat, "deploy")
         assert result == {"task": "deploy", "status": "planned"}
         assert len(cat.run_loop_calls) == 0
@@ -139,7 +139,7 @@ class TestBridgeTaskLoop:
         """Bridge mode calls cat.run_loop("tool_execution")."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultTaskLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="task", use_organ_pipeline=True)
         result = await loop.run(cat, "deploy task")
         assert len(cat.run_loop_calls) == 1
         assert cat.run_loop_calls[0][0] == "tool_execution"
@@ -152,23 +152,23 @@ class TestBridgeTaskLoop:
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
         cat._run_loop_should_fail = True
-        loop = DefaultTaskLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="task", use_organ_pipeline=True)
         result = await loop.run(cat, "deploy")
         assert result == {"task": "deploy", "status": "planned"}
 
 
-# -- 3. Bridge: DefaultLearnLoop --------------------------------------
+# -- 3. Bridge: ReflectionLoop learn mode -----------------------------
 
 
 class TestBridgeLearnLoop:
-    """DefaultLearnLoop with use_organ_pipeline=True."""
+    """ReflectionLoop(mode="learn") with use_organ_pipeline."""
 
     @pytest.mark.anyio
     async def test_default_no_bridge(self):
         """Without use_organ_pipeline, behavior unchanged."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultLearnLoop(use_organ_pipeline=False)
+        loop = ReflectionLoop(mode="learn", use_organ_pipeline=False)
         result = await loop.run(cat, "topic")
         assert result == {"topic": "topic", "learned": True}
         assert len(cat.run_loop_calls) == 0
@@ -178,7 +178,7 @@ class TestBridgeLearnLoop:
         """Bridge mode calls cat.run_loop("diagnostic")."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
-        loop = DefaultLearnLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="learn", use_organ_pipeline=True)
         result = await loop.run(cat, "kubernetes")
         assert len(cat.run_loop_calls) == 1
         assert cat.run_loop_calls[0][0] == "diagnostic"
@@ -192,7 +192,7 @@ class TestBridgeLearnLoop:
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         cat = MockBridgeCat(cs)
         cat._run_loop_should_fail = True
-        loop = DefaultLearnLoop(use_organ_pipeline=True)
+        loop = ReflectionLoop(mode="learn", use_organ_pipeline=True)
         result = await loop.run(cat, "topic")
         assert result == {"topic": "topic", "learned": True}
 
@@ -206,19 +206,22 @@ class TestCatSelfLoopBridge:
     def test_loop_passes_flag_conversation(self):
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         loop = cs.loop("conversation", use_organ_pipeline=True)
-        assert isinstance(loop, DefaultConversationLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "conversation"
         assert loop._use_organ_pipeline is True
 
     def test_loop_passes_flag_task(self):
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         loop = cs.loop("task", use_organ_pipeline=True)
-        assert isinstance(loop, DefaultTaskLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "task"
         assert loop._use_organ_pipeline is True
 
     def test_loop_passes_flag_learn(self):
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
         loop = cs.loop("learn", use_organ_pipeline=True)
-        assert isinstance(loop, DefaultLearnLoop)
+        assert isinstance(loop, ReflectionLoop)
+        assert loop._mode == "learn"
         assert loop._use_organ_pipeline is True
 
     def test_loop_default_false(self):
@@ -226,14 +229,14 @@ class TestCatSelfLoopBridge:
         loop = cs.loop("conversation")
         assert loop._use_organ_pipeline is False
 
-    def test_loop_with_fusion_strategy_and_bridge(self):
-        """Both fusion_strategy and use_organ_pipeline can be passed."""
+    def test_loop_with_fusion_trigger_and_bridge(self):
+        """Both fusion_trigger and use_organ_pipeline can be passed."""
         cs = CatSelf(scribble_pad=ScribblePad(capacity=10))
 
         def my_strategy(x):
             return True
 
-        loop = cs.loop("task", fusion_strategy=my_strategy,
+        loop = cs.loop("task", fusion_trigger=my_strategy,
                        use_organ_pipeline=True)
         assert loop._fusion is my_strategy
         assert loop._use_organ_pipeline is True

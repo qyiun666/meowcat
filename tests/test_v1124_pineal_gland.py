@@ -18,6 +18,7 @@ from meowcat.biology.scribble_pad import ScribblePad
 
 # -- 1. Core API — meditate / trigger / trigger_if -----------------------
 
+
 class TestPinealGlandCore:
     """PinealGland basic meditate / trigger / trigger_if."""
 
@@ -515,4 +516,3 @@ class TestPinealGlandIntegration:
         assert gland.list_plugs() == {}
         gland.plug("merger", DefaultMerger())
         assert "merger" in gland.list_plugs()
-

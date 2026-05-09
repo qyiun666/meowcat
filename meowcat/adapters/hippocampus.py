@@ -245,7 +245,8 @@ class HippocampusAgent(AgentOrgan):
     ) -> list[TreeNode]:
         fn = getattr(self._agent, "query_subtree", None)
         if fn:
-            result = fn(entity_id=entity_id, node_id=node_id, max_depth=max_depth)
+            result = fn(entity_id=entity_id,
+                        node_id=node_id, max_depth=max_depth)
             return result if isinstance(result, list) else []
         return []
 

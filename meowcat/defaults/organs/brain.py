@@ -473,7 +473,8 @@ class NoopCortex(Pluggable):
     def weaknesses(self) -> list[dict[str, Any]]:
         return list(self._weakness_log)
 
-    def synthesize(self, max_tokens: int = 400) -> str:  # type: ignore[override]
+    # type: ignore[override]
+    def synthesize(self, max_tokens: int = 400) -> str:
         result = ""
         for _name, r in self._run_plugs_sync("synthesize", max_tokens):
             if isinstance(r, str):
@@ -782,7 +783,8 @@ class NoopCerebrum(Pluggable):
 
     def __init__(
         self,
-        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
+        llm_fn: Callable[..., Awaitable[str]
+                         ] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
         organ_prompt: OrganPrompt | None = None,
@@ -881,7 +883,8 @@ class NoopCerebellum(Pluggable):
 
     def __init__(
         self,
-        llm_fn: Callable[..., Awaitable[str]] | Callable[..., str] | None = None,
+        llm_fn: Callable[..., Awaitable[str]
+                         ] | Callable[..., str] | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
         organ_prompt: OrganPrompt | None = None,

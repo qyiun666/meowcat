@@ -45,6 +45,7 @@ from meowcat.testing import make_cat
 
 # -- 1. mount 带 protocol 校验 ------------------------------------
 
+
 class _ValidOrgan:
     """满足 OrganProtocol 的最小对象。"""
     name: str = "valid"
@@ -178,6 +179,13 @@ class TestRuntimeCheckable:
             def set_colony_memory(self, memory_pool) -> None: pass
             def snapshot(self, *topics, scope="colony") -> dict: return {}
             def locate(self, query, scope="self") -> list: return []
+            # v2.0 KnowledgeTree
+            def get_tree(self, entity_id): return None
+            def build_tree(self, entity_id, root): return 0
+            def delete_tree(self, entity_id) -> None: pass
+            def search_tree(self, entity_id, keyword, limit=5): return []
+            def query_subtree(self, entity_id, node_id, max_depth=2): return []
+            def check_stale(self, entity_id): return []
         assert isinstance(Dummy(), HippocampusProtocol)
 
     def test_thalamus_checkable(self) -> None:

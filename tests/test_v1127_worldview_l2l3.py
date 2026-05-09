@@ -12,6 +12,7 @@ from meowcat.biology.cortex import Cortex
 # Cortex L2: Beliefs
 # ════════════════════════════════════════════════════════════════════
 
+
 class TestCortexBeliefs:
     """L2 worldview: belief promotion, challenge, and retrieval."""
 
@@ -258,4 +259,3 @@ class TestBlindSpotCatSelfIntegration:
         result = cs.self_assess("rust")
         assert result["suggestion"] == "explore"
         # This is the signal for BlindSpotDetector to analyse
-

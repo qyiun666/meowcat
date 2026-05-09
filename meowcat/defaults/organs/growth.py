@@ -132,14 +132,16 @@ class NoopCrystallizer(Pluggable):
     def diagnose(self) -> dict[str, Any]:
         return {"hits": dict(self._hits), "hotspots": self.hotspots(threshold=3)}
 
-    def crystallize(self, slug: str, hit_count: int) -> bool:  # type: ignore[override]
+    # type: ignore[override]
+    def crystallize(self, slug: str, hit_count: int) -> bool:
         for _name, r in self._run_plugs_sync("crystallize", slug, hit_count):
             if isinstance(r, bool):
                 return r
         self._hits[slug] = self._hits.get(slug, 0) + hit_count
         return self._hits[slug] >= self._crystallize_threshold
 
-    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]:  # type: ignore[override]
+    # type: ignore[override]
+    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]:
         for _name, r in self._run_plugs_sync("hotspots", threshold):
             if isinstance(r, list):
                 return r
@@ -173,6 +175,7 @@ class NoopRoleEmergence(Pluggable):
         for _name, r in self._run_plugs_sync("record", pattern, evidence):
             if isinstance(r, dict):
                 return r
-        entry = {"pattern": pattern, "evidence": evidence[:200], "ts": _time.time()}
+        entry = {"pattern": pattern,
+                 "evidence": evidence[:200], "ts": _time.time()}
         self._patterns.append(entry)
         return {"recorded": True, "total": len(self._patterns)}

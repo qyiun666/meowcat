@@ -142,7 +142,8 @@ class ReflectionLoop:
         elif self._mode == "task":
             await cat.cat_self.after_act(
                 "task_completed",
-                {"task": input[:100], "status": result.get("status") if isinstance(result, dict) else None},
+                {"task": input[:100], "status": result.get(
+                    "status") if isinstance(result, dict) else None},
             )
         else:
             await cat.cat_self.after_act(

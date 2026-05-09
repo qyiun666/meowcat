@@ -159,10 +159,14 @@ BUILTIN_PATHS: tuple[Path, ...] = (
         "Record role behavior pattern",
     ),
     # -- Tree domain (v2.0) --
-    Path("get_tree", THALAMUS, HIPPOCAMPUS, "get_tree", "read", "Read knowledge tree"),
-    Path("search_tree", THALAMUS, HIPPOCAMPUS, "search_tree", "read", "Search tree nodes"),
-    Path("query_subtree", THALAMUS, HIPPOCAMPUS, "query_subtree", "read", "Query subtree nodes"),
-    Path("build_tree", BRAINSTEM, HIPPOCAMPUS, "build_tree", "write", "Build knowledge tree"),
+    Path("get_tree", THALAMUS, HIPPOCAMPUS,
+         "get_tree", "read", "Read knowledge tree"),
+    Path("search_tree", THALAMUS, HIPPOCAMPUS,
+         "search_tree", "read", "Search tree nodes"),
+    Path("query_subtree", THALAMUS, HIPPOCAMPUS,
+         "query_subtree", "read", "Query subtree nodes"),
+    Path("build_tree", BRAINSTEM, HIPPOCAMPUS,
+         "build_tree", "write", "Build knowledge tree"),
 )
 
 

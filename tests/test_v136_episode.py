@@ -26,6 +26,7 @@ from meowcat.storage import JsonlEpisodeStore
 # 1. NoopHippocampus episode CRUD
 # ===================================================================
 
+
 class TestNoopHippocampusEpisode:
     """NoopHippocampus add_episode / get_episode / get_episodes."""
 

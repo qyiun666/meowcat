@@ -524,16 +524,18 @@ class TestNoopBrainstemV136:
         """NoopBrainstem accepts organ + route + optional snapshot."""
         nb = NoopBrainstem()
         result = await nb.build_system_prompt("cerebrum", "chat")
-        assert result == ""
+        assert "MeowCat" in result
+        assert "helpful AI assistant" in result
 
     async def test_new_signature_with_snapshot(self):
-        """NoopBrainstem accepts snapshot (ignores it)."""
+        """NoopBrainstem accepts snapshot and injects CatSelf."""
         nb = NoopBrainstem()
         snap = SelfSnapshot(personality={"tone": "x"})
         result = await nb.build_system_prompt(
             "cerebrum", "chat", cat_self_snapshot=snap,
         )
-        assert result == ""
+        assert "## 自我认知" in result
+        assert "x" in result
 
     async def test_inject_cat_self_default_true(self):
         """NoopBrainstem.inject_cat_self defaults to True."""

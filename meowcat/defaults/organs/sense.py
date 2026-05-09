@@ -80,7 +80,8 @@ class NoopEars(Pluggable):
                 result.update(r)
         return result
 
-    def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:  # type: ignore[override]
+    # type: ignore[override]
+    def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:
         result = _extract_keywords(
             text, top_k=top_k, stop_words=self._keyword.stop_words
         )
@@ -409,7 +410,7 @@ def _repetition_ratio(text: str, n: int = 5) -> float:
     grams: dict[str, int] = {}
     total = 0
     for i in range(len(text) - n + 1):
-        g = text[i : i + n]
+        g = text[i: i + n]
         grams[g] = grams.get(g, 0) + 1
         total += 1
     if total == 0:
@@ -437,7 +438,7 @@ def _jaccard(a: str, b: str, n: int = 3) -> float:
     """
 
     def _ngrams(s: str) -> set[str]:
-        return {s[i : i + n] for i in range(len(s) - n + 1)}
+        return {s[i: i + n] for i in range(len(s) - n + 1)}
 
     sa = _ngrams(a.lower())
     sb = _ngrams(b.lower())

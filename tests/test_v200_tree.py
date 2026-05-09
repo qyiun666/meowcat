@@ -57,7 +57,8 @@ class TestTreeNode:
         assert n.metadata == {}
 
     def test_metadata(self):
-        n = TreeNode(id="y", entity_id="e", metadata={"lang": "py", "size": 1024})
+        n = TreeNode(id="y", entity_id="e", metadata={
+                     "lang": "py", "size": 1024})
         assert n.metadata["lang"] == "py"
         assert n.metadata["size"] == 1024
 

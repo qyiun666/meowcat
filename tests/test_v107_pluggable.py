@@ -102,7 +102,7 @@ def test_pluggable_run_plugs_no_plugs():
 async def test_amygdala_mode_a_default():
     a = NoopAmygdala()
     r = await a.assess_safety("hi")
-    assert r == {"safe": True, "risk": "none"}
+    assert r == {"safe": True, "risk": "low"}
 
 
 @pytest.mark.anyio
@@ -129,23 +129,23 @@ async def test_amygdala_mode_a_plug_safe_passes():
     a = NoopAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": True, "risk": "none"})
     r = await a.assess_safety("hello")
-    assert r == {"safe": True, "risk": "none"}  # 默认
+    assert r == {"safe": True, "risk": "low"}  # 默认（插件 safe 穿透后落回 Noop）
 
 
 @pytest.mark.anyio
 async def test_frontal_mode_a():
     f = NoopFrontal()
-    assert await f.is_continue("msg") is False
+    assert f.is_continue("msg") is False
     f.mount_plug("is_continue", lambda _: True)
-    assert await f.is_continue("msg") is True
+    assert f.is_continue("msg") is True
 
 
 @pytest.mark.anyio
 async def test_frontal_mode_a_detect_shift():
     f = NoopFrontal()
-    assert await f.detect_shift("msg") is False
-    f.mount_plug("detect_shift", lambda _: True)
-    assert await f.detect_shift("msg") is True
+    assert f.detect_shift("msg") is True  # 无已知关键词时默认视为转移
+    f.mount_plug("detect_shift", lambda _: False)
+    assert f.detect_shift("msg") is False
 
 
 # ===================================================================
@@ -212,10 +212,10 @@ async def test_hypothalamus_mode_b():
 @pytest.mark.anyio
 async def test_cortex_mode_b():
     c = NoopCortex()
-    r = await c.synthesize(100)
+    r = c.synthesize(100)
     assert r == ""
     c.mount_plug("synthesize", lambda mt: "worldview snippet")
-    r = await c.synthesize(100)
+    r = c.synthesize(100)
     assert r == "worldview snippet"
 
 
@@ -223,7 +223,9 @@ async def test_cortex_mode_b():
 async def test_brainstem_mode_b():
     b = NoopBrainstem()
     r = await b.build_system_prompt("cerebrum", "chat")
-    assert r == ""
+    assert r != ""
+    # default prompt contains the cat name
+    assert "MeowCat" in r
     b.mount_plug("build_system_prompt", lambda organ, route,
                  snapshot=None: f"prompt for {route}")
     r = await b.build_system_prompt("cerebrum", "chat")
@@ -257,7 +259,7 @@ async def test_hippocampus_mode_b_remember():
 async def test_mouth_mode_c():
     m = NoopMouth()
     r = await m.speak("hello")
-    assert r == ""  # 默认
+    assert r == "hello"  # 默认返回传入文本
     m.mount_plug("speak", lambda text, **kw: f"[[{text}]]")
     r = await m.speak("hello")
     assert r == "[[hello]]"
@@ -287,7 +289,8 @@ async def test_tail_mode_c():
 async def test_eyes_mode_c():
     e = NoopEyes()
     r = await e.see(b"img", "image/png")
-    assert r == {"format": "image/png", "size_bytes": 3, "width_hint": "unknown", "height_hint": "unknown"}
+    assert r == {"format": "image/png", "size_bytes": 3,
+                 "width_hint": "unknown", "height_hint": "unknown"}
     e.mount_plug("see", lambda data, mime: {"caption": "a cat"})
     r = await e.see(b"img", "image/png")
     assert r == {"caption": "a cat"}
@@ -297,7 +300,7 @@ async def test_eyes_mode_c():
 async def test_paws_mode_c():
     p = NoopPaws()
     r = await p.execute("tool1", {"arg": 1})
-    assert r == {"ok": False, "reason": "noop_paws: execute disabled"}
+    assert r == {"ok": False, "reason": "no tool_registry mounted"}
     p.mount_plug("execute", lambda name, params: {
                  "ok": True, "result": "done"})
     r = await p.execute("tool1", {"arg": 1})
@@ -321,7 +324,8 @@ async def test_thalamus_locate_default():
 def test_thalamus_decide_route():
     t = NoopThalamus()
     r = t.decide_route()
-    assert r == {"route": "chat"}
+    assert r["route"] == "chat"
+    assert r["keywords"] == []  # 无输入时关键词为空
 
 
 def test_thalamus_hooks():

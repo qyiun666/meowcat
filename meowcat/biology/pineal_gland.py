@@ -56,7 +56,8 @@ class Insight:
         tags: Optional topic tags for categorisation.
     """
 
-    __slots__ = ("summary", "confidence", "source_count", "contradictions", "tags")
+    __slots__ = ("summary", "confidence", "source_count",
+                 "contradictions", "tags")
 
     def __init__(
         self,
@@ -171,7 +172,8 @@ class PinealGland(Pluggable):
             if keep:
                 filtered.append(ins)
 
-        _log.info("meditate", scribbles_in=len(scribbles), insights_out=len(filtered))
+        _log.info("meditate", scribbles_in=len(
+            scribbles), insights_out=len(filtered))
         return filtered
 
     def fuse_to_self(self, insights: list[Insight]) -> None:
@@ -225,7 +227,8 @@ class PinealGland(Pluggable):
             if fuse_colony:
                 self.fuse_to_colony(insights)
 
-        _log.info(FusionEvent.TRIGGER_END, insights_count=len(insights), scribbles=len(scribbles))
+        _log.info(FusionEvent.TRIGGER_END, insights_count=len(
+            insights), scribbles=len(scribbles))
         _log.info(
             "trigger",
             scribbles=len(scribbles),
@@ -274,7 +277,8 @@ class PinealGland(Pluggable):
         def _condition(pad: ScribblePad) -> bool:
             return pad.count() >= min_count
 
-        _condition.__name__ = f"on_full({min_count})"  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        _condition.__name__ = f"on_full({min_count})"
         return _condition
 
     @staticmethod
@@ -303,7 +307,8 @@ class PinealGland(Pluggable):
                 return True
             return False
 
-        _condition.__name__ = f"on_timer({minutes}m)"  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        _condition.__name__ = f"on_timer({minutes}m)"
         return _condition
 
     @staticmethod
@@ -324,7 +329,8 @@ class PinealGland(Pluggable):
         def _condition(pad: ScribblePad) -> bool:
             return True
 
-        _condition.__name__ = f"on_event({event})"  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        _condition.__name__ = f"on_event({event})"
         return _condition
 
     def diagnose(self) -> dict[str, Any]:

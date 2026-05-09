@@ -25,6 +25,7 @@ from meowcat.testing import make_cat, make_test_colony
 # T1: CatBase container 类型标注修复
 # ──────────────────────────────────────────────────────────────────────
 
+
 class Test_T1_CatBaseContainer:
     """T1: CatBase("01") 抛 StandaloneCatError; 带 container 正常工作。"""
 
