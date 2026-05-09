@@ -29,6 +29,20 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create tag from version
+        run: |
+          VERSION=$(python -c "import re; print(re.search(r'version\s*=\s*\"([^\"]+)\"', open('pyproject.toml').read()).group(1))")
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG exists"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+          echo "TAG=$TAG" >> $GITHUB_ENV
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           generate_release_notes: true
