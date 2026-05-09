@@ -3,18 +3,20 @@
 [![中文文档](https://img.shields.io/badge/文档-中文-red.svg)](README_CN.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.10-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-2.0.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
 
 An AI agent framework built on a cat's biological blueprint. Define your organs, wire their nerves, and the cat comes alive.
 
-> 📖 **[AGENTS_EN.md](AGENTS_EN.md)** — app developer entry (mental model in 3 min)
+> 📖 **[AGENTS.md](AGENTS.md)** — app developer entry (mental model in 3 min)
 >
 > **Framework defines the skeleton. You choose the materials.**
 >
-> 20 organs · 31 paths · 8 chains · 7 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
+> 20 organs · 23 paths · 8 chains · 7 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
+>
+> ⚠️ **v2.0 breaking changes** — read **[MIGRATION_v2.md](MIGRATION_v2.md)** before upgrading from v1.x.
 
 ---
 
@@ -47,12 +49,11 @@ meowcat is to AI agents what a skeleton is to a body — it defines the structur
               ┌───────────────┼───────────────┐
               │               │               │
           OrganHost        Colony         defaults/
-         mount/validate  multi-cat     Noop stubs/Renovated
+         mount/validate  multi-cat    Default organs
 ```
 
 - **Zero I/O core** — framework has no file/network I/O, pure abstractions
 - **Slot-Plug separation** — framework defines Slots (Protocols), you provide Plugs (implementations)
-- **Optional batteries** — `pip install meowcat[plus]` gets you browser, ChromaDB, MCP, gateways
 
 ---
 
@@ -66,7 +67,7 @@ meowcat models an AI agent after a **cat's biological nervous system** — a pro
 | Cerebrum handles deep reasoning         | `Cerebrum` — LLM-powered deep thinking                 |
 | Cerebellum coordinates fast action      | `Cerebellum` — sole gateway to effectors               |
 | Amygdala triggers fear responses        | `Amygdala` — safety bypass (can act without reasoning) |
-| Hippocampus stores memories             | `Hippocampus` — entity graph memory                    |
+| Hippocampus stores memories             | `Hippocampus` — entity graph + knowledge tree          |
 | Hypothalamus maintains homeostasis      | `Hypothalamus` — memory decay + cleanup                |
 | Cortex builds worldview from experience | `Cortex` — L0→L3 cognition pipeline                    |
 | Reflex arcs bypass the brain            | `ReflexArc` — stimulus→response with zero LLM          |
@@ -88,9 +89,9 @@ meowcat follows a different path: **a living organism has organs → organs have
 | **Communication**     | Message routing / topic / queue      | Neural signals (Path → Chain → Loop, 4 layers)                         |
 | **Constraints**       | Prompt guard / output validator      | Architecture-level forbidden edges (brain can't control paws directly) |
 | **Safety**            | Post-hoc guardrail / validator       | Amygdala bypass (skip reasoning, act on danger instantly)              |
-| **Memory**            | Vector store + chat history          | Hippocampus entity graph + Cortex L0→L3 worldview distillation         |
+| **Memory**            | Vector store + chat history          | Hippocampus entity graph + knowledge tree + Cortex worldview           |
 | **Growth**            | Fine-tuning / prompt optimization    | Inner loop (self-evolution) + Outer loop (collective intelligence)     |
-| **Multi-agent**       | Group chat / router→worker           | Colony (shared storage + collective growth + role emergence)           |
+| **Multi-agent**       | Group chat / router→worker           | Colony (shared storage + cross-cat signals)                            |
 
 Harness-style frameworks answer **"how to make LLMs work"**. meowcat answers **"what should an agent be"**. You can absolutely implement harness patterns on top of meowcat — but not the other way around. meowcat is one level of abstraction above.
 
@@ -108,7 +109,7 @@ Modeled after real neuroanatomy. 20 organs in 5 categories (BRAIN / SENSE / VOIC
 
 ### 🔌 Slot-Plug Architecture
 
-Framework defines the **Slot** (Protocol interface + OrganSpec contract). You provide the **Plug** (concrete implementation). 4 plug styles: `ALGORITHM` | `RULE` | `MODEL` | `HYBRID`. Mix and match per organ.
+Framework defines the **Slot** (Protocol interface + OrganSpec contract). You provide the **Plug** (concrete implementation). 2 plug styles: `ALGORITHM` | `MODEL`. Mix and match per organ.
 
 ### 🧠 Four-Layer Execution Model
 
@@ -129,9 +130,9 @@ Framework defines the **Slot** (Protocol interface + OrganSpec contract). You pr
 - **Inner loop (CatSelf)**: freeze snapshot → act → reflect → fuse insights → evolve worldview
 - **Outer loop (Colony)**: shared storage → cross-cat signals → collective growth → role emergence
 
-### 📦 Zero I/O Core + Optional Plus
+### 🌳 KnowledgeTree (v2.0)
 
-`pip install meowcat` → pure framework, zero file/network I/O. `pip install meowcat[plus]` → browser, ChromaDB, MCP, gateway adapters, crystallizer — all I/O lives in the optional `plus/` package.
+`TreeNode` dataclass + Hippocampus tree methods: build_tree, get_tree, search_tree, query_subtree, delete_tree, check_stale.
 
 </td>
 </tr>
@@ -143,21 +144,20 @@ Framework defines the **Slot** (Protocol interface + OrganSpec contract). You pr
 
 ```
                              ┌──────────────────────────────┐
-  External World ──────────► │  Gateway (Skin)               │  HTTP / WebSocket / CLI / IPC / Webhook
+  External World ──────────► │  Gateway (Skin)               │
                              │  ┌────────────────────────┐   │
-                             │  │  FrontDesk (Reception)  │   │  on_route plugins: security gate, audit, rate-limit
+                             │  │  FrontDesk (Reception)  │   │  on_route plugins: security, audit, rate-limit
                              │  └────────┬───────────────┘   │
                              └───────────┼───────────────────┘
                                          │
-                           1 Colony : 1 Gateway : N Adapters
-                                         │
+                           1 Colony : 1 Gateway : N Adapters *
+                                         │           (* app-layer provided)
   ┌──────────────────────────────────────▼──────────────────────────────────────┐
   │                           Colony (Multi-Cat Container)                       │
   │                                                                              │
   │   ┌─────────────────────────────────────┐   ┌────────────────────────────┐  │
-  │   │  Shared Board (猫舍大看板)            │   │  Federation (跨容器)        │  │
-  │   │  owner/ rules/ knowledge/ cats/       │   │  P2P request-response       │  │
-  │   │  growth/ [custom...]                  │   │  30s timeout                 │  │
+  │   │  Shared Board                       │   │  Communication              │  │
+  │   │  owner/ knowledge/ cats/             │   │  signal_between, broadcast  │  │
   │   └─────────────────────────────────────┘   └────────────────────────────┘  │
   │                                                                              │
   │   ┌─ cat.perceive() ────────────────────────────────────────────────────┐   │
@@ -199,12 +199,10 @@ from meowcat.colony import Colony
 
 colony = Colony()  # colony_uid auto-generated (with copyright watermark)
 
-# ✅ Option 1: Real LLM (DeepSeek example)
-# DeepSeek is OpenAI-API-compatible — just set base_url
+# Define your LLM brain
 from openai import AsyncOpenAI
 
 class DeepSeekCerebrum:
-    """DeepSeek cerebrum — model fixed to deepseek-v4-pro."""
     name = "cerebrum"
 
     def __init__(self, *, api_key=None):
@@ -235,121 +233,41 @@ class DeepSeekCerebrum:
     def reload_config(self) -> None:
         pass
 
-# Fully assembled: 20 organs + wiring + reflex arcs
+# One line to create a fully assembled cat
 cat = create_cat(container=colony, cerebrum=DeepSeekCerebrum(), name="Kitty")
 
-# ✅ Option 2: Minimal mock (no API key, for testing wiring)
+# Minimal mock for testing — no API key needed
 # class EchoCerebrum:
 #     name = "cerebrum"
 #     async def generate(self, prompt, system_prompt=None, **kw) -> str:
 #         return f"Meow! {prompt[:100]}"
-#     async def stream_generate(self, prompt, system_prompt=None,
-#                               temperature=0.7, max_tokens=None):
-#         result = await self.generate(prompt, system_prompt=system_prompt)
-#
-#         async def _stream():
-#             yield result
+#     async def stream_generate(self, prompt, system_prompt=None, **kw):
+#         result = await self.generate(prompt)
+#         async def _stream(): yield result
 #         return _stream()
-#     def reload_config(self) -> None:
-#         pass
-# cat = create_cat(container=colony, cerebrum=EchoCerebrum(), name="Kitty")
+#     def reload_config(self): pass
 
-# Direct organ invocation — simplest working path
+# v2.0: CatSelf is application-layer managed
+from meowcat.biology.cat_self import CatSelf
+cat.cat_self = CatSelf()
+
 async def main():
-    # Chain: deep reasoning (brain generates reply directly)
-    result = await cat.path_registry.run(cat, "deep_reason", prompt="Why is the sky blue?")
+    # Path: deep reasoning
+    result = await cat.path_registry.run("deep_reason", prompt="Why is the sky blue?")
     print(result)
 
-    # Path: memory retrieval
-    result = await cat.path_registry.run(cat, "locate", msg="weather in Tokyo", session_id="default")
-
-    # perceive(): unified perception entry (needs custom Stage impl to produce output)
-    async for event in cat.perceive("What's the weather today?"):
+    # perceive(): unified entry (yields StageEvent objects)
+    async for ev in cat.perceive("What's the weather today?"):
         pass
+
+    # KnowledgeTree (v2.0)
+    from meowcat.tree import TreeNode
+    root = TreeNode(id="r", entity_id="e1", parent_id=None,
+                    path="/", node_type="project", name="p")
+    cat.hippocampus.build_tree("e1", root)
 
 import asyncio
 asyncio.run(main())
-```
-
----
-
-## 🔬 Slot-Plug Model
-
-The framework only defines the **Slot** — what an organ looks like, what it can connect to, what it can read/write, what implementations it supports. You provide the **Plug** — the actual implementation.
-
-```python
-from meowcat.defaults import create_cat
-from meowcat.colony import Colony
-from meowcat.anatomy import ImplementationStyle
-
-colony = Colony()
-
-# cerebrum (mock for demonstration)
-class MockBrain:
-    name = "cerebrum"
-    async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        return f"[thinking: {prompt[:50]}]"
-
-    async def stream_generate(self, prompt, system_prompt=None,
-                              temperature=0.7, max_tokens=None):
-        result = await self.generate(prompt, system_prompt=system_prompt)
-
-        async def _stream():
-            yield result
-        return _stream()
-
-    def reload_config(self) -> None:
-        pass
-
-# You provide the PLUG — must satisfy AmygdalaProtocol
-class MyAmygdala:
-    name = "amygdala"
-    impl_style = ImplementationStyle.RULE
-    async def assess_safety(self, input, **kw):
-        return {"safe": True, "risk_level": 0}
-
-cat = create_cat(container=colony, cerebrum=MockBrain(),
-                 amygdala=MyAmygdala(), name="Kitty")
-```
-
-**Plug styles per organ** — framework validates compatibility:
-
-| Style       | Description              | Example Organs                     |
-| :---------- | :----------------------- | :--------------------------------- |
-| `ALGORITHM` | Deterministic, no LLM    | Ears, Mouth, Purr, Tail, Brainstem |
-| `RULE`      | Rule-based decision      | Amygdala, Cortex                   |
-| `MODEL`     | LLM-powered              | Cerebrum, Cerebellum               |
-| `HYBRID`    | Algorithm + LLM combined | Hippocampus, Frontal               |
-
----
-
-## 🔗 Four-Layer Execution Model
-
-| Layer               | Primitive                            | Description                                                          |
-| :------------------ | :----------------------------------- | :------------------------------------------------------------------- |
-| **L1 Path**         | `source → target.method`             | Atomic organ-to-organ signal. 26 built-in paths.                     |
-| **L2 Chain**        | `[path1, path2, ...] + rollback`     | Named path sequence. Previous result fed to next. 6 built-in chains. |
-| **L3 Loop**         | `Chain + trigger_event + exit_event` | Autonomous closed loop. 5 built-in loops.                            |
-| **L4 LoopSequence** | `[loop1, loop2, ...]`                | Sequential or concurrent loop orchestration.                         |
-
-```python
-# L1: Path
-await cat.path_registry.run(cat, "deep_reason", prompt="...")
-
-# L2: Chain with rollback
-await cat.chain_registry.run(cat, "full_reasoning", prompt="...")
-# = deep_reason → speak  (if speak fails, nothing to roll back)
-
-await cat.chain_registry.run(cat, "maintenance")
-# = decay → cleanup_orphans
-
-# L3: Loop — event-driven autonomous execution
-await cat.loop_registry.run(cat, "conversation", message="hello")
-# Runs on perceive.start event, exits on conversation.end
-
-# L4: LoopSequence
-await cat.loopseq_registry.run(cat, "daily_maintenance")
-# = maintenance → diagnostic  (sequential)
 ```
 
 ---
@@ -393,16 +311,16 @@ User Input
 | Organ            | Role                | Key Trait                            |
 | :--------------- | :------------------ | :----------------------------------- |
 | **Thalamus**     | Sensory relay hub   | All input routes through here        |
-| **Cerebrum**     | Deep reasoning      | LLM-powered, only MODEL/HYBRID       |
+| **Cerebrum**     | Deep reasoning      | LLM-powered, MODEL only              |
 | **Cerebellum**   | Fast response       | Sole gateway to ALL effectors        |
-| **Hippocampus**  | Memory graph        | Entity-association storage           |
+| **Hippocampus**  | Memory + trees      | Entity graph + KnowledgeTree (v2.0)  |
 | **Amygdala**     | Safety bypass       | Can trigger output without reasoning |
 | **Frontal**      | Focus & planning    | Topic tracking, task decomposition   |
 | **Hypothalamus** | Homeostasis         | Memory decay, orphan cleanup         |
 | **Cortex**       | Worldview distiller | L0→L3 cognition pipeline             |
 | **Brainstem**    | Master dispatch     | Coordinates ALL brain regions        |
 
-### 4 Senses + 3 Voice + 4 Growth
+### 4 Senses + 3 Voice + 5 Growth
 
 | Category   | Organs                                                                                     |
 | :--------- | :----------------------------------------------------------------------------------------- |
@@ -420,22 +338,16 @@ from meowcat.colony import Colony
 
 colony = Colony("my-squad")
 
-# Define cerebrum (see Quick Start above)
+# Define a simple cerebrum
 class TaskBrain:
     name = "cerebrum"
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         return f"[thinking: {prompt[:50]}]"
-
-    async def stream_generate(self, prompt, system_prompt=None,
-                              temperature=0.7, max_tokens=None):
-        result = await self.generate(prompt, system_prompt=system_prompt)
-
-        async def _stream():
-            yield result
+    async def stream_generate(self, prompt, system_prompt=None, **kw):
+        result = await self.generate(prompt)
+        async def _stream(): yield result
         return _stream()
-
-    def reload_config(self) -> None:
-        pass
+    def reload_config(self): pass
 
 # Spawn cats into the colony
 analyst  = create_cat(container=colony, cerebrum=TaskBrain(), name="analyst")
@@ -446,25 +358,17 @@ data = "DELETE FROM orders"
 await colony.signal_between(analyst.cat_uid, executor.cat_uid,
     "brain", "amygdala", "assess_safety", user_input=data)
 
-# 1:N broadcast
-await colony.broadcast("alert", level="high")
-
 # Shared storage (namespace ns_set / ns_get)
 await colony.ns_set("knowledge", "weather", {"city": "NYC"})
 result = await colony.ns_get("knowledge", "weather")
-
-# Federation — cross-host colony communication
-await colony.federate(transport)
-await colony.signal_remote("other-colony", "cat-3", ...)
 ```
 
-| Feature               | Description                                                          |
-| :-------------------- | :------------------------------------------------------------------- |
-| **Cross-cat signals** | 1:1 (`signal_between`), 1:N (`broadcast_request`), N:N (`broadcast`) |
-| **Shared storage**    | Namespaced: `owner/` `rules/` `knowledge/` `growth/` `cats/`         |
-| **Federation**        | Cross-host colony P2P communication (request-response, 30s timeout)  |
-| **Collective growth** | Cats learn from each other's anomalies and corrections               |
-| **Role emergence**    | Behavior patterns → implicit role specialization                     |
+| Feature               | Description                                            |
+| :-------------------- | :----------------------------------------------------- |
+| **Cross-cat signals** | 1:1 (`signal_between`), 1:N (`broadcast_request`)      |
+| **Shared storage**    | Namespaced: `owner/` `knowledge/` `cats/`              |
+| **Collective growth** | Cats learn from each other's anomalies and corrections |
+| **Role emergence**    | Behavior patterns → implicit role specialization       |
 
 ---
 
@@ -478,7 +382,7 @@ Full AI Agent implementation built on meowcat → **[MeowAgent](https://github.c
 
 - **Website:** https://qyiun666.github.io/meowagent.github.io/
 - **Email:** qyiun666@163.com
-- **GitHub:** https://github.com/Axonant/MeowAgent — production Agent built on meowcat (coming soon)
+- **GitHub:** https://github.com/Axonant/MeowAgent
 
 Have feature ideas or want to collaborate? We'd love to hear from you — pull requests, feature suggestions, and partnership inquiries are all welcome.
 
@@ -486,13 +390,14 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 ## 📊 Version History (Key Milestones)
 
-| Version    | Date       | Highlights                                                                                                                                                                                                       |
-| :--------- | :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.3.x** | 2026.05.06 | Task delegation delegate_async / await_task, auto-generated colony UID with CALL_SIGN watermark, Growth +4 Paths +2 Chains +2 Loops                                                                              |
-| **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                                                 |
-| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                                           |
-| **v1.0.x** | 2026.05.02 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                                             |
-| **v0.5.x** | 2026.05.01 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Reflex arc · Slot-Plug model · ImplementationStyle · 20-organ blueprint |
+| Version    | Date       | Highlights                                                                                                                                                                    |
+| :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v2.0.0** | 2026.05.10 | Framework slimming: 154→113 files, 40→14 concepts · Noop/Renovated merged · Conversation 6→3 steps · KnowledgeTree · Adapters/CLI/tools moved to app layer                    |
+| **v1.3.x** | 2026.05.06 | Task delegation, Gateway+FrontDesk, OrganPrompt, LLM model shelf, manager base classes, async lifecycle hooks                                                                 |
+| **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                              |
+| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                        |
+| **v1.0.x** | 2026.05.02 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                          |
+| **v0.5.x** | 2026.05.01 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Slot-Plug model · 20-organ blueprint |
 
 ---
 
@@ -502,34 +407,33 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 # Core framework (zero I/O)
 pip install meowcat
 
-# With optional batteries (browser, ChromaDB, MCP, gateway adapters)
-pip install meowcat[plus]
-
 # Development
-pip install -e ".[plus,dev]"
+pip install -e ".[dev]"
 pytest tests/
 ```
 
 **Requirements**: Python 3.10+, `pydantic>=2.0`, `anyio>=4.0`
 
+> v2.0: `pip install meowcat[plus]` no longer includes built-in tools or gateway adapters (moved to app layer).
+
 ---
 
 ## 📂 Package Map
 
-| Module                | Purpose                                                      |
-| :-------------------- | :----------------------------------------------------------- |
-| `meowcat/anatomy.py`  | Organ coordinates, categories, ImplementationStyle           |
-| `meowcat/biology/`    | OrganSpec SSOT, CatSelf, Cortex, PinealGland, Fusion, Growth |
-| `meowcat/assembly.py` | CatBase — compose 5 subsystems into a living cat             |
-| `meowcat/host.py`     | OrganHost — mount/unmount/find organs, protocol validation   |
-| `meowcat/wiring.py`   | Wiring — directed nerve graph (allow + forbid)               |
-| `meowcat/nervous.py`  | Nervous — signal dispatch with middleware + circuit breaker  |
-| `meowcat/reflex.py`   | ReflexArc — stimulus→response, zero-LLM paths                |
-| `meowcat/tools/`      | Tool/Skill/Paws core (zero I/O abstractions)                 |
-| `meowcat/plus/`       | Optional I/O: browser, ChromaDB, MCP, gateway, crystallizer  |
-| `meowcat/colony/`     | Colony multi-cat container + federation                      |
-| `meowcat/gateway/`    | Gateway — colony's skin, FrontDesk + protocol adapters       |
-| `meowcat/defaults/`   | Noop stubs, Renovated implants, presets, factory             |
+| Module                | Purpose                                                              |
+| :-------------------- | :------------------------------------------------------------------- |
+| `meowcat/anatomy.py`  | Organ coordinates, categories, ImplementationStyle                   |
+| `meowcat/biology/`    | OrganSpec SSOT, CatSelf, Cortex, PinealGland, Fusion, Growth         |
+| `meowcat/assembly.py` | CatBase — compose subsystems into a living cat                       |
+| `meowcat/host.py`     | OrganHost — mount/unmount/find organs, protocol validation           |
+| `meowcat/wiring.py`   | Wiring — directed nerve graph (allow + forbid)                       |
+| `meowcat/nervous.py`  | Nervous — signal dispatch with middleware + circuit breaker          |
+| `meowcat/reflex.py`   | ReflexArc — stimulus→response, zero-LLM paths                        |
+| `meowcat/tools/`      | Tool/Skill/Paws core (zero I/O abstractions)                         |
+| `meowcat/tree.py` 🆕  | KnowledgeTree — TreeNode dataclass (v2.0)                            |
+| `meowcat/colony/`     | Colony multi-cat container                                           |
+| `meowcat/gateway/`    | Gateway + FrontDesk + protocol (adapters moved to app layer in v2.0) |
+| `meowcat/defaults/`   | Default organ implementations, presets, factory                      |
 
 ---
 

@@ -22,7 +22,8 @@ class _CommunicationMixin:
         - ``self._assert_cross_allowed()`` (cross-wiring validator)
     """
 
-    _storage: Any = None  # type: ignore[assignment]  # lazy-init in _ensure_storage
+    # type: ignore[assignment]  # lazy-init in _ensure_storage
+    _storage: Any = None
 
     # -- Shared storage (namespace isolation) -------------------------
 
