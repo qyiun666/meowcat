@@ -1,9 +1,10 @@
-# meowcat v1.3.7 · Default Configuration & Execution Catalog
+# meowcat v1.3.9 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 31 路径 + 8 链条 + 7 循环 + 3 CatSelf 自循环 + 2 反射 + 1 循环序列 + 预设目录 + 接线规则
 >
 > v1.3.6 新增：OrganPrompt 插槽 · Hippocampus 持久化 · LLM 模型货架 · 管理器基类 5 件套 · 调度/存储/编排/容错
 > v1.3.7 新增：Gateway 绑定 Colony + FrontDesk 前台接待员 (Protocol + Pluggable)
+> v1.3.9: 代码健康整理 — 12 文件拆分 + deprecated 清理 (零新功能/零 API 变更)
 
 `create_cat()` 一行代码做了什么？出厂自带了哪些默认执行流？这里就是答案。
 
@@ -446,10 +447,14 @@ print(cat.wiring.describe())                        # 接线图描述
 | 内容                                        | 文件路径                                      |
 | :------------------------------------------ | :-------------------------------------------- |
 | 公共 API (延迟加载)                         | `meowcat/__init__.py` + `meowcat/_exports.py` |
+| 延迟加载数据 (v1.3.9)                       | `meowcat/_lazy_map.py`                        |
 | 器官坐标 / 类别 / PlugStyle                 | `meowcat/anatomy.py`                          |
 | 器官规约 (Slot SSOT)                        | `meowcat/biology.py`                          |
+| 器官规格定义 (v1.3.9)                       | `meowcat/biology/organ_spec.py`               |
 | 器官角色描述                                | `meowcat/organ_roles.py`                      |
 | CatBase 装配逻辑                            | `meowcat/assembly.py`                         |
+| 装配辅助函数 (v1.3.9)                       | `meowcat/assemblers.py`                       |
+| 装配信号方法 (v1.3.9)                       | `meowcat/assembly_signals.py`                 |
 | OrganHost 挂载/校验                         | `meowcat/host.py`                             |
 | Wiring 神经接线图                           | `meowcat/wiring.py`                           |
 | Nervous 信号调度 + 断路器                   | `meowcat/nervous.py`                          |
@@ -462,13 +467,18 @@ print(cat.wiring.describe())                        # 接线图描述
 | Loop / BUILTIN_LOOPS (7) + LoopSequence (1) | `meowcat/loops.py`                            |
 | Reflex / 反射弧 (2)                         | `meowcat/reflex.py`                           |
 | CatSelf 统一自我 + 3 默认循环               | `meowcat/biology/cat_self.py`                 |
+| CatSelf 默认循环 (v1.3.9)                   | `meowcat/biology/cat_self_loops.py`           |
 | PinealGland 顿悟融合                        | `meowcat/biology/pineal_gland.py`             |
 | Cortex L0-L3 世界观                         | `meowcat/biology/cortex.py`                   |
 | ScribblePad 草稿纸                          | `meowcat/biology/scribble_pad.py`             |
 | Fusion + ActiveGrowth                       | `meowcat/biology/`                            |
-| 简装修实现 (Renovated\*)                    | `meowcat/defaults/renovated.py`               |
-| 毛坯桩 (Noop\*)                             | `meowcat/defaults/organs.py`                  |
-| 关键词 + 提示词预设                         | `meowcat/defaults/presets.py`                 |
+| 简装修实现 (Renovated*)                     | `meowcat/defaults/renovated/`                 |
+| 毛坯桩 (Noop*)                              | `meowcat/defaults/organs/`                    |
+| Hippocampus 毛坯桩 (v1.3.9)                 | `meowcat/defaults/organs/hippocampus.py`      |
+| Hippocampus 简装修 (v1.3.9)                 | `meowcat/defaults/renovated/hippocampus.py`   |
+| BrainStem 简装修 (v1.3.9)                   | `meowcat/defaults/renovated/brainstem.py`     |
+| Cerebrum 简装修 (v1.3.9)                    | `meowcat/defaults/renovated/cerebrum.py`      |
+| 关键词 + 提示词预设                         | `meowcat/defaults/presets/`                   |
 | 存储参考实现                                | `meowcat/defaults/stores.py`                  |
 | create_cat 工厂                             | `meowcat/defaults/factory.py`                 |
 | 工具/技能/Paws 核心                         | `meowcat/tools/`                              |
@@ -477,6 +487,7 @@ print(cat.wiring.describe())                        # 接线图描述
 | Colony 多猫容器 + 联邦                      | `meowcat/colony/`                             |
 | Worker / Scheduler (v1.2.22)                | `meowcat/worker/`                             |
 | Gateway 协议（皮肤 + FrontDesk 前台）       | `meowcat/gateway/`                            |
+| Hippocampus 适配器 (v1.3.9)                 | `meowcat/adapters/hippocampus.py`             |
 | 测试 (60+ 用例)                             | `tests/`                                      |
 
 ### v1.3.6 新增模块
