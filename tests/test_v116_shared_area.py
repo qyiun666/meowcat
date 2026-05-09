@@ -21,7 +21,6 @@ import pytest
 from meowcat.colony import Colony, ColonyOwner, ColonyRules
 from meowcat.defaults.stores import InMemorySharedStore
 
-
 # -- 1. ColonyOwner -------------------------------------------------------
 
 class TestColonyOwner:

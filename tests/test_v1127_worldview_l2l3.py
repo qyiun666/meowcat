@@ -5,11 +5,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from meowcat.biology.cortex import Cortex
 from meowcat.biology.metacognition import Metacognition
-
 
 # ════════════════════════════════════════════════════════════════════
 # Cortex L2: Beliefs

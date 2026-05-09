@@ -17,8 +17,6 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from meowcat.testing import make_cat
-from meowcat import CatBase
 from meowcat.chain import Chain
 from meowcat.events import Lifecycle
 from meowcat.loops import (
@@ -27,8 +25,8 @@ from meowcat.loops import (
     LoopRegistry,
     register_default_loops,
 )
-from meowcat.path import Path, PathRegistry, register_builtin_paths
-
+from meowcat.path import Path
+from meowcat.testing import make_cat
 
 # -- Loop dataclass -----------------------------------------------
 
@@ -431,7 +429,7 @@ class TestCatBaseLoopIntegration:
 
         async def _run():
             result = await cat.run_loop("diagnostic", slug="test", hit_count=1)
-            assert isinstance(result, bool) or isinstance(result, dict)
+            assert isinstance(result, (bool, dict))
 
         anyio.run(_run)
 
@@ -457,7 +455,9 @@ class TestCatBaseLoopIntegration:
 
     def test_from_meowcat_import_loops(self):
         """Externally importable via from meowcat import Loop/LoopRegistry/BUILTIN_LOOPS."""
-        from meowcat import BUILTIN_LOOPS as L, Loop as LP, LoopRegistry as LR
+        from meowcat import BUILTIN_LOOPS as L
+        from meowcat import Loop as LP
+        from meowcat import LoopRegistry as LR
         assert len(L) == 7
         assert hasattr(LP, "__dataclass_fields__")
         assert hasattr(LR, "register")

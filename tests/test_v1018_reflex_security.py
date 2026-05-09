@@ -6,9 +6,8 @@
 from __future__ import annotations
 
 from meowcat.anatomy import AMYGDALA, BRAINSTEM, CEREBELLUM, CEREBRUM, EARS, MOUTH, THALAMUS
-from meowcat.reflex import BUILTIN_REFLEX_PATHS
 from meowcat.protocols import SecurityPolicyProtocol
-from meowcat.wiring import Organ
+from meowcat.reflex import BUILTIN_REFLEX_PATHS
 
 
 class TestBuiltinReflexPaths:
@@ -50,7 +49,6 @@ class TestSecurityPolicyProtocol:
         assert SecurityPolicyProtocol is not None
 
     def test_protocol_is_runtime_checkable(self) -> None:
-        from typing import runtime_checkable
         assert hasattr(SecurityPolicyProtocol, "__protocol_flags__") or \
             hasattr(SecurityPolicyProtocol, "_is_runtime_protocol")
 

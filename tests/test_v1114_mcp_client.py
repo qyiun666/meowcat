@@ -24,7 +24,6 @@ import pytest
 from meowcat import MCPClient, MCPServerConfig, MCPTool
 from meowcat.plus.mcp_client import _jsonrpc_request
 
-
 # -- 1. MCPServerConfig 数据类 ---------------------------------------
 
 class TestMCPServerConfig:

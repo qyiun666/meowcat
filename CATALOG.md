@@ -472,8 +472,8 @@ print(cat.wiring.describe())                        # 接线图描述
 | Cortex L0-L3 世界观                         | `meowcat/biology/cortex.py`                   |
 | ScribblePad 草稿纸                          | `meowcat/biology/scribble_pad.py`             |
 | Fusion + ActiveGrowth                       | `meowcat/biology/`                            |
-| 简装修实现 (Renovated*)                     | `meowcat/defaults/renovated/`                 |
-| 毛坯桩 (Noop*)                              | `meowcat/defaults/organs/`                    |
+| 简装修实现 (Renovated\*)                    | `meowcat/defaults/renovated/`                 |
+| 毛坯桩 (Noop\*)                             | `meowcat/defaults/organs/`                    |
 | Hippocampus 毛坯桩 (v1.3.9)                 | `meowcat/defaults/organs/hippocampus.py`      |
 | Hippocampus 简装修 (v1.3.9)                 | `meowcat/defaults/renovated/hippocampus.py`   |
 | BrainStem 简装修 (v1.3.9)                   | `meowcat/defaults/renovated/brainstem.py`     |

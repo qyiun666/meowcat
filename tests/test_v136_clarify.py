@@ -21,10 +21,7 @@ v1.3.6 — ClarifyManager 全覆盖测试
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
-from meowcat.clarify import ClarifyManager, ClarifyConfig, ClarifyResult
-
+from meowcat.clarify import ClarifyConfig, ClarifyManager, ClarifyResult
 
 # ── 1. ClarifyConfig ───────────────────────────────────────────────────
 

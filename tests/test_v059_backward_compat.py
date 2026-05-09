@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import anyio
 
+from meowcat import assemble_default_cat
 from meowcat.testing import make_cat
-from meowcat import CatBase, assemble_default_cat
 
 
 class _Cerebrum:
@@ -71,6 +71,7 @@ def test_assemble_default_cat_top_level() -> None:
 def test_catbase_parent_id_and_forbidden_methods():
     """v1.0.1: CatBase 支持 parent_id / forbidden_methods（替代 KittenBase）。"""
     import pytest
+
     from meowcat.errors import IllegalNeuralPathError
 
     cat = make_cat(
@@ -91,6 +92,7 @@ def test_catbase_parent_id_and_forbidden_methods():
 def test_catbase_allowed_organs_blocks_access():
     """v1.0.1: allowed_organs 拦截禁止器官名的直接访问。"""
     import pytest
+
     from meowcat.errors import IllegalNeuralPathError
 
     cat = make_cat(

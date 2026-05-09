@@ -25,8 +25,7 @@ v1.3.6 — BudgetTracker 全覆盖测试
 
 from __future__ import annotations
 
-from meowcat.budget import BudgetTracker, BudgetConfig
-
+from meowcat.budget import BudgetConfig, BudgetTracker
 
 # ── 1. BudgetConfig ─────────────────────────────────────────────────────
 

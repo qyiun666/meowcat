@@ -25,7 +25,6 @@ import pytest
 from meowcat import Command, CommandContext, CommandRouter, I18n
 from meowcat.pluggable import Pluggable
 
-
 # -- 1. Command 数据类 -------------------------------------------------
 
 class TestCommandDataClass:

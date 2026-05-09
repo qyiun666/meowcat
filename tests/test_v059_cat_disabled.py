@@ -9,7 +9,6 @@ import anyio
 import pytest
 
 from meowcat.testing import make_cat
-from meowcat import CatBase
 
 
 def test_cat_disabled_wiring_still_mounts() -> None:

@@ -6,21 +6,20 @@
 from __future__ import annotations
 
 import asyncio
+
 import pytest
 
-from meowcat.coordination import AsyncApprovalGate, ApprovalRequest, ApprovalStatus
-from meowcat.tools.matcher import KeywordToolMatcher
-from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
-from meowcat.models import ModelConfig
 from meowcat.cli.theme import Theme
+from meowcat.coordination import ApprovalStatus, AsyncApprovalGate
+from meowcat.models import ModelConfig
+from meowcat.tools.matcher import KeywordToolMatcher
+from meowcat.tools.tool import Tool, ToolRegistry, ToolSpec
 from meowcat.worker import (
     BaseWorker,
-    CheckpointStore,
     InMemoryCheckpointStore,
     WorkerState,
     WorkerStatus,
 )
-
 
 # ════════════════════════════════════════════════════════════════════
 # Helpers

@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.testing import make_cat
 from meowcat import CatBase
 from meowcat.errors import (
     IllegalNeuralPathError,
@@ -25,9 +24,9 @@ from meowcat.errors import (
     OrganProtocolMismatchError,
     StandaloneCatError,
 )
-from meowcat.protocols import AmygdalaProtocol, OrganProtocol
+from meowcat.protocols import OrganProtocol
 from meowcat.reflex import Reflex
-
+from meowcat.testing import make_cat
 
 # -- v1.1.3: CatBase 强制归属 ------------------------------------------
 

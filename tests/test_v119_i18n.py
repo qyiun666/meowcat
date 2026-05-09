@@ -23,7 +23,6 @@ import pytest
 from meowcat import I18n
 from meowcat.pluggable import Pluggable
 
-
 # -- 1. 默认语言与内置翻译 --------------------------------------------
 
 class TestDefaultLanguage:

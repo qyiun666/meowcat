@@ -19,15 +19,31 @@ from __future__ import annotations
 import pytest
 
 from meowcat.biology import (
-    AMYGDALA, BRAIN_REGIONS, BRAINSTEM, BUILTIN_NERVOUS_SYSTEM,
-    CEREBELLUM, CEREBRUM, CORTEX,
-    EARS, EFFECTORS, EYES, FORBIDDEN_PATHS, FRONTAL,
-    HIPPOCAMPUS, HYPOTHALAMUS, MOUTH, PAWS, PURR, SENSORS,
-    TAIL, THALAMUS, VOICES, WHISKERS,
+    AMYGDALA,
+    BRAIN_REGIONS,
+    BRAINSTEM,
+    BUILTIN_NERVOUS_SYSTEM,
+    CEREBELLUM,
+    CEREBRUM,
+    CORTEX,
+    EARS,
+    EFFECTORS,
+    EYES,
+    FORBIDDEN_PATHS,
+    FRONTAL,
+    HIPPOCAMPUS,
+    HYPOTHALAMUS,
+    MOUTH,
+    PAWS,
+    PURR,
+    SENSORS,
+    TAIL,
+    THALAMUS,
+    VOICES,
+    WHISKERS,
     apply_default_wiring,
 )
 from meowcat.wiring import Wiring
-
 
 # -- 1. 器官坐标 ---------------------------------------------------
 

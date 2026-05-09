@@ -35,7 +35,8 @@ class _CatOpsMixin:
         if cat.has_organ("brain", "hippocampus"):
             hippo = cat.organ("brain", "hippocampus")
             if hasattr(hippo, "set_colony_memory"):
-                hippo.set_colony_memory(self.memory)  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                hippo.set_colony_memory(self.memory)
 
     # -- Create -------------------------------------------------------
 
@@ -64,13 +65,14 @@ class _CatOpsMixin:
         """
         if self.is_full:  # type: ignore[attr-defined]
             raise RuntimeError(
-                f"Colony '{self.colony_id}' is full ({len(self._cats)}/{self._max_cats} cats)"  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                f"Colony '{self.colony_id}' is full ({len(self._cats)}/{self._max_cats} cats)"
             )
 
         cat_uid = self._next_cat_uid()  # type: ignore[attr-defined]
         cat = CatBase(
             cat_uid,
-            container=self,
+            container=self,  # type: ignore[arg-type]
             parent_id=parent_id,
             allowed_organs=allowed_organs,
             **cat_kwargs,
@@ -78,7 +80,8 @@ class _CatOpsMixin:
         if name is not None:
             cat._name = name  # type: ignore[attr-defined]
         # type: ignore[attr-defined]
-        cat._address = f"{self.colony_id}_{cat_uid}"  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        cat._address = f"{self.colony_id}_{cat_uid}"
 
         # Inject shared storage reference
         if self._storage is not None:  # type: ignore[attr-defined]

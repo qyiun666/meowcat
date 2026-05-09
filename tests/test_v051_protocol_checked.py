@@ -16,22 +16,32 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.testing import make_cat
 from meowcat import (
-    CatBase,
     OrganProtocol,
     OrganProtocolMismatchError,
     StageProtocol,
 )
 from meowcat.protocols import (
-    AmygdalaProtocol, BrainStemProtocol, CatProtocol, CortexProtocol,
-    EarsProtocol, EyesProtocol, FrontalCortexProtocol, GraphStorageProtocol,
-    HippocampusProtocol, HypothalamusProtocol, KittenProtocol,
-    LLMBrainProtocol, LLMProviderProtocol,
-    PawsProtocol, SharedStorageProtocol, ThalamusProtocol,
-    VectorStorageProtocol, WhiskersProtocol,
+    AmygdalaProtocol,
+    BrainStemProtocol,
+    CatProtocol,
+    CortexProtocol,
+    EarsProtocol,
+    EyesProtocol,
+    FrontalCortexProtocol,
+    GraphStorageProtocol,
+    HippocampusProtocol,
+    HypothalamusProtocol,
+    KittenProtocol,
+    LLMBrainProtocol,
+    LLMProviderProtocol,
+    PawsProtocol,
+    SharedStorageProtocol,
+    ThalamusProtocol,
+    VectorStorageProtocol,
+    WhiskersProtocol,
 )
-
+from meowcat.testing import make_cat
 
 # -- 1. mount 带 protocol 校验 ------------------------------------
 

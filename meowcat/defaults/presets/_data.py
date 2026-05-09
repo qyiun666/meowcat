@@ -284,7 +284,8 @@ _ZH_COMMANDS: dict[str, str] = {
 # -- English danger patterns (SQL/XSS/shell/path) -------------------
 
 _EN_DANGER: list[re.Pattern] = [
-    re.compile(r"(?i)(?:drop\s+table|delete\s+from|truncate\s+table|alter\s+table)\b"),
+    re.compile(
+        r"(?i)(?:drop\s+table|delete\s+from|truncate\s+table|alter\s+table)\b"),
     re.compile(r"(?i)(?:exec\s*\(|eval\s*\(|__import__\s*\(|subprocess\b)"),
     re.compile(r"(?i)(?:rm\s+-rf\s+/|:\(\)\s*\{\s*:\|:&\s*\}|wget\s+.*\|sh)"),
     re.compile(r"(?i)<script\b.*?>"),

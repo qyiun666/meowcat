@@ -23,13 +23,13 @@ from meowcat.defaults.renovated.cerebrum import (
     RenovatedCerebellum,
     RenovatedCerebrum,
 )
-from meowcat.defaults.renovated.hippocampus import RenovatedHippocampus
 from meowcat.defaults.renovated.growth import (
     RenovatedAnomalyGrowth,
     RenovatedCorrectionGrowth,
     RenovatedCrystallizer,
     RenovatedRoleEmergence,
 )
+from meowcat.defaults.renovated.hippocampus import RenovatedHippocampus
 from meowcat.defaults.renovated.sense import (
     RenovatedEars,
     RenovatedEyes,

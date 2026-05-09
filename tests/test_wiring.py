@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 
 from meowcat.errors import IllegalNeuralPathError, MeowCatError
-from meowcat.wiring import Edge, Organ, Wiring, WiringSnapshot
+from meowcat.wiring import Edge, Organ, Wiring
 
 
 class TestWiringConnectAndForbid:

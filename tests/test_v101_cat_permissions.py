@@ -17,10 +17,9 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
-from meowcat.biology import CEREBRUM, HIPPOCAMPUS, THALAMUS
+from meowcat.biology import THALAMUS
 from meowcat.errors import IllegalNeuralPathError
-
+from meowcat.testing import make_cat
 
 # -- 1. parent_id 只是字符串 ----------------------------------------
 

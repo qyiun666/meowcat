@@ -7,11 +7,7 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from meowcat.colony import Colony
-from meowcat.biology.growth import CollectiveGrowth
-from meowcat.biology.roles import CollectiveEmergence
 from meowcat.defaults.stores import InMemorySharedStore
 
 

@@ -13,10 +13,8 @@
 
 from __future__ import annotations
 
-import os
 import tempfile
 from pathlib import Path
-from typing import Any
 
 import anyio
 import pytest
@@ -24,8 +22,6 @@ import pytest
 from meowcat import NoopHippocampus
 from meowcat.defaults.renovated import RenovatedHippocampus
 from meowcat.storage import JsonlEpisodeStore
-from meowcat.testing import make_cat
-
 
 # ===================================================================
 # 1. NoopHippocampus episode CRUD

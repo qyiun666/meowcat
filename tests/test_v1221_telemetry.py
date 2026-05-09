@@ -19,7 +19,7 @@ import pytest
 
 from meowcat import EventBus, Nervous, OrganHost, biology
 from meowcat.events import TelemetryEvent
-from meowcat.telemetry import Tracer, Metrics, SignalSpan
+from meowcat.telemetry import SignalSpan, Tracer
 
 
 class _SimpleOrgan:
@@ -259,7 +259,7 @@ def test_tracer_bounded_buffer():
     from_org = ("brain", "a")
     to_org = ("brain", "b")
 
-    for i in range(5):
+    for _i in range(5):
         span = tracer.start_span(from_org, to_org, "act")
         tracer.end_span(span)
 

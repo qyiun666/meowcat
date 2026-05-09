@@ -13,21 +13,18 @@ Validates:
 """
 
 from __future__ import annotations
-from meowcat.testing import make_cat
-from meowcat.events import Lifecycle
 
 import anyio
-import pytest
 
 from meowcat import (
-    CatBase,
-    WorkflowShape,
-    WORKFLOW_CHAIN,
-    BUILTIN_PATHS,
     BUILTIN_CHAINS,
+    BUILTIN_PATHS,
+    WORKFLOW_CHAIN,
+    WorkflowShape,
 )
 from meowcat.defaults.organs import NoopHippocampus
-
+from meowcat.events import Lifecycle
+from meowcat.testing import make_cat
 
 # ===================================================================
 # 1. WorkflowShape data model

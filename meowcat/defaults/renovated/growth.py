@@ -113,14 +113,14 @@ class RenovatedCrystallizer(NoopCrystallizer):
     def diagnose(self) -> dict[str, Any]:
         return {"hits": dict(self._hits), "hotspots": self.hotspots(threshold=3)}
 
-    def crystallize(self, slug: str, hit_count: int) -> bool:
+    def crystallize(self, slug: str, hit_count: int) -> bool:  # type: ignore[override]
         for _name, r in self._run_plugs_sync("crystallize", slug, hit_count):
             if isinstance(r, bool):
                 return r
         self._hits[slug] = self._hits.get(slug, 0) + hit_count
         return self._hits[slug] >= self._crystallize_threshold
 
-    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]:
+    def hotspots(self, threshold: int | None = None) -> list[tuple[str, int]]:  # type: ignore[override]
         for _name, r in self._run_plugs_sync("hotspots", threshold):
             if isinstance(r, list):
                 return r

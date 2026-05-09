@@ -17,9 +17,8 @@ from meowcat.biology.cat_self import (
     DefaultLearnLoop,
     DefaultTaskLoop,
 )
-from meowcat.biology.scribble_pad import ScribblePad
 from meowcat.biology.pineal_gland import PinealGland
-
+from meowcat.biology.scribble_pad import ScribblePad
 
 # -- Mock Cat with perceive / run_loop for bridge tests ---------------
 

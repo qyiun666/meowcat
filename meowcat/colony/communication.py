@@ -28,7 +28,7 @@ class _CommunicationMixin:
 
     def _ensure_storage(self):  # type: ignore[no-untyped-def]
         """Lazy-init storage if not provided."""
-        if self._storage is None:  # type: ignore[attr-defined]
+        if self._storage is None:  # type: ignore[has-type]  # type: ignore[attr-defined]
             from meowcat.defaults.stores import InMemorySharedStore
 
             self._storage = InMemorySharedStore()  # type: ignore[attr-defined]
@@ -215,7 +215,8 @@ class _CommunicationMixin:
         colony_id, cat_uid = parts
         if colony_id != self.colony_id:  # type: ignore[attr-defined]
             raise ValueError(
-                f"Address colony '{colony_id}' does not match this colony '{self.colony_id}'"  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                f"Address colony '{colony_id}' does not match this colony '{self.colony_id}'"
             )
         cat = self.get_cat(cat_uid)  # type: ignore[attr-defined]
         await cat.emit("external_message", {"address": address, **kwargs})
@@ -263,7 +264,8 @@ class _CommunicationMixin:
         # Ensure cat exists
         if cat_uid not in self._cats:  # type: ignore[attr-defined]
             raise KeyError(
-                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                f"Cat '{cat_uid}' not found in colony '{self.colony_id}'")
 
     # -- Inter-cat communication --------------------------------------
 
@@ -306,7 +308,8 @@ class _CommunicationMixin:
             asyncio.TimeoutError: If timeout is set and exceeded.
         """
         # 1. Cross-cat wiring validation
-        self._assert_cross_allowed(from_id, to_id)  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        self._assert_cross_allowed(from_id, to_id)
 
         # 2. Get target cat
         target_cat = self._cats[to_id]  # type: ignore[attr-defined]

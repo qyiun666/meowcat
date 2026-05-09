@@ -22,13 +22,13 @@ from meowcat.defaults.organs.brain import (
     NoopHypothalamus,
     NoopThalamus,
 )
-from meowcat.defaults.organs.hippocampus import NoopHippocampus
 from meowcat.defaults.organs.growth import (
     NoopAnomalyGrowth,
     NoopCorrectionGrowth,
     NoopCrystallizer,
     NoopRoleEmergence,
 )
+from meowcat.defaults.organs.hippocampus import NoopHippocampus
 from meowcat.defaults.organs.sense import (
     NoopEars,
     NoopEyes,

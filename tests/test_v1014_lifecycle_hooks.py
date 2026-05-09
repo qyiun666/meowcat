@@ -18,11 +18,9 @@
 from __future__ import annotations
 
 import anyio
-import pytest
 
+from meowcat import CatBase, Lifecycle
 from meowcat.testing import make_cat
-from meowcat import CatBase, CatHook, Lifecycle
-
 
 # -- 1. on_start hook -------------------------------------------------
 

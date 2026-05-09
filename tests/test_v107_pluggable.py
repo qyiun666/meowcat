@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 
 import pytest
@@ -40,7 +39,6 @@ from meowcat import (
 )
 from meowcat.biology import ORGAN_PROTOCOLS
 from meowcat.defaults import create_cat
-
 
 # ===================================================================
 # Pluggable mixin

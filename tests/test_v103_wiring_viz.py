@@ -15,10 +15,9 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.diagnose import render_wiring
+from meowcat.testing import make_cat
 from meowcat.wiring import Wiring
-
 
 # -- 辅助 ---------------------------------------------------------
 

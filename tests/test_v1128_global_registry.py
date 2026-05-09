@@ -10,7 +10,6 @@ import pytest
 from meowcat.colony import Colony, GlobalColonyRegistry
 from meowcat.pluggable import Pluggable
 
-
 # ════════════════════════════════════════════════════════════════════
 # Helpers
 # ════════════════════════════════════════════════════════════════════
@@ -119,7 +118,7 @@ class TestLookup:
         c.create_cat(name="planner")
         reg.register(c)
         with pytest.raises(KeyError, match="nope01"):
-            reg.find_cat(f"feishu_nope01")
+            reg.find_cat("feishu_nope01")
 
 
 # ════════════════════════════════════════════════════════════════════

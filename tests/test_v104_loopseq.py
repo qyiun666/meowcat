@@ -23,17 +23,16 @@ from __future__ import annotations
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.chain import Chain
-from meowcat.path import Path
 from meowcat.loops import (
+    BUILTIN_LOOPSEQS,
+    DAILY_MAINTENANCE_SEQ,
     Loop,
     LoopSequence,
     LoopSequenceRegistry,
-    DAILY_MAINTENANCE_SEQ,
-    BUILTIN_LOOPSEQS,
 )
-
+from meowcat.path import Path
+from meowcat.testing import make_cat
 
 # -- 辅助 ---------------------------------------------------------
 

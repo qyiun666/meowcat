@@ -20,7 +20,6 @@ from meowcat.biology.pineal_gland import PinealGland
 from meowcat.biology.scribble_pad import ScribblePad
 from meowcat.tools.skill import SkillRegistry
 
-
 # -- Fixtures ---------------------------------------------------------
 
 

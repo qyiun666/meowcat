@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-
 # =========================================================================
 # KeywordPreset — 关键词预设 (挂载到 Ears/Thalamus/Amygdala/Frontal)
 # =========================================================================
@@ -42,7 +41,8 @@ class KeywordPreset:
         return KeywordPreset(
             name=f"{self.name}+{other.name}",
             stop_words=self.stop_words | other.stop_words,
-            command_patterns={**self.command_patterns, **other.command_patterns},
+            command_patterns={**self.command_patterns,
+                              **other.command_patterns},
             danger_patterns=self.danger_patterns + other.danger_patterns,
             topic_keywords={**self.topic_keywords, **other.topic_keywords},
             priority_keywords=self.priority_keywords + other.priority_keywords,

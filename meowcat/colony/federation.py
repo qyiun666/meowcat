@@ -40,7 +40,7 @@ class _FederationMixin:
     @property
     def is_federated(self) -> bool:
         """Whether federation is enabled."""
-        return self._federated
+        return self._federated  # type: ignore[has-type]
 
     async def federate(self, transport: FederationTransport) -> None:
         """Enable federation, join the cross-host Colony network.
@@ -55,7 +55,7 @@ class _FederationMixin:
         Raises:
             RuntimeError: Already federated.
         """
-        if self._federated:
+        if self._federated:  # type: ignore[has-type]
             raise RuntimeError(f"Colony '{self.colony_id}' is already federated")
 
         self._transport = transport
@@ -76,11 +76,11 @@ class _FederationMixin:
             self._federation_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._federation_task
-            self._federation_task = None
+            self._federation_task = None  # type: ignore[assignment]
 
         if self._transport:
             await self._transport.stop()
-            self._transport = None
+            self._transport = None  # type: ignore[assignment]
 
         # Cancel all pending remote requests
         for fut in self._pending_remote.values():

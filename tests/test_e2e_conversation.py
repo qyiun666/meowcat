@@ -15,7 +15,8 @@ Coverage:
 
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import pytest
 
@@ -26,8 +27,7 @@ from meowcat.defaults.organs import NoopCerebrum
 from meowcat.defaults.stages import BaseStage
 from meowcat.events import Lifecycle
 from meowcat.models import PipelineContext, StageEvent
-from meowcat.reflex import Reflex, BUILTIN_REFLEX_PATHS
-
+from meowcat.reflex import BUILTIN_REFLEX_PATHS, Reflex
 
 # ── Helpers ────────────────────────────────────────────────────────────
 

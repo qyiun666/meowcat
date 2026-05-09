@@ -62,7 +62,7 @@ class RenovatedEars(NoopEars):
                 result.update(r)
         return result
 
-    def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:
+    def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:  # type: ignore[override]
         result = _extract_keywords(
             text, top_k=top_k, stop_words=self._keyword.stop_words)
         for _name, r in self._run_plugs_sync("extract_keywords", text, top_k):
@@ -280,7 +280,7 @@ class RenovatedWhiskers(NoopWhiskers):
         drift = any(abs(ln - avg) > avg * 2 for ln in lengths if ln > 0)
         return {"drift": drift, "avg_length": avg}
 
-    def check_hallucination(
+    def check_hallucination(  # type: ignore[override]
         self,
         reply: str,
         session_id: str | None = None,

@@ -21,12 +21,9 @@ v1.3.6 — RememberPolicy 全覆盖测试
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
-from meowcat.remember import RememberPolicy, RememberConfig
-
+from meowcat.remember import RememberConfig, RememberPolicy
 
 # ── Helpers ────────────────────────────────────────────────────────────
 

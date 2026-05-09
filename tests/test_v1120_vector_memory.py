@@ -5,12 +5,11 @@
 
 import pytest
 
-from meowcat.protocols_storage import VectorStorageProtocol
-from meowcat.storage.vector_store import VectorStore
 from meowcat.colony import Colony
 from meowcat.colony.memory import SharedMemoryPool
 from meowcat.defaults.stores import InMemorySharedStore
-
+from meowcat.protocols_storage import VectorStorageProtocol
+from meowcat.storage.vector_store import VectorStore
 
 # -- VectorStore ----------------------------------------------------------
 

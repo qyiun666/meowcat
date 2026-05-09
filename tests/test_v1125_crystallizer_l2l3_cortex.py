@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.plus.crystallizer import Crystallizer, DefaultDetector
 from meowcat.biology.cortex import Cortex, DefaultRuleExtractor
-
+from meowcat.plus.crystallizer import Crystallizer
 
 # ════════════════════════════════════════════════════════════════════
 # Crystallizer L2: Pattern Crystallization

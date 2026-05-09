@@ -19,12 +19,10 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.assembly import CatBase
 from meowcat.colony import Colony
 from meowcat.models import ModelConfig
-from meowcat.tools.tool import Tool, ToolRegistry, ToolSpec
 from meowcat.tools.skill import Skill, SkillRegistry, SkillSpec
-
+from meowcat.tools.tool import Tool, ToolRegistry, ToolSpec
 
 # -- 1. ModelConfig --------------------------------------------------------
 

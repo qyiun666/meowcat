@@ -17,11 +17,10 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.chain import Chain, ChainRegistry
-from meowcat.path import Path, PathRegistry, register_builtin_paths
 from meowcat.assembly import CatBase
+from meowcat.chain import Chain
+from meowcat.path import Path
 from meowcat.testing import make_cat
-
 
 # -- 辅助 ---------------------------------------------------------
 

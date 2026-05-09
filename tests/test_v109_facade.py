@@ -18,21 +18,32 @@ from __future__ import annotations
 import pytest
 
 from meowcat.anatomy import (
-    AMYGDALA, ANOMALY_GROWTH, BRAINSTEM, CORRECTION_GROWTH,
-    EARS, EYES, HIPPOCAMPUS, THALAMUS, WHISKERS,
+    AMYGDALA,
+    ANOMALY_GROWTH,
+    BRAINSTEM,
+    CORRECTION_GROWTH,
+    EARS,
+    EYES,
+    HIPPOCAMPUS,
+    THALAMUS,
+    WHISKERS,
 )
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.colony import Colony
 from meowcat.defaults.organs import (
-    NoopAmygdala, NoopBrainstem, NoopEars, NoopEyes,
-    NoopHippocampus, NoopHypothalamus, NoopThalamus,
+    NoopAmygdala,
+    NoopBrainstem,
+    NoopEars,
+    NoopEyes,
+    NoopHippocampus,
+    NoopHypothalamus,
+    NoopThalamus,
     NoopWhiskers,
 )
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.loops import DAILY_MAINTENANCE_SEQ
-
+from meowcat.testing import make_cat
 
 # -- 辅助 ---------------------------------------------------------
 
@@ -373,7 +384,6 @@ class TestNewWiringEdges:
     @pytest.mark.anyio
     async def test_ears_to_thalamus_hearing_edge(self) -> None:
         """EARS → THALAMUS wiring edge exists (hearing through Path system)."""
-        from meowcat.path import PathRegistry, Path as PathObj
         cat = _make_wired_cat()
         # 通过 Path 系统验证: hear 路径是 EARS → THALAMUS
         hear_path = cat.path_registry.get("hear")

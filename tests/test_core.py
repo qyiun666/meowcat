@@ -11,22 +11,19 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.testing import make_cat
 from meowcat import (
     CatBase,
-    EventBus,
-    Pipeline,
     Wiring,
 )
 from meowcat.defaults import create_cat
 from meowcat.defaults.organs import NoopAmygdala, NoopEars
+from meowcat.models import EntityShape, PipelineContext
 from meowcat.protocols import (
     AmygdalaProtocol,
     CatProtocol,
     EarsProtocol,
-    KittenProtocol,
 )
-from meowcat.models import EntityShape, PipelineContext
+from meowcat.testing import make_cat
 
 
 class TestProtocols:

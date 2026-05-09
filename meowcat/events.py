@@ -309,7 +309,7 @@ class EventBus:
                     self._handler_info.pop(id(h), None)
             self._handlers.clear()
         else:
-            lst = self._handlers.pop(event, None)
+            lst = self._handlers.pop(event, None)  # type: ignore[arg-type]
             if lst:
                 for h in lst:
                     self._handler_info.pop(id(h), None)

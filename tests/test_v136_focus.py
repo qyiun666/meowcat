@@ -12,7 +12,6 @@ import pytest
 
 from meowcat.focus import FocusState, FocusStore, JsonFocusStore
 
-
 # ── FocusState ────────────────────────────────────────────────────────
 
 

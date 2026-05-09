@@ -19,19 +19,17 @@ v1.3.6 — ModelShelf + FallbackChain 全覆盖测试
 from __future__ import annotations
 
 import json
-import urllib.error
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from meowcat.models import ModelConfig
 from meowcat.models_shelf import (
-    ProviderEntry,
     BUILTIN_PROVIDERS,
-    ModelShelf,
     FallbackChain,
+    ModelShelf,
+    ProviderEntry,
 )
-
 
 # ── 1. ProviderEntry ────────────────────────────────────────────────────
 

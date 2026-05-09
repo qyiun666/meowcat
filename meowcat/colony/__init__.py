@@ -59,6 +59,7 @@ from meowcat.storage import SharedStore
 if TYPE_CHECKING:
     from meowcat.biology.growth import CollectiveGrowth
     from meowcat.biology.roles import CollectiveEmergence
+    from meowcat.colony.memory import SharedMemoryPool
 
 logger = logging.getLogger("meowcat.colony")
 
@@ -162,11 +163,13 @@ class Colony(
         self.region = region
         self._colony_uid = colony_id
         self._cat_counter: int = 0
-        self._storage = storage
+        self._storage = storage  # type: ignore[assignment]
         self._llm_shelf: dict[str, ModelConfig] = dict(llm_shelf or {})
         self._cats: dict[str, CatBase] = {}
-        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set()
-        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set()
+        self._cross_allowed: set[Colony._CrossEdge] = cross_wiring_allowed or set(
+        )
+        self._cross_forbidden: set[Colony._CrossEdge] = cross_wiring_forbidden or set(
+        )
         self._has_cross_wiring = (
             cross_wiring_allowed is not None or cross_wiring_forbidden is not None
         )
@@ -181,15 +184,15 @@ class Colony(
             "__tasks__",
         }
         # -- Federation state (initialized here, used by _FederationMixin) --
-        self._transport: FederationTransport | None = None
-        self._federation_task: asyncio.Task | None = None
+        self._transport: FederationTransport | None = None  # type: ignore[assignment]
+        self._federation_task: asyncio.Task | None = None  # type: ignore[assignment]
         self._pending_remote: dict[str, asyncio.Future] = {}
         self._federated = False
         # -- Shared Memory (v1.1.20) ---------------------------------------
-        self._memory_pool = None  # lazily created on first access
+        self._memory_pool: SharedMemoryPool | None = None  # lazily created on first access
         # -- Collective Growth + Emergence (v1.1.22) -------------------------
-        self._growth = None  # lazily created on first access
-        self._emergence = None  # lazily created on first access
+        self._growth: CollectiveGrowth | None = None  # lazily created on first access
+        self._emergence: CollectiveEmergence | None = None  # lazily created on first access
         # -- Task delegation (v1.3.0) -----------------------------------
         # actual task results (non-serialized)
         self._task_results: dict[str, Any] = {}

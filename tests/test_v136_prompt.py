@@ -20,13 +20,12 @@ import asyncio
 
 import pytest
 
-from meowcat.defaults.renovated import RenovatedBrainstem
-from meowcat.defaults.organs import NoopBrainstem
-from meowcat.defaults.presets import OrganPrompt, PROMPT_ZH, PROMPT_DEFAULT, PromptPreset
-from meowcat.biology.cat_self import SelfSnapshot
-from meowcat.protocols_brain import BrainStemProtocol
 from meowcat.adapters.brain import BrainstemAgent
-
+from meowcat.biology.cat_self import SelfSnapshot
+from meowcat.defaults.organs import NoopBrainstem
+from meowcat.defaults.presets import PROMPT_ZH, OrganPrompt, PromptPreset
+from meowcat.defaults.renovated import RenovatedBrainstem
+from meowcat.protocols_brain import BrainStemProtocol
 
 # =========================================================================
 # OrganPrompt dataclass

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.biology.scribble_pad import ScribblePad
+from meowcat.biology.fusion_cycle import FusionCycle
 from meowcat.biology.pineal_gland import (
     DefaultContradiction,
     DefaultInsightFilter,
@@ -15,8 +15,7 @@ from meowcat.biology.pineal_gland import (
     Insight,
     PinealGland,
 )
-from meowcat.biology.fusion_cycle import FusionCycle
-
+from meowcat.biology.scribble_pad import ScribblePad
 
 # -- 1. Core API — meditate / trigger / trigger_if -----------------------
 
@@ -355,7 +354,6 @@ class TestFusionCycle:
 
     def test_on_timer_triggers_after_elapsed(self):
         """on_timer returns True when enough time passed and pad has entries."""
-        import time
         pad = ScribblePad()
         pad.scribble("test")
         cond = FusionCycle.on_timer(minutes=1)

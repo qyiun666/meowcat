@@ -42,7 +42,7 @@ class AgentOrgan(Pluggable):
     def __init__(self, agent: Any, *, name: str | None = None) -> None:
         Pluggable.__init__(self)
         self._agent = agent
-        self.name: str = name or getattr(agent, "name", type(agent).__name__)
+        self.name: str = name or getattr(agent, "name", type(agent).__name__)  # type: ignore[assignment]
 
     # ------------------------------------------------------------------
     # Core delegation

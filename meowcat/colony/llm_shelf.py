@@ -51,23 +51,27 @@ class _LLMShelfMixin:
             KeyError: Named LLM not found on shelf.
         """
         # Plugin hook (first-hit)
-        for _hook, r in self._run_plugs_sync("on_pick", name, dict(self._llm_shelf)):  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        for _hook, r in self._run_plugs_sync("on_pick", name, dict(self._llm_shelf)):
             if isinstance(r, ModelConfig):
                 return r
 
         if name is not None:
             if name not in self._llm_shelf:  # type: ignore[attr-defined]
                 raise KeyError(
-                    f"LLM '{name}' not found on shelf. Available: {list(self._llm_shelf.keys())}"  # type: ignore[attr-defined]
+                    # type: ignore[attr-defined]
+                    f"LLM '{name}' not found on shelf. Available: {list(self._llm_shelf.keys())}"
                 )
             return self._llm_shelf[name]  # type: ignore[attr-defined]
 
         if not self._llm_shelf:  # type: ignore[attr-defined]
             raise ValueError(
-                f"LLM shelf is empty in colony '{self.colony_id}'. "  # type: ignore[attr-defined]
+                # type: ignore[attr-defined]
+                f"LLM shelf is empty in colony '{self.colony_id}'. "
                 f"Stock at least one LLM or pass llm=... explicitly."
             )
-        return next(iter(self._llm_shelf.values()))  # type: ignore[attr-defined]
+        # type: ignore[attr-defined]
+        return next(iter(self._llm_shelf.values()))
 
     def assemble_cat(
         self,

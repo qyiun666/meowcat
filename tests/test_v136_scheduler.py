@@ -35,8 +35,7 @@ import time
 
 import pytest
 
-from meowcat.scheduler import PeriodicScheduler, PeriodicConfig, PeriodicTask
-
+from meowcat.scheduler import PeriodicConfig, PeriodicScheduler, PeriodicTask
 
 # ── 1. PeriodicConfig ───────────────────────────────────────────────────
 

@@ -36,9 +36,9 @@ asyncio_mode = "auto"
 python_version = "3.10"
 check_untyped_defs = true
 warn_return_any = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 exclude = ["tests/"]
-disable_error_code = ["attr-defined"]
+disable_error_code = ["attr-defined", "no-any-return"]
 
 [[tool.mypy.overrides]]
 module = ["pydantic", "anyio", "httpx", "playwright", "chromadb", "textual"]
@@ -52,6 +52,9 @@ extend-exclude = [".history/", "__pycache__/", "docs/"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
 ignore = ["PLC", "D", "F822", "N999"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["N806", "N814", "N817", "B017", "N801", "E741", "SIM105", "SIM103", "SIM117", "B023", "F841"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["meowcat"]

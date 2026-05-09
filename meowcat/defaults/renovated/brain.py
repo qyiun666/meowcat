@@ -33,7 +33,6 @@ from .brainstem import RenovatedBrainstem  # noqa: F401
 from .cerebrum import RenovatedCerebellum, RenovatedCerebrum  # noqa: F401
 from .hippocampus import RenovatedHippocampus  # noqa: F401
 
-
 # =========================================================================
 # Brain Regions — 简装修
 # =========================================================================
@@ -165,7 +164,7 @@ class RenovatedAmygdala(NoopAmygdala):
                 return {"safe": False, "risk": "high", "pattern": pat.pattern, "match": m.group()}
         return {"safe": True, "risk": "low"}
 
-    def assess_tool_risk(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]:
+    def assess_tool_risk(self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]:  # type: ignore[override]
         """Assess tool execution risk.
 
         Configurable via ``dangerous_tools`` and ``dangerous_paths`` constructor
@@ -215,7 +214,7 @@ class RenovatedFrontal(NoopFrontal):
         self._threshold: float = threshold
         self._focus_store = focus_store
 
-    def is_continue(self, msg: str) -> bool:
+    def is_continue(self, msg: str) -> bool:  # type: ignore[override]
         for _name, r in self._run_plugs_sync("is_continue", msg):
             if isinstance(r, bool):
                 return r
@@ -226,7 +225,7 @@ class RenovatedFrontal(NoopFrontal):
         overlap = len(kws & self._current_keywords)
         return overlap >= max(1, len(self._current_keywords) * self._threshold)
 
-    def detect_shift(self, msg: str) -> bool:
+    def detect_shift(self, msg: str) -> bool:  # type: ignore[override]
         for _name, r in self._run_plugs_sync("detect_shift", msg):
             if isinstance(r, bool):
                 return r
@@ -351,7 +350,7 @@ class RenovatedCortex(NoopCortex):
     def weaknesses(self) -> list[dict[str, Any]]:
         return list(self._weakness_log)
 
-    def synthesize(self, max_tokens: int = 400) -> str:
+    def synthesize(self, max_tokens: int = 400) -> str:  # type: ignore[override]
         result = ""
         for _name, r in self._run_plugs_sync("synthesize", max_tokens):
             if isinstance(r, str):

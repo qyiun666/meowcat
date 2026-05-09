@@ -19,18 +19,16 @@
 from __future__ import annotations
 
 import asyncio
-import json
 
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.colony import Colony
-from meowcat.colony.transports import TCPSocketTransport, RedisPubSubTransport
+from meowcat.colony.transports import RedisPubSubTransport, TCPSocketTransport
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.protocols_storage import FederationTransport
-
+from meowcat.testing import make_cat
 
 # -- 辅助 -------------------------------------------------------------
 

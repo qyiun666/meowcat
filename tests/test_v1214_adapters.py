@@ -5,17 +5,27 @@
 
 import pytest
 
-from meowcat.adapters.base import AgentOrgan, SkillOrgan
 from meowcat.adapters import (
-    CerebrumAgent, CerebellumAgent, ThalamusAgent,
-    HippocampusAgent, AmygdalaAgent, BrainstemAgent,
-    FrontalAgent, HypothalamusAgent, CortexAgent,
-    EarsAgent, EyesAgent, WhiskersAgent, PawsAgent,
-    MouthAgent, PurrAgent, TailAgent,
+    AmygdalaAgent,
+    BrainstemAgent,
+    CerebellumAgent,
+    CerebrumAgent,
+    CortexAgent,
+    EarsAgent,
+    EyesAgent,
+    FrontalAgent,
+    HippocampusAgent,
+    HypothalamusAgent,
+    MouthAgent,
+    PawsAgent,
+    PurrAgent,
+    TailAgent,
+    ThalamusAgent,
+    WhiskersAgent,
 )
+from meowcat.adapters.base import AgentOrgan, SkillOrgan
 from meowcat.errors import OrganDelegateError
 from meowcat.pluggable import Pluggable
-
 
 # ===================================================================
 # Mock agents / skills

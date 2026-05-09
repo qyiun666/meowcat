@@ -137,7 +137,7 @@ class PawsEngine:
         Application layer can subclass for smarter matching (LLM/embedding).
         """
         q = intent.lower()
-        results: list[Tool] = []
+        results: list[tuple[int, Tool]] = []
         for tool in self.tool_registry.list_all():
             score = 0
             if q in tool.name.lower():

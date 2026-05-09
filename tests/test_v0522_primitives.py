@@ -18,12 +18,10 @@ from unittest.mock import patch
 import anyio
 import pytest
 
-from meowcat.testing import make_cat
-from meowcat import CatBase
 from meowcat.diagnose import Stethoscope
 from meowcat.errors import OrganNotMountedError
 from meowcat.inject import Needle, NeedleDisabledError
-
+from meowcat.testing import make_cat
 
 # -- 测试用器官 ---------------------------------------------------
 

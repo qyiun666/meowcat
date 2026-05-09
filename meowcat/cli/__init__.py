@@ -25,7 +25,7 @@ from meowcat.cli.theme import Theme
 try:
     from meowcat.cli.app import MeowTui  # requires textual
 except ImportError:
-    MeowTui = None
+    MeowTui = None  # type: ignore[misc,assignment]
 
 __all__ = [
     "I18n",

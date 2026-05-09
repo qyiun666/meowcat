@@ -23,10 +23,10 @@ from meowcat.adapters.brain import (
     CerebrumAgent,
     CortexAgent,
     FrontalAgent,
-    HippocampusAgent,
     HypothalamusAgent,
     ThalamusAgent,
 )
+from meowcat.adapters.hippocampus import HippocampusAgent
 from meowcat.adapters.sense import (
     EarsAgent,
     EyesAgent,

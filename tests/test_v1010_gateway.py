@@ -25,12 +25,18 @@ import io
 import json
 import os
 import sys
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from meowcat.assembly import CatBase
-from meowcat.testing import make_cat, make_test_colony
+from meowcat.gateway import Gateway
+from meowcat.gateway.front_desk import DefaultFrontDesk
+from meowcat.gateway.protocol import (
+    FrontDeskProtocol,
+    GatewayProtocol,
+    IoAdapterProtocol,
+    SignalContext,
+)
 from meowcat.plus.gateway import (
     CliAdapter,
     HttpAdapter,
@@ -38,15 +44,7 @@ from meowcat.plus.gateway import (
     WebhookAdapter,
     WsAdapter,
 )
-from meowcat.gateway import Gateway
-from meowcat.gateway.front_desk import DefaultFrontDesk
-from meowcat.gateway.protocol import (
-    FrontDeskProtocol,
-    IoAdapterProtocol,
-    GatewayProtocol,
-    SignalContext,
-)
-
+from meowcat.testing import make_cat, make_test_colony
 
 # ═══════════════════════════════════════════════════════════════════
 # 1. SignalContext
@@ -353,12 +351,10 @@ class TestHttpAdapter:
 
 # WebSocket 帧工具（复用 ws_adapter 中的函数）
 from meowcat.plus.gateway.ws_adapter import (  # noqa: E402
+    _OP_TEXT,
     _compute_accept,
     _decode_frame,
     _encode_frame,
-    _OP_TEXT,
-    _OP_CLOSE,
-    _WS_GUID,
 )
 
 
@@ -373,7 +369,6 @@ class TestWsFrameEncoding:
 
     def test_decode_text_frame(self) -> None:
         """解码带 mask 的文本帧。"""
-        import struct
         payload = b"test"
         mask_key = b"\x12\x34\x56\x78"
         masked = bytearray(payload)
@@ -443,7 +438,6 @@ class TestWsAdapter:
 
             # 发送文本帧
             text = "hello ws"
-            import struct
             payload = text.encode()
             mask_key = b"\x00\x01\x02\x03"
             masked = bytearray(payload)

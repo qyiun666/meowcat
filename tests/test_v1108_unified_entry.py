@@ -14,13 +14,16 @@ v1.1.8 — 统一对外入口 + 搜索边界测试
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from meowcat.assembly import CatBase
 
 from meowcat.colony import Colony
 from meowcat.defaults.organs import NoopHippocampus
 from meowcat.defaults.stores import InMemorySharedStore
-from meowcat.testing import make_cat
-
 
 # -- 辅助工厂 -------------------------------------------------------
 
@@ -30,7 +33,6 @@ def _colony_with_cats(*names: str) -> tuple[Colony, dict[str, CatBase]]:
     Returns:
         (colony, dict_of_cats) where dict_of_cats maps name → CatBase.
     """
-    from meowcat.assembly import CatBase
     colony = Colony("test-colony", storage=InMemorySharedStore())
     cats: dict[str, CatBase] = {}
     for n in names:

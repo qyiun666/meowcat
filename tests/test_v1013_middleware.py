@@ -23,7 +23,6 @@ from typing import Any
 
 import pytest
 
-from meowcat.testing import make_cat
 from meowcat import (
     CatBase,
     ContextInjector,
@@ -33,8 +32,7 @@ from meowcat import (
     SignalLogger,
     TimeoutGuard,
 )
-from meowcat.nervous import SignalMiddleware
-
+from meowcat.testing import make_cat
 
 # -- 测试辅助 --------------------------------------------------------
 

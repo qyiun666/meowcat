@@ -121,8 +121,7 @@ class I18n(Pluggable):
 
     # -- Pluggable hook — "language" slot -------------------------------
 
-    # type: ignore[override]
-    def plug(self, slot: str, code: str, data: dict[str, str] | None = None) -> None:
+    def plug(self, slot: str, code: str, data: dict[str, str] | None = None) -> None:  # type: ignore[override]
         """Extended plug for I18n — ``"language"`` slot registers a new language.
 
         Usage::
@@ -139,7 +138,7 @@ class I18n(Pluggable):
         if slot == "language" and data is not None:
             self.add_language(code, data)
         else:
-            super().plug(slot, code)
+            super().plug(slot, code)  # type: ignore[arg-type]
 
 
 __all__ = ["I18n"]

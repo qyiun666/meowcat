@@ -14,9 +14,8 @@ v1.0.1 — CatBase 分身猫隔离（替代 KittenBase + _KittenParentProxy）
 from __future__ import annotations
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.errors import IllegalNeuralPathError
-
+from meowcat.testing import make_cat
 
 # -- 1. 无父猫对象引用 ----------------------------------------------
 

@@ -17,11 +17,9 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from meowcat.testing import make_cat
-from meowcat import CatBase
 from meowcat.chain import BUILTIN_CHAINS, Chain, ChainRegistry, register_builtin_chains
 from meowcat.path import Path
-
+from meowcat.testing import make_cat
 
 # -- Chain dataclass -----------------------------------------------
 

@@ -6,9 +6,8 @@
 import pytest
 
 from meowcat.protocols_storage import GraphStorageProtocol
-from meowcat.storage.sqlite_graph_store import SqliteGraphStore
 from meowcat.storage.jsonl_l6_store import JsonlL6Store
-
+from meowcat.storage.sqlite_graph_store import SqliteGraphStore
 
 # -- SqliteGraphStore ---------------------------------------------------
 

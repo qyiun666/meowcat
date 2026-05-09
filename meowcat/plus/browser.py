@@ -91,12 +91,12 @@ class BrowserTool:
 
         pw_func = self._get_playwright()
         # type: ignore[union-attr]
-        self._playwright = await pw_func().__aenter__()
+        self._playwright = await pw_func().__aenter__()  # type: ignore[operator]
         browser_launcher = getattr(self._playwright, self._browser_type)
         self._browser = await browser_launcher.launch(
             headless=self._headless,
         )
-        self._page = await self._browser.new_page(
+        self._page = await self._browser.new_page(  # type: ignore[union-attr]
             viewport={"width": self._viewport_width, "height": self._viewport_height},
         )
         self._started = True

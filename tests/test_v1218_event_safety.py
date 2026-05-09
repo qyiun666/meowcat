@@ -11,35 +11,48 @@ from __future__ import annotations
 
 from typing import get_type_hints
 
-import anyio
 import pytest
 
 from meowcat import (
-    EventBus,
-    Lifecycle, NerveEvent,
-    LocateEvent, RememberEvent,
-    OrchestrateEvent, GrowthEvent,
-    KittenEvent, SelfEvent, FusionEvent,
     ALL_EVENTS,
+    EventBus,
+    KittenEvent,
+    Lifecycle,
+    NerveEvent,
 )
 from meowcat.events_payloads import (
-    LifecycleStartPayload, LifecycleShutdownPayload,
-    PerceiveStartPayload, PerceiveEndPayload,
-    NerveSignalPayload,
-    LocatePrePayload, LocatePostPayload, RouteDecidedPayload,
-    RememberPrePayload, RememberPostPayload,
-    CompressPrePayload, CompressPostPayload,
-    OrchestrateStartPayload, OrchestrateEndPayload,
-    GrowthAnomalyPayload, GrowthCorrectionPayload,
-    CrystallizePayload, RoleEmergePayload,
-    KittenSpawnedPayload, KittenExecutingPayload, KittenCompletedPayload,
-    KittenStuckPayload, KittenDismissedPayload, KittenMergeAbsorbedPayload,
-    SelfSnapshotPayload, SelfReflectPayload,
-    FusionSelfPayload, FusionColonyPayload,
-    FusionTriggerStartPayload, FusionTriggerEndPayload,
     EVENT_PAYLOAD_MAP,
+    CompressPostPayload,
+    CompressPrePayload,
+    CrystallizePayload,
+    FusionColonyPayload,
+    FusionSelfPayload,
+    FusionTriggerEndPayload,
+    FusionTriggerStartPayload,
+    GrowthAnomalyPayload,
+    GrowthCorrectionPayload,
+    KittenCompletedPayload,
+    KittenDismissedPayload,
+    KittenExecutingPayload,
+    KittenMergeAbsorbedPayload,
+    KittenSpawnedPayload,
+    KittenStuckPayload,
+    LifecycleShutdownPayload,
+    LifecycleStartPayload,
+    LocatePostPayload,
+    LocatePrePayload,
+    NerveSignalPayload,
+    OrchestrateEndPayload,
+    OrchestrateStartPayload,
+    PerceiveEndPayload,
+    PerceiveStartPayload,
+    RememberPostPayload,
+    RememberPrePayload,
+    RoleEmergePayload,
+    RouteDecidedPayload,
+    SelfReflectPayload,
+    SelfSnapshotPayload,
 )
-
 
 # -- TypedDict 导入 + 存在性 -----------------------------------------------
 
@@ -49,15 +62,15 @@ class TestPayloadImports:
     def test_import_from_meowcat(self) -> None:
         """通过 meowcat 顶层包可导入所有 payload TypedDict."""
         from meowcat import (
-            NerveSignalPayload, PerceiveStartPayload, PerceiveEndPayload,
-            LifecycleStartPayload, LifecycleShutdownPayload,
+            NerveSignalPayload,
+            PerceiveStartPayload,
         )
         assert NerveSignalPayload is not None
         assert PerceiveStartPayload is not None
 
     def test_import_from_payloads_module(self) -> None:
         """通过 events_payloads 模块可直接导入."""
-        from meowcat.events_payloads import NerveSignalPayload, EVENT_PAYLOAD_MAP
+        from meowcat.events_payloads import EVENT_PAYLOAD_MAP, NerveSignalPayload
         assert isinstance(NerveSignalPayload, type)
         assert isinstance(EVENT_PAYLOAD_MAP, dict)
 

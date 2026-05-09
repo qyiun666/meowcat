@@ -12,7 +12,6 @@ import pytest
 
 from meowcat.checkpoint import CheckpointConfig, CheckpointStore, JsonCheckpointStore
 
-
 # ── CheckpointConfig ──────────────────────────────────────────────────
 
 

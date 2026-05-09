@@ -23,11 +23,10 @@ import asyncio
 import pytest
 
 from meowcat.assembly import CatBase
-from meowcat.testing import make_cat
 from meowcat.colony import Colony
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
-
+from meowcat.testing import make_cat
 
 # -- 辅助 ---------------------------------------------------------
 

@@ -5,10 +5,9 @@
 
 import pytest
 
-from meowcat.storage import SharedStore
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.log import MeowLog
-
+from meowcat.storage import SharedStore
 
 # -- SharedStore ABC -------------------------------------------------------
 

@@ -46,7 +46,6 @@ from meowcat.biology import (
     _aggregate_edges,
 )
 
-
 # -- 结构性约束 --------------------------------------------------
 
 def test_organ_specs_count_matches_organ_protocols() -> None:
@@ -126,7 +125,7 @@ def test_organ_protocols_derived_from_specs() -> None:
     """ORGAN_PROTOCOLS 与 ORGAN_SPECS 中非 None protocol 完全一致。"""
     expected = {
         s.coord: s.protocol for s in ORGAN_SPECS if s.protocol is not None}
-    assert ORGAN_PROTOCOLS == expected
+    assert expected == ORGAN_PROTOCOLS
 
 
 # -- 生物学合理性抽查 --------------------------------------------

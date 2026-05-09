@@ -20,8 +20,7 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.compression import CompressionManager, CompressionConfig
-
+from meowcat.compression import CompressionConfig, CompressionManager
 
 # ── Helpers ────────────────────────────────────────────────────────────
 

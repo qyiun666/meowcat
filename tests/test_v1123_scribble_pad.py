@@ -13,7 +13,6 @@ from meowcat.biology.scribble_pad import (
     ScribblePad,
 )
 
-
 # -- 1. Core API — scribble / peek / drain / count / is_full --------------
 
 class TestScribblePadCore:

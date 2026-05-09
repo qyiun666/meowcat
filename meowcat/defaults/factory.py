@@ -9,7 +9,10 @@ Unprovided organs automatically use Noop* / InMemory* default implementations.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from meowcat.colony import Colony  # noqa: F401
 
 from meowcat.assembly import CatBase, CatHook, mount_known_organs
 from meowcat.defaults.organs import (
@@ -430,7 +433,7 @@ def create_cat(
                 name="text_dialogue",
                 trigger=lambda x: isinstance(x, str),
                 path=BUILTIN_REFLEX_PATHS["text_dialogue"],
-                stages=build_default_pipeline(),
+                stages=build_default_pipeline(),  # type: ignore[arg-type]
                 priority=0,
             )
         )

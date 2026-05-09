@@ -15,7 +15,6 @@ from meowcat.biology.active_growth import (
 from meowcat.defaults.organs import NoopPaws, NoopWhiskers
 from meowcat.reflex import ReflexRegistry
 
-
 # ════════════════════════════════════════════════════════════════════
 # BlindSpotDetector — curiosity-driven knowledge gap detection
 # ════════════════════════════════════════════════════════════════════

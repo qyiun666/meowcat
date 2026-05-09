@@ -16,11 +16,9 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from meowcat.testing import make_cat
-from meowcat import CatBase
 from meowcat.anatomy import BRAINSTEM, CORTEX
 from meowcat.path import BUILTIN_PATHS, Path, PathRegistry, register_builtin_paths
-
+from meowcat.testing import make_cat
 
 # -- synthesize path exists in BUILTIN_PATHS ---------------------------------
 

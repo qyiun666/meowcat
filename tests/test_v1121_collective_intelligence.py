@@ -8,10 +8,8 @@ from __future__ import annotations
 import pytest
 
 from meowcat.colony import Colony
-from meowcat.colony.memory import SharedMemoryPool
 from meowcat.defaults.organs import NoopHippocampus
 from meowcat.defaults.stores import InMemorySharedStore
-
 
 # -- 1. Cross-cat memory search (Hippocampus.locate scope=colony) ----------
 

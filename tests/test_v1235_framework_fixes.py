@@ -16,11 +16,10 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.defaults import InMemorySharedStore, InMemoryVectorStore
+from meowcat.defaults import InMemoryVectorStore
 from meowcat.errors import StandaloneCatError
 from meowcat.storage import VectorStore
 from meowcat.testing import make_cat, make_test_colony
-
 
 # ──────────────────────────────────────────────────────────────────────
 # T1: CatBase container 类型标注修复
@@ -74,7 +73,7 @@ class Test_T2_LoopsImportProtection:
 
     def test_import_normal_from_loops_works(self):
         """正常导入 loops 模块的正确定义不应被影响。"""
-        from meowcat.loops import Loop, BUILTIN_LOOPS  # noqa: F401
+        from meowcat.loops import BUILTIN_LOOPS, Loop  # noqa: F401
 
     def test_unknown_attr_still_raises(self):
         """非事件类的未知属性仍抛出 AttributeError。"""
@@ -195,8 +194,8 @@ class Test_T6_ToolsLazyDelegation:
         from meowcat.tools import BrowserTool  # noqa: F401
 
     def test_same_object_from_top_level_and_tools(self):
-        from meowcat.tools import BUILTIN_TOOLS as BT_TOOLS
         from meowcat import BUILTIN_TOOLS as BT_TOP
+        from meowcat.tools import BUILTIN_TOOLS as BT_TOOLS
         assert BT_TOOLS is BT_TOP
 
     def test_unknown_attr_raises(self):

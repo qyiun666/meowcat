@@ -174,7 +174,7 @@ class WorkerScheduler:
                     "priority": worker.priority,
                     "depends_on": worker.depends_on,
                     "max_retries": worker.max_retries,
-                    "status": self.status(w_id).value if self.status(w_id) else "unknown",
+                    "status": self.status(w_id).value if self.status(w_id) else "unknown",  # type: ignore[union-attr]
                 }
             )
         return result

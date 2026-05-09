@@ -20,7 +20,7 @@
 - [x] 同步清理 `adapters/sense.py` / `defaults/organs/voice.py` / `defaults/renovated/brain.py` 中关联引用
 - [x] 验证: 搜全框架零残留引用
 
-### T-03: colony/__init__.py 拆分 (971→422)
+### T-03: colony/**init**.py 拆分 (971→422)
 
 - [x] Colony 主类精简 — 保留核心初始化 + 重导出
 - [x] cat 管理 / 通信方法已在 `cat_ops.py` / `communication.py` / `llm_shelf.py` 中
@@ -41,7 +41,7 @@
 - [x] `__init__.py` (597→210): 提取器官规格定义 → `organ_spec.py`
 - [x] 验证: CatSelf 单类保留，API 不变
 
-### T-06: _exports + adapters + assembly 拆分
+### T-06: \_exports + adapters + assembly 拆分
 
 - [x] `_exports.py` (661→235): 提取 `__all__` + `_LAZY_MAP` → `_lazy_map.py`
 - [x] `adapters/brain.py` (566→375): 提取 Hippocampus 适配器 → `adapters/hippocampus.py`

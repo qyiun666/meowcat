@@ -24,7 +24,6 @@ from __future__ import annotations
 
 from meowcat.noise import NoiseFilter, NoiseFilterConfig
 
-
 # ── 1. NoiseFilterConfig ────────────────────────────────────────────────
 
 class TestNoiseFilterConfig:

@@ -218,7 +218,7 @@ class CollectiveGrowth(Pluggable):
 
     async def diagnose(self) -> dict[str, Any]:
         """Return a diagnostic snapshot."""
-        cnt = await self.count()
+        cnt: dict[str, Any] = await self.count()
         cnt["growth_ns"] = _GROWTH_NS
         cnt["plugs"] = self.list_plugs()
         return cnt

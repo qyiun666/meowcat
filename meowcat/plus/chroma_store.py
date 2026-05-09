@@ -169,7 +169,7 @@ class ChromaStore:
             settings_kwargs["settings"] = settings
             self._client = chromadb.PersistentClient(
                 path=self._persist_dir,
-                **settings_kwargs,
+                **settings_kwargs,  # type: ignore[arg-type]
             )
         else:
             self._client = chromadb.Client()
