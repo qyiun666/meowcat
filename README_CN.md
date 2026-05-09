@@ -200,37 +200,28 @@ from meowcat.colony import Colony
 
 colony = Colony()  # colony_uid 自动生成（含版权水印）
 
-# ✅ 方式一：接入真实 LLM（以 OpenAI 为例）
-# 框架不存模型名，只存 provider + API 接口，绑定后动态拉取
+# ✅ 方式一：接入真实 LLM（以 DeepSeek 为例）
+# DeepSeek 兼容 OpenAI API，只需设置 base_url
 from openai import AsyncOpenAI
 
-class OpenAICerebrum:
-    """OpenAI 大脑 — 不硬编码模型名，首次调用时从 provider 拉取。"""
+class DeepSeekCerebrum:
+    """DeepSeek 大脑 — 模型固定为 deepseek-chat。"""
     name = "cerebrum"
 
     def __init__(self, *, api_key=None):
-        """api_key 不存框架内，由环境变量或配置中心注入。"""
-        self.client = AsyncOpenAI(api_key=api_key)
-        self._model = None  # 延迟绑定，首次调用时拉取
-
-    async def _resolve_model(self) -> str:
-        """从 provider 拉取可用模型列表，取最新 chat 模型。"""
-        models = await self.client.models.list()
-        chat = sorted(
-            [m.id for m in models.data if m.id.startswith("gpt-")],
-            reverse=True,
+        self.client = AsyncOpenAI(
+            api_key=api_key or "your-deepseek-api-key",
+            base_url="https://api.deepseek.com",
         )
-        return chat[0] if chat else "gpt-4o-mini"
+        self.model = "deepseek-chat"
 
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        if self._model is None:
-            self._model = await self._resolve_model()
         msgs = []
         if system_prompt:
             msgs.append({"role": "system", "content": system_prompt})
         msgs.append({"role": "user", "content": prompt})
         r = await self.client.chat.completions.create(
-            model=self._model, messages=msgs
+            model=self.model, messages=msgs
         )
         return r.choices[0].message.content
 
@@ -246,7 +237,7 @@ class OpenAICerebrum:
         pass
 
 # 完整装配：20 器官 + 接线 + 反射弧
-cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="小喵")
+cat = create_cat(container=colony, cerebrum=DeepSeekCerebrum(), name="小喵")
 
 # ✅ 方式二：最小 mock（无需 API key，用于测试布线）
 # class EchoCerebrum:
@@ -496,18 +487,18 @@ await colony.signal_remote("other-colony", "cat-3", ...)
 
 ## 📊 版本历史（关键里程碑）
 
-| 版本       | 时间       | 亮点                                                                                                                                                                                                                                    |
-| :--------- | :--------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1.3.10** | 2026.05.09 | CI lint 修复 + Release 重构为 workflow_dispatch 手动发包 · pypi/github-release 独立 job |
-| **v1.3.9** | 2026.05.09 | 代码健康整理 — 12 文件拆至 ≤500 行 · deprecated 清理 · 版本文档补全 |
-| **v1.3.8** | 2026.05.08 | mypy + ruff 静态检查 · CI lint job + 矩阵 3.10-3.13 · pre-commit · 10 蓝修复 · 大文件拆分 |
-| **v1.3.7** | 2026.05.08 | Gateway 绑定 Colony · FrontDesk 新物种 — on_route 插件链（安全门/审计/限流） |
-| **v1.3.6** | 2026.05.07 | OrganPrompt 提示插槽 · Hippocampus episodes 持久化 · LLM 模型货架 12 供应商 · 管理器基类 5 件套 · PeriodicScheduler/FocusStore/CheckpointStore · PlanReviser 策略链 · TaskOrchestrator DAG · Async 生命周期钩子 · Telemetry/CB 公开 API |
-| **v1.3.x** | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                                                                                          |
-| **v1.2.x** | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                                                                                           |
-| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                                                                                      |
-| **v1.0.x** | 2026.05.02 | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                                                                                      |
-| **v0.5.x** | 2026.05.01 | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图                                                                 |
+| 版本        | 时间       | 亮点                                                                                                                                                                                                                                    |
+| :---------- | :--------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1.3.10** | 2026.05.09 | CI lint 修复 + Release 重构为 workflow_dispatch 手动发包 · pypi/github-release 独立 job                                                                                                                                                 |
+| **v1.3.9**  | 2026.05.09 | 代码健康整理 — 12 文件拆至 ≤500 行 · deprecated 清理 · 版本文档补全                                                                                                                                                                     |
+| **v1.3.8**  | 2026.05.08 | mypy + ruff 静态检查 · CI lint job + 矩阵 3.10-3.13 · pre-commit · 10 蓝修复 · 大文件拆分                                                                                                                                               |
+| **v1.3.7**  | 2026.05.08 | Gateway 绑定 Colony · FrontDesk 新物种 — on_route 插件链（安全门/审计/限流）                                                                                                                                                            |
+| **v1.3.6**  | 2026.05.07 | OrganPrompt 提示插槽 · Hippocampus episodes 持久化 · LLM 模型货架 12 供应商 · 管理器基类 5 件套 · PeriodicScheduler/FocusStore/CheckpointStore · PlanReviser 策略链 · TaskOrchestrator DAG · Async 生命周期钩子 · Telemetry/CB 公开 API |
+| **v1.3.x**  | 2026.05.06 | 任务委托 delegate_async / await_task、colony UID 自动生成 + CALL_SIGN 版权水印、Growth 新增 4 条 Path + 2 条 Chain + 2 条 Loop                                                                                                          |
+| **v1.2.x**  | 2026.05.05 | CatSelf 统一自我模型、熔断器、遥测（Tracer+Metrics）、事件载荷类型、Colony 配置化、中间件重构                                                                                                                                           |
+| **v1.1.x**  | 2026.05.03 | Crystallizer L1-L3 技能晶化、PinealGland 顿悟融合、ScribblePad 草稿纸、Cortex L0-L3 世界观、ActiveGrowth 主动生长、Colony 联邦、Pluggable 器官插件                                                                                      |
+| **v1.0.x**  | 2026.05.02 | Colony 多猫容器、SharedStorage 共享存储、群聊、跨猫信号、Gateway 适配器（HTTP/WS/CLI/IPC/Webhook）                                                                                                                                      |
+| **v0.5.x**  | 2026.05.01 | 从 MeowAgent 抽离为独立框架 · CatBase 外观模式 · 双脑架构 · OrganHost/Wiring/Nervous 子系统拆分 · ReflexArc 反射弧 · Slot-Plug 模型 · ImplementationStyle · 20 器官蓝图                                                                 |
 
 ---
 

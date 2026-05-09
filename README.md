@@ -199,37 +199,28 @@ from meowcat.colony import Colony
 
 colony = Colony()  # colony_uid auto-generated (with copyright watermark)
 
-# ✅ Option 1: Real LLM (OpenAI example)
-# Framework stores no model names — only provider + API; resolved at bind time
+# ✅ Option 1: Real LLM (DeepSeek example)
+# DeepSeek is OpenAI-API-compatible — just set base_url
 from openai import AsyncOpenAI
 
-class OpenAICerebrum:
-    """OpenAI cerebrum — no hardcoded model, fetched from provider on first call."""
+class DeepSeekCerebrum:
+    """DeepSeek cerebrum — model name fixed to deepseek-chat."""
     name = "cerebrum"
 
     def __init__(self, *, api_key=None):
-        """api_key not stored in framework — injected via env or config center."""
-        self.client = AsyncOpenAI(api_key=api_key)
-        self._model = None  # lazy bind, resolved on first call
-
-    async def _resolve_model(self) -> str:
-        """Fetch available models from provider, pick latest chat model."""
-        models = await self.client.models.list()
-        chat = sorted(
-            [m.id for m in models.data if m.id.startswith("gpt-")],
-            reverse=True,
+        self.client = AsyncOpenAI(
+            api_key=api_key or "your-deepseek-api-key",
+            base_url="https://api.deepseek.com",
         )
-        return chat[0] if chat else "gpt-4o-mini"
+        self.model = "deepseek-chat"
 
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
-        if self._model is None:
-            self._model = await self._resolve_model()
         msgs = []
         if system_prompt:
             msgs.append({"role": "system", "content": system_prompt})
         msgs.append({"role": "user", "content": prompt})
         r = await self.client.chat.completions.create(
-            model=self._model, messages=msgs
+            model=self.model, messages=msgs
         )
         return r.choices[0].message.content
 
@@ -245,7 +236,7 @@ class OpenAICerebrum:
         pass
 
 # Fully assembled: 20 organs + wiring + reflex arcs
-cat = create_cat(container=colony, cerebrum=OpenAICerebrum(), name="Kitty")
+cat = create_cat(container=colony, cerebrum=DeepSeekCerebrum(), name="Kitty")
 
 # ✅ Option 2: Minimal mock (no API key, for testing wiring)
 # class EchoCerebrum:

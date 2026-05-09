@@ -26,10 +26,10 @@ Bug 修复版本 — 解决 CI lint mypy `import-not-found` 错误 + Release wor
 
 ## 子任务进度
 
-| 子任务 | 状态 | 描述 |
-| ------ | ---- | ---- |
-| T-01   | ✅   | CI lint 安装可选依赖 |
-| T-02   | ✅   | Release 改 workflow_dispatch |
-| T-03   | ✅   | github-release 自动创建 tag |
+| 子任务 | 状态 | 描述                             |
+| ------ | ---- | -------------------------------- |
+| T-01   | ✅   | CI lint 安装可选依赖             |
+| T-02   | ✅   | Release 改 workflow_dispatch     |
+| T-03   | ✅   | github-release 自动创建 tag      |
 | T-04   | ✅   | pypi/github-release 拆为独立 job |
-| T-05   | ✅   | 文档更新 + release v1.3.10 |
+| T-05   | ✅   | 文档更新 + release v1.3.10       |

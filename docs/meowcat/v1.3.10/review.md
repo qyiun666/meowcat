@@ -2,11 +2,11 @@
 
 ## 问题与决策
 
-| # | 问题 | 决策 |
-|---|------|------|
-| 1 | CI lint job mypy `import-not-found` on `textual`/`playwright` | lint job 安装 `-e ".[plus,tui]"` 而非仅 mypy+ruff |
-| 2 | `workflow_dispatch` 无关联 tag，`github-release` 失败 | 新增 step 自动从 pyproject.toml 读版本创建 tag |
-| 3 | pypi 版本冲突导致 github-release 被阻断 | 拆为独立 job，仅依赖 call-test |
+| #   | 问题                                                          | 决策                                              |
+| --- | ------------------------------------------------------------- | ------------------------------------------------- |
+| 1   | CI lint job mypy `import-not-found` on `textual`/`playwright` | lint job 安装 `-e ".[plus,tui]"` 而非仅 mypy+ruff |
+| 2   | `workflow_dispatch` 无关联 tag，`github-release` 失败         | 新增 step 自动从 pyproject.toml 读版本创建 tag    |
+| 3   | pypi 版本冲突导致 github-release 被阻断                       | 拆为独立 job，仅依赖 call-test                    |
 
 ## 关键决策
 
