@@ -204,7 +204,7 @@ colony = Colony()  # colony_uid auto-generated (with copyright watermark)
 from openai import AsyncOpenAI
 
 class DeepSeekCerebrum:
-    """DeepSeek cerebrum — model name fixed to deepseek-chat."""
+    """DeepSeek cerebrum — model fixed to deepseek-v4-pro."""
     name = "cerebrum"
 
     def __init__(self, *, api_key=None):
@@ -212,7 +212,7 @@ class DeepSeekCerebrum:
             api_key=api_key or "your-deepseek-api-key",
             base_url="https://api.deepseek.com",
         )
-        self.model = "deepseek-chat"
+        self.model = "deepseek-v4-pro"
 
     async def generate(self, prompt, system_prompt=None, **kw) -> str:
         msgs = []
