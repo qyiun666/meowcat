@@ -54,5 +54,5 @@
 | T-06   | ✅   | \_exports 661→235 + adapters/brain 566→375 + assembly 777→438 |
 | T-07   | ✅   | task_orchestrator 549→473 + nervous 534→492 + loops 529→496   |
 | T-08   | ✅   | 版本文档产出 — README/tasks/review + AGENTS/CATALOG 同步      |
-| T-09   | ⬜   | ruff + mypy + pytest 全绿                                     |
-| T-10   | ⬜   | release v1.3.9                                                |
+| T-09   | ✅   | ruff + mypy + pytest 全绿                                     |
+| T-10   | ✅   | release v1.3.9                                                |

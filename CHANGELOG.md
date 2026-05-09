@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.10] — 2026-05-09
+
+### Fixed
+
+- CI lint job 安装可选依赖解决 mypy `import-not-found`
+- `github-release` job 自动从 pyproject.toml 创建 tag
+- Release workflow 拆为 `pypi` / `github-release` 独立 job，互不阻断
+
+### Changed
+
+- Release 触发从 `push: tags` 改为 `workflow_dispatch`（手动发包）
+
+---
+
+## [1.3.9] — 2026-05-09
+
+### Changed
+
+- **代码健康整理**：12 个 >500 行文件拆至 ≤500 行
+- **Deprecated 清理**：移除 LLMConfig / L6StorageProtocol / Paws 旧方法
+- colony 971→422 行、assembly 777→438 行、\_exports 661→235 行 等全面精简
+
+---
+
+## [1.3.8] — 2026-05-08
+
+### Added
+
+- mypy + ruff 静态检查配置
+- CI lint job（mypy + ruff）
+- CI 测试矩阵扩展至 Python 3.10/3.11/3.12/3.13
+- `.pre-commit-config.yaml`
+
+### Fixed
+
+- v1.3.6 review 遗留 10 蓝修复（budget/scheduler/shelf/topic/noise/orchestrator/plan_reviser 等）
+
+### Changed
+
+- colony/organs/renovated 大文件拆分
+- v1.3.6/v1.3.7 版本文档补全 + 架构文档升级
+
+---
+
 ## [1.3.7] — 2026-05-08
 
 ### Changed
