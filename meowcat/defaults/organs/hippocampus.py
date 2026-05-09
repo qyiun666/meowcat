@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import re
 import time as _time
+from collections import deque
 from typing import Any
 
 from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
+from meowcat.tree import TreeNode
 
 
 class NoopHippocampus(Pluggable):
@@ -46,6 +48,8 @@ class NoopHippocampus(Pluggable):
         self._colony_memory: Any = None  # v1.1.21: SharedMemoryPool for scope=colony
         self._keyword_index: dict[str, set[str]] = {}
         self._episode_store = episode_store
+        # v2.0: KnowledgeTree storage
+        self._trees: dict[str, dict[str, Any]] = {}
 
     # -- Lazy-init properties (subclasses that super().__init__()
     #    avoid creating unused InMemoryGraphStore) -------------------
@@ -398,6 +402,76 @@ class NoopHippocampus(Pluggable):
                 continue
             results.append({"entity_id": eid, **entity})
         return results
+
+    # -- v2.0 KnowledgeTree methods ----------------------------------
+
+    def build_tree(self, entity_id: str, root: TreeNode) -> int:
+        nodes: dict[str, TreeNode] = {}
+        queue: deque[TreeNode] = deque([root])
+        while queue:
+            node = queue.popleft()
+            nodes[node.id] = node
+        self._trees[entity_id] = {"root": root, "nodes": nodes}
+        return len(nodes)
+
+    def get_tree(self, entity_id: str) -> TreeNode | None:
+        tree = self._trees.get(entity_id)
+        return tree["root"] if tree else None
+
+    def delete_tree(self, entity_id: str) -> None:
+        self._trees.pop(entity_id, None)
+
+    def search_tree(self, entity_id: str, keyword: str, limit: int = 5) -> list[TreeNode]:
+        tree = self._trees.get(entity_id)
+        if not tree:
+            return []
+        kw = keyword.lower()
+        results: list[tuple[int, TreeNode]] = []
+        for node in tree["nodes"].values():
+            score = 0
+            if kw in node.name.lower():
+                score = 3
+            if kw in node.path.lower():
+                score = max(score, 2)
+            if node.summary and kw in node.summary.lower():
+                score = max(score, 1)
+            if score > 0:
+                results.append((score, node))
+        results.sort(key=lambda x: x[0], reverse=True)
+        return [node for _, node in results[:limit]]
+
+    def query_subtree(self, entity_id: str, node_id: str, max_depth: int = 2) -> list[TreeNode]:
+        tree = self._trees.get(entity_id)
+        if not tree:
+            return []
+        target = tree["nodes"].get(node_id)
+        if target is None:
+            return []
+        children_map: dict[str, list[TreeNode]] = {}
+        for n in tree["nodes"].values():
+            if n.parent_id:
+                children_map.setdefault(n.parent_id, []).append(n)
+        results: list[TreeNode] = [target]
+        frontier: deque[TreeNode] = deque([target])
+        depth = 0
+        while frontier and depth < max_depth:
+            depth += 1
+            for _ in range(len(frontier)):
+                parent = frontier.popleft()
+                for child in children_map.get(parent.id, []):
+                    results.append(child)
+                    frontier.append(child)
+        return results
+
+    def check_stale(self, entity_id: str) -> list[str]:
+        tree = self._trees.get(entity_id)
+        if not tree:
+            return []
+        stale: list[str] = []
+        for nid, node in tree["nodes"].items():
+            if node.entity_id not in self.entities:
+                stale.append(nid)
+        return stale
 
 
 def _extract_keywords(text, top_k=5, stop_words=None):
