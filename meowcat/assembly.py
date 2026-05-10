@@ -56,6 +56,7 @@ from meowcat.assemblers import assemble_default_cat, mount_known_organs  # noqa:
 from meowcat.assembly_diag import DiagnosticMixin
 from meowcat.assembly_lifecycle import CatHook, LifecycleMixin
 from meowcat.assembly_signals import SignalSystemMixin
+from meowcat.assembly_task import DoTaskMixin
 from meowcat.errors import IllegalNeuralPathError, StandaloneCatError
 from meowcat.events import EventBus, Handler
 from meowcat.host import OrganHost
@@ -64,11 +65,12 @@ from meowcat.reflex import ReflexArc
 from meowcat.tools.skill import SkillRegistry
 from meowcat.tools.tool import ToolRegistry
 from meowcat.wiring import Wiring
+from meowcat.worker.worker_cat import SpawnWorkerMixin
 
 _log = _logging.getLogger(__name__)
 
 
-class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
+class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, SpawnWorkerMixin):
     """Cat assembly base class (v0.5.9 composer, v1.0.1 unified kitten model).
 
     v1.0.1: Added ``parent_id`` / ``allowed_organs`` / ``forbidden_methods``,
@@ -388,140 +390,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
     async def emit(self, event: str, payload: Any = None) -> None:
         """Emit event."""
         await self._events.emit(event, payload)
-
-    # -- v2.2.0: do_task + spawn_worker -----------------------------------
-
-    async def do_task(
-        self,
-        task: str,
-        *,
-        max_rounds: int = 10,
-        timeout: float | None = 120.0,
-        parser: Any = None,
-    ) -> Any:
-        """Brain-tool multi-round loop — think → call tools → think → ... until done.
-
-        Each round:
-        1. Cerebrum thinks about the current context
-        2. If cerebrum output contains a tool call → safety check → execute tool
-        3. Tool result feeds back into context for next round
-        4. If cerebrum says no more tools needed → final answer
-
-        Args:
-            task: Task description (e.g. "写一个用户登录函数").
-            max_rounds: Maximum brain-tool rounds (prevents infinite loops).
-            timeout: Total timeout in seconds. None = no timeout.
-            parser: Tool-call parser. Defaults to ``XmlToolCallParser``.
-
-        Returns:
-            :class:`~meowcat.tools.tool_call.DoTaskResult` with final_text,
-            rounds, and tool_calls list.
-        """
-        from meowcat.tools.tool_call import DoTaskResult, ToolCall, XmlToolCallParser
-
-        if parser is None:
-            parser = XmlToolCallParser()
-
-        tool_calls: list[ToolCall] = []
-        context: str = task
-        final_text: str = ""
-        rounds: int = 0
-
-        for _ in range(max_rounds):
-            rounds += 1
-            # 1. Cerebrum thinks
-            cerebrum_result: str = await self.path_registry.run(
-                self, "deep_reason", prompt=context,
-            )
-
-            # 2. Try to extract a tool call
-            tool_call = parser.extract(cerebrum_result)
-            if tool_call is None:
-                # No tool → this is the final answer
-                final_text = cerebrum_result
-                break
-
-            # 3. Safety check
-            safe = await self.path_registry.run(
-                self, "assess_safety",
-                user_input=str(tool_call.params),
-            )
-            if isinstance(safe, dict) and safe.get("risk") == "high":
-                context = (
-                    f"工具 {tool_call.name} 被安全策略拒绝（高风险操作）。"
-                    f"请尝试其他方法完成原始任务: {task}"
-                )
-                continue
-
-            # 4. Execute tool (bypass wiring — PawsEngine is the standard entry)
-            from meowcat.tools.paws import PawsEngine
-
-            paws = PawsEngine(self.tool_registry)
-            raw_result = await paws.execute(
-                name=tool_call.name, **tool_call.params,
-            )
-            # Extract meaningful output for LLM context (not raw dict repr)
-            tool_result: str = raw_result.get("output", str(raw_result))
-            tool_calls.append(tool_call)
-
-            # 5. Feed result back as context for next round
-            context = (
-                f"原始任务: {task}\n\n"
-                f"上一轮工具 {tool_call.name} 的执行结果:\n{tool_result}\n\n"
-                f"请根据以上结果继续完成原始任务。如果任务已完成请输出最终答案，"
-                f"如果还需要调用工具请使用 <tool name=\"...\"> 标签。"
-            )
-        else:
-            # max_rounds exhausted — use last cerebrum output
-            final_text = cerebrum_result or ""
-
-        return DoTaskResult(
-            final_text=final_text,
-            rounds=rounds,
-            tool_calls=tool_calls,
-        )
-
-    def spawn_worker(
-        self,
-        name: str,
-        task: str,
-        *,
-        allowed_organs: frozenset[str] | None = None,
-    ) -> CatBase:
-        """Summon a worker cat and stick a task on its TaskPad.
-
-        The worker cat is a normal :class:`CatBase` instance with
-        ``parent_id = self.cat_uid``. It gets a fresh :class:`TaskPad`
-        with the task already posted.
-
-        Args:
-            name: Worker cat display name.
-            task: Task description (auto-posted to worker's TaskPad).
-            allowed_organs: Organ access restriction (security sandbox).
-                ``None`` = all organs allowed.
-
-        Returns:
-            Worker :class:`CatBase` instance with task_pad and parent_id set.
-
-        Emits:
-            ``kitten.spawned`` event with ``{parent_id, kitten_id, task}``.
-        """
-        from meowcat.biology.task_pad import TaskPad
-
-        worker = self._container.create_cat(
-            name=name,
-            parent_id=self.cat_uid,
-            allowed_organs=allowed_organs,
-        )
-        worker.task_pad = TaskPad()
-        worker.task_pad.post(task)
-
-        self._events.emit_nowait("kitten.spawned", {
-            "parent_id": self.cat_uid,
-            "kitten_id": worker.cat_uid,
-            "task": task,
-        })
-        return worker
 
     # -- Organ attribute access control (v1.0.1) ------------------------------
     #

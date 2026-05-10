@@ -288,6 +288,9 @@ def _new_worker_id() -> str:
 # -- Deferred import (avoids circular import with worker.scheduler) -----------
 from meowcat.worker.scheduler import WorkerScheduler  # noqa: E402,F811
 
+# -- Cat spawn_worker Mixin (v2.3.0: extracted from assembly.py) ---------------
+from meowcat.worker.worker_cat import SpawnWorkerMixin  # noqa: E402,F811
+
 # -- Re-exports --------------------------------------------------------------
 __all__ = [
     "WorkerStatus",
@@ -296,4 +299,5 @@ __all__ = [
     "InMemoryCheckpointStore",
     "BaseWorker",
     "WorkerScheduler",
+    "SpawnWorkerMixin",
 ]
