@@ -8,18 +8,27 @@ event-driven.
 """
 
 from __future__ import annotations
-from meowcat.events import Lifecycle
-from meowcat.chain import (
-    Chain,
-    DIAGNOSTIC_CHAIN as _DC,
-    MAINTENANCE_CHAIN as _MC,
-    GROWTH_CHAIN as _GC,
-    REFLECTION_CHAIN as _RC,
-)
 
 import logging
 from dataclasses import dataclass, field
 from typing import Any
+
+from meowcat.chain import (
+    DIAGNOSTIC_CHAIN as _DC,
+)
+from meowcat.chain import (
+    GROWTH_CHAIN as _GC,
+)
+from meowcat.chain import (
+    MAINTENANCE_CHAIN as _MC,
+)
+from meowcat.chain import (
+    REFLECTION_CHAIN as _RC,
+)
+from meowcat.chain import (
+    Chain,
+)
+from meowcat.events import Lifecycle
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +68,11 @@ class Loop:
 
 # -- 5 default loops -------------------------------------------------
 
+# 🔻 降级为内部实现（v2.4.0）：不再作为公开 API 导出。
+# 应用层应使用 cat.perceive()。cat.run_loop("conversation") 仍可用但不再教学。
 CONVERSATION_LOOP: Loop = Loop(
     "conversation",
-    "Standard conversation loop — hear→reason→speak",
+    "Standard conversation loop — hear→reason→speak (internal, use cat.perceive() instead)",
     chain=Chain(
         "conversation_chain",
         ("hear", "deep_reason", "speak"),
@@ -70,9 +81,11 @@ CONVERSATION_LOOP: Loop = Loop(
     trigger=Lifecycle.PERCEIVE_START,
 )
 
+# 🔻 降级为内部实现（v2.4.0）：不再作为公开 API 导出。
+# 应用层应使用 cat.do_task()。cat.run_loop("tool_execution") 仍可用但不再教学。
 TOOL_EXECUTION_LOOP: Loop = Loop(
     "tool_execution",
-    "Tool execution loop — hear→execute→speak",
+    "Tool execution loop — hear→execute→speak (internal, use cat.do_task() instead)",
     chain=Chain(
         "tool_loop_chain",
         ("hear", "execute_tool", "speak"),
@@ -432,8 +445,6 @@ class LoopSequenceRegistry:
 __all__ = [
     "Loop",
     "LoopRegistry",
-    "CONVERSATION_LOOP",
-    "TOOL_EXECUTION_LOOP",
     "DANGER_RESPONSE_LOOP",
     "MAINTENANCE_LOOP",
     "DIAGNOSTIC_LOOP",

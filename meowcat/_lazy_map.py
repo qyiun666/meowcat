@@ -154,8 +154,6 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "LoopRegistry": ("meowcat.loops", "LoopRegistry"),
     "BUILTIN_LOOPS": ("meowcat.loops", "BUILTIN_LOOPS"),
     "register_default_loops": ("meowcat.loops", "register_default_loops"),
-    "CONVERSATION_LOOP": ("meowcat.loops", "CONVERSATION_LOOP"),
-    "TOOL_EXECUTION_LOOP": ("meowcat.loops", "TOOL_EXECUTION_LOOP"),
     "DANGER_RESPONSE_LOOP": ("meowcat.loops", "DANGER_RESPONSE_LOOP"),
     "MAINTENANCE_LOOP": ("meowcat.loops", "MAINTENANCE_LOOP"),
     "DIAGNOSTIC_LOOP": ("meowcat.loops", "DIAGNOSTIC_LOOP"),

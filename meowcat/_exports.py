@@ -73,7 +73,6 @@ __all__ = [
     "WORKFLOW_CHAIN",
     # v0.5.28b Loops
     "Loop", "LoopRegistry", "BUILTIN_LOOPS", "register_default_loops",
-    "CONVERSATION_LOOP", "TOOL_EXECUTION_LOOP",
     "DANGER_RESPONSE_LOOP", "MAINTENANCE_LOOP", "DIAGNOSTIC_LOOP",
     # v1.0.4 Loop sequences
     "LoopSequence", "LoopSequenceRegistry", "DAILY_MAINTENANCE_SEQ",
