@@ -75,14 +75,6 @@ class SignalSystemMixin:
 
         register_default_loops(self.loop_registry, self.chain_registry)
 
-    def register_default_tools(self) -> None:
-        """Stub — builtin tools moved to application layer (v2.0).
-
-        Safe to call multiple times; no-op when no tools are registered.
-        Use ``cat.tool_registry.register(tool)`` at the application layer.
-        """
-        pass
-
     # -- Telemetry / CircuitBreaker facade (v1.3.6) -----------------------
 
     def enable_telemetry(self) -> None:

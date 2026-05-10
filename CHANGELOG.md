@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] — 2026-05-11
+
+### Fixed
+
+- **C-01**: `KW_PRESETS`/`PROMPT_PRESETS` lazy import 映射修复 — 指向正确的 `defaults.presets`
+- **H-07**: 4处静默吞异常添加 WARNING 日志（hippocampus 持久化/加载、reflex trigger、loop 失败）
+- **M-08**: 3处 DEBUG 级别吞异常提升为 WARNING
+- **H-02**: 核心类命名冲突修复 — `TaskResult`→`DoTaskResult` / `TaskStatus`→`TaskPadStatus` / `CheckpointStore`→`WorkerCheckpointStore`
+- **H-09**: 猫间通信 default-open → default-deny — 未配置规则时拒绝跨猫信号 (Security)
+- **M-02**: `biology/__init__.py` `CollectiveEmergence` lazy map 指向修正
+- **M-07**: Chain 异常添加 `ChainExecutionError` 包装
+
+### Changed
+
+- **H-01**: `Noop*` → `Default*` 全量重命名（33个类 + 13个测试文件）— 与 v2.0 设计对齐 _(Breaking)_
+- **H-03**: AGENTS.md §11 API 示例与 `factory.py`/`cat_ops.py` 实际签名对齐
+- **H-04**: 架构文档 v1.3.7 → v2.2.0 全量更新（Path/Chain/Loop 数量、conversation loop 步骤）
+- **H-06**: assembly.py 拆分 `do_task`/`spawn_worker` 至独立文件
+- **H-12**: CATALOG.md 标题版本号 v2.0 → v2.2.0
+- **H-08**: 类型注解债务消除（TypedDict `Any`→具体类型、Mixin `# type: ignore`→Protocol 基类）
+- **M-05**: `register_default_tools` 全链路死代码清理
+- **M-06**: `checkpoint.py` 模块标记为内部实现
+- **M-13**: pyproject.toml 声明 `chromadb`/`httpx` 为可选依赖
+- **M-01**: 架构文档 Chain/Loop/FORBIDDEN_PATHS 补全
+- **M-04**: `_UNSET` 内部 sentinel 移出公共 API
+- **L-01~L-06**: 低优先级修复（ReflexArc `__all__` 去重、空载荷填充、文件名整理、PyPI name 大小写统一）
+
+### Test
+
+- Gateway/Worker/Coordination 0% 测试覆盖补齐（~750行）
+- tools/ 层补齐测试 — tool 注册/执行/禁用、paws execute/suggest、matcher 匹配器（~300行）
+- 错误路径/并发/集成测试补齐 — SignalError 传播、EventBus 竞态、Gateway→Colony→Cat 全链路（~500行）
+- conftest fixture 扩充至 80+ fixture
+- `time.sleep()` → `asyncio.sleep()` 替换 + parametrize 使用扩大
+
+### Removed
+
+- **H-13**: 零依赖死代码评估 — 8个模块标记为内部实现，保留供后续拆分引用
+
+---
+
+## [2.2.0] — 2026-05-10
+
+### Added
+
+- **TaskPad**: 每只猫的待办清单 — `post()`/`pick()`/`diagnose()`，支持 TODO→DOING→DONE/FAILED 状态流转
+- **do_task()**: 大脑-工具多轮循环 — `CatBase.do_task()` 支持 XmlToolCallParser，max_rounds 限制
+- **spawn_worker()**: 召唤分身猫 — `CatBase.spawn_worker()` 创建独立 TaskPad 的子猫
+- REFLECTION_LOOP 加入 post_loop 事件链
+
+### Changed
+
+- conversation loop 精简为 3 步（hear→deep_reason→speak），removed `decide_route`/`locate`/`remember` 从主链
+- `remember` 改为 post_loop 异步事件
+
+---
+
 ## [1.3.10] — 2026-05-09
 
 ### Fixed

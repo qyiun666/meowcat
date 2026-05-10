@@ -3,6 +3,10 @@
 
 """General-purpose checkpoint store for orchestration snapshots.
 
+.. deprecated:: v2.3.0
+    This module is not used in production. It remains for backward
+    compatibility and may be removed in a future version.
+
 T-24 (v1.3.6): Framework-layer checkpoint persistence protocol + default
 JSON-file implementation.  Each checkpoint is a best-effort snapshot of
 arbitrary ``dict`` data keyed by a string ID.

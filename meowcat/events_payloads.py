@@ -106,13 +106,16 @@ class RememberPostPayload(TypedDict, total=False):
 class CompressPrePayload(TypedDict, total=False):
     """Payload for ``RememberEvent.COMPRESS_PRE`` event."""
 
-    pass
+    messages: list[dict[str, Any]]
+    max_tokens: int
 
 
 class CompressPostPayload(TypedDict, total=False):
     """Payload for ``RememberEvent.COMPRESS_POST`` event."""
 
-    pass
+    original_count: int
+    compressed_count: int
+    result: list[dict[str, Any]]
 
 
 # -- Orchestrate (Loop B) payloads ---------------------------------------

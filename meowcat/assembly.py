@@ -91,7 +91,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         register_default_paths: bool = True,
         register_default_chains: bool = True,
         register_default_loops: bool = True,
-        register_default_tools: bool = True,
     ) -> None:
         """Construct cat skeleton.
 
@@ -120,9 +119,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
                 auto-registered. Call ``register_default_chains()`` later.
             register_default_loops: When False, BUILTIN_LOOPS are not
                 auto-registered. Call ``register_default_loops()`` later.
-            register_default_tools: When False, BUILTIN_TOOLS are not
-                auto-registered by ``assemble_default_cat()``.
-                Call ``register_default_tools()`` later.
         """
         if container is None:
             raise StandaloneCatError(cat_uid)
@@ -186,8 +182,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         self._task_pad: Any = None
         # v1.2.5: Current self snapshot — set by DefaultLoops before each action
         self._current_snapshot: Any = None
-        # v1.2.10: BUILTIN_* optional registration flags
-        self._register_default_tools = register_default_tools
         # v1.0.1: allowed_organs must be assigned after all properties are set,
         # to avoid __init__ internal self.xxx assignments being intercepted
         # by __getattribute__

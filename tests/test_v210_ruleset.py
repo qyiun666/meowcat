@@ -108,7 +108,8 @@ class TestRuleSet:
 class TestRuleSetRender:
     @pytest.mark.parametrize("kwargs, substring", [
         ({"role_block": "<role>expert</role>"}, "<role>expert</role>"),
-        ({"context_block": "<context>fastapi</context>"}, "<context>fastapi</context>"),
+        ({"context_block": "<context>fastapi</context>"},
+         "<context>fastapi</context>"),
         ({"output_format_block": "<output>json</output>"}, "<output>json</output>"),
     ])
     def test_render_block(self, kwargs, substring):
@@ -134,7 +135,8 @@ class TestRuleSetRender:
 
     @pytest.mark.parametrize("content, substrings", [
         ("# 标题\n\n- 列表项", ["# 标题", "- 列表项"]),
-        ("```python\ncursor.execute(sql, params)\n```", ["```python", "cursor.execute(sql, params)"]),
+        ("```python\ncursor.execute(sql, params)\n```",
+         ["```python", "cursor.execute(sql, params)"]),
         ("# 标题\n\n- 列表项\n\n```python\ncursor.execute(sql, params)\n```",
          ["# 标题", "- 列表项", "```python", "cursor.execute(sql, params)"]),
     ])

@@ -170,6 +170,21 @@ class CircuitOpenError(MeowCatError):
         )
 
 
+# -- v2.3.0: chain execution error ----------------------------------------
+
+
+class ChainExecutionError(MeowCatError):
+    """Raised when a Chain execution fails."""
+
+    def __init__(self, chain_name: str, path_name: str, original: Exception) -> None:
+        self.chain_name = chain_name
+        self.path_name = path_name
+        self.original = original
+        super().__init__(
+            f"Chain '{chain_name}' failed at path '{path_name}': {original}"
+        )
+
+
 __all__ = [
     "MeowCatError",
     "OrganNotMountedError",
@@ -182,4 +197,5 @@ __all__ = [
     "OrganProtocolMismatchError",
     "OrganDelegateError",
     "CircuitOpenError",
+    "ChainExecutionError",
 ]

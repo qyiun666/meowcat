@@ -3,6 +3,11 @@
 
 """meowcat coordination — async approval gate for multi-agent coordination (v1.1.29).
 
+.. deprecated:: 2.3.0
+    This module is deprecated and will be removed in v2.5.0.
+    meowagent has its own approval system (see `meowagent.cat.approval`).
+    No meowcat-internal or meowagent-external code references this module.
+
 Provides :class:`AsyncApprovalGate` — a lightweight async coordination primitive
 for human-in-the-loop and cross-cat approval workflows.
 
@@ -15,10 +20,18 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+warnings.warn(
+    "meowcat.coordination is deprecated since v2.3.0 and will be removed in v2.5.0. "
+    "Use meowagent's approval system (meowagent.cat.approval) instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 logger = logging.getLogger(__name__)
 

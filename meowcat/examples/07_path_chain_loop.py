@@ -7,7 +7,7 @@ Scenario: Add a "nose" organ to the cat, declare Paths, assemble Chains,
 register Loops — demonstrating the four-layer extension flow from
 Organ → Path → Chain → Loop.
 
-Run: ``python -m meowcat.examples.07_custom_organ``
+Run: ``python -m meowcat.examples.07_path_chain_loop``
 """
 
 from __future__ import annotations

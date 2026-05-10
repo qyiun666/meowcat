@@ -25,6 +25,7 @@ from meowcat.assembly import CatBase
 from meowcat.colony import Colony
 from meowcat.defaults.factory import create_cat
 from meowcat.defaults.organs import DefaultCerebrum
+from meowcat.defaults.stages import BaseStage
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import (
     CircuitOpenError,
@@ -41,7 +42,9 @@ from meowcat.gateway.protocol import (
     IoAdapterProtocol,
     SignalContext,
 )
+from meowcat.models import StageEvent
 from meowcat.nervous import Nervous
+from meowcat.reflex import BUILTIN_REFLEX_PATHS, Reflex
 from meowcat.testing import make_cat, make_test_colony
 from meowcat.tools.tool import Tool, ToolSpec
 from meowcat.tools.tool_call import DoTaskResult, XmlToolCallParser
@@ -133,7 +136,7 @@ class TestSignalErrorPropagation:
     @pytest.mark.asyncio
     async def test_forbidden_method_raises_illegal_path(self) -> None:
         cat = _wired_cat((("brain", "a"), ("brain", "b")))
-        cat._nervous.forbidden_methods.add("echo")
+        cat._nervous.forbidden_methods = frozenset({"echo"})
         with pytest.raises(IllegalNeuralPathError, match="forbidden"):
             await cat.signal(("brain", "a"), ("brain", "b"), "echo")
 
@@ -142,19 +145,20 @@ class TestSignalErrorPropagation:
         cat = _wired_cat()
         cat.mount("brain", "c", _DummyOrgan())
         cat.mount("brain", "d", _DummyOrgan())
-        with pytest.raises(IllegalNeuralPathError, match="not allowed by wiring"):
+        with pytest.raises(IllegalNeuralPathError, match="not connected"):
             await cat.signal(("brain", "c"), ("brain", "d"), "echo")
 
     @pytest.mark.asyncio
     async def test_organ_not_mounted_raises_organ_not_mounted(self) -> None:
         cat = make_cat("test")
+        cat.mount("brain", "a", _DummyOrgan())
+        cat.wiring.connect(("brain", "a"), ("brain", "nonexistent"))
         with pytest.raises(OrganNotMountedError):
             await cat.signal(("brain", "a"), ("brain", "nonexistent"), "echo")
 
     @pytest.mark.asyncio
     async def test_disabled_wiring_raises_runtime_error(self) -> None:
-        cat = make_cat("test")
-        cat._nervous.wiring.disable()
+        cat = make_cat(name="test", enable_wiring=False)
         with pytest.raises(RuntimeError):
             await cat.signal(("brain", "a"), ("brain", "b"), "echo")
 
@@ -231,16 +235,20 @@ class TestSignalErrorPropagation:
         class _MW1:
             async def before(self, ctx):
                 calls.append("mw1.before")
+                return True
 
             async def after(self, ctx, result):
                 calls.append("mw1.after")
+                return result
 
         class _MW2:
             async def before(self, ctx):
                 calls.append("mw2.before")
+                return True
 
             async def after(self, ctx, result):
                 calls.append("mw2.after")
+                return result
 
         cat._nervous.use_middleware(_MW1())
         cat._nervous.use_middleware(_MW2())
@@ -259,8 +267,8 @@ class TestSignalErrorPropagation:
         nervous = Nervous(host, events, circuit_breaker=True,
                           cb_threshold=2, cb_timeout=10.0)
 
-        host.mount("brain", "a", _FragileOrgan(fail_count=99))
-        host.mount("brain", "b", _DummyOrgan())
+        host.mount("brain", "a", _DummyOrgan())
+        host.mount("brain", "b", _FragileOrgan(fail_count=99))
         from meowcat import biology
         biology.apply_default_wiring(nervous.wiring)
         nervous.wiring.connect(("brain", "a"), ("brain", "b"))
@@ -428,13 +436,14 @@ class TestEventBusConcurrency:
         bus.on("evt", ha)
         bus.on("evt", hb)
 
-        # Two concurrent emits — lock ensures handlers of emit1 finish before emit2
+        # Two concurrent emits — lock only protects handler list copy, not execution.
+        # Both ha() calls may append "a" before either finishes sleeping.
         await asyncio.gather(
             bus.emit("evt"),
             bus.emit("evt"),
         )
-        # Each emit runs handlers sequentially: emit1 → [a, a_done, b], emit2 → [a, a_done, b]
-        assert results_a == ["a", "a_done", "a", "a_done"]
+        assert results_a.count("a") == 2
+        assert results_a.count("a_done") == 2
         assert results_b == ["b", "b"]
 
     @pytest.mark.asyncio
@@ -794,9 +803,10 @@ class TestGatewayE2E:
 class _MockAdapter(IoAdapterProtocol):
     """Mock adapter that records serve/stop calls."""
 
-    def __init__(self, name: str = "mock", should_fail: bool = False) -> None:
+    def __init__(self, name: str = "mock", should_fail: bool = False, serve_sleep: float = 0.1) -> None:
         self.name = name
         self.should_fail = should_fail
+        self.serve_sleep = serve_sleep
         self.serve_calls: list[tuple] = []
         self.stop_called = False
         self._serve_event = asyncio.Event()
@@ -809,7 +819,7 @@ class _MockAdapter(IoAdapterProtocol):
         if self.should_fail:
             raise RuntimeError("adapter failure")
         # keep alive until stopped externally
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(self.serve_sleep)
 
     async def send(self, output: str, session_id: str, **meta: Any) -> None:
         pass
@@ -889,12 +899,12 @@ class TestGatewayLifecycle:
     async def test_start_with_one_adapter(self) -> None:
         col = make_test_colony()
         gw = Gateway(col)
-        adapter = _MockAdapter("mock")
+        adapter = _MockAdapter("mock", serve_sleep=2.0)
         gw.mount_adapter(adapter)
 
         # Start with timeout via gather → serve() will be called
         async def _start_with_timeout():
-            await asyncio.wait_for(gw.start(), timeout=0.5)
+            await asyncio.wait_for(gw.start(), timeout=0.3)
         with pytest.raises(asyncio.TimeoutError):
             await _start_with_timeout()
         assert len(adapter.serve_calls) == 1  # serve() was called
@@ -920,6 +930,16 @@ class TestGatewayLifecycle:
             await gw.start()
 
 
+class _CerebrumOutputStage(BaseStage):
+    """Custom stage that calls the cerebrum and yields output events."""
+
+    async def run(self, ctx: Any) -> AsyncIterator[StageEvent]:
+        cat = ctx.cat
+        if cat is not None and hasattr(cat, "cerebrum"):
+            response = await cat.cerebrum.generate(str(ctx.input))
+            yield StageEvent.output(response)
+
+
 @pytest.mark.anyio
 class TestFrontDeskRouting:
     """FrontDesk plugin chain and routing."""
@@ -939,22 +959,39 @@ class TestFrontDeskRouting:
         fd = DefaultFrontDesk()
         fd.plug("on_route", lambda text, ctx, colony: None)
         col = make_test_colony()
-        ctx = SignalContext(session_id="s1", platform="test", target_cat="01")
-        cat = col.create_cat(name="test-cat")
-        cat.mount("brain", "cerebrum", DefaultCerebrum())
+        cerebrum = _SimpleCerebrum()
+        cerebrum._response = "passed through"  # type: ignore[attr-defined]
+        reflex = Reflex(
+            name="text_dialogue",
+            trigger=lambda x: isinstance(x, str),
+            path=BUILTIN_REFLEX_PATHS["text_dialogue"],
+            stages=[_CerebrumOutputStage()],
+        )
+        cat = create_cat(name="test-cat", container=col,
+                         cerebrum=cerebrum, reflexes=[reflex])
+        ctx = SignalContext(session_id="s1", platform="test",
+                            target_cat=cat.cat_uid)
         result = await fd.route("hi", ctx, col)
-        assert result is not None  # passed through to cat
+        assert result == "passed through"  # passed through to cat
 
     @pytest.mark.asyncio
     async def test_route_to_target_cat(self) -> None:
         col = make_test_colony()
-        cat = col.create_cat(name="test-cat")
-        cat.mount("brain", "cerebrum", DefaultCerebrum())
+        cerebrum = _SimpleCerebrum()
+        cerebrum._response = "hello from cat"  # type: ignore[attr-defined]
+        reflex = Reflex(
+            name="text_dialogue",
+            trigger=lambda x: isinstance(x, str),
+            path=BUILTIN_REFLEX_PATHS["text_dialogue"],
+            stages=[_CerebrumOutputStage()],
+        )
+        cat = create_cat(name="test-cat", container=col,
+                         cerebrum=cerebrum, reflexes=[reflex])
         fd = DefaultFrontDesk()
         ctx = SignalContext(session_id="s1", platform="test",
                             target_cat=cat.cat_uid)
         result = await fd.route("hello", ctx, col)
-        assert result is not None
+        assert result == "hello from cat"
 
     @pytest.mark.asyncio
     async def test_route_unknown_cat(self) -> None:
@@ -991,14 +1028,22 @@ class TestFrontDeskRouting:
     @pytest.mark.asyncio
     async def test_route_empty_text(self) -> None:
         col = make_test_colony()
-        cat = col.create_cat(name="test-cat")
-        cat.mount("brain", "cerebrum", DefaultCerebrum())
+        cerebrum = _SimpleCerebrum()
+        cerebrum._response = "ok"  # type: ignore[attr-defined]
+        reflex = Reflex(
+            name="text_dialogue",
+            trigger=lambda x: isinstance(x, str),
+            path=BUILTIN_REFLEX_PATHS["text_dialogue"],
+            stages=[_CerebrumOutputStage()],
+        )
+        cat = create_cat(name="test-cat", container=col,
+                         cerebrum=cerebrum, reflexes=[reflex])
         fd = DefaultFrontDesk()
         ctx = SignalContext(session_id="s1", platform="test",
                             target_cat=cat.cat_uid)
         result = await fd.route("", ctx, col)
         # Empty text should still be handled (not crash)
-        assert result is not None
+        assert result == "ok"
 
 
 @pytest.mark.anyio

@@ -47,7 +47,7 @@
   └─ 返回 → CatBase (完整装配、接线、冻结、就绪)
 ```
 
-> v2.0 变更: 不再有 renovated/bare_organs/renovate_organs 参数和 register_default_tools 参数。
+> v2.0 变更: 不再有 renovated/bare_organs/renovate_organs 参数。
 
 ### 装配开关一览
 

@@ -288,4 +288,3 @@ def test_circuit_state_defaults() -> None:
     assert cs.failures == 0
     assert cs.last_failure == 0.0
     assert cs.open_until == 0.0
-

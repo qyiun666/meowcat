@@ -19,6 +19,7 @@ import pytest
 
 from meowcat.assembly import CatBase
 from meowcat.chain import Chain
+from meowcat.errors import ChainExecutionError
 from meowcat.path import Path
 from meowcat.testing import make_cat
 
@@ -170,7 +171,7 @@ class TestChainRunRollback:
         )
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_b failed"):
+        with pytest.raises(ChainExecutionError, match="step_b failed"):
             await cat.chain_registry.run(cat, "test_chain")
 
         # step_a 成功、step_b 调用后失败（已记录）、rollback_a 被调用
@@ -187,7 +188,7 @@ class TestChainRunRollback:
         )
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_a failed"):
+        with pytest.raises(ChainExecutionError, match="step_a failed"):
             await cat.chain_registry.run(cat, "test_chain")
 
         # step_a 调用后失败（已记录）、回滚逆序: rollback_b 先, rollback_a 后
@@ -204,7 +205,7 @@ class TestChainRunRollback:
         )
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_b failed"):
+        with pytest.raises(ChainExecutionError, match="step_b failed"):
             await cat.chain_registry.run(cat, "multi")
 
         # step_a 成功、step_b 调用后失败（已记录）、回滚逆序
@@ -227,7 +228,7 @@ class TestChainRunRollbackErrors:
         )
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_a failed"):
+        with pytest.raises(ChainExecutionError, match="step_a failed"):
             await cat.chain_registry.run(cat, "test_chain")
 
         # step_a 调用后失败（已记录）、回滚逆序: rollback_a 先执行成功，rollback_fail 后执行失败（已记录）
@@ -245,7 +246,7 @@ class TestChainRunRollbackErrors:
         )
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_a failed"):
+        with pytest.raises(ChainExecutionError, match="step_a failed"):
             await cat.chain_registry.run(cat, "test_chain")
 
         # step_a 调用后失败（已记录）、两个回滚都调用了（失败被吞掉）
@@ -277,7 +278,7 @@ class TestChainRunEmptyRollback:
         chain = Chain("test_chain", ("step_a",))
         cat.chain_registry.register(chain)
 
-        with pytest.raises(RuntimeError, match="step_a failed"):
+        with pytest.raises(ChainExecutionError, match="step_a failed"):
             await cat.chain_registry.run(cat, "test_chain")
 
         # step_a 调用后失败（已记录），没有回滚

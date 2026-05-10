@@ -3,6 +3,10 @@
 
 """ActiveGrowth — cat's self-driven growth: curiosity, tool evolution, reflex evolution.
 
+Note: The module name ``active_growth`` is a domain category (not a class name).
+It aggregates three closely-related growth components — see :class:`ActiveGrowthPack`
+for one-line install.
+
 v1.1.26: Three active growth pillars that make the cat self-improving:
 
 - **BlindSpotDetector**: curiosity-driven — detects knowledge gaps from queries

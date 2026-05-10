@@ -56,17 +56,16 @@ from meowcat.events_payloads import (
 
 # -- TypedDict 导入 + 存在性 -----------------------------------------------
 
-class TestPayloadImports:
-    """所有 TypedDict 类型可从 meowcat 和 events_payloads 导入。"""
 
-    def test_import_from_meowcat(self) -> None:
-        """通过 meowcat 顶层包可导入所有 payload TypedDict."""
-        from meowcat import (
-            NerveSignalPayload,
-            PerceiveStartPayload,
-        )
-        assert NerveSignalPayload is not None
-        assert PerceiveStartPayload is not None
+class TestPayloadImports:
+    """所有 TypedDict 类型可从 events_payloads 模块导入。v2.3.0 已从顶层 meowcat 命名空间移除。"""
+
+    def test_import_from_top_level_removed(self) -> None:
+        """v2.3.0: Payload 类型已从 meowcat 顶层移除，需从 events_payloads 导入."""
+        with pytest.raises(ImportError):
+            from meowcat import NerveSignalPayload  # noqa: F811
+        with pytest.raises(ImportError):
+            from meowcat import PerceiveStartPayload  # noqa: F811
 
     def test_import_from_payloads_module(self) -> None:
         """通过 events_payloads 模块可直接导入."""

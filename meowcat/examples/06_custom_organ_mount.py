@@ -7,7 +7,7 @@ Scenario: The user wants to add a custom organ to a cat (e.g. special audio proc
 Simply satisfy the corresponding Protocol to participate in collaboration
 via wiring and the signal system.
 
-Run: ``python -m meowcat.examples.06_custom_organ``
+Run: ``python -m meowcat.examples.06_custom_organ_mount``
 """
 
 from __future__ import annotations

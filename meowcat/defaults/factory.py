@@ -156,7 +156,6 @@ def create_cat(
     register_default_paths: bool = True,
     register_default_chains: bool = True,
     register_default_loops: bool = True,
-    register_default_tools: bool = True,
 ) -> CatBase:
     """Create a fully assembled cat with one line of code.
 
@@ -191,7 +190,6 @@ def create_cat(
         register_default_paths: When False, BUILTIN_PATHS are not auto-registered.
         register_default_chains: When False, BUILTIN_CHAINS are not auto-registered.
         register_default_loops: When False, BUILTIN_LOOPS are not auto-registered.
-        register_default_tools: When False, BUILTIN_TOOLS are not auto-registered.
         Other organs: Optional, default implementations created when None.
 
     Returns:
@@ -218,7 +216,6 @@ def create_cat(
             register_default_paths=register_default_paths,
             register_default_chains=register_default_chains,
             register_default_loops=register_default_loops,
-            register_default_tools=register_default_tools,
         )
     else:
         # Pre-existing instance (CatBase subclass): register in colony
@@ -305,11 +302,6 @@ def create_cat(
 
     # Nervous system
     cat.wire_default_nervous_system()
-
-    # Builtin tools (v2.0: moved to application layer)
-    # Application layer should register tools via cat.tool_registry.register()
-    if register_default_tools:
-        pass  # no-op: BUILTIN_TOOLS removed in v2.0
 
     # Reflex arcs
     if reflexes is not None:

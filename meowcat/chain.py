@@ -27,6 +27,8 @@ import contextlib
 from dataclasses import dataclass, field
 from typing import Any
 
+from meowcat.errors import ChainExecutionError
+
 
 @dataclass(frozen=True)
 class Chain:
@@ -197,9 +199,11 @@ class ChainRegistry:
 
         current_input: dict[str, Any] = dict(initial_input)
         last_result: Any = current_input
+        current_path: str | None = None
 
         try:
             for path_name in chain.path_names:
+                current_path = path_name
                 last_result = await cat.path_registry.run(
                     cat,
                     path_name,
@@ -208,7 +212,7 @@ class ChainRegistry:
                 # previous step return value becomes next step kwargs
                 current_input = last_result if isinstance(last_result, dict) else {
                     "_result": last_result}
-        except Exception:
+        except Exception as e:
             # execute rollback paths in reverse; rollback exceptions do not mask the original
             for rollback_name in reversed(chain.rollback_paths):
                 with contextlib.suppress(Exception):
@@ -217,7 +221,7 @@ class ChainRegistry:
                         rollback_name,
                         **current_input,
                     )
-            raise
+            raise ChainExecutionError(chain.name, current_path or "(unknown)", e) from e
 
         # return the last step result (preserving dict type)
         if isinstance(last_result, dict):

@@ -43,7 +43,7 @@ __all__ = [
     # Skeleton
     "CatBase", "CatHook", "Colony", "ColonyConfig", "ColonyOwner", "ColonyRules", "EventBus", "Pipeline",
     # v0.5.9 Subsystems
-    "OrganHost", "Nervous", "ReflexArc", "assemble_default_cat",
+    "OrganHost", "Nervous", "assemble_default_cat",
     # v0.5.20 Shared mount
     "mount_known_organs",
     # Loop event names
@@ -135,7 +135,7 @@ __all__ = [
     # v2.0 CatSelf + unified ReflectionLoop
     "CatSelf", "SelfSnapshot", "ReflectionLoop",
     # v1.1.29 skeleton abstraction
-    "AsyncApprovalGate", "ApprovalRequest", "ApprovalStatus",
+    "AsyncApprovalGate", "ApprovalRequest", "ApprovalStatus",  # deprecated v2.3.0
     "KeywordToolMatcher",
     "BaseWorker", "CheckpointStore", "InMemoryCheckpointStore",
     "WorkerState", "WorkerStatus", "WorkerScheduler",
@@ -145,7 +145,6 @@ __all__ = [
     "PROMPT_DEFAULT", "PROMPT_ZH",
     "KW_PRESETS", "PROMPT_PRESETS",
     "ImplementationStyle",
-    "_UNSET",
     # v1.2.14 Organ adapters
     "AgentOrgan",
     "CerebrumAgent", "CerebellumAgent", "ThalamusAgent",
@@ -153,25 +152,9 @@ __all__ = [
     "FrontalAgent", "HypothalamusAgent", "CortexAgent",
     "EarsAgent", "EyesAgent", "WhiskersAgent", "PawsAgent",
     "MouthAgent", "PurrAgent", "TailAgent",
-    # v1.2.18 Event payload types
-    "LifecycleStartPayload", "LifecycleShutdownPayload",
-    "PerceiveStartPayload", "PerceiveEndPayload",
-    "NerveSignalPayload",
-    "LocatePrePayload", "LocatePostPayload", "RouteDecidedPayload",
-    "RememberPrePayload", "RememberPostPayload",
-    "CompressPrePayload", "CompressPostPayload",
-    "OrchestrateStartPayload", "OrchestrateEndPayload",
-    "GrowthAnomalyPayload", "GrowthCorrectionPayload",
-    "CrystallizePayload", "RoleEmergePayload",
-    "KittenSpawnedPayload", "KittenExecutingPayload", "KittenCompletedPayload",
-    "KittenStuckPayload", "KittenDismissedPayload", "KittenMergeAbsorbedPayload",
-    "SelfSnapshotPayload", "SelfReflectPayload",
-    "FusionSelfPayload", "FusionColonyPayload",
-    "FusionTriggerStartPayload", "FusionTriggerEndPayload",
-    "EVENT_PAYLOAD_MAP",
     # v1.2.21 Telemetry
     "SignalSpan", "Tracer", "Metrics",
-    "TelemetryEvent", "TelemetrySpanPayload",
+    "TelemetryEvent",
     # v1.3.6 Model shelf
     "ProviderEntry", "BUILTIN_PROVIDERS", "ModelShelf", "FallbackChain",
     # v1.3.6 Compression manager
@@ -194,6 +177,8 @@ __all__ = [
     "PlanReviser", "PlanReviserConfig", "RevisionStrategy", "RevisionContext", "RevisionResult",
     # v1.3.6 Task orchestrator
     "TaskOrchestrator", "TaskNode", "TaskStatus", "TaskResult", "TaskExecutor",
+    # v1.3.6 Periodic scheduler
+    "PeriodicScheduler", "PeriodicConfig", "PeriodicTask",
     # v2.1.0 RuleSet
     "Rule", "RuleSet",
     # v2.2.0 TaskPad + do_task + spawn_worker

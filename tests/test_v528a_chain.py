@@ -18,6 +18,7 @@ import anyio
 import pytest
 
 from meowcat.chain import BUILTIN_CHAINS, Chain, ChainRegistry, register_builtin_chains
+from meowcat.errors import ChainExecutionError
 from meowcat.path import Path
 from meowcat.testing import make_cat
 
@@ -270,7 +271,7 @@ class TestChainRegistryRun:
         anyio.run(_run)
 
     def test_run_missing_path_in_chain(self):
-        """Chain references nonexistent path -> PathRegistry.run raises KeyError."""
+        """Chain references nonexistent path -> ChainExecutionError raised."""
         cat, _ = self._setup_cat()
 
         # Register a chain that references a nonexistent path
@@ -279,7 +280,7 @@ class TestChainRegistryRun:
         )
 
         async def _run():
-            with pytest.raises(KeyError, match="nonexistent_path"):
+            with pytest.raises(ChainExecutionError, match="nonexistent_path"):
                 await cat.chain_registry.run(cat, "bad_chain")
 
         anyio.run(_run)
@@ -331,4 +332,3 @@ class TestCatBaseChainIntegration:
             chain = cat.chain_registry.get(name)
             assert chain is not None, f"Missing chain: {name}"
             assert chain.name == name
-

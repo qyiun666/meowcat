@@ -24,6 +24,7 @@ import pytest
 
 from meowcat.assembly import CatBase
 from meowcat.chain import Chain
+from meowcat.errors import ChainExecutionError
 from meowcat.loops import (
     BUILTIN_LOOPSEQS,
     DAILY_MAINTENANCE_SEQ,
@@ -35,6 +36,7 @@ from meowcat.path import Path
 from meowcat.testing import make_cat
 
 # -- 辅助 ---------------------------------------------------------
+
 
 class _MockOrgan:
     """模拟器官，记录调用顺序。"""
@@ -258,7 +260,7 @@ class TestRunSequentialStopOnError:
             "loop_a", "loop_b"), stop_on_error=True)
         cat.loopseq_registry.register(seq)
 
-        with pytest.raises(RuntimeError, match="step_a failed"):
+        with pytest.raises(ChainExecutionError, match="step_a failed"):
             await cat.loopseq_registry.run(cat, "test_seq")
 
         organ = cat.organ("brain", "hippocampus")
@@ -276,7 +278,7 @@ class TestRunSequentialStopOnError:
             "loop_a", "loop_b"), stop_on_error=True)
         cat.loopseq_registry.register(seq)
 
-        with pytest.raises(RuntimeError, match="step_b failed"):
+        with pytest.raises(ChainExecutionError, match="step_b failed"):
             await cat.loopseq_registry.run(cat, "test_seq")
 
         organ = cat.organ("brain", "hippocampus")
@@ -359,7 +361,7 @@ class TestRunEventDrivenStopError:
         cat.loopseq_registry.register(seq)
 
         # 一个失败，gather 会传播异常
-        with pytest.raises(RuntimeError, match="step_b failed"):
+        with pytest.raises(ChainExecutionError, match="step_b failed"):
             await cat.loopseq_registry.run(cat, "test_seq")
 
     @pytest.mark.anyio

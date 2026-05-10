@@ -31,8 +31,9 @@ except Exception:
 def __getattr__(name: str):
     """PEP 562 lazy import — only loads a module on first access.
 
-    ``import meowcat`` costs ~2 ms instead of ~80 ms because nothing
-    beyond ``_exports.py`` + ``__init__.py`` is imported eagerly.
+    ``import meowcat`` costs ~60 ms (primarily from parsing the
+    400+ entry lazy-load registry in ``_lazy_map.py``).  Submodules
+    (anatomy, biology, etc.) are imported only on first access.
     """
     # Submodule access: meowcat.anatomy, meowcat.biology, meowcat.organ_roles
     if name in _SUBMODULES:
