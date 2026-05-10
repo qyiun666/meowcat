@@ -3,7 +3,7 @@
 
 """meowcat default organ stubs — no-op implementations satisfying Protocols.
 
-Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
+Each Default* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
 _run_plugs plugin capability. HOOKS class variable declares mountable hooks and their suggested signatures.
 
 Three execution modes:
@@ -21,47 +21,57 @@ from meowcat.defaults.organs.frontal import NoopFrontal
 from meowcat.defaults.organs.hypothalamus import NoopHypothalamus
 from meowcat.defaults.organs.thalamus import NoopThalamus
 from meowcat.defaults.organs.growth import (
-    NoopAnomalyGrowth,
-    NoopCorrectionGrowth,
-    NoopCrystallizer,
-    NoopRoleEmergence,
+    DefaultAnomalyGrowth,
+    DefaultCorrectionGrowth,
+    DefaultCrystallizer,
+    DefaultRoleEmergence,
 )
-from meowcat.defaults.organs.hippocampus import NoopHippocampus
+from meowcat.defaults.organs.hippocampus import DefaultHippocampus
 from meowcat.defaults.organs.sense import (
-    NoopEars,
-    NoopEyes,
-    NoopWhiskers,
+    DefaultEars,
+    DefaultEyes,
+    DefaultWhiskers,
 )
 from meowcat.defaults.organs.voice import (
-    NoopMouth,
-    NoopPaws,
-    NoopPurr,
-    NoopTail,
+    DefaultMouth,
+    DefaultPaws,
+    DefaultPurr,
+    DefaultTail,
 )
+
+# Backward-compat / T-05 rename aliases: Noop* → Default*
+DefaultAmygdala = NoopAmygdala
+DefaultBrainstem = NoopBrainstem
+DefaultCerebellum = NoopCerebellum
+DefaultCerebrum = NoopCerebrum
+DefaultCortex = NoopCortex
+DefaultFrontal = NoopFrontal
+DefaultHypothalamus = NoopHypothalamus
+DefaultThalamus = NoopThalamus
 
 __all__ = [
     # Brain
-    "NoopThalamus",
-    "NoopAmygdala",
-    "NoopFrontal",
-    "NoopHypothalamus",
-    "NoopCortex",
-    "NoopBrainstem",
-    "NoopCerebrum",
-    "NoopCerebellum",
-    "NoopHippocampus",
+    "NoopThalamus", "DefaultThalamus",
+    "NoopAmygdala", "DefaultAmygdala",
+    "NoopFrontal", "DefaultFrontal",
+    "NoopHypothalamus", "DefaultHypothalamus",
+    "NoopCortex", "DefaultCortex",
+    "NoopBrainstem", "DefaultBrainstem",
+    "NoopCerebrum", "DefaultCerebrum",
+    "NoopCerebellum", "DefaultCerebellum",
+    "DefaultHippocampus",
     # Senses
-    "NoopEars",
-    "NoopEyes",
-    "NoopWhiskers",
+    "DefaultEars",
+    "DefaultEyes",
+    "DefaultWhiskers",
     # Voice / Effectors
-    "NoopMouth",
-    "NoopPurr",
-    "NoopTail",
-    "NoopPaws",
+    "DefaultMouth",
+    "DefaultPurr",
+    "DefaultTail",
+    "DefaultPaws",
     # Growth
-    "NoopAnomalyGrowth",
-    "NoopCorrectionGrowth",
-    "NoopCrystallizer",
-    "NoopRoleEmergence",
+    "DefaultAnomalyGrowth",
+    "DefaultCorrectionGrowth",
+    "DefaultCrystallizer",
+    "DefaultRoleEmergence",
 ]

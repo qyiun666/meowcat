@@ -10,7 +10,11 @@ event-driven.
 from __future__ import annotations
 from meowcat.events import Lifecycle
 from meowcat.chain import (
+    Chain,
     DIAGNOSTIC_CHAIN as _DC,
+    MAINTENANCE_CHAIN as _MC,
+    GROWTH_CHAIN as _GC,
+    REFLECTION_CHAIN as _RC,
 )
 
 import logging
