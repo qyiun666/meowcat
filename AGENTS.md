@@ -212,7 +212,27 @@ gw = Gateway(colony, front_desk=MyFrontDesk())
                                       └── fuse_to_colony → 猫舍大看板
 ```
 
-### 4.5 身体（器官）— 干活用的
+### 4.5 待办清单（TaskPad）— 房间家具 #5 🆕 v2.2.0
+
+每只猫床头挂的任务清单。大脑决定做什么，爪子干活，做完划掉。
+
+```
+┌── 待办清单（TaskPad）──────────┐
+│                                │
+│  ☐ 写一个登录函数              │
+│  ☐ 重构数据库模型              │
+│  ✓ 修复空指针异常               │
+│  ✗ 优化查询性能（超时）         │
+│                                │
+└────────────────────────────────┘
+```
+
+- **post()**: 贴新任务（TODO → DOING → DONE/FAILED）
+- **pick()**: 取下一个待办（FIFO，跳过已完成的）
+- **diagnose()**: 看任务分布
+- **独立实例**: 每只猫有自己的 TaskPad，分身猫互不干扰
+
+### 4.6 身体（器官）— 干活用的
 
 猫由 20 个器官组成，一套 Default 实现开箱即用，通过 Path/Chain/Loop 编排：
 
@@ -243,7 +263,7 @@ gw = Gateway(colony, front_desk=MyFrontDesk())
 
 > v2.0 变更: Noop/Renovated 两套器官合并为一套 Default。`create_cat(renovated=True/False)` 参数已删除。
 
-### 4.6 插头（Adapter）— 器官可以换实现
+### 4.7 插头（Adapter）— 器官可以换实现
 
 每个器官是插座，可以插入外部实现：
 
@@ -469,6 +489,22 @@ nodes = cat.hippocampus.search_tree("e1", "keyword")
 # v2.0 统一房间闭环
 from meowcat.biology.cat_self_loops import ReflectionLoop
 loop = ReflectionLoop(mode="conversation", fusion_trigger="event")
+
+# v2.1.0 规则引擎
+from meowcat.ruleset import Rule, RuleSet
+cat.rule_set = RuleSet(
+    always_on=[Rule("安全守则", "不要删除数据库", "critical")],
+    per_route={"deep_reason": [Rule("SQL规范", "参数化查询", "high")]},
+)
+
+# v2.2.0 大脑-工具多轮循环
+from meowcat.tools.tool_call import XmlToolCallParser
+result = await cat.do_task("写一个登录函数", max_rounds=5)
+print(result.final_text, result.rounds, result.tool_calls)
+
+# v2.2.0 召唤分身猫
+worker = cat.spawn_worker("helper", "检索用户表结构")
+worker.task_pad.list_todo()  # 分身有自己的待办清单
 ```
 
 > 完整装配流程和所有默认配置 → **[CATALOG.md](CATALOG.md)**

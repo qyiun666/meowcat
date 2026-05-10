@@ -15,6 +15,7 @@ from meowcat.tools.matcher import KeywordToolMatcher
 from meowcat.tools.paws import PawsEngine
 from meowcat.tools.skill import Skill, SkillRegistry, SkillSpec
 from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
+from meowcat.tools.tool_call import TaskResult, ToolCall, XmlToolCallParser
 
 # -- Re-export concrete plus/ implementations for backward compatibility -----
 # Delegates to the central _LAZY_MAP from meowcat._exports (single source of truth).
@@ -58,4 +59,8 @@ __all__ = [
     "DefaultDetector",
     "KeywordToolMatcher",
     "SkillLoader",
+    # v2.2.0
+    "ToolCall",
+    "TaskResult",
+    "XmlToolCallParser",
 ]

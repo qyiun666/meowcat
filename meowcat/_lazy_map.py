@@ -388,4 +388,11 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — v2.1.0 RuleSet —
     "Rule": ("meowcat.ruleset", "Rule"),
     "RuleSet": ("meowcat.ruleset", "RuleSet"),
+    # — v2.2.0 TaskPad + tools —
+    "TaskPad": ("meowcat.biology.task_pad", "TaskPad"),
+    "TaskItem": ("meowcat.biology.task_pad", "TaskItem"),
+    "TaskPadStatus": ("meowcat.biology.task_pad", "TaskStatus"),
+    "ToolCall": ("meowcat.tools.tool_call", "ToolCall"),
+    "DoTaskResult": ("meowcat.tools.tool_call", "TaskResult"),
+    "XmlToolCallParser": ("meowcat.tools.tool_call", "XmlToolCallParser"),
 }

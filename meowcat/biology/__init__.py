@@ -102,6 +102,10 @@ _LAZY_BIOLOGY: dict[str, str] = {
     "CatSelf": "meowcat.biology.cat_self",
     "SelfSnapshot": "meowcat.biology.cat_self",
     "ReflectionLoop": "meowcat.biology.cat_self_loops",
+    # v2.2.0 TaskPad
+    "TaskPad": "meowcat.biology.task_pad",
+    "TaskItem": "meowcat.biology.task_pad",
+    "TaskPadStatus": "meowcat.biology.task_pad",
 }
 
 
@@ -196,4 +200,8 @@ __all__ = [
     "CatSelf",
     "SelfSnapshot",
     "ReflectionLoop",
+    # v2.2.0 TaskPad
+    "TaskPad",
+    "TaskItem",
+    "TaskPadStatus",
 ]

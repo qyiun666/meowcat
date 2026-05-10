@@ -331,7 +331,81 @@ cat.hippocampus.delete_tree("proj-1")
 
 ---
 
-## VII. Assembly Recipes
+## VII. RuleSet 统一规则引擎 🆕 v2.1.0
+
+```python
+from meowcat.ruleset import Rule, RuleSet
+
+rs = RuleSet(
+    always_on=[
+        Rule("安全守则", "不要删除数据库", "critical"),
+    ],
+    per_route={
+        "deep_reason": [Rule("SQL规范", "必须参数化查询", "high")],
+        "tool_use": [Rule("工具约束", "只读优先", "medium")],
+    },
+    output_format_block="使用 Markdown 格式回复",
+)
+
+cat.rule_set = rs
+# Brainstem.build_system_prompt() 自动注入 <rules> XML 块
+# cerebrum.generate() 兜底注入（不走 Brainstem 也生效）
+# cat.rule_set = None 时行为不变
+```
+
+---
+
+## VIII. TaskPad + do_task + spawn_worker 🆕 v2.2.0
+
+### 8.1 TaskPad — 任务清单
+
+```python
+from meowcat.biology.task_pad import TaskPad
+
+pad = TaskPad(max_tasks=50)
+item = pad.post("写一个登录函数")          # TaskItem(TODO)
+pad.mark_doing(item.task_id)
+result = await cat.do_task(item.content)   # 大脑-工具多轮循环
+pad.mark_done(item.task_id, result.final_text)
+
+# 或标记失败
+pad.mark_failed(item.task_id, "超时未完成")
+
+todos = pad.list_todo()           # 仅返回 TODO 状态
+diag = pad.diagnose()             # {"count": 5, "by_status": {...}}
+```
+
+### 8.2 do_task() — 大脑-工具多轮循环
+
+```python
+from meowcat.tools.tool_call import TaskResult, XmlToolCallParser
+
+result: TaskResult = await cat.do_task(
+    "写一个登录函数",
+    max_rounds=5,
+    timeout=120.0,
+    parser=XmlToolCallParser(),
+)
+print(result.final_text)   # 最终答案
+print(result.rounds)       # 执行的轮次
+print(result.tool_calls)   # [ToolCall(name="read_file", params={...}), ...]
+```
+
+### 8.3 spawn_worker() — 召唤分身猫
+
+```python
+worker = cat.spawn_worker(
+    "helper",               # 分身猫名字
+    "检索用户表结构",        # 待办任务 (自动发布到分身 TaskPad)
+    allowed_organs=frozenset({"cat_uid", "name", "container", "task_pad"}),
+)
+worker.parent_id == cat.cat_uid         # True
+worker.task_pad.list_todo()             # 分身独立的待办清单
+```
+
+---
+
+## IX. Assembly Recipes
 
 ```python
 from meowcat.defaults import create_cat, KW_BILINGUAL, PROMPT_ZH
@@ -386,7 +460,7 @@ await cat.loopseq_registry.run("daily_maintenance")
 
 ---
 
-## VIII. File Index
+## X. File Index
 
 | 内容                          | 文件路径                                 |
 | :---------------------------- | :--------------------------------------- |
@@ -408,6 +482,9 @@ await cat.loopseq_registry.run("daily_maintenance")
 | Cortex L0-L3 世界观           | `meowcat/biology/cortex.py`              |
 | ScribblePad 草稿纸            | `meowcat/biology/scribble_pad.py`        |
 | 知识树 (TreeNode) 🆕          | `meowcat/tree.py`                        |
+| 规则引擎 (RuleSet) 🆕 v2.1    | `meowcat/ruleset/`                       |
+| TaskPad 任务清单 🆕 v2.2      | `meowcat/biology/task_pad.py`            |
+| ToolCall 工具调用 🆕 v2.2     | `meowcat/tools/tool_call.py`             |
 | Default 器官实现              | `meowcat/defaults/organs/`               |
 | 关键词 + 提示词预设           | `meowcat/defaults/presets/`              |
 | 存储参考实现                  | `meowcat/defaults/stores.py`             |

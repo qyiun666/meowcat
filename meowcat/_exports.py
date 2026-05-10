@@ -196,6 +196,9 @@ __all__ = [
     "TaskOrchestrator", "TaskNode", "TaskStatus", "TaskResult", "TaskExecutor",
     # v2.1.0 RuleSet
     "Rule", "RuleSet",
+    # v2.2.0 TaskPad + do_task + spawn_worker
+    "TaskPad", "TaskItem", "TaskPadStatus",
+    "ToolCall", "DoTaskResult", "XmlToolCallParser",
 ]
 # fmt: on
 
