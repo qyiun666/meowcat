@@ -5,11 +5,11 @@
 
 import pytest
 
-from meowcat.biology.task_pad import TaskItem, TaskPad, TaskStatus
+from meowcat.biology.task_pad import TaskItem, TaskPad, TaskPadStatus
 from meowcat.defaults.factory import create_cat
 from meowcat.testing import make_test_colony
 from meowcat.tools.tool import Tool, ToolSpec
-from meowcat.tools.tool_call import TaskResult, ToolCall, XmlToolCallParser
+from meowcat.tools.tool_call import DoTaskResult, ToolCall, XmlToolCallParser
 
 # ── TaskPad tests ──────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ class TestTaskPad:
         item = pad.post("写一个函数")
         assert isinstance(item, TaskItem)
         assert item.content == "写一个函数"
-        assert item.status == TaskStatus.TODO
+        assert item.status == TaskPadStatus.TODO
         assert item.result == ""
         assert item.created_at is not None
         assert len(item.task_id) == 12  # uuid hex[:12]
@@ -54,7 +54,7 @@ class TestTaskPad:
         pad = TaskPad()
         item = pad.post("任务")
         pad.mark_done(item.task_id, "完成了")
-        assert item.status == TaskStatus.DONE
+        assert item.status == TaskPadStatus.DONE
         assert item.result == "完成了"
         assert item.done_at is not None
 
@@ -62,13 +62,13 @@ class TestTaskPad:
         pad = TaskPad()
         item = pad.post("任务")
         pad.mark_doing(item.task_id)
-        assert item.status == TaskStatus.DOING
+        assert item.status == TaskPadStatus.DOING
 
     def test_mark_failed(self):
         pad = TaskPad()
         item = pad.post("任务")
         pad.mark_failed(item.task_id, "出错了")
-        assert item.status == TaskStatus.FAILED
+        assert item.status == TaskPadStatus.FAILED
         assert item.result == "出错了"
         assert item.done_at is not None
 
@@ -128,16 +128,16 @@ class TestToolCall:
         assert tc.params == {}
 
 
-class TestTaskResult:
+class TestDoTaskResult:
     def test_basic(self):
-        tr = TaskResult(final_text="done", rounds=3)
+        tr = DoTaskResult(final_text="done", rounds=3)
         assert tr.final_text == "done"
         assert tr.rounds == 3
         assert tr.tool_calls == []
 
     def test_with_tool_calls(self):
         tc = ToolCall(name="read", params={"path": "/x"})
-        tr = TaskResult(final_text="ok", rounds=5, tool_calls=[tc])
+        tr = DoTaskResult(final_text="ok", rounds=5, tool_calls=[tc])
         assert len(tr.tool_calls) == 1
         assert tr.tool_calls[0].name == "read"
 
@@ -224,7 +224,7 @@ class TestDoTask:
         """大脑返回纯文本 → 1 轮结束"""
         cat = self._make_echo_cat()
         result = await cat.do_task("简单任务")
-        assert isinstance(result, TaskResult)
+        assert isinstance(result, DoTaskResult)
         assert result.rounds == 1
         assert result.tool_calls == []
         assert "回复:" in result.final_text

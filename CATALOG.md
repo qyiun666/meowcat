@@ -378,9 +378,9 @@ diag = pad.diagnose()             # {"count": 5, "by_status": {...}}
 ### 8.2 do_task() — 大脑-工具多轮循环
 
 ```python
-from meowcat.tools.tool_call import TaskResult, XmlToolCallParser
+from meowcat.tools.tool_call import DoTaskResult, XmlToolCallParser
 
-result: TaskResult = await cat.do_task(
+result: DoTaskResult = await cat.do_task(
     "写一个登录函数",
     max_rounds=5,
     timeout=120.0,

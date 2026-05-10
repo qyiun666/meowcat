@@ -3,7 +3,7 @@
 
 """meowcat worker subsystem — resumable worker abstraction (v1.1.29).
 
-Provides :class:`BaseWorker` and :class:`CheckpointStore` for long-running,
+Provides :class:`BaseWorker` and :class:`WorkerCheckpointStore` for long-running,
 restartable task execution. Workers represent individual units of work
 that can be paused, checkpointed, and resumed across process restarts.
 
@@ -55,7 +55,7 @@ class WorkerState:
 # -- Checkpoint store ---------------------------------------------------------
 
 
-class CheckpointStore(ABC):
+class WorkerCheckpointStore(ABC):
     """Abstract checkpoint persistence for workers.
 
     Framework-layer: defines the interface.
@@ -79,7 +79,7 @@ class CheckpointStore(ABC):
         """List all checkpointed worker IDs."""
 
 
-class InMemoryCheckpointStore(CheckpointStore):
+class InMemoryCheckpointStore(WorkerCheckpointStore):
     """In-memory checkpoint store — default for development/testing."""
 
     def __init__(self) -> None:
@@ -131,7 +131,7 @@ class BaseWorker(ABC):
         self,
         worker_id: str = "",
         *,
-        store: CheckpointStore | None = None,
+        store: WorkerCheckpointStore | None = None,
         priority: int = 0,
         depends_on: list[str] | None = None,
         max_retries: int = 0,
@@ -292,7 +292,7 @@ from meowcat.worker.scheduler import WorkerScheduler  # noqa: E402,F811
 __all__ = [
     "WorkerStatus",
     "WorkerState",
-    "CheckpointStore",
+    "WorkerCheckpointStore",
     "InMemoryCheckpointStore",
     "BaseWorker",
     "WorkerScheduler",

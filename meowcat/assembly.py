@@ -414,10 +414,10 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
             parser: Tool-call parser. Defaults to ``XmlToolCallParser``.
 
         Returns:
-            :class:`~meowcat.tools.tool_call.TaskResult` with final_text,
+            :class:`~meowcat.tools.tool_call.DoTaskResult` with final_text,
             rounds, and tool_calls list.
         """
-        from meowcat.tools.tool_call import TaskResult, ToolCall, XmlToolCallParser
+        from meowcat.tools.tool_call import DoTaskResult, ToolCall, XmlToolCallParser
 
         if parser is None:
             parser = XmlToolCallParser()
@@ -475,7 +475,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
             # max_rounds exhausted — use last cerebrum output
             final_text = cerebrum_result or ""
 
-        return TaskResult(
+        return DoTaskResult(
             final_text=final_text,
             rounds=rounds,
             tool_calls=tool_calls,

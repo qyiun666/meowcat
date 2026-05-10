@@ -30,7 +30,7 @@ from meowcat.pluggable import Pluggable
 _log = MeowLog.get("meowcat.task_pad")
 
 
-class TaskStatus(str, Enum):
+class TaskPadStatus(str, Enum):
     """Task lifecycle states."""
 
     TODO = "todo"
@@ -54,7 +54,7 @@ class TaskItem:
 
     task_id: str
     content: str
-    status: TaskStatus = TaskStatus.TODO
+    status: TaskPadStatus = TaskPadStatus.TODO
     result: str = ""
     created_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc))
@@ -140,7 +140,7 @@ class TaskPad(Pluggable):
             The next TaskItem with status TODO, or None if empty.
         """
         for item in self._tasks:
-            if item.status == TaskStatus.TODO:
+            if item.status == TaskPadStatus.TODO:
                 return item
         return None
 
@@ -154,7 +154,7 @@ class TaskPad(Pluggable):
             ValueError: If task_id not found.
         """
         item = self._find(task_id)
-        item.status = TaskStatus.DOING
+        item.status = TaskPadStatus.DOING
 
     def mark_done(self, task_id: str, result: str = "") -> None:
         """Mark a task as completed.
@@ -167,7 +167,7 @@ class TaskPad(Pluggable):
             ValueError: If task_id not found.
         """
         item = self._find(task_id)
-        item.status = TaskStatus.DONE
+        item.status = TaskPadStatus.DONE
         item.result = result
         item.done_at = datetime.now(timezone.utc)
 
@@ -187,7 +187,7 @@ class TaskPad(Pluggable):
             ValueError: If task_id not found.
         """
         item = self._find(task_id)
-        item.status = TaskStatus.FAILED
+        item.status = TaskPadStatus.FAILED
         item.result = error
         item.done_at = datetime.now(timezone.utc)
 
@@ -200,7 +200,7 @@ class TaskPad(Pluggable):
 
     def list_todo(self) -> list[TaskItem]:
         """List all TODO tasks."""
-        return [t for t in self._tasks if t.status == TaskStatus.TODO]
+        return [t for t in self._tasks if t.status == TaskPadStatus.TODO]
 
     def list_all(self) -> list[TaskItem]:
         """List all tasks (shallow copy)."""
@@ -216,7 +216,7 @@ class TaskPad(Pluggable):
 
     def count_by_status(self) -> dict[str, int]:
         """Count tasks grouped by status."""
-        counts: dict[str, int] = {s.value: 0 for s in TaskStatus}
+        counts: dict[str, int] = {s.value: 0 for s in TaskPadStatus}
         for t in self._tasks:
             counts[t.status.value] += 1
         return counts
@@ -243,5 +243,5 @@ class TaskPad(Pluggable):
 __all__ = [
     "TaskPad",
     "TaskItem",
-    "TaskStatus",
+    "TaskPadStatus",
 ]

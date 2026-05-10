@@ -18,17 +18,12 @@ path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvali
 """
 
 from __future__ import annotations
-
-import bisect
-import logging
-from collections.abc import AsyncIterator, Callable
-from typing import TYPE_CHECKING, Any
-
-logger = logging.getLogger(__name__)
-
-from pydantic import BaseModel, ConfigDict, Field
-
-# v1.0.18: built-in reflex path structures
+from meowcat.wiring import Organ, Wiring
+from meowcat.protocols import StageProtocol
+from meowcat.pipeline import Pipeline
+from meowcat.perception import PerceptionContext, infer_modality
+from meowcat.events import EventBus, Lifecycle, NerveEvent
+from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
 from meowcat.anatomy import (
     AMYGDALA,
     BRAINSTEM,
@@ -38,12 +33,17 @@ from meowcat.anatomy import (
     MOUTH,
     THALAMUS,
 )
-from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
-from meowcat.events import EventBus, Lifecycle, NerveEvent
-from meowcat.perception import PerceptionContext, infer_modality
-from meowcat.pipeline import Pipeline
-from meowcat.protocols import StageProtocol
-from meowcat.wiring import Organ, Wiring
+from pydantic import BaseModel, ConfigDict, Field
+
+import bisect
+import logging
+from collections.abc import AsyncIterator, Callable
+from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
+
+
+# v1.0.18: built-in reflex path structures
 
 if TYPE_CHECKING:
     from meowcat.nervous import Nervous
@@ -141,7 +141,8 @@ class ReflexRegistry:
 
     def _record_trigger(self, reflex_name: str) -> None:
         """Internal: increment trigger counter for hot path tracking."""
-        self._trigger_counts[reflex_name] = self._trigger_counts.get(reflex_name, 0) + 1
+        self._trigger_counts[reflex_name] = self._trigger_counts.get(
+            reflex_name, 0) + 1
         self._total_triggers += 1
 
     def observe_hot_paths(self, min_triggers: int = 5) -> list[tuple[str, int]]:
@@ -310,4 +311,5 @@ arguments when registering ``Reflex`` instances. The ``trigger`` callable
 is always supplied by the application layer."""
 
 
-__all__ = ["Reflex", "ReflexRegistry", "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]
+__all__ = ["Reflex", "ReflexRegistry",
+           "ReflexArc", "Trigger", "BUILTIN_REFLEX_PATHS"]

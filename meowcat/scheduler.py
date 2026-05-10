@@ -177,9 +177,11 @@ class PeriodicScheduler:
                         both are provided.
         """
         if interval is None and cron is None:
-            raise ValueError(f"Task '{name}': must provide either interval or cron")
+            raise ValueError(
+                f"Task '{name}': must provide either interval or cron")
         if interval is not None and cron is not None:
-            raise ValueError(f"Task '{name}': interval and cron are mutually exclusive")
+            raise ValueError(
+                f"Task '{name}': interval and cron are mutually exclusive")
 
         task = PeriodicTask(
             name=name,

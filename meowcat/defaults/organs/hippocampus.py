@@ -4,6 +4,9 @@
 """meowcat default hippocampus stub — in-memory graph store implementing HippocampusProtocol."""
 
 from __future__ import annotations
+from meowcat.tree import TreeNode
+from meowcat.pluggable import Pluggable
+from meowcat.anatomy import ImplementationStyle
 
 import logging
 import re
@@ -12,10 +15,6 @@ from collections import deque
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
-from meowcat.anatomy import ImplementationStyle
-from meowcat.pluggable import Pluggable
-from meowcat.tree import TreeNode
 
 
 class NoopHippocampus(Pluggable):

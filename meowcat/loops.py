@@ -8,6 +8,10 @@ event-driven.
 """
 
 from __future__ import annotations
+from meowcat.events import Lifecycle
+from meowcat.chain import (
+    DIAGNOSTIC_CHAIN as _DC,
+)
 
 import logging
 from dataclasses import dataclass, field
@@ -15,22 +19,6 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-from meowcat.chain import (
-    DIAGNOSTIC_CHAIN as _DC,
-)
-from meowcat.chain import (
-    GROWTH_CHAIN as _GC,
-)
-from meowcat.chain import (
-    MAINTENANCE_CHAIN as _MC,
-)
-from meowcat.chain import (
-    REFLECTION_CHAIN as _RC,
-)
-from meowcat.chain import (
-    Chain,
-)
-from meowcat.events import Lifecycle
 
 # -- Lookup reusable Chains from BUILTIN_CHAINS -------------------------
 

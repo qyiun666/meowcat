@@ -217,7 +217,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ApprovalStatus": ("meowcat.coordination", "ApprovalStatus"),
     # — worker —
     "BaseWorker": ("meowcat.worker", "BaseWorker"),
-    "CheckpointStore": ("meowcat.worker", "CheckpointStore"),
+    "CheckpointStore": ("meowcat.worker", "WorkerCheckpointStore"),
     "InMemoryCheckpointStore": ("meowcat.worker", "InMemoryCheckpointStore"),
     "WorkerState": ("meowcat.worker", "WorkerState"),
     "WorkerStatus": ("meowcat.worker", "WorkerStatus"),
@@ -391,8 +391,8 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — v2.2.0 TaskPad + tools —
     "TaskPad": ("meowcat.biology.task_pad", "TaskPad"),
     "TaskItem": ("meowcat.biology.task_pad", "TaskItem"),
-    "TaskPadStatus": ("meowcat.biology.task_pad", "TaskStatus"),
+    "TaskPadStatus": ("meowcat.biology.task_pad", "TaskPadStatus"),
     "ToolCall": ("meowcat.tools.tool_call", "ToolCall"),
-    "DoTaskResult": ("meowcat.tools.tool_call", "TaskResult"),
+    "DoTaskResult": ("meowcat.tools.tool_call", "DoTaskResult"),
     "XmlToolCallParser": ("meowcat.tools.tool_call", "XmlToolCallParser"),
 }

@@ -1,11 +1,11 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""ToolCall + TaskResult + built-in XML tool-call parser.
+"""ToolCall + DoTaskResult + built-in XML tool-call parser.
 
 Usage::
 
-    from meowcat.tools.tool_call import ToolCall, TaskResult, XmlToolCallParser
+    from meowcat.tools.tool_call import ToolCall, DoTaskResult, XmlToolCallParser
 
     parser = XmlToolCallParser()
     tc = parser.extract('<tool name="read_file"><param name="path">/tmp/x</param></tool>')
@@ -33,7 +33,7 @@ class ToolCall:
 
 
 @dataclass
-class TaskResult:
+class DoTaskResult:
     """The result of one ``cat.do_task()`` execution.
 
     Args:
@@ -127,7 +127,7 @@ class XmlToolCallParser:
 
 __all__ = [
     "ToolCall",
-    "TaskResult",
+    "DoTaskResult",
     "ToolCallParser",
     "XmlToolCallParser",
 ]
