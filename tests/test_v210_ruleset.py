@@ -8,10 +8,7 @@ Tests cover:
     - RuleSet.render() — MD and code block content preservation
 """
 
-import pytest
-
 from meowcat.ruleset import Rule, RuleSet
-
 
 # ── Rule tests ────────────────────────────────────────────────────────
 
@@ -30,7 +27,8 @@ class TestRule:
 
     def test_repr(self):
         r = Rule("N", "C")
-        assert repr(r) == "Rule(name='N', content='C', priority='medium', tags=[])"
+        assert repr(
+            r) == "Rule(name='N', content='C', priority='medium', tags=[])"
 
 
 # ── RuleSet tests ─────────────────────────────────────────────────────

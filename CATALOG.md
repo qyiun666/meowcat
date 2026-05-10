@@ -1,4 +1,4 @@
-# meowcat v2.0 · Default Configuration & Execution Catalog
+# meowcat v2.2.0 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 23 路径 + 8 链条 + 7 循环 + 1 循环序列 + 预设目录 + 接线规则
 >

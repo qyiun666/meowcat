@@ -9,8 +9,11 @@ event-driven.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from meowcat.chain import (
     DIAGNOSTIC_CHAIN as _DC,
@@ -384,9 +387,11 @@ class LoopSequenceRegistry:
                 current_input = last_result if isinstance(last_result, dict) else {
                     "_result": last_result}
             except Exception:
+                logger.warning(
+                    "Loop %r failed in LoopSequence, skipping", loop_name, exc_info=True
+                )
                 if seq.stop_on_error:
                     raise
-                # stop_on_error=False → skip failure, continue
                 current_input = dict(initial_input)
 
         if isinstance(last_result, dict):

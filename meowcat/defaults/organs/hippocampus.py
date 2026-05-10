@@ -5,10 +5,13 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time as _time
 from collections import deque
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
@@ -120,7 +123,9 @@ class NoopHippocampus(Pluggable):
                     "cat_uid", "unknown")
                 self._episode_store.append(store_cat_uid, dict(episode))
             except Exception:
-                pass
+                logger.warning(
+                    "Failed to persist episode %s to store", eid, exc_info=True
+                )
         return eid
 
     def get_episode(self, episode_id: str) -> dict[str, Any] | None:
@@ -347,7 +352,11 @@ class NoopHippocampus(Pluggable):
                 if ep.get("id") not in {e.get("id") for e in self.episodes}:
                     self.episodes.append(ep)
         except Exception:
-            pass
+            logger.warning(
+                "Failed to load episodes from store for cat_uid=%s",
+                self.cat_uid,
+                exc_info=True,
+            )
 
     async def _flush_to_store(self) -> None:
         pass  # write-through: add_episode already persists immediately

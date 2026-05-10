@@ -274,7 +274,7 @@ class PeriodicScheduler:
                         self._inflight.add(t)
                         t.add_done_callback(self._inflight.discard)
             except Exception:
-                _log.debug(
+                _log.warning(
                     "PeriodicScheduler tick error",
                     exc_info=True,
                 )

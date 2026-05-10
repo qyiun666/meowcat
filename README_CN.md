@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-2.0.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-2.2.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -135,6 +135,14 @@ Harness 解决的是**"怎么让 LLM 干活"**，meowcat 回答的是**"Agent �
 
 `TreeNode` dataclass + 海马体树方法：build_tree、get_tree、search_tree、query_subtree、delete_tree、check_stale。
 
+### 📋 统一规则引擎（v2.1 新增）
+
+`RuleSet` + `Rule` — 每只猫挂一个规则集，所有 LLM 调用点按场景自动注入结构化规则。框架提供容器，不内置规则。
+
+### 📝 任务委托（v2.2 新增）
+
+多轮脑-工具循环 `do_task()`：大脑自动交替推理和工具调用直到完成。`spawn_worker()` 召唤独立分身猫执行任务。`TaskPad` 每猫独立待办清单。
+
 </td>
 </tr>
 </table>
@@ -255,6 +263,23 @@ async def main():
     root = TreeNode(id="r", entity_id="e1", parent_id=None,
                     path="/", node_type="project", name="项目")
     cat.hippocampus.build_tree("e1", root)
+
+    # 统一规则引擎（v2.1 新增）
+    from meowcat.ruleset import RuleSet, Rule
+    cat.rule_set = RuleSet(
+        role_block="<role>Python 安全审计专家</role>",
+        always_on=[Rule("安全第一", "不要执行危险操作", "critical")],
+        per_route={"deep_reason": [Rule("SQL规范", "参数化查询", "critical")]},
+    )
+
+    # 任务委托（v2.2 新增）
+    from meowcat.tools.tool_call import XmlToolCallParser
+    result = await cat.do_task("写一个登录函数", max_rounds=5)
+    print(result.final_text, result.rounds, result.tool_calls)
+
+    # 召唤分身猫（v2.2 新增）
+    worker = cat.spawn_worker("helper", "检索用户表结构")
+    worker.task_pad.list_todo()
 
 import asyncio
 asyncio.run(main())
@@ -382,6 +407,8 @@ result = await colony.ns_get("knowledge", "weather")
 
 | 版本        | 时间       | 亮点                                                                                                                                        |
 | :---------- | :--------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| **v2.2.0**  | 2026.05.10 | TaskPad 每猫待办清单 · `do_task()` 脑-工具多轮循环 · `spawn_worker()` 分身猫                                                                |
+| **v2.1.0**  | 2026.05.10 | RuleSet 统一规则引擎 — 每只猫挂一个规则集，按场景自动注入                                                                                   |
 | **v2.0.0**  | 2026.05.10 | 框架瘦身：154→113 文件，40→14 概念 · Noop/Renovated 合并 · 对话 6→3 步 · 知识树 · 适配器/CLI/工具移入应用层                                 |
 | **v1.3.10** | 2026.05.09 | CI lint 修复 + Release 重构为 workflow_dispatch 手动发包                                                                                    |
 | **v1.3.9**  | 2026.05.09 | 代码健康整理 — 12 文件拆至 ≤500 行 · deprecated 清理 · 版本文档补全                                                                         |
@@ -414,20 +441,21 @@ pytest tests/
 
 ## 📂 包结构速查
 
-| 模块                  | 用途                                                         |
-| :-------------------- | :----------------------------------------------------------- |
-| `meowcat/anatomy.py`  | 器官坐标、类别、ImplementationStyle                          |
-| `meowcat/biology/`    | OrganSpec SSOT、CatSelf、Cortex、PinealGland、Fusion、Growth |
-| `meowcat/assembly.py` | CatBase — 将子系统组合为一只活的猫                           |
-| `meowcat/host.py`     | OrganHost — 挂载/卸载/查找器官，Protocol 校验                |
-| `meowcat/wiring.py`   | Wiring — 有向神经图（允许 + 禁止）                           |
-| `meowcat/nervous.py`  | Nervous — 信号调度 + 中间件 + 熔断器                         |
-| `meowcat/reflex.py`   | ReflexArc — 刺激→响应，零 LLM 路径                           |
-| `meowcat/tools/`      | Tool/Skill/Paws 核心（零 I/O 抽象）                          |
-| `meowcat/tree.py` 🆕  | KnowledgeTree — TreeNode dataclass（v2.0 新增）              |
-| `meowcat/colony/`     | Colony 多猫容器                                              |
-| `meowcat/gateway/`    | Gateway + FrontDesk + Protocol（适配器 v2.0 移入应用层）     |
-| `meowcat/defaults/`   | Default 器官实现、预设、工厂                                 |
+| 模块                  | 用途                                                                  |
+| :-------------------- | :-------------------------------------------------------------------- |
+| `meowcat/anatomy.py`  | 器官坐标、类别、ImplementationStyle                                   |
+| `meowcat/biology/`    | OrganSpec SSOT、CatSelf、Cortex、PinealGland、Fusion、Growth、TaskPad |
+| `meowcat/ruleset/` 🆕 | RuleSet 统一规则引擎（v2.1 新增）                                     |
+| `meowcat/assembly.py` | CatBase — 将子系统组合为一只活的猫                                    |
+| `meowcat/host.py`     | OrganHost — 挂载/卸载/查找器官，Protocol 校验                         |
+| `meowcat/wiring.py`   | Wiring — 有向神经图（允许 + 禁止）                                    |
+| `meowcat/nervous.py`  | Nervous — 信号调度 + 中间件 + 熔断器                                  |
+| `meowcat/reflex.py`   | ReflexArc — 刺激→响应，零 LLM 路径                                    |
+| `meowcat/tools/`      | Tool/Skill/Paws 核心 + ToolCall/TaskResult dataclass                  |
+| `meowcat/tree.py` 🆕  | KnowledgeTree — TreeNode dataclass（v2.0 新增）                       |
+| `meowcat/colony/`     | Colony 多猫容器                                                       |
+| `meowcat/gateway/`    | Gateway + FrontDesk + Protocol（适配器 v2.0 移入应用层）              |
+| `meowcat/defaults/`   | Default 器官实现、预设、工厂                                          |
 
 ---
 

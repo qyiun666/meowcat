@@ -59,10 +59,12 @@ def get_shared_client(
         return _shared_client
 
     try:
-        import httpx  # type: ignore[import-untyped]
+        import httpx  # type: ignore[import-not-found,import-untyped]
     except ImportError:
-        logger.warning("httpx not installed — HTTP features require: pip install httpx")
-        raise ImportError("httpx not installed. Install with: pip install httpx") from None
+        logger.warning(
+            "httpx not installed — HTTP features require: pip install httpx")
+        raise ImportError(
+            "httpx not installed. Install with: pip install httpx") from None
 
     limits = httpx.Limits(
         max_connections=max_connections,

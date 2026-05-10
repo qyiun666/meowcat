@@ -20,8 +20,11 @@ path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvali
 from __future__ import annotations
 
 import bisect
+import logging
 from collections.abc import AsyncIterator, Callable
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -124,7 +127,9 @@ class ReflexRegistry:
                 if r.trigger(input):
                     return r
             except Exception:
-                # trigger should not raise; treat as non-match and continue
+                logger.warning(
+                    "Reflex trigger %r raised an exception", r.name, exc_info=True
+                )
                 continue
         return None
 

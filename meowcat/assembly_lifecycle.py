@@ -90,7 +90,7 @@ class LifecycleMixin:
                     # type: ignore[attr-defined]
                     self._active_workflows[eid] = wf
         except Exception:
-            _log.debug(
+            _log.warning(
                 "_resume_workflows: failed to load workflows", exc_info=True)
 
     async def _checkpoint_workflows(self) -> None:
@@ -121,7 +121,7 @@ class LifecycleMixin:
                     text="\n[checkpoint] " + _json.dumps(checkpoint_data),
                 )
         except Exception:
-            _log.debug(
+            _log.warning(
                 "_checkpoint_workflows: failed to write checkpoint", exc_info=True)
 
     # -- Organs mounted hooks (v1.2.36) ------------------------------------

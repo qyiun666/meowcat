@@ -134,6 +134,14 @@ Framework defines the **Slot** (Protocol interface + OrganSpec contract). You pr
 
 `TreeNode` dataclass + Hippocampus tree methods: build_tree, get_tree, search_tree, query_subtree, delete_tree, check_stale.
 
+### 📋 Unified Rule Engine (v2.1)
+
+`RuleSet` + `Rule` — attach a rule set to each cat; all LLM call sites auto-inject structured rules per route. Framework provides container, no built-in rules.
+
+### 📝 Task Delegation (v2.2)
+
+Multi-round brain-tool loop `do_task()`: cerebrum interleaves reasoning and tool calls until completion. `spawn_worker()` creates independent worker cats. `TaskPad` per-cat todo list.
+
 </td>
 </tr>
 </table>
@@ -265,6 +273,23 @@ async def main():
     root = TreeNode(id="r", entity_id="e1", parent_id=None,
                     path="/", node_type="project", name="p")
     cat.hippocampus.build_tree("e1", root)
+
+    # Unified rule engine (v2.1)
+    from meowcat.ruleset import RuleSet, Rule
+    cat.rule_set = RuleSet(
+        role_block="<role>Python security auditor</role>",
+        always_on=[Rule("Safety first", "No dangerous operations", "critical")],
+        per_route={"deep_reason": [Rule("SQL", "Use parameterized queries", "critical")]},
+    )
+
+    # Task delegation (v2.2)
+    from meowcat.tools.tool_call import XmlToolCallParser
+    result = await cat.do_task("Write a login function", max_rounds=5)
+    print(result.final_text, result.rounds, result.tool_calls)
+
+    # Spawn worker cat (v2.2)
+    worker = cat.spawn_worker("helper", "Query user table schema")
+    worker.task_pad.list_todo()
 
 import asyncio
 asyncio.run(main())
@@ -420,23 +445,26 @@ pytest tests/
 
 ## 📂 Package Map
 
-| Module                | Purpose                                                              |
-| :-------------------- | :------------------------------------------------------------------- |
-| `meowcat/anatomy.py`  | Organ coordinates, categories, ImplementationStyle                   |
-| `meowcat/biology/`    | OrganSpec SSOT, CatSelf, Cortex, PinealGland, Fusion, Growth         |
-| `meowcat/assembly.py` | CatBase — compose subsystems into a living cat                       |
-| `meowcat/host.py`     | OrganHost — mount/unmount/find organs, protocol validation           |
-| `meowcat/wiring.py`   | Wiring — directed nerve graph (allow + forbid)                       |
-| `meowcat/nervous.py`  | Nervous — signal dispatch with middleware + circuit breaker          |
-| `meowcat/reflex.py`   | ReflexArc — stimulus→response, zero-LLM paths                        |
-| `meowcat/tools/`      | Tool/Skill/Paws core (zero I/O abstractions)                         |
-| `meowcat/tree.py` 🆕  | KnowledgeTree — TreeNode dataclass (v2.0)                            |
-| `meowcat/colony/`     | Colony multi-cat container                                           |
-| `meowcat/gateway/`    | Gateway + FrontDesk + protocol (adapters moved to app layer in v2.0) |
-| `meowcat/defaults/`   | Default organ implementations, presets, factory                      |
+| Module                | Purpose                                                               |
+| :-------------------- | :-------------------------------------------------------------------- |
+| `meowcat/anatomy.py`  | Organ coordinates, categories, ImplementationStyle                    |
+| `meowcat/biology/`    | OrganSpec SSOT, CatSelf, Cortex, PinealGland, Fusion, Growth, TaskPad |
+| `meowcat/ruleset/` 🆕 | RuleSet unified rule engine (v2.1)                                    |
+| `meowcat/assembly.py` | CatBase — compose subsystems into a living cat                        |
+| `meowcat/host.py`     | OrganHost — mount/unmount/find organs, protocol validation            |
+| `meowcat/wiring.py`   | Wiring — directed nerve graph (allow + forbid)                        |
+| `meowcat/nervous.py`  | Nervous — signal dispatch with middleware + circuit breaker           |
+| `meowcat/reflex.py`   | ReflexArc — stimulus→response, zero-LLM paths                         |
+| `meowcat/tools/`      | Tool/Skill/Paws core + ToolCall/TaskResult dataclass                  |
+| `meowcat/tree.py` 🆕  | KnowledgeTree — TreeNode dataclass (v2.0)                             |
+| `meowcat/colony/`     | Colony multi-cat container                                            |
+| `meowcat/gateway/`    | Gateway + FrontDesk + protocol (adapters moved to app layer in v2.0)  |
+| `meowcat/defaults/`   | Default organ implementations, presets, factory                       |
 
 ---
 
 ## 📄 License
+
+[MIT](LICENSE) © 2025-2026 Axonant — built with curiosity and cat-like instincts.
 
 [MIT](LICENSE) © 2025-2026 Axonant — built with curiosity and cat-like instincts.

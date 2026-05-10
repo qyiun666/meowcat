@@ -425,9 +425,10 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
         tool_calls: list[ToolCall] = []
         context: str = task
         final_text: str = ""
-        round_num: int = 0
+        rounds: int = 0
 
-        for round_num in range(max_rounds):
+        for _ in range(max_rounds):
+            rounds += 1
             # 1. Cerebrum thinks
             cerebrum_result: str = await self.path_registry.run(
                 self, "deep_reason", prompt=context,
@@ -476,7 +477,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
 
         return TaskResult(
             final_text=final_text,
-            rounds=round_num + 1,
+            rounds=rounds,
             tool_calls=tool_calls,
         )
 

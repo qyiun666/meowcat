@@ -3,16 +3,13 @@
 
 """Tests for v2.2.0: TaskPad + do_task + spawn_worker."""
 
-from __future__ import annotations
-
 import pytest
 
 from meowcat.biology.task_pad import TaskItem, TaskPad, TaskStatus
 from meowcat.defaults.factory import create_cat
 from meowcat.testing import make_test_colony
-from meowcat.tools.tool_call import TaskResult, ToolCall, XmlToolCallParser
 from meowcat.tools.tool import Tool, ToolSpec
-
+from meowcat.tools.tool_call import TaskResult, ToolCall, XmlToolCallParser
 
 # ── TaskPad tests ──────────────────────────────────────────────────
 
