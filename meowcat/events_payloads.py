@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from meowcat.assembly import CatBase
 from meowcat.wiring import Organ
 
 # -- Lifecycle payloads --------------------------------------------------
@@ -27,13 +28,13 @@ from meowcat.wiring import Organ
 class LifecycleStartPayload(TypedDict):
     """Payload for ``Lifecycle.START`` event."""
 
-    cat: Any  # CatBase — circular import avoided
+    cat: CatBase  # cyclical import avoided via TYPE_CHECKING
 
 
 class LifecycleShutdownPayload(TypedDict):
     """Payload for ``Lifecycle.SHUTDOWN`` event."""
 
-    cat: Any  # CatBase — circular import avoided
+    cat: CatBase  # cyclical import avoided via TYPE_CHECKING
 
 
 class PerceiveStartPayload(TypedDict):
@@ -215,14 +216,14 @@ class KittenMergeAbsorbedPayload(TypedDict):
 class SelfSnapshotPayload(TypedDict):
     """Payload for ``SelfEvent.SNAPSHOT`` event."""
 
-    cat: Any  # CatBase
+    cat: CatBase  # cyclical import avoided via TYPE_CHECKING
     snapshot: Any  # SelfSnapshot
 
 
 class SelfReflectPayload(TypedDict):
     """Payload for ``SelfEvent.REFLECT`` event."""
 
-    cat: Any  # CatBase
+    cat: CatBase  # cyclical import avoided via TYPE_CHECKING
     result: Any
 
 

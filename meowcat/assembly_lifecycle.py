@@ -14,10 +14,15 @@ import json as _json
 import logging as _logging
 import time as _time
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS
-from meowcat.events import Lifecycle
+from meowcat.events import Lifecycle, EventBus
+
+if TYPE_CHECKING:
+    from meowcat.host import OrganHost
+    from meowcat.loops import LoopRegistry, LoopSequenceRegistry
+    from meowcat.nervous import Nervous
 
 _log = _logging.getLogger(__name__)
 
@@ -26,7 +31,29 @@ _log = _logging.getLogger(__name__)
 CatHook = Callable[[Any], None] | Callable[[Any], Awaitable[None]]
 
 
-class LifecycleMixin:
+class LifecycleHost(Protocol):
+    """Protocol declaring the CatBase attributes that LifecycleMixin depends on.
+
+    This eliminates ``# type: ignore[attr-defined]`` annotations in
+    LifecycleMixin by telling mypy what attributes ``self`` provides.
+
+    .. note:: Method signatures (has_organ, organ) are NOT declared here —
+       they are provided by :class:`OrganHost` in the MRO.  Declaring them
+       would shadow the real implementations at runtime.
+    """
+
+    _active_workflows: dict[str, dict[str, Any]]
+    _nervous: Nervous | None
+    _events: EventBus
+    _start_hooks: list[Any]
+    _shutdown_hooks: list[Any]
+    _organs_mounted_hooks: list[Any]
+    cat_uid: str
+    loop_registry: LoopRegistry
+    loopseq_registry: LoopSequenceRegistry
+
+
+class LifecycleMixin(LifecycleHost):
     """Mixin providing lifecycle, workflow, and loop execution methods for CatBase.
 
     All methods access ``self._*`` private attributes set by ``CatBase.__init__``.
@@ -59,12 +86,11 @@ class LifecycleMixin:
         """
         eid = wf.get("entity_id", wf.get("id", ""))
         if eid:
-            self._active_workflows[eid] = wf  # type: ignore[attr-defined]
+            self._active_workflows[eid] = wf
 
     def active_workflows(self) -> list[dict[str, Any]]:
         """Return all currently active (unfinished) workflows."""
         return [
-            # type: ignore[attr-defined]
             wf
             for wf in self._active_workflows.values()
             if wf.get("status") in ("active", "awaiting_user")
@@ -77,17 +103,14 @@ class LifecycleMixin:
         Logs failures at debug level — missing Hippocampus or query
         exceptions do not block startup.
         """
-        if not self.has_organ("brain", "hippocampus"):  # type: ignore[attr-defined]
+        if not self.has_organ("brain", "hippocampus"):
             return
         try:
-            # type: ignore[attr-defined]
             hippo = self.organ("brain", "hippocampus")
-            active = hippo.list_active_workflows(
-                self.cat_uid)  # type: ignore[attr-defined]
+            active = hippo.list_active_workflows(self.cat_uid)
             for wf in active:
                 eid = wf.get("entity_id", wf.get("id", ""))
                 if eid:
-                    # type: ignore[attr-defined]
                     self._active_workflows[eid] = wf
         except Exception:
             _log.warning(
@@ -99,12 +122,11 @@ class LifecycleMixin:
         Logs failures at debug level — missing Hippocampus or write
         exceptions do not block shutdown.
         """
-        if not self._active_workflows or not self.has_organ("brain", "hippocampus"):  # type: ignore[attr-defined]
+        if not self._active_workflows or not self.has_organ("brain", "hippocampus"):
             return
-        if self._nervous is None:  # type: ignore[attr-defined]
+        if self._nervous is None:
             return
         try:
-            # type: ignore[attr-defined]
             for eid, wf in self._active_workflows.items():
                 if wf.get("status") not in ("active", "awaiting_user"):
                     continue
@@ -113,7 +135,7 @@ class LifecycleMixin:
                     "checkpoint": wf.get("checkpoint", {}),
                     "updated_at": str(_time.time()),
                 }
-                await self._nervous.signal(  # type: ignore[attr-defined]
+                await self._nervous.signal(
                     BRAINSTEM,
                     HIPPOCAMPUS,
                     "append_content",
@@ -147,11 +169,11 @@ class LifecycleMixin:
 
             >>> cat.on_organs_mounted(lambda c: colony._inject_colony_memory(c))
         """
-        self._organs_mounted_hooks.append(hook)  # type: ignore[attr-defined]
+        self._organs_mounted_hooks.append(hook)
 
     def _notify_organs_mounted(self) -> None:
         """Internal: fire all on_organs_mounted hooks in registration order."""
-        for hook in self._organs_mounted_hooks:  # type: ignore[attr-defined]
+        for hook in self._organs_mounted_hooks:
             # v1.3.6: sync-only hooks for organs_mounted (called during
             # sync assembly flow). For async needs, use on_start() instead.
             hook(self)  # type: ignore[call-arg]
@@ -174,7 +196,7 @@ class LifecycleMixin:
 
             >>> cat.on_start(lambda c: c.colony.gateway.start())
         """
-        self._start_hooks.append(hook)  # type: ignore[attr-defined]
+        self._start_hooks.append(hook)
 
     def on_shutdown(self, hook: CatHook) -> None:
         """Register a shutdown hook. Called in **reverse** registration
@@ -193,7 +215,7 @@ class LifecycleMixin:
 
             >>> cat.on_shutdown(lambda c: c.colony.gateway.stop())
         """
-        self._shutdown_hooks.append(hook)  # type: ignore[attr-defined]
+        self._shutdown_hooks.append(hook)
 
     # -- Lifecycle -----------------------------------------------------------
 
@@ -205,9 +227,8 @@ class LifecycleMixin:
         """
         # v1.0.15: Scan Hippocampus for unfinished Workflows and load
         await self._resume_workflows()
-        # type: ignore[attr-defined]
         await self._events.emit(Lifecycle.START, {"cat": self})
-        for hook in self._start_hooks:  # type: ignore[attr-defined]
+        for hook in self._start_hooks:
             await self._call_hook(hook, self)
 
     async def shutdown(self) -> None:
@@ -218,10 +239,8 @@ class LifecycleMixin:
         """
         # v1.0.15: Save all active Workflows to Hippocampus
         await self._checkpoint_workflows()
-        # type: ignore[attr-defined]
         for hook in reversed(self._shutdown_hooks):
             await self._call_hook(hook, self)
-        # type: ignore[attr-defined]
         await self._events.emit(Lifecycle.SHUTDOWN, {"cat": self})
 
     # -- Loop execution -------------------------------------------------------
@@ -247,7 +266,7 @@ class LifecycleMixin:
 
             result = await cat.run_loop("conversation", message="hello")
         """
-        return await self.loop_registry.run(self, name, **initial_input)  # type: ignore[attr-defined]
+        return await self.loop_registry.run(self, name, **initial_input)
 
     # -- Loop sequence execution (v1.0.4) -------------------------------------
 
@@ -273,7 +292,7 @@ class LifecycleMixin:
 
             result = await cat.run_loopseq("daily_maintenance")
         """
-        return await self.loopseq_registry.run(self, name, **initial_input)  # type: ignore[attr-defined]
+        return await self.loopseq_registry.run(self, name, **initial_input)
 
 
 __all__ = ["LifecycleMixin", "CatHook"]

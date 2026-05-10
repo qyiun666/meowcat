@@ -434,10 +434,12 @@ loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
 ## 11. 常用 API 速查
 
 ```python
-from meowcat.defaults import create_cat, create_colony, KW_BILINGUAL, PROMPT_ZH
+from meowcat import Colony
+from meowcat.defaults import create_cat, KW_BILINGUAL, PROMPT_ZH
 
-# 创建一只猫 — 只需提供 cerebrum（LLM 实现）
-cat = create_cat("Kitty", cerebrum=MyLLM(), keyword=KW_BILINGUAL, prompt=PROMPT_ZH)
+# 创建猫舍和一只猫 — 只需提供 cerebrum（LLM 实现）
+colony = Colony("my-colony")
+cat = create_cat(container=colony, name="Kitty", cerebrum=MyLLM(), keyword=KW_BILINGUAL, prompt=PROMPT_ZH)
 
 # v2.0: CatSelf 由应用层自行创建
 from meowcat.biology.cat_self import CatSelf
@@ -461,10 +463,9 @@ await cat.run_loop("conversation", message="你好！")
 cat.mount("brain", "hippocampus", MyHippocampus())
 
 # Colony 多猫容器
-colony = create_colony("my-colony")
-cat_a = colony.create_cat("analyst", cerebrum=AnalystBrain())
-cat_b = colony.create_cat("executor", cerebrum=ExecutorBrain())
-await colony.signal_between("analyst", "executor", "brain", "amygdala",
+cat_a = create_cat(container=colony, name="analyst", cerebrum=AnalystBrain())
+cat_b = create_cat(container=colony, name="executor", cerebrum=ExecutorBrain())
+await colony.signal_between(cat_a.cat_uid, cat_b.cat_uid, "brain", "amygdala",
                               "assess_safety", input=data)
 
 # Gateway 大门 + FrontDesk 前台（适配器由应用层提供）

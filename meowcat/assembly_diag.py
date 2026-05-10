@@ -9,13 +9,32 @@ Provides ``DiagnosticMixin`` with diagnostic shortcuts and CLI facade methods.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS
-from meowcat.wiring import Organ
+from meowcat.wiring import Organ, Wiring
+
+if TYPE_CHECKING:
+    from meowcat.chain import ChainRegistry
+    from meowcat.host import OrganHost
+    from meowcat.loops import LoopSequenceRegistry
 
 
-class DiagnosticMixin:
+class DiagnosticHost(Protocol):
+    """Protocol declaring the CatBase attributes that DiagnosticMixin depends on.
+
+    .. note:: The ``signal()`` method is provided by :class:`SignalSystemMixin`
+       in the MRO and is NOT declared here to avoid shadowing.
+    """
+
+    _host: OrganHost
+    wiring: Wiring
+    cat_uid: str
+    chain_registry: ChainRegistry
+    loopseq_registry: LoopSequenceRegistry
+
+
+class DiagnosticMixin(DiagnosticHost):
     """Mixin providing diagnostic shortcuts and CLI facade methods for CatBase.
 
     All methods access ``self._*`` private attributes set by ``CatBase.__init__``.
@@ -68,14 +87,8 @@ class DiagnosticMixin:
         from meowcat.diagnose import render_wiring
 
         # Collect all mounted organs as input for orphan node detection
-        mounted: frozenset[Organ] = frozenset(
-            self._host.list_all_organs())  # type: ignore[attr-defined]
-        return render_wiring(
-            # type: ignore[attr-defined]
-            self.wiring,
-            format=format,
-            organs=mounted,
-        )
+        mounted: frozenset[Organ] = frozenset(self._host.list_all_organs())
+        return render_wiring(self.wiring, format=format, organs=mounted)
 
     # -- CLI facade methods (v1.0.9) ------------------------------------------
 
@@ -92,13 +105,8 @@ class DiagnosticMixin:
         Returns:
             Memory retrieval result dict
         """
-        return await self.chain_registry.run(  # type: ignore[attr-defined]
-            # type: ignore[attr-defined]
-            self,
-            "memory_search",
-            msg=query,
-            session_id=self.cat_uid,
-        )
+        return await self.chain_registry.run(
+            self, "memory_search", msg=query, session_id=self.cat_uid)
 
     async def memory_stats(self) -> dict[str, Any]:
         """Memory stats. Equivalent to ``/stats``.
@@ -108,9 +116,7 @@ class DiagnosticMixin:
         Returns:
             Memory stats dict
         """
-        result = await self.signal(  # type: ignore[attr-defined]
-            BRAINSTEM, HIPPOCAMPUS, "stats"
-        )
+        result = await self.signal(BRAINSTEM, HIPPOCAMPUS, "stats")
         if isinstance(result, dict):
             return result
         return {"stats": result}
@@ -130,10 +136,7 @@ class DiagnosticMixin:
         Returns:
             Maintenance result dict
         """
-        return await self.loopseq_registry.run(  # type: ignore[attr-defined]
-            self,
-            "daily_maintenance",
-        )
+        return await self.loopseq_registry.run(self, "daily_maintenance")
 
 
 __all__ = ["DiagnosticMixin"]

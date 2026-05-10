@@ -691,6 +691,7 @@ class TestGatewayE2E:
 
         class _CatRoutingFrontDesk(FrontDeskProtocol):
             """FrontDesk that routes to cat's ears.echo."""
+
             async def route(self, text, ctx, colony):
                 if ctx.target_cat:
                     cat_obj = colony.get_cat(ctx.target_cat)
@@ -703,7 +704,7 @@ class TestGatewayE2E:
 
         gw = Gateway(col, front_desk=_CatRoutingFrontDesk())
         ctx = SignalContext(session_id="s1", platform="test",
-                           target_cat=cat.cat_uid)
+                            target_cat=cat.cat_uid)
         result = await gw._on_message("你好世界", ctx)
         assert result == "cat:你好世界"
 
@@ -748,7 +749,7 @@ class TestGatewayE2E:
         cat._cat_uid = "new-cat-uid"  # type: ignore[attr-defined]
 
         ctx = SignalContext(session_id="s1", platform="test",
-                           target_cat="new-cat-uid")
+                            target_cat="new-cat-uid")
         result = await gw._on_message("ping", ctx)
         assert result == "found:dynamic-cat"
 

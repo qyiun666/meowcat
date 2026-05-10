@@ -5,12 +5,29 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from meowcat.assembly import CatBase
 
+if TYPE_CHECKING:
+    from meowcat.protocols_storage import SharedStorageProtocol
 
-class _CatOpsMixin:
+
+class _CatOpsHost(Protocol):
+    """Protocol declaring the Colony attributes that _CatOpsMixin depends on.
+
+    .. note:: ``_next_cat_uid()`` and ``memory`` are provided by Colony
+       directly (MRO position 0) and are NOT declared here to avoid shadowing.
+    """
+
+    is_full: bool
+    colony_id: str
+    _cats: dict[str, CatBase]
+    _storage: SharedStorageProtocol | None
+    _max_cats: int
+
+
+class _CatOpsMixin(_CatOpsHost):
     """Cat CRUD methods extracted from Colony.
 
     Provides cat creation (create_cat), registration (register, adopt),
@@ -30,7 +47,6 @@ class _CatOpsMixin:
         if cat.has_organ("brain", "hippocampus"):
             hippo = cat.organ("brain", "hippocampus")
             if hasattr(hippo, "set_colony_memory"):
-                # type: ignore[attr-defined]
                 hippo.set_colony_memory(self.memory)
 
     # -- Create -------------------------------------------------------
@@ -58,13 +74,12 @@ class _CatOpsMixin:
         Returns:
             Registered CatBase instance.
         """
-        if self.is_full:  # type: ignore[attr-defined]
+        if self.is_full:
             raise RuntimeError(
-                # type: ignore[attr-defined]
                 f"Colony '{self.colony_id}' is full ({len(self._cats)}/{self._max_cats} cats)"
             )
 
-        cat_uid = self._next_cat_uid()  # type: ignore[attr-defined]
+        cat_uid = self._next_cat_uid()
         cat = CatBase(
             cat_uid,
             container=self,  # type: ignore[arg-type]
@@ -73,15 +88,13 @@ class _CatOpsMixin:
             **cat_kwargs,
         )
         if name is not None:
-            cat._name = name  # type: ignore[attr-defined]
-        # type: ignore[attr-defined]
+            cat._name = name
         cat._address = f"{self.colony_id}_{cat_uid}"
 
-        if self._storage is not None:  # type: ignore[attr-defined]
-            cat._colony_storage = self._storage  # type: ignore[attr-defined]
+        if self._storage is not None:
+            cat._colony_storage = self._storage
 
         if memory_snapshot:
-            # type: ignore[attr-defined]
             cat._memory_snapshot = memory_snapshot
 
         cat.on_organs_mounted(lambda c: self._inject_colony_memory(c))
@@ -93,9 +106,9 @@ class _CatOpsMixin:
 
     def register(self, cat: CatBase) -> None:
         """Register a cat into the colony (overwrites if already exists)."""
-        if self._storage is not None:  # type: ignore[attr-defined]
-            cat._colony_storage = self._storage  # type: ignore[attr-defined]
-        self._cats[cat.cat_uid] = cat  # type: ignore[attr-defined]
+        if self._storage is not None:
+            cat._colony_storage = self._storage
+        self._cats[cat.cat_uid] = cat
 
     def unregister(self, cat_uid: str) -> None:
         """Remove a cat from the colony.
@@ -103,7 +116,7 @@ class _CatOpsMixin:
         Raises:
             KeyError: Cat does not exist.
         """
-        del self._cats[cat_uid]  # type: ignore[attr-defined]
+        del self._cats[cat_uid]
 
     def get_cat(self, cat_uid: str) -> CatBase:
         """Get a cat by uid.
@@ -111,11 +124,11 @@ class _CatOpsMixin:
         Raises:
             KeyError: Cat does not exist.
         """
-        return self._cats[cat_uid]  # type: ignore[attr-defined]
+        return self._cats[cat_uid]
 
     def list_cats(self) -> list[str]:
         """List all cat uids in the colony."""
-        return list(self._cats.keys())  # type: ignore[attr-defined]
+        return list(self._cats.keys())
 
     # -- Alias methods ---------------------------------------
 

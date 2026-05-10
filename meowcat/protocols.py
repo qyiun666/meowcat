@@ -151,7 +151,7 @@ class KittenProtocol(Protocol):
     parent_id: str  # parent cat_uid, string identifier only
     task: SubTaskShape
     role: str
-    workspace: Any
+    workspace: dict[str, Any]
     capability: KittenCapability
     # read-only memory snapshot injected at spawn
     memory_snapshot: dict[str, Any]
@@ -198,7 +198,7 @@ class SettingsProtocol(Protocol):
     **Implemented by**: app layer (settings implementation)
     """
 
-    data_dir: Any
+    data_dir: str
 
 
 @runtime_checkable
@@ -218,8 +218,8 @@ class AdapterProtocol(Protocol):
     """
 
     name: str
-    entity_types: Any
-    locate_weights: Any
+    entity_types: list[str]
+    locate_weights: dict[str, float]
 
 
 @runtime_checkable
@@ -236,8 +236,8 @@ class CatProtocol(Protocol):
     """
 
     cat_uid: str
-    settings: Any
-    data_dir: Any
+    settings: SettingsProtocol
+    data_dir: str
     turn: int
     # brain regions
     hippocampus: HippocampusProtocol

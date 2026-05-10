@@ -6,10 +6,26 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from meowcat.assembly import CatBase
+    from meowcat.protocols_storage import SharedStorageProtocol
 
 
-class _CommunicationMixin:
+class _CommunicationHost(Protocol):
+    """Protocol declaring the Colony attributes that _CommunicationMixin depends on.
+
+    .. note:: ``_assert_cross_allowed()`` is provided by Colony directly
+       (MRO position 0) and is NOT declared here to avoid shadowing.
+    """
+
+    _storage: SharedStorageProtocol | None
+    _cats: dict[str, CatBase]
+    colony_id: str
+
+
+class _CommunicationMixin(_CommunicationHost):
     """Inter-cat communication, broadcast, and shared storage methods.
 
     Provides inter-cat signal routing (signal_between), broadcast,
@@ -22,16 +38,15 @@ class _CommunicationMixin:
         - ``self._assert_cross_allowed()`` (cross-wiring validator)
     """
 
-    # type: ignore[assignment]  # lazy-init in _ensure_storage
-    _storage: Any = None
+    _storage: SharedStorageProtocol | None = None  # type: ignore[assignment]
 
     # -- Shared storage (namespace isolation) -------------------------
 
     def _ensure_storage(self):  # type: ignore[no-untyped-def]
         if self._storage is None:
             from meowcat.defaults.stores import InMemorySharedStore
-            self._storage = InMemorySharedStore()  # type: ignore[attr-defined]
-        return self._storage  # type: ignore[attr-defined]
+            self._storage = InMemorySharedStore()
+        return self._storage
 
     def _cat_key(self, cat_uid: str, key: str) -> str:
         """Construct a cat-isolated storage key: ``cat_uid/key``."""
@@ -62,7 +77,6 @@ class _CommunicationMixin:
     ) -> Any:
         """Watch shared storage key changes matching pattern."""
         ns_pattern = f"{cat_uid}/{pattern}"
-        # type: ignore[attr-defined]
         async for item in self._ensure_storage().watch(ns_pattern):
             yield item
 
@@ -75,7 +89,7 @@ class _CommunicationMixin:
             event: Event name.
             **data: Event data.
         """
-        for cat in self._cats.values():  # type: ignore[attr-defined]
+        for cat in self._cats.values():
             await cat.emit(event, data)
 
     # -- Inter-cat communication --------------------------------------
@@ -113,10 +127,9 @@ class _CommunicationMixin:
             OrganNotMountedError: Target organ does not exist.
             asyncio.TimeoutError: If timeout is set and exceeded.
         """
-        # type: ignore[attr-defined]
         self._assert_cross_allowed(from_id, to_id)
 
-        target_cat = self._cats[to_id]  # type: ignore[attr-defined]
+        target_cat = self._cats[to_id]
         target_organ = target_cat.organ(to_category, to_name)
         fn = getattr(target_organ, method)
         import inspect as _inspect
