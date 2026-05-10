@@ -14,10 +14,9 @@ Tests the circuit breaker embedded in Nervous.signal():
 
 from __future__ import annotations
 
-import time
-
 import anyio
 import pytest
+import time
 
 from meowcat import EventBus, Nervous, OrganHost, biology
 from meowcat.errors import CircuitOpenError
@@ -182,8 +181,8 @@ def test_half_open_probe_succeeds() -> None:
             "act", "blocked",
         )
 
-    # Wait for timeout
-    time.sleep(0.15)
+    # Wait for timeout with generous buffer for CI stability
+    anyio.run(anyio.sleep, 0.2)
 
     # Mount a working organ — probe should succeed
     host.mount("brain", "b", _FragileOrgan("b", fail_count=0))

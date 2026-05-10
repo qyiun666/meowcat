@@ -50,27 +50,18 @@ class TestTaskPad:
         assert picked is not None
         assert picked.task_id == b.task_id
 
-    def test_mark_done(self):
+    @pytest.mark.parametrize("method, args, expected_status, expected_result, has_done_at", [
+        ("mark_done", ("完成了",), TaskPadStatus.DONE, "完成了", True),
+        ("mark_doing", (), TaskPadStatus.DOING, "", False),
+        ("mark_failed", ("出错了",), TaskPadStatus.FAILED, "出错了", True),
+    ])
+    def test_mark_status(self, method, args, expected_status, expected_result, has_done_at):
         pad = TaskPad()
         item = pad.post("任务")
-        pad.mark_done(item.task_id, "完成了")
-        assert item.status == TaskPadStatus.DONE
-        assert item.result == "完成了"
-        assert item.done_at is not None
-
-    def test_mark_doing(self):
-        pad = TaskPad()
-        item = pad.post("任务")
-        pad.mark_doing(item.task_id)
-        assert item.status == TaskPadStatus.DOING
-
-    def test_mark_failed(self):
-        pad = TaskPad()
-        item = pad.post("任务")
-        pad.mark_failed(item.task_id, "出错了")
-        assert item.status == TaskPadStatus.FAILED
-        assert item.result == "出错了"
-        assert item.done_at is not None
+        getattr(pad, method)(item.task_id, *args)
+        assert item.status == expected_status
+        assert item.result == expected_result
+        assert (item.done_at is not None) == has_done_at
 
     def test_list_todo_only(self):
         pad = TaskPad()
@@ -118,28 +109,28 @@ class TestTaskPad:
 
 
 class TestToolCall:
-    def test_basic(self):
-        tc = ToolCall(name="read", params={"path": "/x"})
-        assert tc.name == "read"
-        assert tc.params == {"path": "/x"}
-
-    def test_default_params(self):
-        tc = ToolCall(name="ping")
-        assert tc.params == {}
+    @pytest.mark.parametrize("name, params", [
+        ("read", {"path": "/x"}),
+        ("ping", {}),
+    ])
+    def test_construction(self, name, params):
+        tc = ToolCall(name=name, params=params)
+        assert tc.name == name
+        assert tc.params == params
 
 
 class TestDoTaskResult:
-    def test_basic(self):
-        tr = DoTaskResult(final_text="done", rounds=3)
-        assert tr.final_text == "done"
-        assert tr.rounds == 3
-        assert tr.tool_calls == []
-
-    def test_with_tool_calls(self):
-        tc = ToolCall(name="read", params={"path": "/x"})
-        tr = DoTaskResult(final_text="ok", rounds=5, tool_calls=[tc])
-        assert len(tr.tool_calls) == 1
-        assert tr.tool_calls[0].name == "read"
+    @pytest.mark.parametrize("kwargs, rounds, tool_count, first_name", [
+        ({"final_text": "done", "rounds": 3}, 3, 0, None),
+        ({"final_text": "ok", "rounds": 5,
+          "tool_calls": [ToolCall(name="read", params={"path": "/x"})]}, 5, 1, "read"),
+    ])
+    def test_construction(self, kwargs, rounds, tool_count, first_name):
+        tr = DoTaskResult(**kwargs)
+        assert tr.rounds == rounds
+        assert len(tr.tool_calls) == tool_count
+        if first_name:
+            assert tr.tool_calls[0].name == first_name
 
 
 class TestXmlToolCallParser:
@@ -149,31 +140,36 @@ class TestXmlToolCallParser:
     def test_no_tool_tag_returns_none(self):
         assert self.parser.extract("这是普通文本") is None
 
-    def test_basic_tool(self):
-        tc = self.parser.extract(
-            '<tool name="read_file"><param name="path">/tmp/x.py</param></tool>'
-        )
-        assert tc is not None
-        assert tc.name == "read_file"
-        assert tc.params == {"path": "/tmp/x.py"}
-
-    def test_multiple_params(self):
-        tc = self.parser.extract(
+    @pytest.mark.parametrize("text, expected_name, expected_params", [
+        (
+            '<tool name="read_file"><param name="path">/tmp/x.py</param></tool>',
+            "read_file",
+            {"path": "/tmp/x.py"},
+        ),
+        (
             '<tool name="search">'
             '<param name="query">hello world</param>'
             '<param name="limit">10</param>'
-            "</tool>"
-        )
+            "</tool>",
+            "search",
+            {"query": "hello world", "limit": "10"},
+        ),
+        (
+            '<TOOL name="READ"><param name="X">V</param></TOOL>',
+            "READ",
+            {"X": "V"},
+        ),
+        (
+            '<tool name="status"></tool>',
+            "status",
+            {},
+        ),
+    ])
+    def test_extract_tool(self, text, expected_name, expected_params):
+        tc = self.parser.extract(text)
         assert tc is not None
-        assert tc.params == {"query": "hello world", "limit": "10"}
-
-    def test_case_insensitive(self):
-        tc = self.parser.extract(
-            '<TOOL name="READ"><param name="X">V</param></TOOL>'
-        )
-        assert tc is not None
-        assert tc.name == "READ"
-        assert tc.params == {"X": "V"}
+        assert tc.name == expected_name
+        assert tc.params == expected_params
 
     def test_multiline(self):
         tc = self.parser.extract(
@@ -185,12 +181,6 @@ class TestXmlToolCallParser:
         )
         assert tc is not None
         assert tc.name == "read"
-
-    def test_no_params(self):
-        tc = self.parser.extract('<tool name="status"></tool>')
-        assert tc is not None
-        assert tc.name == "status"
-        assert tc.params == {}
 
 
 # ── do_task tests ──────────────────────────────────────────────────

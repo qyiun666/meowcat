@@ -9,21 +9,22 @@ Tests cover:
 """
 
 from meowcat.ruleset import Rule, RuleSet
+import pytest
 
 # ── Rule tests ────────────────────────────────────────────────────────
 
 
 class TestRule:
-    def test_defaults(self):
-        r = Rule("name", "content")
-        assert r.priority == "medium"
-        assert r.tags == []
-
-    def test_full(self):
-        r = Rule("SQL", "参数化", priority="critical", tags=["code", "security"])
-        assert r.name == "SQL"
-        assert r.priority == "critical"
-        assert r.tags == ["code", "security"]
+    @pytest.mark.parametrize("kwargs, expected_name, expected_priority, expected_tags", [
+        ({"name": "name", "content": "content"}, "name", "medium", []),
+        ({"name": "SQL", "content": "参数化", "priority": "critical",
+          "tags": ["code", "security"]}, "SQL", "critical", ["code", "security"]),
+    ])
+    def test_construction(self, kwargs, expected_name, expected_priority, expected_tags):
+        r = Rule(**kwargs)
+        assert r.name == expected_name
+        assert r.priority == expected_priority
+        assert r.tags == expected_tags
 
     def test_repr(self):
         r = Rule("N", "C")
@@ -105,17 +106,14 @@ class TestRuleSet:
 
 
 class TestRuleSetRender:
-    def test_render_role_block(self):
-        rs = RuleSet(role_block="<role>expert</role>")
-        assert "<role>expert</role>" in rs.render("chat")
-
-    def test_render_context_block(self):
-        rs = RuleSet(context_block="<context>fastapi</context>")
-        assert "<context>fastapi</context>" in rs.render("chat")
-
-    def test_render_output_format(self):
-        rs = RuleSet(output_format_block="<output>json</output>")
-        assert "<output>json</output>" in rs.render("chat")
+    @pytest.mark.parametrize("kwargs, substring", [
+        ({"role_block": "<role>expert</role>"}, "<role>expert</role>"),
+        ({"context_block": "<context>fastapi</context>"}, "<context>fastapi</context>"),
+        ({"output_format_block": "<output>json</output>"}, "<output>json</output>"),
+    ])
+    def test_render_block(self, kwargs, substring):
+        rs = RuleSet(**kwargs)
+        assert substring in rs.render("chat")
 
     def test_render_rules_xml(self):
         rs = RuleSet(always_on=[Rule("SQL", "参数化查询", "critical")])
@@ -134,31 +132,17 @@ class TestRuleSetRender:
         assert "<rules>" not in rendered
         assert "</rules>" not in rendered
 
-    def test_render_md_content_preserved(self):
-        rs = RuleSet(always_on=[
-            Rule("MD规则", "# 标题\n\n- 列表项"),
-        ])
+    @pytest.mark.parametrize("content, substrings", [
+        ("# 标题\n\n- 列表项", ["# 标题", "- 列表项"]),
+        ("```python\ncursor.execute(sql, params)\n```", ["```python", "cursor.execute(sql, params)"]),
+        ("# 标题\n\n- 列表项\n\n```python\ncursor.execute(sql, params)\n```",
+         ["# 标题", "- 列表项", "```python", "cursor.execute(sql, params)"]),
+    ])
+    def test_render_content_preserved(self, content, substrings):
+        rs = RuleSet(always_on=[Rule("规则", content)])
         rendered = rs.render("chat")
-        assert "# 标题" in rendered
-        assert "- 列表项" in rendered
-
-    def test_render_code_block_preserved(self):
-        rs = RuleSet(always_on=[
-            Rule("代码规则", "```python\ncursor.execute(sql, params)\n```"),
-        ])
-        rendered = rs.render("chat")
-        assert "```python" in rendered
-        assert "cursor.execute(sql, params)" in rendered
-
-    def test_render_mixed_md_and_code(self):
-        rs = RuleSet(always_on=[
-            Rule("混合规则", "# 标题\n\n- 列表项\n\n```python\ncursor.execute(sql, params)\n```"),
-        ])
-        rendered = rs.render("chat")
-        assert "# 标题" in rendered
-        assert "- 列表项" in rendered
-        assert "```python" in rendered
-        assert "cursor.execute(sql, params)" in rendered
+        for s in substrings:
+            assert s in rendered
 
     def test_render_full_xml_structure(self):
         rs = RuleSet(
