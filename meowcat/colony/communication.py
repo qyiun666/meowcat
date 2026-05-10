@@ -45,7 +45,7 @@ class _CommunicationMixin(_CommunicationHost):
     def _ensure_storage(self):  # type: ignore[no-untyped-def]
         if self._storage is None:
             from meowcat.defaults.stores import InMemorySharedStore
-            self._storage = InMemorySharedStore()
+            self._storage = InMemorySharedStore()  # type: ignore[assignment]
         return self._storage
 
     def _cat_key(self, cat_uid: str, key: str) -> str:

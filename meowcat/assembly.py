@@ -220,7 +220,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         return f"{prefix}{self._address}"
 
     @property
-    def cat_uid(self) -> str:
+    def cat_uid(self) -> str:  # type: ignore[override]
         """Cat unique identifier within the colony: 2-digit increment."""
         return self._cat_uid
 
@@ -252,7 +252,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         return self._host
 
     @property
-    def wiring(self) -> Wiring:
+    def wiring(self) -> Wiring:  # type: ignore[override]
         """Neural connectivity graph (raises :class:`AttributeError` when
         Nervous is disabled)."""
         if self._nervous is None:

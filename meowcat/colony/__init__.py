@@ -178,7 +178,7 @@ class Colony(
         return self._colony_uid
 
     @property
-    def is_full(self) -> bool:
+    def is_full(self) -> bool:  # type: ignore[override]
         if self._max_cats is None:
             return False
         return len(self._cats) >= self._max_cats

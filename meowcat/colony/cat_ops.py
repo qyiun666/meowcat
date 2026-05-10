@@ -24,7 +24,7 @@ class _CatOpsHost(Protocol):
     colony_id: str
     _cats: dict[str, CatBase]
     _storage: SharedStorageProtocol | None
-    _max_cats: int
+    _max_cats: int | None
 
 
 class _CatOpsMixin(_CatOpsHost):
