@@ -4,8 +4,8 @@
 """v1.3.6 T-11: episode CRUD + 批量查询 + 持久化恢复全覆盖测试.
 
 覆盖:
-- NoopHippocampus add_episode / get_episode / get_episodes
-- NoopHippocampus add_episode with write-through persistence
+- DefaultHippocampus add_episode / get_episode / get_episodes
+- DefaultHippocampus add_episode with write-through persistence
 - JsonlEpisodeStore append / get / get_batch / load_all / get_stats
 - Hippocampus lifecycle: _load_from_store / _flush_to_store
 - 持久化恢复: 构造新 store 实例读取之前写入的数据
@@ -19,19 +19,19 @@ from pathlib import Path
 import anyio
 import pytest
 
-from meowcat import NoopHippocampus
+from meowcat import DefaultHippocampus
 from meowcat.storage import JsonlEpisodeStore
 
 # ===================================================================
-# 1. NoopHippocampus episode CRUD
+# 1. DefaultHippocampus episode CRUD
 # ===================================================================
 
 
-class TestNoopHippocampusEpisode:
-    """NoopHippocampus add_episode / get_episode / get_episodes."""
+class TestDefaultHippocampusEpisode:
+    """DefaultHippocampus add_episode / get_episode / get_episodes."""
 
     def test_add_episode_with_id(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         eid = h.add_episode(
             {"id": "ep1", "user_msg": "hi", "ai_reply": "hello"})
         assert eid == "ep1"
@@ -39,20 +39,20 @@ class TestNoopHippocampusEpisode:
         assert h.episodes[0]["user_msg"] == "hi"
 
     def test_add_episode_auto_id(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         eid = h.add_episode({"user_msg": "q", "ai_reply": "a"})
         assert eid.startswith("ep_")
         assert h.episodes[0]["id"] == eid
 
     def test_add_episode_sequential_auto_id(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         eid1 = h.add_episode({"user_msg": "q1"})
         eid2 = h.add_episode({"user_msg": "q2"})
         assert eid1 == "ep_0"
         assert eid2 == "ep_1"
 
     def test_get_episode_found(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1", "user_msg": "hi"})
         h.add_episode({"id": "ep2", "user_msg": "hello"})
         ep = h.get_episode("ep2")
@@ -60,16 +60,16 @@ class TestNoopHippocampusEpisode:
         assert ep["user_msg"] == "hello"
 
     def test_get_episode_not_found(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1", "user_msg": "hi"})
         assert h.get_episode("nonexistent") is None
 
     def test_get_episode_empty_store(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         assert h.get_episode("any") is None
 
     def test_get_episodes_batch_found(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1", "user_msg": "a"})
         h.add_episode({"id": "ep2", "user_msg": "b"})
         h.add_episode({"id": "ep3", "user_msg": "c"})
@@ -79,24 +79,24 @@ class TestNoopHippocampusEpisode:
         assert msgs == {"a", "c"}
 
     def test_get_episodes_batch_partial(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1", "user_msg": "a"})
         results = h.get_episodes(["ep1", "ep_missing"])
         assert len(results) == 1
         assert results[0]["user_msg"] == "a"
 
     def test_get_episodes_batch_empty_ids(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1", "user_msg": "a"})
         assert h.get_episodes([]) == []
 
     def test_get_episodes_batch_all_missing(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "ep1"})
         assert h.get_episodes(["x", "y", "z"]) == []
 
     def test_add_episode_preserves_all_fields(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         ep = {"id": "ep_x", "user_msg": "q", "ai_reply": "a",
               "cat_uid": "cat1", "model": "gpt-4", "ts": 1234567890}
         h.add_episode(ep)
@@ -273,11 +273,11 @@ class TestJsonlEpisodeStore:
 
 
 # ===================================================================
-# 3. NoopHippocampus episode CRUD with store with store
+# 3. DefaultHippocampus episode CRUD with store with store
 # ===================================================================
 
-class TestNoopHippocampusEpisodeStore:
-    """NoopHippocampus add_episode with JsonlEpisodeStore write-through."""
+class TestDefaultHippocampusEpisodeStore:
+    """DefaultHippocampus add_episode with JsonlEpisodeStore write-through."""
 
     @pytest.fixture
     def tmp_dir(self) -> str:
@@ -285,14 +285,14 @@ class TestNoopHippocampusEpisodeStore:
             yield d
 
     def test_add_episode_without_store(self) -> None:
-        h = NoopHippocampus()  # no episode_store
+        h = DefaultHippocampus()  # no episode_store
         eid = h.add_episode({"id": "ep1", "user_msg": "hi"})
         assert eid == "ep1"
         assert h.get_episode("ep1") is not None
 
     def test_add_episode_with_store_write_through(self, tmp_dir: str) -> None:
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "cat1"
         eid = h.add_episode({"id": "ep1", "user_msg": "hi"})
         assert eid == "ep1"
@@ -308,7 +308,7 @@ class TestNoopHippocampusEpisodeStore:
             def append(self, cat_uid: str, episode: dict) -> str:
                 raise OSError("disk full")
 
-        h = NoopHippocampus(episode_store=_BadStore())
+        h = DefaultHippocampus(episode_store=_BadStore())
         h.cat_uid = "cat1"
         # 不应抛异常
         eid = h.add_episode({"id": "ep1", "user_msg": "hi"})
@@ -317,7 +317,7 @@ class TestNoopHippocampusEpisodeStore:
 
     def test_get_episode_in_memory(self, tmp_dir: str) -> None:
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "cat1"
         h.add_episode({"id": "ep1", "user_msg": "in-memory"})
         # 内存获取成功
@@ -325,11 +325,11 @@ class TestNoopHippocampusEpisodeStore:
 
     def test_get_episode_not_found(self, tmp_dir: str) -> None:
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         assert h.get_episode("nonexistent") is None
 
     def test_get_episodes_batch(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
         h.add_episode({"id": "a", "user_msg": "1"})
         h.add_episode({"id": "b", "user_msg": "2"})
         h.add_episode({"id": "c", "user_msg": "3"})
@@ -340,7 +340,7 @@ class TestNoopHippocampusEpisodeStore:
 
     def test_add_episode_uses_cat_uid_for_store(self, tmp_dir: str) -> None:
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "my-custom-cat"
         eid = h.add_episode({"id": "ep1", "user_msg": "x"})
         assert eid == "ep1"
@@ -352,7 +352,7 @@ class TestNoopHippocampusEpisodeStore:
     def test_add_episode_uses_episode_cat_uid_fallback(self, tmp_dir: str) -> None:
         """cat_uid 为空时回退到 episode 中的 cat_uid。"""
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = ""  # 未设置
         eid = h.add_episode(
             {"id": "ep1", "cat_uid": "fallback-cat", "user_msg": "x"})
@@ -362,7 +362,7 @@ class TestNoopHippocampusEpisodeStore:
     def test_add_episode_uses_unknown_fallback(self, tmp_dir: str) -> None:
         """cat_uid 和 episode cat_uid 都为空时回退到 'unknown'。"""
         store = JsonlEpisodeStore(tmp_dir)
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = ""
         eid = h.add_episode({"id": "ep1", "user_msg": "x"})
         assert eid == "ep1"
@@ -382,7 +382,7 @@ class TestHippocampusLifecycle:
             yield d
 
     def test_load_from_store_no_store(self) -> None:
-        h = NoopHippocampus()  # no store
+        h = DefaultHippocampus()  # no store
 
         async def _run() -> None:
             await h._load_from_store()  # 不应抛异常
@@ -390,7 +390,7 @@ class TestHippocampusLifecycle:
 
     def test_load_from_store_no_cat_uid(self) -> None:
         store = JsonlEpisodeStore(tempfile.mkdtemp())
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = ""  # 未设置
 
         async def _run() -> None:
@@ -398,7 +398,7 @@ class TestHippocampusLifecycle:
         anyio.run(_run)
 
     def test_flush_to_store_no_store(self) -> None:
-        h = NoopHippocampus()
+        h = DefaultHippocampus()
 
         async def _run() -> None:
             await h._flush_to_store()  # no-op
@@ -412,7 +412,7 @@ class TestHippocampusLifecycle:
         store.append("cat1", {"id": "ep2", "user_msg": "persisted-b"})
 
         # 新 hippocampus
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "cat1"
 
         async def _run() -> None:
@@ -428,7 +428,7 @@ class TestHippocampusLifecycle:
         store = JsonlEpisodeStore(tmp_dir)
         store.append("cat1", {"id": "ep1", "user_msg": "stored"})
 
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "cat1"
         # 已在内存中
         h.add_episode({"id": "ep1", "user_msg": "in-memory"})
@@ -447,7 +447,7 @@ class TestHippocampusLifecycle:
             def load_all(self, cat_uid: str) -> list:
                 raise OSError("cannot read")
 
-        h = NoopHippocampus(episode_store=_BadStore())
+        h = DefaultHippocampus(episode_store=_BadStore())
         h.cat_uid = "cat1"
 
         async def _run() -> None:
@@ -460,7 +460,7 @@ class TestHippocampusLifecycle:
         store = JsonlEpisodeStore(tmp_dir)
         store.append("cat1", {"id": "ep1", "user_msg": "pre-populated"})
 
-        h = NoopHippocampus(episode_store=store)
+        h = DefaultHippocampus(episode_store=store)
         h.cat_uid = "cat1"
 
         async def _run() -> None:
@@ -480,13 +480,13 @@ class TestHippocampusLifecycle:
         store = JsonlEpisodeStore(tmp_dir)
 
         # 第一轮：写
-        h1 = NoopHippocampus(episode_store=store)
+        h1 = DefaultHippocampus(episode_store=store)
         h1.cat_uid = "cat1"
         h1.add_episode({"id": "a", "user_msg": "q1", "ai_reply": "a1"})
         h1.add_episode({"id": "b", "user_msg": "q2", "ai_reply": "a2"})
 
         # 第二轮：新建
-        h2 = NoopHippocampus(episode_store=store)
+        h2 = DefaultHippocampus(episode_store=store)
         h2.cat_uid = "cat1"
 
         async def _run() -> None:

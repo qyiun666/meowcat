@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""Default Brainstem implementation — customizable system prompt builder + lifecycle.
+"""Default Brainstem — customizable system prompt builder + lifecycle.
 
 v1.3.6: 新增 per-organ prompt 拼装链路 + CatSelf 自动注入。
 
@@ -26,7 +26,7 @@ from meowcat.defaults.presets import PROMPT_DEFAULT, OrganPrompt, PromptPreset
 from meowcat.pluggable import Pluggable
 
 
-class NoopBrainstem(Pluggable):
+class DefaultBrainstem(Pluggable):
     """Brainstem: customizable system prompt builder + lifecycle logging.
 
     Accepts a :class:`PromptPreset` for route-specific prompt templates,
@@ -41,12 +41,10 @@ class NoopBrainstem(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "build_system_prompt": {
-            "in": "organ: str, route: str, snapshot: Any|None",
-            "out": "str",
+            "in": "organ: str, route: str, snapshot: Any|None", "out": "str",
         },
         "compress_context": {
-            "in": "messages: list[dict], max_tokens: int",
-            "out": "list[dict]",
+            "in": "messages: list[dict], max_tokens: int", "out": "list[dict]",
         },
     }
 
@@ -73,7 +71,6 @@ class NoopBrainstem(Pluggable):
 
     @property
     def organ_prompts(self) -> dict[str, OrganPrompt]:
-        """Per-organ prompt slot map (v1.3.6)."""
         return self._organ_prompts
 
     def diagnose(self) -> dict[str, Any]:
@@ -87,41 +84,22 @@ class NoopBrainstem(Pluggable):
         }
 
     async def build_system_prompt(
-        self,
-        organ: str,
-        route: str,
+        self, organ: str, route: str,
         cat_self_snapshot: Any | None = None,
     ) -> str:
-        """Build system prompt with 7-step assembly chain (v1.3.6).
-
-        Args:
-            organ: Organ name, e.g. ``"cerebrum"``, ``"cerebellum"``.
-            route: Route name, e.g. ``"chat"``, ``"tool"``.
-            cat_self_snapshot: Optional :class:`SelfSnapshot` for
-                CatSelf injection. ``None`` skips injection.
-
-        Returns:
-            Assembled system prompt string.
-        """
         parts: list[str] = []
 
-        # 1. Plugin chain (allow full override)
         async for _name, r in self._run_plugs(
-            "build_system_prompt",
-            organ,
-            route,
-            cat_self_snapshot,
+            "build_system_prompt", organ, route, cat_self_snapshot
         ):
             if isinstance(r, str) and r:
                 parts.append(r)
         if parts:
             return "\n".join(parts)
 
-        # 2. PromptPreset.pre_prompt
         if self._prompt.pre_prompt:
             parts.append(self._fill_vars(self._prompt.pre_prompt))
 
-        # 2.5 RuleSet injection from cat.rule_set (v2.1.0)
         host = getattr(self, "_organ_host", None)
         if host is not None:
             cat = getattr(host, "_cat", None)
@@ -130,7 +108,6 @@ class NoopBrainstem(Pluggable):
                 if rule_block:
                     parts.append(rule_block)
 
-        # 3. OrganPrompt identity + perspective
         op = self._organ_prompts.get(organ)
         if op is not None:
             if op.identity:
@@ -138,7 +115,6 @@ class NoopBrainstem(Pluggable):
             if op.perspective:
                 parts.append(self._fill_vars(op.perspective))
 
-        # 4. Route template (OrganPrompt override → PromptPreset → fallback)
         route_tmpl: str = ""
         if op is not None:
             route_tmpl = op.route_templates.get(route, "")
@@ -150,49 +126,27 @@ class NoopBrainstem(Pluggable):
             route_tmpl = "You are MeowCat, a helpful AI assistant."
         parts.append(self._fill_vars(route_tmpl))
 
-        # 5. CatSelf injection
         if self.inject_cat_self and cat_self_snapshot is not None:
             parts.append(self._inject_cat_self(cat_self_snapshot))
 
-        # 6. OrganPrompt.output_format
         if op is not None and op.output_format:
             parts.append(self._fill_vars(op.output_format))
 
-        # 7. PromptPreset.post_prompt
         if self._prompt.post_prompt:
             parts.append(self._fill_vars(self._prompt.post_prompt))
 
         return "\n\n".join(parts)
 
     async def compress_context(
-        self,
-        messages: list[dict],
-        max_tokens: int = 4000,
+        self, messages: list[dict], max_tokens: int = 4000,
     ) -> list[dict]:
-        """Compress conversation context to fit token budget.
-
-        Framework default: keep first message + last N messages
-        (simple truncation). App layer can override via Pluggable
-        ``compress_context`` hook for LLM-based summarization.
-
-        Args:
-            messages: List of message dicts (role, content).
-            max_tokens: Target token budget (approximate).
-
-        Returns:
-            Compressed message list.
-        """
         async for _name, r in self._run_plugs(
-            "compress_context",
-            messages,
-            max_tokens,
+            "compress_context", messages, max_tokens
         ):
             if isinstance(r, list):
                 return r
-        # Default: keep first + estimate token count, trim from end
         if not messages:
             return messages
-        # Rough estimate: 1 token ≈ 4 chars
         budget_chars = max_tokens * 4
         result: list[dict] = [dict(messages[0])]
         used = len(str(messages[0]))
@@ -208,10 +162,7 @@ class NoopBrainstem(Pluggable):
     def cancel_current(self) -> bool:
         return False
 
-    # ── Helpers ────────────────────────────────────────────────────
-
     def _fill_vars(self, template: str) -> str:
-        """Substitute {name} {language} {domain} {route} {organ} variables."""
         return (
             template.replace("{name}", self._cat_name)
             .replace("{language}", self._language)
@@ -219,19 +170,11 @@ class NoopBrainstem(Pluggable):
         )
 
     def _inject_cat_self(self, snap: Any) -> str:
-        """Generate CatSelf injection block from snapshot.
-
-        Reads personality, beliefs (Cortex L2), and capabilities
-        (Metacognition L3) from the snapshot and formats them
-        as a self-awareness block.  Language-aware: uses Chinese
-        labels when ``_language`` starts with ``"zh"``, English otherwise.
-        """
         is_zh = (self._language or "").startswith("zh")
+        lines: list[str] = (
+            ["## 自我认知", ""] if is_zh else ["## Self-Awareness", ""]
+        )
 
-        lines: list[str] = []
-        lines = ["## 自我认知", ""] if is_zh else ["## Self-Awareness", ""]
-
-        # Personality
         personality = getattr(snap, "personality", None) or {}
         tone = personality.get("tone", "")
         lang = personality.get("language", "")
@@ -243,19 +186,15 @@ class NoopBrainstem(Pluggable):
                     f"Personality: {tone} tone, communicates in {lang}."
                 )
         elif tone:
-            if is_zh:
-                lines.append(f"性格：{tone} 的语气。")
-            else:
-                lines.append(f"Personality: {tone} tone.")
+            lines.append(
+                f"性格：{tone} 的语气。" if is_zh
+                else f"Personality: {tone} tone."
+            )
 
-        # Beliefs (Cortex L2)
         beliefs = getattr(snap, "beliefs", None) or []
         if beliefs:
             lines.append("")
-            if is_zh:
-                lines.append("坚信的法则：")
-            else:
-                lines.append("Core Beliefs:")
+            lines.append("坚信的法则：" if is_zh else "Core Beliefs:")
             for item in beliefs[:10]:
                 if isinstance(item, (tuple, list)) and len(item) >= 2:
                     value = str(item[1])
@@ -265,7 +204,6 @@ class NoopBrainstem(Pluggable):
                     else:
                         lines.append(f"- {value} (confidence: {conf:.0%})")
 
-        # Capable domains (Metacognition L3)
         capable = getattr(snap, "capable_domains", None) or []
         if capable:
             lines.append("")
@@ -275,7 +213,6 @@ class NoopBrainstem(Pluggable):
             else:
                 lines.append(f"Capable domains: {domains}")
 
-        # Incapable domains
         incapable = getattr(snap, "incapable_domains", None) or []
         if incapable:
             domains = ", ".join(str(d) for d in incapable[:10])

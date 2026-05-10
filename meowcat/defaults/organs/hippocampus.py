@@ -17,10 +17,10 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-class NoopHippocampus(Pluggable):
+class DefaultHippocampus(Pluggable):
     """Default hippocampus: in-memory graph store with auto-indexing and optional persistence.
 
-    Merged from NoopHippocampus + RenovatedHippocampus (v2.0).
+    Merged into DefaultHippocampus (v2.0).
     Implements full HippocampusProtocol methods.
     Mode B — remember / recall merge enhancement.
     """

@@ -7,7 +7,7 @@ Validates the complete chain from ``perceive()`` through reflex matching,
 pipeline stage execution, and lifecycle events — without real LLM dependency.
 
 Coverage:
-- Default Noop pipeline: reflex → stages → lifecycle events
+- Default pipeline: reflex → stages → lifecycle events
 - Custom stage pipeline: verify Stage.run() is called in order
 - Short-circuit: verify pipeline stops early
 - PERCEIVE_START / PERCEIVE_END lifecycle events
@@ -23,7 +23,7 @@ import pytest
 from meowcat.colony import Colony
 from meowcat.defaults import InMemorySharedStore
 from meowcat.defaults.factory import create_cat
-from meowcat.defaults.organs import NoopCerebrum
+from meowcat.defaults.organs import DefaultCerebrum
 from meowcat.defaults.stages import BaseStage
 from meowcat.events import Lifecycle
 from meowcat.models import PipelineContext, StageEvent
@@ -37,7 +37,7 @@ def _make_colony() -> Colony:
 
 
 def _create_test_cat(colony: Colony, **kw: Any) -> Any:
-    return create_cat(container=colony, cerebrum=NoopCerebrum(), **kw)
+    return create_cat(container=colony, cerebrum=DefaultCerebrum(), **kw)
 
 
 # ── Custom Stages for pipeline verification ─────────────────────────────
@@ -76,7 +76,7 @@ class TestE2EConversationLoop:
 
     @pytest.mark.asyncio
     async def test_default_noop_pipeline_completes(self):
-        """Default Noop pipeline: perceive() runs without error and emits
+        """Default pipeline: perceive() runs without error and emits
         lifecycle events."""
         colony = _make_colony()
         cat = _create_test_cat(colony)
@@ -89,7 +89,7 @@ class TestE2EConversationLoop:
         async for ev in cat.perceive("你好"):
             outputs.append(ev)
 
-        # Default Noop stages yield nothing → outputs empty
+        # Default stages yield nothing → outputs empty
         assert outputs == []
         # Lifecycle events must fire
         assert len(events) == 2
@@ -113,7 +113,7 @@ class TestE2EConversationLoop:
 
         cat = create_cat(
             container=colony,
-            cerebrum=NoopCerebrum(),
+            cerebrum=DefaultCerebrum(),
             reflexes=[
                 Reflex(
                     name="text_dialogue",
@@ -148,7 +148,7 @@ class TestE2EConversationLoop:
 
         cat = create_cat(
             container=colony,
-            cerebrum=NoopCerebrum(),
+            cerebrum=DefaultCerebrum(),
             reflexes=[
                 Reflex(
                     name="text_dialogue",
@@ -177,7 +177,7 @@ class TestE2EConversationLoop:
 
         cat = create_cat(
             container=colony,
-            cerebrum=NoopCerebrum(),
+            cerebrum=DefaultCerebrum(),
             reflexes=[
                 Reflex(
                     name="text_dialogue",
@@ -212,7 +212,7 @@ class TestE2EConversationLoop:
 
         cat = create_cat(
             container=colony,
-            cerebrum=NoopCerebrum(),
+            cerebrum=DefaultCerebrum(),
             reflexes=[
                 Reflex(
                     name="text_dialogue",

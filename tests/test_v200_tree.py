@@ -5,10 +5,10 @@
 
 Validates:
 - TreeNode dataclass creation and defaults
-- NoopHippocampus build_tree / get_tree / delete_tree
-- NoopHippocampus search_tree keyword matching
-- NoopHippocampus query_subtree depth-limited traversal
-- NoopHippocampus check_stale detection
+- DefaultHippocampus build_tree / get_tree / delete_tree
+- DefaultHippocampus search_tree keyword matching
+- DefaultHippocampus query_subtree depth-limited traversal
+- DefaultHippocampus check_stale detection
 - Path execution via cat.path_registry for tree paths
 - BUILTIN_PATHS includes 4 tree paths
 """
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from meowcat.defaults.organs.hippocampus import NoopHippocampus
+from meowcat.defaults.organs.hippocampus import DefaultHippocampus
 from meowcat.path import BUILTIN_PATHS
 from meowcat.testing import make_cat
 from meowcat.tree import TreeNode
@@ -63,17 +63,17 @@ class TestTreeNode:
         assert n.metadata["size"] == 1024
 
 
-class TestNoopHippocampusTree:
-    """NoopHippocampus tree CRUD + search + stale detection."""
+class TestDefaultHippocampusTree:
+    """DefaultHippocampus tree CRUD + search + stale detection."""
 
     @pytest.fixture
     def hippo(self):
-        return NoopHippocampus()
+        return DefaultHippocampus()
 
     @pytest.fixture
     def sample_tree(self):
         """Build a small 3-node tree and return (hippo, entity_id)."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         root = TreeNode(id="r", entity_id="e1", parent_id=None,
                         path="/", node_type="project", name="sample")
         n1 = TreeNode(id="f1", entity_id="e1", parent_id="r",
@@ -204,7 +204,7 @@ class TestTreePathExecution:
     @pytest.fixture
     def cat(self):
         c = make_cat("tree_cat")
-        c.mount("brain", "hippocampus", NoopHippocampus())
+        c.mount("brain", "hippocampus", DefaultHippocampus())
         return c
 
     def test_build_tree_on_mounted_hippo(self, cat):

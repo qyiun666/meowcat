@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat default organ stubs — no-op implementations satisfying Protocols.
+"""meowcat default organ stubs — default implementations satisfying Protocols.
 
 Each Default* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
 _run_plugs plugin capability. HOOKS class variable declares mountable hooks and their suggested signatures.
@@ -12,14 +12,14 @@ Three execution modes:
 - C Full replacement: first plugin completely replaces default behavior
 """
 
-from meowcat.defaults.organs.amygdala import NoopAmygdala
-from meowcat.defaults.organs.brainstem import NoopBrainstem
-from meowcat.defaults.organs.cerebellum import NoopCerebellum
-from meowcat.defaults.organs.cerebrum import NoopCerebrum
-from meowcat.defaults.organs.cortex import NoopCortex
-from meowcat.defaults.organs.frontal import NoopFrontal
-from meowcat.defaults.organs.hypothalamus import NoopHypothalamus
-from meowcat.defaults.organs.thalamus import NoopThalamus
+from meowcat.defaults.organs.amygdala import DefaultAmygdala
+from meowcat.defaults.organs.brainstem import DefaultBrainstem
+from meowcat.defaults.organs.cerebellum import DefaultCerebellum
+from meowcat.defaults.organs.cerebrum import DefaultCerebrum
+from meowcat.defaults.organs.cortex import DefaultCortex
+from meowcat.defaults.organs.frontal import DefaultFrontal
+from meowcat.defaults.organs.hypothalamus import DefaultHypothalamus
+from meowcat.defaults.organs.thalamus import DefaultThalamus
 from meowcat.defaults.organs.growth import (
     DefaultAnomalyGrowth,
     DefaultCorrectionGrowth,
@@ -39,26 +39,16 @@ from meowcat.defaults.organs.voice import (
     DefaultTail,
 )
 
-# Backward-compat / T-05 rename aliases: Noop* → Default*
-DefaultAmygdala = NoopAmygdala
-DefaultBrainstem = NoopBrainstem
-DefaultCerebellum = NoopCerebellum
-DefaultCerebrum = NoopCerebrum
-DefaultCortex = NoopCortex
-DefaultFrontal = NoopFrontal
-DefaultHypothalamus = NoopHypothalamus
-DefaultThalamus = NoopThalamus
-
 __all__ = [
     # Brain
-    "NoopThalamus", "DefaultThalamus",
-    "NoopAmygdala", "DefaultAmygdala",
-    "NoopFrontal", "DefaultFrontal",
-    "NoopHypothalamus", "DefaultHypothalamus",
-    "NoopCortex", "DefaultCortex",
-    "NoopBrainstem", "DefaultBrainstem",
-    "NoopCerebrum", "DefaultCerebrum",
-    "NoopCerebellum", "DefaultCerebellum",
+    "DefaultThalamus",
+    "DefaultAmygdala",
+    "DefaultFrontal",
+    "DefaultHypothalamus",
+    "DefaultCortex",
+    "DefaultBrainstem",
+    "DefaultCerebrum",
+    "DefaultCerebellum",
     "DefaultHippocampus",
     # Senses
     "DefaultEars",

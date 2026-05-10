@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""Default Cerebrum implementation — callable-based LLM adapter with prompt preset."""
+"""Default Cerebrum — callable-based LLM adapter with prompt preset."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from meowcat.defaults.presets import OrganPrompt, PromptPreset
 from meowcat.pluggable import Pluggable
 
 
-class NoopCerebrum(Pluggable):
+class DefaultCerebrum(Pluggable):
     """Cerebrum: callable-based LLM adapter with prompt preset support.
 
     Accepts an optional ``llm_fn`` callable (sync or async), a
@@ -26,11 +26,13 @@ class NoopCerebrum(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "generate": {
-            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "in": "prompt: str, system_prompt: str|None, "
+            "temperature: float, max_tokens: int|None",
             "out": "str",
         },
         "stream_generate": {
-            "in": "prompt: str, system_prompt: str|None, temperature: float, max_tokens: int|None",
+            "in": "prompt: str, system_prompt: str|None, "
+            "temperature: float, max_tokens: int|None",
             "out": "AsyncIterator[str]",
         },
     }
@@ -40,8 +42,9 @@ class NoopCerebrum(Pluggable):
 
     def __init__(
         self,
-        llm_fn: Callable[..., Awaitable[str]
-                         ] | Callable[..., str] | None = None,
+        llm_fn: Callable[..., Awaitable[str]]
+        | Callable[..., str]
+        | None = None,
         default_model: str = "renovated",
         prompt: PromptPreset | None = None,
         organ_prompt: OrganPrompt | None = None,
@@ -54,7 +57,6 @@ class NoopCerebrum(Pluggable):
 
     @property
     def organ_prompt(self) -> OrganPrompt | None:
-        """Per-organ prompt slot (v1.3.6)."""
         return self._organ_prompt
 
     def diagnose(self) -> dict[str, Any]:
@@ -66,11 +68,8 @@ class NoopCerebrum(Pluggable):
         }
 
     async def generate(
-        self,
-        prompt: str,
-        system_prompt: str | None = None,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
     ) -> str:
         async for _name, r in self._run_plugs(
             "generate", prompt, system_prompt, temperature, max_tokens
@@ -78,7 +77,6 @@ class NoopCerebrum(Pluggable):
             if isinstance(r, str):
                 return r
 
-        # RuleSet injection (v2.1.0 — fallback: inject even when Brainstem is bypassed)
         if system_prompt:
             host = getattr(self, "_organ_host", None)
             if host is not None:
@@ -90,12 +88,9 @@ class NoopCerebrum(Pluggable):
 
         if self._llm_fn is not None:
             import inspect
-
             result = self._llm_fn(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                prompt=prompt, system_prompt=system_prompt,
+                temperature=temperature, max_tokens=max_tokens,
             )
             if inspect.isawaitable(result):
                 result = await result
@@ -103,11 +98,8 @@ class NoopCerebrum(Pluggable):
         return "(renovated cerebrum: no LLM configured)"
 
     async def stream_generate(
-        self,
-        prompt: str,
-        system_prompt: str | None = None,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
+        self, prompt: str, system_prompt: str | None = None,
+        temperature: float = 0.7, max_tokens: int | None = None,
     ) -> Any:
         async for _name, r in self._run_plugs(
             "stream_generate", prompt, system_prompt, temperature, max_tokens
@@ -119,7 +111,6 @@ class NoopCerebrum(Pluggable):
 
         async def _stream():
             yield result
-
         return _stream()
 
     def reload_config(self) -> None:

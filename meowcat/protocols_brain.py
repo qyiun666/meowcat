@@ -66,7 +66,7 @@ class OrganProtocol(Diagnosable, Protocol):
     **Inbound**: Determined by wiring-assembled allowed edges
     **Outbound**: Determined by wiring-assembled allowed edges
     **Reflex**: Depends on app-layer reflex arc paths
-    **Implementor**: Noop* classes in meowcat/defaults/ (default stubs)
+    **Implementor**: Default* classes in meowcat/defaults/ (default stubs)
     """
 
     name: str

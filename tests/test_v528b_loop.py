@@ -422,9 +422,9 @@ class TestCatBaseLoopIntegration:
     def test_cat_run_loop_diagnostic(self):
         """cat.run_loop("diagnostic") runs crystallize path and returns result."""
         cat = make_cat("test")
-        from meowcat.defaults.organs import NoopBrainstem, NoopCrystallizer
-        cat.mount("brain", "brainstem", NoopBrainstem())
-        cat.mount("growth", "crystallizer", NoopCrystallizer())
+        from meowcat.defaults.organs import DefaultBrainstem, DefaultCrystallizer
+        cat.mount("brain", "brainstem", DefaultBrainstem())
+        cat.mount("growth", "crystallizer", DefaultCrystallizer())
         cat.wire_default_nervous_system()
 
         async def _run():

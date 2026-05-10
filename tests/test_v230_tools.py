@@ -43,7 +43,8 @@ class TestToolSpec:
         spec = ToolSpec(
             name="read",
             description="Read file",
-            parameters={"path": {"type": "string", "description": "File path"}},
+            parameters={"path": {"type": "string",
+                                 "description": "File path"}},
             risk=RiskLevel.HIGH,
             category="file",
         )
@@ -60,7 +61,8 @@ class TestTool:
     @pytest.fixture
     def tool(self):
         return Tool(
-            ToolSpec(name="echo", description="Echo back input", category="util"),
+            ToolSpec(name="echo", description="Echo back input",
+                     category="util"),
             handler=None,
         )
 
@@ -129,7 +131,8 @@ class TestTool:
             ToolSpec(
                 name="read_file",
                 description="Read file contents",
-                parameters={"path": {"type": "string", "description": "File path"}},
+                parameters={"path": {"type": "string",
+                                     "description": "File path"}},
             ),
         )
         schema = tool.to_openai_schema()

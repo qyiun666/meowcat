@@ -1,9 +1,9 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""meowcat default Stage stubs — no-op pipeline stage implementations (v1.0.17).
+"""meowcat default Stage stubs — default pipeline stage implementations (v1.0.17).
 
-Each Noop*Stage extends BaseStage and provides a default name derived from its
+Each Default*Stage extends BaseStage and provides a default name derived from its
 class name. Applications subclass and override :meth:`run()` with real logic;
 unused Stages stay as no-op pass-through.
 
@@ -26,7 +26,7 @@ class BaseStage(Pluggable):
     """Pipeline Stage base class — every Stage inherits from this.
 
     :attr:`name` is derived automatically from the class name
-    (e.g. ``NoopLocateStage`` → ``"noop_locate"``).
+    (e.g. ``DefaultLocateStage`` → ``"default_locate"``).
     Default :meth:`run` is a no-op async generator (yields nothing).
 
     HOOKS declares the ``run`` hook for documentation;
@@ -41,12 +41,13 @@ class BaseStage(Pluggable):
     def __init__(self) -> None:
         Pluggable.__init__(self)
         cls_name = type(self).__name__
-        if cls_name.startswith("Noop"):
-            cls_name = cls_name[4:]
+        if cls_name.startswith("Default"):
+            cls_name = cls_name[7:]
         # CamelCase → snake_case
         import re
 
-        self.name = "noop_" + re.sub(r"(?<!^)(?=[A-Z])", "_", cls_name).lower()
+        self.name = "default_" + \
+            re.sub(r"(?<!^)(?=[A-Z])", "_", cls_name).lower()
 
     def diagnose(self) -> dict[str, Any]:
         return {}
@@ -57,31 +58,31 @@ class BaseStage(Pluggable):
             yield
 
 
-# -- Noop Stage stubs -------------------------------------------------
+# -- Default Stage stubs -----------------------------------------------
 
 
-class NoopIngestStage(BaseStage):
-    """No-op input preprocessing Stage."""
+class DefaultIngestStage(BaseStage):
+    """Default input preprocessing Stage."""
 
 
-class NoopLocateStage(BaseStage):
-    """No-op memory retrieval Stage."""
+class DefaultLocateStage(BaseStage):
+    """Default memory retrieval Stage."""
 
 
-class NoopRouteStage(BaseStage):
-    """No-op routing decision Stage."""
+class DefaultRouteStage(BaseStage):
+    """Default routing decision Stage."""
 
 
-class NoopExecuteStage(BaseStage):
-    """No-op LLM execution Stage."""
+class DefaultExecuteStage(BaseStage):
+    """Default LLM execution Stage."""
 
 
-class NoopPostStage(BaseStage):
-    """No-op post-processing (memory write) Stage."""
+class DefaultPostStage(BaseStage):
+    """Default post-processing (memory write) Stage."""
 
 
-class NoopCompressStage(BaseStage):
-    """No-op context compression Stage."""
+class DefaultCompressStage(BaseStage):
+    """Default context compression Stage."""
 
 
 # -- Default pipeline factory -----------------------------------------
@@ -96,21 +97,21 @@ def build_default_pipeline() -> list[BaseStage]:
         Stages or reorder/replace as needed.
     """
     return [
-        NoopIngestStage(),
-        NoopLocateStage(),
-        NoopRouteStage(),
-        NoopExecuteStage(),
-        NoopPostStage(),
+        DefaultIngestStage(),
+        DefaultLocateStage(),
+        DefaultRouteStage(),
+        DefaultExecuteStage(),
+        DefaultPostStage(),
     ]
 
 
 __all__ = [
     "BaseStage",
-    "NoopIngestStage",
-    "NoopLocateStage",
-    "NoopRouteStage",
-    "NoopExecuteStage",
-    "NoopPostStage",
-    "NoopCompressStage",
+    "DefaultIngestStage",
+    "DefaultLocateStage",
+    "DefaultRouteStage",
+    "DefaultExecuteStage",
+    "DefaultPostStage",
+    "DefaultCompressStage",
     "build_default_pipeline",
 ]

@@ -552,7 +552,7 @@ class TestCerebellumAgent:
 
 class TestIntegration:
     def test_mount_adapter_into_cat(self):
-        """Adapter organs should be mountable just like Noop organs."""
+        """Adapter organs should be mountable just like Default organs."""
         from meowcat import CatBase, Colony
         from meowcat.defaults.stores import InMemorySharedStore
 

@@ -1,15 +1,15 @@
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-"""meowcat Pluggable mixin — plug/unplug hooks onto Noop organs.
+"""meowcat Pluggable mixin — plug/unplug hooks onto Default organs.
 
-v1.0.7: mount_plug / unmount_plug / _run_plugs on all 15 Noop organs,
+v1.0.7: mount_plug / unmount_plug / _run_plugs on all 15 Default organs,
 allowing app-layer plugins on framework defaults (LLM safety check, TTS adapter, etc.).
 
 v1.2.16: _run_plugs → async generator with automatic await for async plugins.
 Sync plugins still work (isawaitable returns False).
 
-Three execution modes (chosen by each Noop class, not enforced by Pluggable):
+Three execution modes (chosen by each Default class, not enforced by Pluggable):
 - A First-hit: return first non-default result
 - B Merge-enhance: merge all plugin results into defaults
 - C Full-replace: first plugin completely replaces default behavior
@@ -30,7 +30,7 @@ class Pluggable:
 
     **Usage**::
 
-        class NoopAmygdala(Pluggable):
+        class DefaultAmygdala(Pluggable):
             HOOKS: dict[str, dict[str, str]] = {
                 "assess_safety": {"in": "user_input: str", "out": "dict[str, Any]"},
                 "assess_tool_risk": {"in": "tool: str, params: dict", "out": "dict[str, Any]"},

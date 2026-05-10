@@ -1,7 +1,7 @@
 # Copyright (c) 2026 qyiun666
 # SPDX-License-Identifier: MIT
 
-"""v1.0.17 — Pipeline Stage base classes and Noop* Stage stubs."""
+"""v1.0.17 — Pipeline Stage base classes and Default* Stage stubs."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ import pytest
 
 from meowcat.defaults.stages import (
     BaseStage,
-    NoopCompressStage,
-    NoopExecuteStage,
-    NoopIngestStage,
-    NoopLocateStage,
-    NoopPostStage,
-    NoopRouteStage,
+    DefaultCompressStage,
+    DefaultExecuteStage,
+    DefaultIngestStage,
+    DefaultLocateStage,
+    DefaultPostStage,
+    DefaultRouteStage,
     build_default_pipeline,
 )
 from meowcat.pipeline import Pipeline
@@ -26,7 +26,7 @@ class TestBaseStage:
 
     def test_base_stage_name(self) -> None:
         s = BaseStage()
-        assert s.name == "noop_base_stage"
+        assert s.name == "default_base_stage"
 
     def test_base_stage_is_pluggable(self) -> None:
         s = BaseStage()
@@ -42,16 +42,16 @@ class TestBaseStage:
         assert s.diagnose() == {}
 
 
-class TestNoopStageNames:
-    """Each Noop* Stage auto-derives its name from class name."""
+class TestDefaultStageNames:
+    """Each Default* Stage auto-derives its name from class name."""
 
     STAGES = [
-        (NoopIngestStage, "noop_ingest_stage"),
-        (NoopLocateStage, "noop_locate_stage"),
-        (NoopRouteStage, "noop_route_stage"),
-        (NoopExecuteStage, "noop_execute_stage"),
-        (NoopPostStage, "noop_post_stage"),
-        (NoopCompressStage, "noop_compress_stage"),
+        (DefaultIngestStage, "default_ingest_stage"),
+        (DefaultLocateStage, "default_locate_stage"),
+        (DefaultRouteStage, "default_route_stage"),
+        (DefaultExecuteStage, "default_execute_stage"),
+        (DefaultPostStage, "default_post_stage"),
+        (DefaultCompressStage, "default_compress_stage"),
     ]
 
     @pytest.mark.parametrize("cls, expected_name", STAGES)
@@ -71,12 +71,12 @@ class TestNoopStageNames:
 
 
 @pytest.mark.anyio
-class TestNoopStageRun:
-    """Noop* Stages yield nothing from run()."""
+class TestDefaultStageRun:
+    """Default* Stages yield nothing from run()."""
 
     @pytest.mark.parametrize("cls", [
-        NoopIngestStage, NoopLocateStage, NoopRouteStage,
-        NoopExecuteStage, NoopPostStage, NoopCompressStage,
+        DefaultIngestStage, DefaultLocateStage, DefaultRouteStage,
+        DefaultExecuteStage, DefaultPostStage, DefaultCompressStage,
     ])
     async def test_run_yields_nothing(self, cls: type) -> None:
         s = cls()
@@ -102,4 +102,3 @@ class TestBuildDefaultPipeline:
         pipe = build_default_pipeline()
         p = Pipeline(pipe)
         assert len(p.stages) == 5
-

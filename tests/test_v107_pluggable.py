@@ -1,14 +1,14 @@
 # Copyright (c) 2026 Axonant
 # SPDX-License-Identifier: MIT
 
-"""v1.0.7 Pluggable + Noop 全补齐 + Voice Protocols 测试。
+"""v1.0.7 Pluggable + Default 全补齐 + Voice Protocols 测试。
 
 覆盖:
 - Pluggable mixin 的 mount/unmount/_run_plugs/list_plugs
-- 15 个 Noop 器官的三模式插件执行 (A/B/C)
-- NoopThalamus / NoopHippocampus 功能
+- 15 个 Default 器官的三模式插件执行 (A/B/C)
+- DefaultThalamus / DefaultHippocampus 功能
 - Voice Protocols (Mouth/Purr/Tail)
-- create_cat() 默认使用 NoopThalamus/NoopHippocampus
+- create_cat() 默认使用 DefaultThalamus/DefaultHippocampus
 """
 
 from __future__ import annotations
@@ -19,20 +19,20 @@ import pytest
 
 from meowcat import (
     MouthProtocol,
-    NoopAmygdala,
-    NoopBrainstem,
-    NoopCortex,
-    NoopEars,
-    NoopEyes,
-    NoopFrontal,
-    NoopHippocampus,
-    NoopHypothalamus,
-    NoopMouth,
-    NoopPaws,
-    NoopPurr,
-    NoopTail,
-    NoopThalamus,
-    NoopWhiskers,
+    DefaultAmygdala,
+    DefaultBrainstem,
+    DefaultCortex,
+    DefaultEars,
+    DefaultEyes,
+    DefaultFrontal,
+    DefaultHippocampus,
+    DefaultHypothalamus,
+    DefaultMouth,
+    DefaultPaws,
+    DefaultPurr,
+    DefaultTail,
+    DefaultThalamus,
+    DefaultWhiskers,
     Pluggable,
     PurrProtocol,
     TailProtocol,
@@ -100,14 +100,14 @@ def test_pluggable_run_plugs_no_plugs():
 
 @pytest.mark.anyio
 async def test_amygdala_mode_a_default():
-    a = NoopAmygdala()
+    a = DefaultAmygdala()
     r = await a.assess_safety("hi")
     assert r == {"safe": True, "risk": "low"}
 
 
 @pytest.mark.anyio
 async def test_amygdala_mode_a_plug_block():
-    a = NoopAmygdala()
+    a = DefaultAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": False, "risk": "block"})
     r = await a.assess_safety("malicious input")
     assert r == {"safe": False, "risk": "block"}
@@ -115,7 +115,7 @@ async def test_amygdala_mode_a_plug_block():
 
 @pytest.mark.anyio
 async def test_amygdala_mode_a_plug_first_wins():
-    a = NoopAmygdala()
+    a = DefaultAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": False, "risk": "block"})
     a.mount_plug("assess_safety", lambda x: {
                  "safe": False, "risk": "override"})
@@ -126,15 +126,15 @@ async def test_amygdala_mode_a_plug_first_wins():
 
 @pytest.mark.anyio
 async def test_amygdala_mode_a_plug_safe_passes():
-    a = NoopAmygdala()
+    a = DefaultAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": True, "risk": "none"})
     r = await a.assess_safety("hello")
-    assert r == {"safe": True, "risk": "low"}  # 默认（插件 safe 穿透后落回 Noop）
+    assert r == {"safe": True, "risk": "low"}  # 默认（插件 safe 穿透后落回 Default）
 
 
 @pytest.mark.anyio
 async def test_frontal_mode_a():
-    f = NoopFrontal()
+    f = DefaultFrontal()
     assert f.is_continue("msg") is False
     f.mount_plug("is_continue", lambda _: True)
     assert f.is_continue("msg") is True
@@ -142,7 +142,7 @@ async def test_frontal_mode_a():
 
 @pytest.mark.anyio
 async def test_frontal_mode_a_detect_shift():
-    f = NoopFrontal()
+    f = DefaultFrontal()
     assert f.detect_shift("msg") is True  # 无已知关键词时默认视为转移
     f.mount_plug("detect_shift", lambda _: False)
     assert f.detect_shift("msg") is False
@@ -155,7 +155,7 @@ async def test_frontal_mode_a_detect_shift():
 
 @pytest.mark.anyio
 async def test_ears_mode_b_hear():
-    e = NoopEars()
+    e = DefaultEars()
     r = await e.hear("hello")
     assert r == {"text": "hello", "keywords": ["hello"], "language": "en"}
 
@@ -166,7 +166,7 @@ async def test_ears_mode_b_hear():
 
 @pytest.mark.anyio
 async def test_ears_mode_b_extract_keywords():
-    e = NoopEars()
+    e = DefaultEars()
     r = e.extract_keywords("test")
     assert r == ["test"]
 
@@ -177,7 +177,7 @@ async def test_ears_mode_b_extract_keywords():
 
 @pytest.mark.anyio
 async def test_whiskers_mode_b():
-    w = NoopWhiskers()
+    w = DefaultWhiskers()
     r = await w.feel_input("test")
     assert r.get("length") == 4
     assert r.get("has_code") is False
@@ -188,7 +188,7 @@ async def test_whiskers_mode_b():
 
 @pytest.mark.anyio
 async def test_whiskers_mode_b_hallucination():
-    w = NoopWhiskers()
+    w = DefaultWhiskers()
     r = w.check_hallucination("reply", "s1")
     assert r == {"hallucination": False}
     w.mount_plug("check_hallucination", lambda reply,
@@ -199,7 +199,7 @@ async def test_whiskers_mode_b_hallucination():
 
 @pytest.mark.anyio
 async def test_hypothalamus_mode_b():
-    h = NoopHypothalamus()
+    h = DefaultHypothalamus()
     r = await h.run_maintenance()
     assert r == {"decayed": 0, "orphans_cleaned": 0,
                  "woke": 0, "suggestions": []}
@@ -211,7 +211,7 @@ async def test_hypothalamus_mode_b():
 
 @pytest.mark.anyio
 async def test_cortex_mode_b():
-    c = NoopCortex()
+    c = DefaultCortex()
     r = c.synthesize(100)
     assert r == ""
     c.mount_plug("synthesize", lambda mt: "worldview snippet")
@@ -221,7 +221,7 @@ async def test_cortex_mode_b():
 
 @pytest.mark.anyio
 async def test_brainstem_mode_b():
-    b = NoopBrainstem()
+    b = DefaultBrainstem()
     r = await b.build_system_prompt("cerebrum", "chat")
     assert r != ""
     # default prompt contains the cat name
@@ -234,7 +234,7 @@ async def test_brainstem_mode_b():
 
 @pytest.mark.anyio
 async def test_thalamus_mode_b():
-    t = NoopThalamus()
+    t = DefaultThalamus()
     r = await t.locate("hello", "s1")
     assert r["route"] == "chat"
     t.mount_plug("locate", lambda msg, sid: {"route": "danger"})
@@ -244,7 +244,7 @@ async def test_thalamus_mode_b():
 
 @pytest.mark.anyio
 async def test_hippocampus_mode_b_remember():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     r = await h.remember("hi", "hello", "cat1", "gpt-4")
     assert r["user_msg"] == "hi"
     assert r["ai_reply"] == "hello"
@@ -257,7 +257,7 @@ async def test_hippocampus_mode_b_remember():
 
 @pytest.mark.anyio
 async def test_mouth_mode_c():
-    m = NoopMouth()
+    m = DefaultMouth()
     r = await m.speak("hello")
     assert r == "hello"  # 默认返回传入文本
     m.mount_plug("speak", lambda text, **kw: f"[[{text}]]")
@@ -267,7 +267,7 @@ async def test_mouth_mode_c():
 
 @pytest.mark.anyio
 async def test_purr_mode_c():
-    p = NoopPurr()
+    p = DefaultPurr()
     r = await p.stream("hello")
     assert r is None
     p.mount_plug("stream", lambda text, **kw: text.upper())
@@ -277,7 +277,7 @@ async def test_purr_mode_c():
 
 @pytest.mark.anyio
 async def test_tail_mode_c():
-    t = NoopTail()
+    t = DefaultTail()
     await t.render({"status": "ok"})  # 默认 no-op
     rendered: list[dict[str, Any]] = []
     t.mount_plug("render", lambda s: rendered.append(s))
@@ -287,7 +287,7 @@ async def test_tail_mode_c():
 
 @pytest.mark.anyio
 async def test_eyes_mode_c():
-    e = NoopEyes()
+    e = DefaultEyes()
     r = await e.see(b"img", "image/png")
     assert r == {"format": "image/png", "size_bytes": 3,
                  "width_hint": "unknown", "height_hint": "unknown"}
@@ -298,7 +298,7 @@ async def test_eyes_mode_c():
 
 @pytest.mark.anyio
 async def test_paws_mode_c():
-    p = NoopPaws()
+    p = DefaultPaws()
     r = await p.execute("tool1", {"arg": 1})
     assert r == {"ok": False, "reason": "no tool_registry mounted"}
     p.mount_plug("execute", lambda name, params: {
@@ -308,13 +308,13 @@ async def test_paws_mode_c():
 
 
 # ===================================================================
-# NoopThalamus 完整功能
+# DefaultThalamus 完整功能
 # ===================================================================
 
 
 @pytest.mark.anyio
 async def test_thalamus_locate_default():
-    t = NoopThalamus()
+    t = DefaultThalamus()
     r = await t.locate("hello world", "session_1")
     assert r["route"] == "chat"
     assert r["entities"] == []
@@ -322,25 +322,25 @@ async def test_thalamus_locate_default():
 
 
 def test_thalamus_decide_route():
-    t = NoopThalamus()
+    t = DefaultThalamus()
     r = t.decide_route()
     assert r["route"] == "chat"
     assert r["keywords"] == []  # 无输入时关键词为空
 
 
 def test_thalamus_hooks():
-    t = NoopThalamus()
+    t = DefaultThalamus()
     assert "locate" in t.HOOKS
-    assert "locate" in NoopThalamus.HOOKS
+    assert "locate" in DefaultThalamus.HOOKS
 
 
 # ===================================================================
-# NoopHippocampus 完整功能
+# DefaultHippocampus 完整功能
 # ===================================================================
 
 
 def test_hippocampus_add_and_get_entity():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1", "name": "test_entity", "importance": 0.8})
     e = h.get_entity("e1")
     assert e is not None
@@ -348,7 +348,7 @@ def test_hippocampus_add_and_get_entity():
 
 
 def test_hippocampus_get_by_name():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1", "name": "alice"})
     h.add_entity({"id": "e2", "name": "bob"})
     assert h.get_by_name("alice") is not None
@@ -356,14 +356,14 @@ def test_hippocampus_get_by_name():
 
 
 def test_hippocampus_get_all():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1"})
     h.add_entity({"id": "e2"})
     assert len(h.get_all()) == 2
 
 
 def test_hippocampus_connect_and_get_related():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1", "name": "parent"})
     h.add_entity({"id": "e2", "name": "child"})
     h.connect("e1", "e2", "has_child", 0.9)
@@ -373,7 +373,7 @@ def test_hippocampus_connect_and_get_related():
 
 
 def test_hippocampus_fts_search():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_episode({"user_msg": "what is python",
                   "ai_reply": "a programming language"})
     h.add_episode({"user_msg": "what is java", "ai_reply": "also a language"})
@@ -383,7 +383,7 @@ def test_hippocampus_fts_search():
 
 
 def test_hippocampus_stats():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1"})
     h.add_episode({"user_msg": "hi", "ai_reply": "hello"})
     stats = h.stats()
@@ -392,7 +392,7 @@ def test_hippocampus_stats():
 
 
 def test_hippocampus_decay():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1", "importance": 0.5})
     count = h.decay()
     assert count == 1
@@ -400,19 +400,19 @@ def test_hippocampus_decay():
 
 
 def test_hippocampus_serialize():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1", "name": "test"})
     d = h.to_dict()
     assert "entities" in d
     assert len(d["entities"]) == 1
 
-    h2 = NoopHippocampus()
+    h2 = DefaultHippocampus()
     h2.from_dict(d)
     assert h2.get_entity("e1") is not None
 
 
 def test_hippocampus_dormant_access():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     h.add_entity({"id": "e1"})
     h.record_access("e1")
     assert h.entities["e1"].get("_last_accessed", 0) > 0
@@ -421,7 +421,7 @@ def test_hippocampus_dormant_access():
 
 
 def test_hippocampus_hooks():
-    h = NoopHippocampus()
+    h = DefaultHippocampus()
     assert "remember" in h.HOOKS
     assert "recall" in h.HOOKS
 
@@ -432,17 +432,17 @@ def test_hippocampus_hooks():
 
 
 def test_noop_mouth_is_mouth_protocol():
-    m = NoopMouth()
+    m = DefaultMouth()
     assert isinstance(m, MouthProtocol)
 
 
 def test_noop_purr_is_purr_protocol():
-    p = NoopPurr()
+    p = DefaultPurr()
     assert isinstance(p, PurrProtocol)
 
 
 def test_noop_tail_is_tail_protocol():
-    t = NoopTail()
+    t = DefaultTail()
     assert isinstance(t, TailProtocol)
 
 
@@ -453,7 +453,7 @@ def test_noop_tail_is_tail_protocol():
 
 @pytest.mark.anyio
 async def test_create_cat_default_thalamus_hippocampus():
-    """create_cat 不传 thalamus/hippocampus 时自动使用 Noop 实现。"""
+    """create_cat 不传 thalamus/hippocampus 时自动使用 Default 实现。"""
 
     class FakeLLM:
         name = "fake"
@@ -471,8 +471,8 @@ async def test_create_cat_default_thalamus_hippocampus():
     from meowcat.testing import make_test_colony
     colony = make_test_colony()
     cat = create_cat(container=colony, cerebrum=llm, name="test-cat")
-    assert isinstance(cat.thalamus, NoopThalamus)
-    assert isinstance(cat.hippocampus, NoopHippocampus)
+    assert isinstance(cat.thalamus, DefaultThalamus)
+    assert isinstance(cat.hippocampus, DefaultHippocampus)
 
 
 # ===================================================================
@@ -495,7 +495,7 @@ def test_organ_protocols_includes_voice():
 
 
 def test_pluggable_multi_hook_list():
-    a = NoopAmygdala()
+    a = DefaultAmygdala()
     a.mount_plug("assess_safety", lambda x: {"safe": False})
     a.mount_plug("assess_tool_risk", lambda n, p: {"risk": "high"})
     lst = a.list_plugs()

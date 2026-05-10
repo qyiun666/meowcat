@@ -13,7 +13,7 @@ from meowcat.defaults.presets import KW_BILINGUAL, KeywordPreset
 from meowcat.pluggable import Pluggable
 
 
-class NoopThalamus(Pluggable):
+class DefaultThalamus(Pluggable):
     """Thalamus: keyword routing + command detection.
 
     Accepts a :class:`KeywordPreset` for configurable command patterns and

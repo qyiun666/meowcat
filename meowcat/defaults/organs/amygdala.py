@@ -13,7 +13,7 @@ from meowcat.defaults.presets import KW_BILINGUAL, KeywordPreset
 from meowcat.pluggable import Pluggable
 
 
-class NoopAmygdala(Pluggable):
+class DefaultAmygdala(Pluggable):
     """Amygdala: regex-based danger/safety assessment.
 
     Accepts a :class:`KeywordPreset` for configurable danger patterns.
@@ -35,7 +35,9 @@ class NoopAmygdala(Pluggable):
 
     HOOKS: dict[str, dict[str, str]] = {
         "assess_safety": {"in": "user_input: str", "out": "dict[str, Any]"},
-        "assess_tool_risk": {"in": "tool_name: str, params: dict", "out": "dict[str, Any]"},
+        "assess_tool_risk": {
+            "in": "tool_name: str, params: dict", "out": "dict[str, Any]"
+        },
     }
 
     name: str = "renovated_amygdala"
@@ -67,30 +69,12 @@ class NoopAmygdala(Pluggable):
         )
 
     def is_rejection(self, msg: str) -> bool:
-        """Check if the input should be *rejected* as dangerous.
-
-        Matches against danger patterns (SQL injection, shell injection,
-        XSS, path traversal, etc.). Return ``True`` means the input
-        contains dangerous content that should be blocked.
-
-        For user negation/correction detection, use
-        :meth:`RenovatedWhiskers.is_negation` / :meth:`RenovatedWhiskers.parse_correction`.
-        """
         return any(pat.search(msg) for pat in self._patterns)
 
     def is_dangerous(self, msg: str) -> bool:
-        """Alias for :meth:`is_rejection` — semantically clearer.
-
-        Returns ``True`` if the input matches known danger patterns.
-        """
         return self.is_rejection(msg)
 
     def classify_rejection(self, msg: str) -> str:
-        """Classify the rejection type of dangerous input.
-
-        Returns:
-            ``"danger"`` if input matches danger patterns, ``"none"`` otherwise.
-        """
         if not self.is_rejection(msg):
             return "none"
         return "danger"
@@ -99,17 +83,12 @@ class NoopAmygdala(Pluggable):
         return None
 
     async def handle_rejection(
-        self,
-        msg: str,
-        last_candidates: list[Any],
-        hippocampus: Any,
+        self, msg: str, last_candidates: list[Any], hippocampus: Any,
     ) -> str:
         return msg
 
     async def handle_correction(
-        self,
-        msg: str,
-        hippocampus: Any,
+        self, msg: str, hippocampus: Any,
     ) -> tuple[str, str] | None:
         return None
 
@@ -128,15 +107,12 @@ class NoopAmygdala(Pluggable):
                 }
         return {"safe": True, "risk": "low"}
 
-    def assess_tool_risk(  # type: ignore[override]
+    def assess_tool_risk(
         self, tool_name: str, params: dict[str, Any]
     ) -> dict[str, Any]:
-        """Assess tool execution risk.
-
-        Configurable via ``dangerous_tools`` and ``dangerous_paths`` constructor
-        params, with plugin override via the ``assess_tool_risk`` hook.
-        """
-        for _name, r in self._run_plugs_sync("assess_tool_risk", tool_name, params):
+        for _name, r in self._run_plugs_sync(
+            "assess_tool_risk", tool_name, params
+        ):
             if isinstance(r, dict):
                 return r
         if tool_name in self._dangerous_tools:

@@ -5,7 +5,7 @@
 
 验证:
 - 每个 @runtime_checkable Protocol 都能正常 import
-- Noop* 桩满足对应 Protocol
+- Default* 桩满足对应 Protocol
 - CatProtocol 包含 v0.2.0 新增 API（turn、process_message 等）
 """
 
@@ -14,22 +14,22 @@ from __future__ import annotations
 import pytest
 
 from meowcat.defaults.organs import (
-    NoopAmygdala,
-    NoopAnomalyGrowth,
-    NoopCerebellum,
-    NoopCerebrum,
-    NoopCorrectionGrowth,
-    NoopCortex,
-    NoopCrystallizer,
-    NoopEars,
-    NoopEyes,
-    NoopFrontal,
-    NoopHypothalamus,
-    NoopMouth,
-    NoopPurr,
-    NoopRoleEmergence,
-    NoopTail,
-    NoopWhiskers,
+    DefaultAmygdala,
+    DefaultAnomalyGrowth,
+    DefaultCerebellum,
+    DefaultCerebrum,
+    DefaultCorrectionGrowth,
+    DefaultCortex,
+    DefaultCrystallizer,
+    DefaultEars,
+    DefaultEyes,
+    DefaultFrontal,
+    DefaultHypothalamus,
+    DefaultMouth,
+    DefaultPurr,
+    DefaultRoleEmergence,
+    DefaultTail,
+    DefaultWhiskers,
 )
 from meowcat.defaults.stores import InMemoryGraphStore
 from meowcat.protocols import (
@@ -103,61 +103,61 @@ class TestProtocolImport:
             "CatProtocol missing perceive_stream"
 
 
-class TestNoopSatisfiesProtocol:
-    """每个 Noop* 桩满足对应 Protocol 的 isinstance 校验。"""
+class TestDefaultSatisfiesProtocol:
+    """每个 Default* 桩满足对应 Protocol 的 isinstance 校验。"""
 
     def test_noop_amygdala(self) -> None:
-        a = NoopAmygdala()
+        a = DefaultAmygdala()
         assert isinstance(a, AmygdalaProtocol)
         assert a.is_rejection("hello") is False
         assert a.classify_rejection("hello") == "none"
         assert a.parse_correction("hello") is None
 
     def test_noop_frontal(self) -> None:
-        f = NoopFrontal()
+        f = DefaultFrontal()
         assert isinstance(f, FrontalCortexProtocol)
         assert f.detect_shift("hello") is True
         assert f.is_continue("hello") is False
 
     def test_noop_hypothalamus(self) -> None:
-        h = NoopHypothalamus()
+        h = DefaultHypothalamus()
         assert isinstance(h, HypothalamusProtocol)
 
     def test_noop_cortex(self) -> None:
-        c = NoopCortex()
+        c = DefaultCortex()
         assert isinstance(c, CortexProtocol)
 
     @pytest.mark.anyio
     async def test_noop_ears(self) -> None:
-        e = NoopEars()
+        e = DefaultEars()
         assert isinstance(e, EarsProtocol)
         assert e.extract_keywords("hello") == ["hello"]
         assert e.detect_language("hello") == "en"
 
     def test_noop_eyes(self) -> None:
-        e = NoopEyes()
+        e = DefaultEyes()
         assert isinstance(e, EyesProtocol)
 
     def test_noop_mouth(self) -> None:
-        m = NoopMouth()
+        m = DefaultMouth()
         assert isinstance(m, OrganProtocol)
 
     def test_noop_purr(self) -> None:
-        p = NoopPurr()
+        p = DefaultPurr()
         assert isinstance(p, OrganProtocol)
 
     def test_noop_tail(self) -> None:
-        t = NoopTail()
+        t = DefaultTail()
         assert isinstance(t, OrganProtocol)
 
     def test_noop_whiskers(self) -> None:
-        w = NoopWhiskers()
+        w = DefaultWhiskers()
         assert isinstance(w, WhiskersProtocol)
 
     # -- v1.0.16: Growth + LLM organs ----------------------------------
 
     def test_noop_cerebrum(self) -> None:
-        c = NoopCerebrum()
+        c = DefaultCerebrum()
         assert isinstance(c, LLMBrainProtocol)
         assert c.name == "renovated_cerebrum"
         assert c.diagnose() == {
@@ -169,32 +169,32 @@ class TestNoopSatisfiesProtocol:
         c.reload_config()  # no-op
 
     def test_noop_cerebellum(self) -> None:
-        c = NoopCerebellum()
+        c = DefaultCerebellum()
         assert isinstance(c, LLMBrainProtocol)
         assert c.name == "renovated_cerebellum"
 
     def test_noop_anomaly_growth(self) -> None:
-        a = NoopAnomalyGrowth()
+        a = DefaultAnomalyGrowth()
         assert isinstance(a, AnomalyGrowthProtocol)
         assert a.name == "renovated_anomaly_growth"
         result = a.record("drift", "snippet", 0.9)
         assert isinstance(result, dict)
 
     def test_noop_correction_growth(self) -> None:
-        c = NoopCorrectionGrowth()
+        c = DefaultCorrectionGrowth()
         assert isinstance(c, CorrectionGrowthProtocol)
         result = c.record("wrong", "correct", session_id="s1")
         assert isinstance(result, dict)
 
     def test_noop_crystallizer(self) -> None:
-        c = NoopCrystallizer()
+        c = DefaultCrystallizer()
         assert isinstance(c, CrystallizerProtocol)
         assert c.crystallize("my_skill", 1) is False
         assert c.crystallize("my_skill", 4) is True
         assert c.hotspots(3) == [("my_skill", 5)]
 
     def test_noop_role_emergence(self) -> None:
-        r = NoopRoleEmergence()
+        r = DefaultRoleEmergence()
         assert isinstance(r, RoleEmergenceProtocol)
         result = r.record("pattern_x", "evidence_y")
         assert isinstance(result, dict)

@@ -5,7 +5,7 @@
 
 Validates:
 - WorkflowShape data model (defaults, import)
-- NoopHippocampus.list_active_workflows() (filtering, empty list)
+- DefaultHippocampus.list_active_workflows() (filtering, empty list)
 - CatBase workflow tracking (register/active/_active_workflows)
 - CatBase start/shutdown integration (checkpoint save, resume restore)
 - BUILTIN_PATHS / BUILTIN_CHAINS orchestration additions
@@ -22,7 +22,7 @@ from meowcat import (
     WORKFLOW_CHAIN,
     WorkflowShape,
 )
-from meowcat.defaults.organs import NoopHippocampus
+from meowcat.defaults.organs import DefaultHippocampus
 from meowcat.events import Lifecycle
 from meowcat.testing import make_cat
 
@@ -87,22 +87,22 @@ class TestWorkflowShape:
 
 
 # ===================================================================
-# 2. NoopHippocampus.list_active_workflows()
+# 2. DefaultHippocampus.list_active_workflows()
 # ===================================================================
 
 
-class TestNoopHippocampusListActiveWorkflows:
-    """NoopHippocampus list_active_workflows filtering logic."""
+class TestDefaultHippocampusListActiveWorkflows:
+    """DefaultHippocampus list_active_workflows filtering logic."""
 
     def test_empty_when_no_entities(self):
         """Empty list when no entities."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         result = hippo.list_active_workflows("cat-1")
         assert result == []
 
     def test_filters_by_type_workflow(self):
         """Only returns type="workflow" entities."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         hippo.add_entity({
             "id": "e1", "type": "memory", "status": "active",
             "cat_uid": "cat-1",
@@ -117,7 +117,7 @@ class TestNoopHippocampusListActiveWorkflows:
 
     def test_filters_by_status_active_or_awaiting(self):
         """Only returns workflows with active or awaiting_user status."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         hippo.add_entity({
             "id": "w1", "type": "workflow", "status": "active",
             "cat_uid": "cat-1",
@@ -141,7 +141,7 @@ class TestNoopHippocampusListActiveWorkflows:
 
     def test_filters_by_cat_id(self):
         """Filters by cat_uid, does not return other cats' workflows."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         hippo.add_entity({
             "id": "w1", "type": "workflow", "status": "active",
             "cat_uid": "cat-a",
@@ -156,7 +156,7 @@ class TestNoopHippocampusListActiveWorkflows:
 
     def test_includes_entity_id_in_result(self):
         """Result includes entity_id key."""
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         hippo.add_entity({
             "id": "wf-x", "type": "workflow", "status": "active",
             "cat_uid": "cat-1", "plan": ["step1"],
@@ -236,13 +236,13 @@ class TestCatBaseWorkflowLifecycle:
     """start()/shutdown() workflow checkpoint/resume integration."""
 
     def _setup_cat_with_hippo(self, name="test"):
-        """Create CatBase with NoopHippocampus and wiring."""
+        """Create CatBase with DefaultHippocampus and wiring."""
         cat = make_cat(name)
-        hippo = NoopHippocampus()
+        hippo = DefaultHippocampus()
         cat.mount("brain", "hippocampus", hippo)
         # need brainstem for signal support
-        from meowcat.defaults.organs import NoopBrainstem
-        cat.mount("brain", "brainstem", NoopBrainstem())
+        from meowcat.defaults.organs import DefaultBrainstem
+        cat.mount("brain", "brainstem", DefaultBrainstem())
         cat.wire_default_nervous_system()
         cat.freeze_nervous_system()
         return cat, hippo
@@ -501,10 +501,10 @@ class TestGracefulDegradation:
 
     def test_multiple_start_shutdown_cycles(self):
         """Multiple start/shutdown cycles do not accumulate errors."""
-        cat, hippo = make_cat("cycle"), NoopHippocampus()
+        cat, hippo = make_cat("cycle"), DefaultHippocampus()
         cat.mount("brain", "hippocampus", hippo)
-        from meowcat.defaults.organs import NoopBrainstem
-        cat.mount("brain", "brainstem", NoopBrainstem())
+        from meowcat.defaults.organs import DefaultBrainstem
+        cat.mount("brain", "brainstem", DefaultBrainstem())
         cat.wire_default_nervous_system()
         cat.freeze_nervous_system()
 
@@ -514,4 +514,3 @@ class TestGracefulDegradation:
                 await cat.shutdown()
 
         anyio.run(_run)  # no exception = pass
-

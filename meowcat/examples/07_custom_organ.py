@@ -56,7 +56,7 @@ async def main() -> None:
     cat.mount(
         "sense",
         "ears",
-        type("NoopEars", (), {"name": "ears", "diagnose": lambda: {}})(),
+        type("DefaultEars", (), {"name": "ears", "diagnose": lambda: {}})(),
         protocol=None,
     )
     cat.mount("sense", "nose", MyNose())

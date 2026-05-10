@@ -12,12 +12,13 @@ from meowcat.biology.active_growth import (
     HotPathObserver,
     ToolFailureLearner,
 )
-from meowcat.defaults.organs import NoopPaws, NoopWhiskers
+from meowcat.defaults.organs import DefaultPaws, DefaultWhiskers
 from meowcat.reflex import ReflexRegistry
 
 # ════════════════════════════════════════════════════════════════════
 # BlindSpotDetector — curiosity-driven knowledge gap detection
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestBlindSpotDetector:
     """Curiosity: detect knowledge blind spots from queries."""
@@ -360,20 +361,20 @@ class TestReflexRegistryHotPaths:
 
 
 # ════════════════════════════════════════════════════════════════════
-# NoopWhiskers detect_blind_spot
+# DefaultWhiskers detect_blind_spot
 # ════════════════════════════════════════════════════════════════════
 
-class TestNoopWhiskersBlindSpot:
-    """NoopWhiskers detect_blind_spot — default and pluggable."""
+class TestDefaultWhiskersBlindSpot:
+    """DefaultWhiskers detect_blind_spot — default and pluggable."""
 
     @pytest.mark.anyio
     async def test_default_returns_empty(self):
-        nw = NoopWhiskers()
+        nw = DefaultWhiskers()
         assert await nw.detect_blind_spot(["What is Redis?"]) == []
 
     @pytest.mark.anyio
     async def test_plug_returns_list(self):
-        nw = NoopWhiskers()
+        nw = DefaultWhiskers()
 
         def my_detector(queries, known):
             return [{"topic": "Redis", "novelty": 0.8}]
@@ -385,21 +386,21 @@ class TestNoopWhiskersBlindSpot:
 
 
 # ════════════════════════════════════════════════════════════════════
-# NoopPaws on_tool_failure
+# DefaultPaws on_tool_failure
 # ════════════════════════════════════════════════════════════════════
 
-class TestNoopPawsToolFailure:
-    """NoopPaws on_tool_failure — default and pluggable."""
+class TestDefaultPawsToolFailure:
+    """DefaultPaws on_tool_failure — default and pluggable."""
 
     @pytest.mark.anyio
     async def test_default_returns_recorded_false(self):
-        np = NoopPaws()
+        np = DefaultPaws()
         result = await np.on_tool_failure("read_file", {}, "Error")
         assert result == {"recorded": False}
 
     @pytest.mark.anyio
     async def test_plug_returns_dict(self):
-        np = NoopPaws()
+        np = DefaultPaws()
 
         def my_handler(tool, params, error, elapsed):
             return {"recorded": True, "tool": tool}

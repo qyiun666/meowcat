@@ -9,7 +9,7 @@ Covers:
 - CatSelf injection (personality + beliefs + capabilities)
 - inject_cat_self toggle
 - Route template fallback chain
-- NoopBrainstem new signature
+- DefaultBrainstem new signature
 - BrainStemProtocol runtime_checkable
 - BrainStemAgent delegation
 """
@@ -22,7 +22,7 @@ import pytest
 
 from meowcat.adapters.brain import BrainstemAgent
 from meowcat.biology.cat_self import SelfSnapshot
-from meowcat.defaults.organs import NoopBrainstem
+from meowcat.defaults.organs import DefaultBrainstem
 from meowcat.defaults.presets import PROMPT_ZH, OrganPrompt, PromptPreset
 from meowcat.protocols_brain import BrainStemProtocol
 
@@ -67,31 +67,31 @@ class TestOrganPrompt:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemBasic:
+class TestDefaultBrainstemBasic:
 
     async def test_basic_fallback(self):
         """No organ_prompts, no snapshot → pure PromptPreset fallback."""
-        bs = NoopBrainstem(cat_name="Kitty", prompt=PROMPT_ZH)
+        bs = DefaultBrainstem(cat_name="Kitty", prompt=PROMPT_ZH)
         result = await bs.build_system_prompt("cerebrum", "chat")
         assert "Kitty" in result
         assert "请简洁" in result  # PROMPT_ZH.post_prompt
 
     async def test_default_prompt_when_none(self):
         """Prompt=None → PROMPT_DEFAULT."""
-        bs = NoopBrainstem(cat_name="Test")
+        bs = DefaultBrainstem(cat_name="Test")
         result = await bs.build_system_prompt("cerebrum", "chat")
         assert "Test" in result
 
     async def test_route_not_in_templates(self):
         """Unknown route → fallback template."""
-        bs = NoopBrainstem(cat_name="Kitty")
+        bs = DefaultBrainstem(cat_name="Kitty")
         result = await bs.build_system_prompt("cerebrum", "unknown_route")
         assert "Kitty" in result
         assert len(result) > 10
 
     async def test_different_organs_same_result_without_organ_prompts(self):
         """Without organ_prompts, cerebrum and cerebellum get same route template."""
-        bs = NoopBrainstem(cat_name="Kitty")
+        bs = DefaultBrainstem(cat_name="Kitty")
         r1 = await bs.build_system_prompt("cerebrum", "chat")
         r2 = await bs.build_system_prompt("cerebellum", "chat")
         assert r1 == r2
@@ -103,11 +103,11 @@ class TestNoopBrainstemBasic:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemOrganPrompt:
+class TestDefaultBrainstemOrganPrompt:
 
     @pytest.fixture
     def brainstem(self):
-        return NoopBrainstem(
+        return DefaultBrainstem(
             cat_name="Kitty",
             language="zh",
             domain="tech",
@@ -182,7 +182,7 @@ class TestNoopBrainstemOrganPrompt:
 
     async def test_pre_prompt_appears_first(self, brainstem):
         """pre_prompt is the first section."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -209,11 +209,11 @@ class TestNoopBrainstemOrganPrompt:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemCatSelf:
+class TestDefaultBrainstemCatSelf:
 
     @pytest.fixture
     def brainstem(self):
-        return NoopBrainstem(
+        return DefaultBrainstem(
             cat_name="Kitty",
             prompt=PROMPT_ZH,
             organ_prompts={
@@ -358,7 +358,7 @@ class TestNoopBrainstemCatSelf:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemInjectionToggle:
+class TestDefaultBrainstemInjectionToggle:
 
     @pytest.fixture
     def snapshot(self):
@@ -369,12 +369,12 @@ class TestNoopBrainstemInjectionToggle:
 
     async def test_inject_cat_self_default_true(self, snapshot):
         """Default inject_cat_self is True."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         assert bs.inject_cat_self is True
 
     async def test_inject_cat_self_false_skips(self, snapshot):
         """inject_cat_self=False → no injection."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         bs.inject_cat_self = False
         result = await bs.build_system_prompt(
             "cerebrum", "chat", cat_self_snapshot=snapshot,
@@ -383,7 +383,7 @@ class TestNoopBrainstemInjectionToggle:
 
     async def test_inject_cat_self_true_injects(self, snapshot):
         """inject_cat_self=True → injection present."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         bs.inject_cat_self = True
         result = await bs.build_system_prompt(
             "cerebrum", "chat", cat_self_snapshot=snapshot,
@@ -392,7 +392,7 @@ class TestNoopBrainstemInjectionToggle:
 
     async def test_toggle_back_to_false(self, snapshot):
         """Toggle inject_cat_self back to False after True."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         bs.inject_cat_self = True
         r1 = await bs.build_system_prompt(
             "cerebrum", "chat", cat_self_snapshot=snapshot,
@@ -412,11 +412,11 @@ class TestNoopBrainstemInjectionToggle:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemFallback:
+class TestDefaultBrainstemFallback:
 
     async def test_organ_route_first_priority(self):
         """OrganPrompt.route_templates has highest priority."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -435,7 +435,7 @@ class TestNoopBrainstemFallback:
 
     async def test_prompt_template_second_priority(self):
         """PromptPreset.templates used when OrganPrompt has no route override."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -453,7 +453,7 @@ class TestNoopBrainstemFallback:
 
     async def test_fallback_third_priority(self):
         """PromptPreset.fallback used when route not in templates."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -466,7 +466,7 @@ class TestNoopBrainstemFallback:
 
     async def test_organ_route_for_specific_route_overrides_prompt(self):
         """Organ route_template for 'tool' overrides PromptPreset 'tool'."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -484,7 +484,7 @@ class TestNoopBrainstemFallback:
 
     async def test_organ_route_only_overrides_specific_route(self):
         """Organ overrides 'chat' but not 'tool'."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(
                 name="test",
@@ -503,7 +503,7 @@ class TestNoopBrainstemFallback:
 
     async def test_hardcoded_fallback_when_all_empty(self):
         """When both templates and fallback are empty → hardcoded default."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PromptPreset(name="test", templates={}, fallback=""),
         )
@@ -513,23 +513,23 @@ class TestNoopBrainstemFallback:
 
 
 # =========================================================================
-# NoopBrainstem — new signature (v1.3.6)
+# DefaultBrainstem — new signature (v1.3.6)
 # =========================================================================
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemV136:
+class TestDefaultBrainstemV136:
 
     async def test_new_signature_accepts_organ_and_route(self):
-        """NoopBrainstem accepts organ + route + optional snapshot."""
-        nb = NoopBrainstem()
+        """DefaultBrainstem accepts organ + route + optional snapshot."""
+        nb = DefaultBrainstem()
         result = await nb.build_system_prompt("cerebrum", "chat")
         assert "MeowCat" in result
         assert "helpful AI assistant" in result
 
     async def test_new_signature_with_snapshot(self):
-        """NoopBrainstem accepts snapshot and injects CatSelf."""
-        nb = NoopBrainstem()
+        """DefaultBrainstem accepts snapshot and injects CatSelf."""
+        nb = DefaultBrainstem()
         snap = SelfSnapshot(personality={"tone": "x"})
         result = await nb.build_system_prompt(
             "cerebrum", "chat", cat_self_snapshot=snap,
@@ -538,13 +538,13 @@ class TestNoopBrainstemV136:
         assert "x" in result
 
     async def test_inject_cat_self_default_true(self):
-        """NoopBrainstem.inject_cat_self defaults to True."""
-        nb = NoopBrainstem()
+        """DefaultBrainstem.inject_cat_self defaults to True."""
+        nb = DefaultBrainstem()
         assert nb.inject_cat_self is True
 
     async def test_plug_still_works_with_new_signature(self):
         """Plugs receive organ, route, snapshot."""
-        nb = NoopBrainstem()
+        nb = DefaultBrainstem()
         nb.mount_plug(
             "build_system_prompt",
             lambda organ, route, snapshot=None: f"{organ}/{route}",
@@ -602,11 +602,11 @@ class TestBrainStemProtocolV136:
 
     def test_renovated_brainstem_passes(self):
         """RenovatedBrainstem is a BrainStemProtocol."""
-        assert isinstance(NoopBrainstem(), BrainStemProtocol)
+        assert isinstance(DefaultBrainstem(), BrainStemProtocol)
 
     def test_noop_brainstem_passes(self):
-        """NoopBrainstem is a BrainStemProtocol."""
-        assert isinstance(NoopBrainstem(), BrainStemProtocol)
+        """DefaultBrainstem is a BrainStemProtocol."""
+        assert isinstance(DefaultBrainstem(), BrainStemProtocol)
 
 
 # =========================================================================
@@ -653,23 +653,23 @@ class TestBrainStemAgentV136:
 # =========================================================================
 
 
-class TestNoopBrainstemProperties:
+class TestDefaultBrainstemProperties:
 
     def test_organ_prompts_property_empty(self):
         """organ_prompts property returns empty dict by default."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         assert bs.organ_prompts == {}
 
     def test_organ_prompts_property_with_data(self):
         """organ_prompts property returns the dict."""
         op = OrganPrompt(identity="test")
-        bs = NoopBrainstem(organ_prompts={"cerebrum": op})
+        bs = DefaultBrainstem(organ_prompts={"cerebrum": op})
         assert "cerebrum" in bs.organ_prompts
         assert bs.organ_prompts["cerebrum"] is op
 
     def test_diagnose_includes_organ_prompts(self):
         """diagnose() includes organ_prompts keys."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             organ_prompts={
                 "cerebrum": OrganPrompt(),
                 "cerebellum": OrganPrompt(),
@@ -681,13 +681,13 @@ class TestNoopBrainstemProperties:
 
     def test_diagnose_includes_inject_cat_self(self):
         """diagnose() includes inject_cat_self."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         diag = bs.diagnose()
         assert diag["inject_cat_self"] is True
 
     def test_diagnose_includes_prompt_preset(self):
         """diagnose() includes prompt_preset name."""
-        bs = NoopBrainstem(prompt=PROMPT_ZH)
+        bs = DefaultBrainstem(prompt=PROMPT_ZH)
         diag = bs.diagnose()
         assert diag["prompt_preset"] == "zh"
 
@@ -698,11 +698,11 @@ class TestNoopBrainstemProperties:
 
 
 @pytest.mark.anyio
-class TestNoopBrainstemPlugin:
+class TestDefaultBrainstemPlugin:
 
     async def test_plugin_full_override(self):
         """Plugin returning a string completely replaces the assembly chain."""
-        bs = NoopBrainstem(
+        bs = DefaultBrainstem(
             cat_name="Kitty",
             prompt=PROMPT_ZH,
             organ_prompts={
@@ -718,7 +718,7 @@ class TestNoopBrainstemPlugin:
 
     async def test_plugin_multiple_merge(self):
         """Multiple plugins → concatenated."""
-        bs = NoopBrainstem()
+        bs = DefaultBrainstem()
         bs.mount_plug("build_system_prompt", lambda *a, **kw: "LINE1")
         bs.mount_plug("build_system_prompt", lambda *a, **kw: "LINE2")
         result = await bs.build_system_prompt("cerebrum", "chat")

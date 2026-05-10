@@ -12,11 +12,11 @@ from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
 
 
-class NoopCortex(Pluggable):
+class DefaultCortex(Pluggable):
     """Cortex: in-memory worldview accumulation.
 
-    Ingests key-value observations into four layers (axioms/others/values/self)
-    and synthesizes summary text on demand.
+    Ingests key-value observations into four layers
+    (axioms/others/values/self) and synthesizes summary text on demand.
 
     Mode B — synthesize merge enhancement.
     """
@@ -41,9 +41,7 @@ class NoopCortex(Pluggable):
     def ingest(self, source: str, layer: str, key: str, value: Any) -> None:
         if layer in self._worldview:
             self._worldview[layer][key] = {
-                "source": source,
-                "value": value,
-                "ts": _time.time(),
+                "source": source, "value": value, "ts": _time.time(),
             }
 
     def record_weakness(self, kind: str, detail: str) -> None:
@@ -54,7 +52,6 @@ class NoopCortex(Pluggable):
     def weaknesses(self) -> list[dict[str, Any]]:
         return list(self._weakness_log)
 
-    # type: ignore[override]
     def synthesize(self, max_tokens: int = 400) -> str:
         result = ""
         for _name, r in self._run_plugs_sync("synthesize", max_tokens):

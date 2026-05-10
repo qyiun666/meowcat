@@ -16,7 +16,7 @@ from meowcat import (
     Wiring,
 )
 from meowcat.defaults import create_cat
-from meowcat.defaults.organs import NoopAmygdala, NoopEars
+from meowcat.defaults.organs import DefaultAmygdala, DefaultEars
 from meowcat.models import EntityShape, PipelineContext
 from meowcat.protocols import (
     AmygdalaProtocol,
@@ -40,13 +40,13 @@ class TestProtocols:
             assert name in members, f"CatProtocol missing '{name}'"
 
     def test_noop_satisfies_amygdala(self) -> None:
-        a = NoopAmygdala()
+        a = DefaultAmygdala()
         assert isinstance(a, AmygdalaProtocol)
         assert a.is_rejection("hello") is False
 
     @pytest.mark.anyio
     async def test_noop_satisfies_ears(self) -> None:
-        e = NoopEars()
+        e = DefaultEars()
         assert isinstance(e, EarsProtocol)
         assert e.extract_keywords("hello") == ["hello"]
 
@@ -130,12 +130,12 @@ class TestCreateCat:
         assert cat.wiring._frozen is True
 
     def test_create_cat_with_custom_organs(self) -> None:
-        custom_ears = NoopEars()
+        custom_ears = DefaultEars()
         cat = create_cat(name="test-cat", container=self.colony, cerebrum=self.MockCerebrum(),
                          ears=custom_ears)
         assert cat.ears is custom_ears
-        # amygdalla 未提供，应为 Noop
-        assert isinstance(cat.amygdala, NoopAmygdala)
+        # amygdalla 未提供，应为 Default
+        assert isinstance(cat.amygdala, DefaultAmygdala)
 
     def test_on_before_freeze_called_before_freeze(self) -> None:
         """on_before_freeze 钩子在 wiring freeze 之前调用。"""
@@ -189,7 +189,7 @@ class TestCreateCat:
     def test_on_before_freeze_can_inject_organ(self) -> None:
         """on_before_freeze 钩子中可以 mount 新器官。"""
         def hook(cat: CatBase) -> None:
-            cat.mount("brain", "custom_organ", NoopAmygdala())
+            cat.mount("brain", "custom_organ", DefaultAmygdala())
             cat.wiring.connect(("brain", "custom_organ"),
                                ("brain", "thalamus"))
 

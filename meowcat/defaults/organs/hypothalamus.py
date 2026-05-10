@@ -12,7 +12,7 @@ from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
 
 
-class NoopHypothalamus(Pluggable):
+class DefaultHypothalamus(Pluggable):
     """Hypothalamus: background maintenance with configurable TTL decay.
 
     Runs memory decay on the hippocampus organ if accessible via cat ref.
@@ -34,7 +34,9 @@ class NoopHypothalamus(Pluggable):
 
     async def run_maintenance(self, country_code: str | None = None) -> Any:
         result: dict[str, Any] = {
-            "decayed": 0, "orphans_cleaned": 0, "woke": 0, "suggestions": []}
+            "decayed": 0, "orphans_cleaned": 0, "woke": 0,
+            "suggestions": [],
+        }
         async for _name, r in self._run_plugs("run_maintenance", country_code):
             if isinstance(r, dict):
                 result.update(r)

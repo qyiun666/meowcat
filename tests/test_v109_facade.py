@@ -31,14 +31,14 @@ from meowcat.anatomy import (
 from meowcat.assembly import CatBase
 from meowcat.colony import Colony
 from meowcat.defaults.organs import (
-    NoopAmygdala,
-    NoopBrainstem,
-    NoopEars,
-    NoopEyes,
-    NoopHippocampus,
-    NoopHypothalamus,
-    NoopThalamus,
-    NoopWhiskers,
+    DefaultAmygdala,
+    DefaultBrainstem,
+    DefaultEars,
+    DefaultEyes,
+    DefaultHippocampus,
+    DefaultHypothalamus,
+    DefaultThalamus,
+    DefaultWhiskers,
 )
 from meowcat.defaults.stores import InMemorySharedStore
 from meowcat.errors import IllegalNeuralPathError
@@ -46,6 +46,7 @@ from meowcat.loops import DAILY_MAINTENANCE_SEQ
 from meowcat.testing import make_cat
 
 # -- 辅助 ---------------------------------------------------------
+
 
 class _MockGrowth:
     """模拟生长器官 — 实现 record + crystallize + diagnose 用于 wiring 边测试。"""
@@ -65,16 +66,16 @@ class _MockGrowth:
 
 
 def _make_wired_cat(cat_uid: str = "wired-cat") -> CatBase:
-    """创建装配了关键 Noop 器官的猫。"""
+    """创建装配了关键 Default 器官的猫。"""
     cat = make_cat(cat_uid)
-    cat.mount("brain", "thalamus", NoopThalamus())
-    cat.mount("brain", "hippocampus", NoopHippocampus())
-    cat.mount("brain", "amygdala", NoopAmygdala())
-    cat.mount("brain", "hypothalamus", NoopHypothalamus())
-    cat.mount("brain", "brainstem", NoopBrainstem())
-    cat.mount("sense", "ears", NoopEars())
-    cat.mount("sense", "eyes", NoopEyes())
-    cat.mount("sense", "whiskers", NoopWhiskers())
+    cat.mount("brain", "thalamus", DefaultThalamus())
+    cat.mount("brain", "hippocampus", DefaultHippocampus())
+    cat.mount("brain", "amygdala", DefaultAmygdala())
+    cat.mount("brain", "hypothalamus", DefaultHypothalamus())
+    cat.mount("brain", "brainstem", DefaultBrainstem())
+    cat.mount("sense", "ears", DefaultEars())
+    cat.mount("sense", "eyes", DefaultEyes())
+    cat.mount("sense", "whiskers", DefaultWhiskers())
     cat.wire_default_nervous_system()
     return cat
 
@@ -104,8 +105,8 @@ def _make_maintenance_cat(cat_uid: str = "maint-cat") -> CatBase:
     """创建维护专用猫 — 挂载维护链需要的 hypothalamus + brainstem + hippocampus + crystallizer。"""
     cat = make_cat(cat_uid)
     cat.mount("brain", "hippocampus", _MaintenanceMockHippocampus())
-    cat.mount("brain", "hypothalamus", NoopHypothalamus())
-    cat.mount("brain", "brainstem", NoopBrainstem())
+    cat.mount("brain", "hypothalamus", DefaultHypothalamus())
+    cat.mount("brain", "brainstem", DefaultBrainstem())
     cat.mount("growth", "crystallizer", _MockGrowth())
     cat.wire_default_nervous_system()
     return cat
