@@ -194,6 +194,8 @@ __all__ = [
     "PlanReviser", "PlanReviserConfig", "RevisionStrategy", "RevisionContext", "RevisionResult",
     # v1.3.6 Task orchestrator
     "TaskOrchestrator", "TaskNode", "TaskStatus", "TaskResult", "TaskExecutor",
+    # v2.1.0 RuleSet
+    "Rule", "RuleSet",
 ]
 # fmt: on
 

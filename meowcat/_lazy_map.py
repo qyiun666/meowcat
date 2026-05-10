@@ -385,4 +385,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "TaskStatus": ("meowcat.task_orchestrator", "TaskStatus"),
     "TaskResult": ("meowcat.task_orchestrator", "TaskResult"),
     "TaskExecutor": ("meowcat.task_orchestrator", "TaskExecutor"),
+    # — v2.1.0 RuleSet —
+    "Rule": ("meowcat.ruleset", "Rule"),
+    "RuleSet": ("meowcat.ruleset", "RuleSet"),
 }

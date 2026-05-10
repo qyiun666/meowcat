@@ -503,9 +503,10 @@ class NoopBrainstem(Pluggable):
     ``organ_prompts`` dict mapping organ name → :class:`OrganPrompt`
     for per-organ identity/perspective/output_format injection.
 
-    7-step assembly chain:
+    7-step assembly chain (v2.1.0: Step 2.5 RuleSet added):
         1. Plugin override (full replacement)
         2. PromptPreset.pre_prompt
+        2.5 RuleSet injection from cat.rule_set (v2.1.0)
         3. OrganPrompt.identity + perspective
         4. Route template (OrganPrompt → PromptPreset → fallback)
         5. CatSelf injection (personality + beliefs + capabilities)
@@ -598,6 +599,15 @@ class NoopBrainstem(Pluggable):
         # 2. PromptPreset.pre_prompt
         if self._prompt.pre_prompt:
             parts.append(self._fill_vars(self._prompt.pre_prompt))
+
+        # 2.5 RuleSet injection from cat.rule_set (v2.1.0)
+        host = getattr(self, "_organ_host", None)
+        if host is not None:
+            cat = getattr(host, "_cat", None)
+            if cat is not None and cat.rule_set is not None:
+                rule_block = cat.rule_set.render(route=route)
+                if rule_block:
+                    parts.append(rule_block)
 
         # 3. OrganPrompt identity + perspective
         op = self._organ_prompts.get(organ)
@@ -820,6 +830,17 @@ class NoopCerebrum(Pluggable):
         ):
             if isinstance(r, str):
                 return r
+
+        # RuleSet injection (v2.1.0 — fallback: inject even when Brainstem is bypassed)
+        if system_prompt:
+            host = getattr(self, "_organ_host", None)
+            if host is not None:
+                cat = getattr(host, "_cat", None)
+                if cat is not None and cat.rule_set is not None:
+                    rule_block = cat.rule_set.render(route="deep_reason")
+                    if rule_block:
+                        system_prompt = f"{system_prompt}\n\n{rule_block}"
+
         if self._llm_fn is not None:
             import inspect
 
@@ -920,6 +941,17 @@ class NoopCerebellum(Pluggable):
         ):
             if isinstance(r, str):
                 return r
+
+        # RuleSet injection (v2.1.0 — fallback: inject even when Brainstem is bypassed)
+        if system_prompt:
+            host = getattr(self, "_organ_host", None)
+            if host is not None:
+                cat = getattr(host, "_cat", None)
+                if cat is not None and cat.rule_set is not None:
+                    rule_block = cat.rule_set.render(route="tool_use")
+                    if rule_block:
+                        system_prompt = f"{system_prompt}\n\n{rule_block}"
+
         if self._llm_fn is not None:
             import inspect
 

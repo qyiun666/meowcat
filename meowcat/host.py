@@ -59,6 +59,10 @@ class OrganHost:
                 organ,
             )
         self._organs.setdefault(category, {})[name] = organ
+        try:
+            organ._organ_host = self  # v2.1.0: back-reference for host access
+        except (TypeError, AttributeError):
+            pass  # plain object() or __slots__-only classes
 
     def unmount(self, category: str, name: str) -> bool:
         """Unmount an organ, return False if not found."""

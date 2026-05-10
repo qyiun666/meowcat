@@ -132,6 +132,7 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
         self._parent_id = parent_id
         self._allowed_organs: frozenset[str] | None = None
         self._host = OrganHost(cat_uid)
+        self._host._cat = self  # v2.1.0: back-reference for organ → cat access
         self._events = EventBus()
         self._nervous: Nervous | None = (
             Nervous(self._host, self._events,
@@ -177,6 +178,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin):
         self._active_workflows: dict[str, dict[str, Any]] = {}
         # v1.2.0: Unified self — all organ read/write converge here
         self._cat_self: Any = None
+        # v2.1.0: Per-cat unified rule engine
+        self.rule_set: Any = None
         # v1.2.5: Current self snapshot — set by DefaultLoops before each action
         self._current_snapshot: Any = None
         # v1.2.10: BUILTIN_* optional registration flags
