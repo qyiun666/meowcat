@@ -91,8 +91,8 @@ class Colony(
                 None = empty shelf; cats must bring their own LLM.
             owner: Colony owner profile (name/email/language). Defaults to empty.
             rules: Colony rules (safety/approval/rate-limit). Defaults to permissive.
-            cross_wiring_allowed: Cross-cat allowlist edges. None = no validation.
-            cross_wiring_forbidden: Cross-cat blocklist edges.
+            cross_wiring_allowed: Cross-cat allowlist edges. None = deny all cross-cat signals.
+            cross_wiring_forbidden: Cross-cat blocklist edges. Takes priority over allowlist.
         """
         Pluggable.__init__(self)
         if colony_id is None:
@@ -252,15 +252,15 @@ class Colony(
         self._has_cross_wiring = True
 
     def _assert_cross_allowed(self, from_id: str, to_id: str) -> None:
-        if not self._has_cross_wiring:
-            return
+        # Forbidden takes priority — always block if edge is in blocklist
         if (from_id, to_id) in self._cross_forbidden:
             raise IllegalNeuralPathError(
                 ("colony", from_id),
                 ("colony", to_id),
                 reason=f"cross-cat signal forbidden: {from_id} → {to_id}",
             )
-        if self._cross_allowed and (from_id, to_id) not in self._cross_allowed:
+        # Default-deny: only allow edges explicitly registered in the allowlist
+        if (from_id, to_id) not in self._cross_allowed:
             raise IllegalNeuralPathError(
                 ("colony", from_id),
                 ("colony", to_id),

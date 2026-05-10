@@ -12,16 +12,14 @@ Three execution modes:
 - C Full replacement: first plugin completely replaces default behavior
 """
 
-from meowcat.defaults.organs.brain import (
-    NoopAmygdala,
-    NoopBrainstem,
-    NoopCerebellum,
-    NoopCerebrum,
-    NoopCortex,
-    NoopFrontal,
-    NoopHypothalamus,
-    NoopThalamus,
-)
+from meowcat.defaults.organs.amygdala import NoopAmygdala
+from meowcat.defaults.organs.brainstem import NoopBrainstem
+from meowcat.defaults.organs.cerebellum import NoopCerebellum
+from meowcat.defaults.organs.cerebrum import NoopCerebrum
+from meowcat.defaults.organs.cortex import NoopCortex
+from meowcat.defaults.organs.frontal import NoopFrontal
+from meowcat.defaults.organs.hypothalamus import NoopHypothalamus
+from meowcat.defaults.organs.thalamus import NoopThalamus
 from meowcat.defaults.organs.growth import (
     NoopAnomalyGrowth,
     NoopCorrectionGrowth,

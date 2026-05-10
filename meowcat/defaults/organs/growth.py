@@ -12,7 +12,7 @@ from meowcat.anatomy import ImplementationStyle
 from meowcat.pluggable import Pluggable
 
 
-class NoopAnomalyGrowth(Pluggable):
+class DefaultAnomalyGrowth(Pluggable):
     """Default anomaly growth: in-memory anomaly log with diagnostics.
 
     Mode B — record merge enhancement.
@@ -59,7 +59,7 @@ class NoopAnomalyGrowth(Pluggable):
         return {"recorded": True, "total": len(self._log)}
 
 
-class NoopCorrectionGrowth(Pluggable):
+class DefaultCorrectionGrowth(Pluggable):
     """Default correction growth: in-memory correction log with diagnostics.
 
     Mode B — record merge enhancement.
@@ -99,7 +99,7 @@ class NoopCorrectionGrowth(Pluggable):
         return {"recorded": True, "total": len(self._log)}
 
 
-class NoopCrystallizer(Pluggable):
+class DefaultCrystallizer(Pluggable):
     """Default crystallizer: in-memory skill hit counter with hotspot detection.
 
     Tracks how often each skill slug is called, and surfaces hotspots.
@@ -151,7 +151,7 @@ class NoopCrystallizer(Pluggable):
         return result
 
 
-class NoopRoleEmergence(Pluggable):
+class DefaultRoleEmergence(Pluggable):
     """Default role emergence: in-memory behavior pattern log with diagnostics.
 
     Mode B — record merge enhancement.

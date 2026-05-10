@@ -3,7 +3,7 @@
 
 """meowcat default voice/effector organ implementations — merged Noop+Renovated.
 
-Each Noop* class now includes the renovated (简装修) behavior by default,
+Each Default* class now includes the renovated (简装修) behavior by default,
 providing usable stdout output, streaming tracking, status bar, and tool
 registry integration out of the box.
 """
@@ -20,7 +20,7 @@ from meowcat.pluggable import Pluggable
 _logger = logging.getLogger("meowcat.organs")
 
 
-class NoopMouth(Pluggable):
+class DefaultMouth(Pluggable):
     """Default mouth: prints replies to stdout, returns formatted text.
 
     Mode C — speak full replacement.
@@ -49,7 +49,7 @@ class NoopMouth(Pluggable):
         return text
 
 
-class NoopPurr(Pluggable):
+class DefaultPurr(Pluggable):
     """Default purr: streaming status tracker.
 
     Mode C — stream full replacement.
@@ -84,7 +84,7 @@ class NoopPurr(Pluggable):
         return None
 
 
-class NoopTail(Pluggable):
+class DefaultTail(Pluggable):
     """Default tail: status bar rendering with debug logging.
 
     Mode C — render full replacement.
@@ -113,7 +113,7 @@ class NoopTail(Pluggable):
         _logger.debug("tail: %s", bar)
 
 
-class NoopPaws(Pluggable):
+class DefaultPaws(Pluggable):
     """Default paws: tool registry integration with security gate.
 
     Looks up tools in the cat's tool_registry and executes with try/except.

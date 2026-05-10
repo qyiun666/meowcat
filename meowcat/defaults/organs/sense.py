@@ -3,7 +3,7 @@
 
 """meowcat default sense organ implementations — merged renovated behavior.
 
-Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
+Each Default* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
 _run_plugs plugin capability. HOOKS class variable declares mountable hooks and their
 suggested signatures.
 
@@ -13,9 +13,9 @@ Three execution modes:
 - C Full replacement: first plugin completely replaces default behavior
 
 Renovated behavior merged in:
-  NoopEars   — text normalization + keyword extraction + language detection
-  NoopEyes   — image format detection via magic bytes
-  NoopWhiskers — input/output sensing + drift + injection/negation/correction detection
+  DefaultEars   — text normalization + keyword extraction + language detection
+  DefaultEyes   — image format detection via magic bytes
+  DefaultWhiskers — input/output sensing + drift + injection/negation/correction detection
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from meowcat.pluggable import Pluggable
 # =========================================================================
 
 
-class NoopEars(Pluggable):
+class DefaultEars(Pluggable):
     """Ears: text normalization + keyword extraction + language detection.
 
     Accepts a :class:`KeywordPreset` for configurable stop words and keyword extraction.
@@ -102,7 +102,7 @@ class NoopEars(Pluggable):
 # =========================================================================
 
 
-class NoopEyes(Pluggable):
+class DefaultEyes(Pluggable):
     """Eyes: image format detection + basic metadata extraction.
 
     Reads magic bytes to identify PNG/JPEG/GIF/BMP/WebP formats.
@@ -153,7 +153,7 @@ class NoopEyes(Pluggable):
 # =========================================================================
 
 
-class NoopWhiskers(Pluggable):
+class DefaultWhiskers(Pluggable):
     """Whiskers: input/output sensing + drift + injection/negation/correction detection.
 
     Tracks recent outputs, detects simple drift patterns (repetition, length anomaly),

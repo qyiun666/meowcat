@@ -3,7 +3,7 @@
 
 """meowcat default brain organ implementations — 8 classes with real behavior.
 
-Each Noop* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
+Each Default* class extends Pluggable (v1.0.7), providing mount_plug / unmount_plug /
 _run_plugs / _run_plugs_sync plugin capability. HOOKS class variable declares
 mountable hooks and their suggested signatures.
 
@@ -75,7 +75,7 @@ def _detect_command(text: str, kw) -> str | None:
 # =========================================================================
 
 
-class NoopThalamus(Pluggable):
+class DefaultThalamus(Pluggable):
     """Thalamus: keyword routing + command detection.
 
     Accepts a :class:`KeywordPreset` for configurable command patterns and
@@ -128,7 +128,7 @@ class NoopThalamus(Pluggable):
         }
 
 
-class NoopAmygdala(Pluggable):
+class DefaultAmygdala(Pluggable):
     """Amygdala: regex-based danger/safety assessment.
 
     Accepts a :class:`KeywordPreset` for configurable danger patterns.
@@ -267,7 +267,7 @@ class NoopAmygdala(Pluggable):
         return {"risk": "low", "reason": "ok"}
 
 
-class NoopFrontal(Pluggable):
+class DefaultFrontal(Pluggable):
     """Frontal: keyword topic shift detection + topic history.
 
     Accepts a :class:`KeywordPreset` for domain-specific topic keywords
@@ -395,7 +395,7 @@ class NoopFrontal(Pluggable):
         self._threshold = state.threshold
 
 
-class NoopHypothalamus(Pluggable):
+class DefaultHypothalamus(Pluggable):
     """Hypothalamus: background maintenance with configurable TTL decay.
 
     Runs memory decay on the hippocampus organ if accessible via cat ref.
@@ -431,7 +431,7 @@ class NoopHypothalamus(Pluggable):
         return {"compressed": 0}
 
 
-class NoopCortex(Pluggable):
+class DefaultCortex(Pluggable):
     """Cortex: in-memory worldview accumulation.
 
     Ingests key-value observations into four layers (axioms/others/values/self)
@@ -493,7 +493,7 @@ class NoopCortex(Pluggable):
         return result
 
 
-class NoopBrainstem(Pluggable):
+class DefaultBrainstem(Pluggable):
     """Brainstem: customizable system prompt builder + lifecycle logging.
 
     v1.3.6: 新增 per-organ prompt 拼装链路 + CatSelf 自动注入。
@@ -766,7 +766,7 @@ class NoopBrainstem(Pluggable):
         return "\n".join(lines)
 
 
-class NoopCerebrum(Pluggable):
+class DefaultCerebrum(Pluggable):
     """Cerebrum: callable-based LLM adapter with prompt preset support.
 
     Accepts an optional ``llm_fn`` callable (sync or async), a
@@ -879,10 +879,10 @@ class NoopCerebrum(Pluggable):
         pass
 
 
-class NoopCerebellum(Pluggable):
+class DefaultCerebellum(Pluggable):
     """Cerebellum: callable-based fast-response adapter with prompt preset.
 
-    Same pattern as NoopCerebrum — accepts optional ``llm_fn``,
+    Same pattern as DefaultCerebrum — accepts optional ``llm_fn``,
     :class:`PromptPreset`, and :class:`OrganPrompt`.
 
     Mode C — generate / stream_generate full replacement.

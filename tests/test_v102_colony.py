@@ -173,9 +173,12 @@ class TestSignalBetween:
 
     @pytest.mark.anyio
     async def test_signal_between(self) -> None:
-        colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
         cat_b = _Helper.make_cat("b")
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_allowed={(cat_a.cat_uid, cat_b.cat_uid)},
+        )
         colony.register(cat_a)
         colony.register(cat_b)
 
@@ -187,7 +190,10 @@ class TestSignalBetween:
 
     @pytest.mark.anyio
     async def test_signal_between_cat_not_found(self) -> None:
-        colony = Colony("test", storage=InMemorySharedStore())
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_allowed={("01", "nonexistent")},
+        )
         cat = colony.create_cat(name="a")
 
         with pytest.raises(KeyError):
@@ -201,9 +207,10 @@ class TestSignalBetween:
 class TestCrossWiring:
     """跨猫 wiring 白名单/黑名单校验。"""
 
-    def test_no_cross_wiring_allows_all(self) -> None:
+    def test_no_cross_wiring_denies_default(self) -> None:
         colony = Colony("test", storage=InMemorySharedStore())
-        colony._assert_cross_allowed("a", "b")
+        with pytest.raises(IllegalNeuralPathError, match="not allowed"):
+            colony._assert_cross_allowed("a", "b")
 
     def test_cross_forbidden_blocks(self) -> None:
         colony = Colony(
@@ -246,6 +253,19 @@ class TestCrossWiring:
         colony.register(cat_b)
 
         with pytest.raises(IllegalNeuralPathError, match="forbidden"):
+            await colony.signal_between(
+                cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
+            )
+
+    @pytest.mark.anyio
+    async def test_signal_between_rejected_by_default_deny(self) -> None:
+        cat_a = _Helper.make_cat("a")
+        cat_b = _Helper.make_cat("b")
+        colony = Colony("test", storage=InMemorySharedStore())
+        colony.register(cat_a)
+        colony.register(cat_b)
+
+        with pytest.raises(IllegalNeuralPathError, match="not allowed"):
             await colony.signal_between(
                 cat_a.cat_uid, cat_b.cat_uid, "brain", "hippocampus", "locate",
             )
@@ -339,9 +359,12 @@ class TestSignalBetweenTimeout:
 
     @pytest.mark.anyio
     async def test_signal_between_with_timeout_fast(self) -> None:
-        colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
         cat_b = _Helper.make_cat("b")
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_allowed={(cat_a.cat_uid, cat_b.cat_uid)},
+        )
         colony.register(cat_a)
         colony.register(cat_b)
 
@@ -360,10 +383,13 @@ class TestSignalBetweenTimeout:
                 await _asyncio.sleep(2.0)
                 return "done"
 
-        colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
         cat_b = make_cat("b")
         cat_b.mount("brain", "cerebrum", _SlowOrgan())
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_allowed={(cat_a.cat_uid, cat_b.cat_uid)},
+        )
         colony.register(cat_a)
         colony.register(cat_b)
 
@@ -375,9 +401,12 @@ class TestSignalBetweenTimeout:
 
     @pytest.mark.anyio
     async def test_signal_between_no_timeout_by_default(self) -> None:
-        colony = Colony("test", storage=InMemorySharedStore())
         cat_a = _Helper.make_cat("a")
         cat_b = _Helper.make_cat("b")
+        colony = Colony(
+            "test", storage=InMemorySharedStore(),
+            cross_wiring_allowed={(cat_a.cat_uid, cat_b.cat_uid)},
+        )
         colony.register(cat_a)
         colony.register(cat_b)
 
