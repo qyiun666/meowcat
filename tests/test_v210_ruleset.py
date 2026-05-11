@@ -29,7 +29,7 @@ class TestRule:
     def test_repr(self):
         r = Rule("N", "C")
         assert repr(
-            r) == "Rule(name='N', content='C', priority='medium', tags=[])"
+            r) == "Rule(name='N', content='C', priority='medium', mode='inject', tags=[])"
 
 
 # ── RuleSet tests ─────────────────────────────────────────────────────

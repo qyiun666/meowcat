@@ -31,6 +31,7 @@ class SkillSpec:
     tags: list[str] = field(default_factory=list)
     source: str = "builtin"
     category: str = "general"
+    disable_model_invocation: bool = False
 
 
 class Skill:
@@ -147,6 +148,18 @@ class SkillRegistry:
         if enabled_only:
             return [s for s in self._skills.values() if s.enabled]
         return list(self._skills.values())
+
+    def list_for_model(self, enabled_only: bool = True) -> list[Skill]:
+        """List Skills visible to LLM (``disable_model_invocation=False``).
+
+        Skills with ``disable_model_invocation=True`` are excluded from
+        prompt injection and only available for manual user invocation.
+        """
+        return [
+            s for s in self._skills.values()
+            if not s.spec.disable_model_invocation
+            and (not enabled_only or s.enabled)
+        ]
 
     def list_by_source(self, source: str, enabled_only: bool = True) -> list[Skill]:
         """Filter by source."""

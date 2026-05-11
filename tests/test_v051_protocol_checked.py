@@ -220,6 +220,7 @@ class TestRuntimeCheckable:
             async def handle_rejection(self, msg, lc, h): return ""
             async def handle_correction(self, msg, h): pass
             async def assess_safety(self, msg) -> dict: return {}
+            def fast_pass(self, msg: str) -> dict: return None
             @staticmethod
             def assess_tool_risk(tn, p) -> dict: return {}
             def tag_emotion(self, ep) -> dict: return {}

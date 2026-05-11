@@ -73,20 +73,20 @@ meowcat/
 
 ## 净代码变化
 
-| 类型     | 变化     |
-| -------- | -------- |
-| 代码 net | +490 行  |
-| 测试 net | +546 行  |
-| 文档 net | +80 行   |
+| 类型     | 变化    |
+| -------- | ------- |
+| 代码 net | +490 行 |
+| 测试 net | +546 行 |
+| 文档 net | +80 行  |
 
 ## 子任务进度
 
-| 子任务 | 状态 | 描述                                      |
-| ------ | ---- | ----------------------------------------- |
-| T-01   | ✅   | 产出 design.md + 接口定义                 |
-| T-02   | ✅   | 实现 Persona dataclass + 子结构           |
-| T-03   | ✅   | 实现 Colony namespace 面具存储            |
-| T-04   | ✅   | 实现 Cat.wear/unwear + CatSelf.apply      |
-| T-05   | ✅   | 实现 PersonaLoader YAML 加载器            |
-| T-06   | ✅   | 面具加载/切换/序列化测试 (34 tests)       |
-| T-07   | ✅   | 同步 AGENTS + CATALOG                     |
+| 子任务 | 状态 | 描述                                 |
+| ------ | ---- | ------------------------------------ |
+| T-01   | ✅   | 产出 design.md + 接口定义            |
+| T-02   | ✅   | 实现 Persona dataclass + 子结构      |
+| T-03   | ✅   | 实现 Colony namespace 面具存储       |
+| T-04   | ✅   | 实现 Cat.wear/unwear + CatSelf.apply |
+| T-05   | ✅   | 实现 PersonaLoader YAML 加载器       |
+| T-06   | ✅   | 面具加载/切换/序列化测试 (34 tests)  |
+| T-07   | ✅   | 同步 AGENTS + CATALOG                |

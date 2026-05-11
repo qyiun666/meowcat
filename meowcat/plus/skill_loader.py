@@ -23,7 +23,8 @@ from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
 
 logger = logging.getLogger(__name__)
 
-_RISK_MAP = {"low": RiskLevel.LOW, "medium": RiskLevel.MEDIUM, "high": RiskLevel.HIGH}
+_RISK_MAP = {"low": RiskLevel.LOW,
+             "medium": RiskLevel.MEDIUM, "high": RiskLevel.HIGH}
 
 
 def _parse_frontmatter(text: str) -> dict[str, Any]:
@@ -156,7 +157,8 @@ class SkillLoader:
                 tool = self._load_skill(skill_file)
                 if tool is not None:
                     self._tools.append(tool)
-                    logger.debug("Loaded skill: %s from %s", tool.name, skill_file)
+                    logger.debug("Loaded skill: %s from %s",
+                                 tool.name, skill_file)
             except Exception as exc:
                 logger.warning("Failed to load %s: %s", skill_file, exc)
         return list(self._tools)
@@ -182,13 +184,17 @@ class SkillLoader:
                 if isinstance(pv, dict):
                     params[str(pk)] = {str(k): str(v) for k, v in pv.items()}
                 else:
-                    params[str(pk)] = {"type": "string", "description": str(pv)}
+                    params[str(pk)] = {"type": "string",
+                                       "description": str(pv)}
         elif isinstance(raw_params, list):
             params = {str(p): {} for p in raw_params}
 
         risk_str = str(meta.get("risk", "medium")).lower()
         risk = _RISK_MAP.get(risk_str, RiskLevel.MEDIUM)
         category = str(meta.get("category", "skill"))
+        disable_model_invocation = str(
+            meta.get("disable_model_invocation", "false")
+        ).lower() in ("true", "1")
 
         spec = ToolSpec(
             name=name,
@@ -196,6 +202,7 @@ class SkillLoader:
             parameters=params,
             risk=risk,
             category=category,
+            disable_model_invocation=disable_model_invocation,
         )
 
         # Capture body in closure — each tool returns its SKILL.md body

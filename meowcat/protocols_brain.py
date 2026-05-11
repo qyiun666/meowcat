@@ -298,6 +298,16 @@ class AmygdalaProtocol(Protocol):
 
     async def assess_safety(self, user_input: str) -> dict[str, Any]: ...
 
+    def fast_pass(self, user_input: str) -> dict[str, Any] | None:
+        """Pre-filter: regex-based danger check, zero LLM cost.
+
+        Returns:
+            ``{"safe": False, "risk": "high", ...}`` if dangerous,
+            ``None`` if uncertain — caller should proceed to
+            :meth:`assess_safety`.
+        """
+        ...
+
     async def assess_tool_risk(
         self, tool_name: str, params: dict[str, Any]) -> dict[str, Any]: ...
 

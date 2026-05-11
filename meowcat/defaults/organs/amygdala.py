@@ -30,6 +30,11 @@ class DefaultAmygdala(Pluggable):
     and ``dangerous_paths``, and supports plugin override via the
     ``assess_tool_risk`` hook.
 
+    **Fast-pass** (v2.6.0): ``fast_pass_patterns`` are a subset of
+    high-confidence regex patterns that trigger immediate blocking
+    without LLM invocation.  When ``fast_pass()`` returns a non-None
+    result, ``assess_safety`` returns it directly, skipping further checks.
+
     Mode A — assess_safety / assess_tool_risk first-hit override.
     """
 
@@ -49,6 +54,7 @@ class DefaultAmygdala(Pluggable):
         keyword: KeywordPreset | None = None,
         dangerous_tools: set[str] | None = None,
         dangerous_paths: list[str] | None = None,
+        fast_pass_patterns: list[re.Pattern] | None = None,
     ) -> None:
         Pluggable.__init__(self)
         if danger_patterns:
@@ -57,6 +63,9 @@ class DefaultAmygdala(Pluggable):
             self._patterns = list(keyword.danger_patterns)
         else:
             self._patterns = list(KW_BILINGUAL.danger_patterns)
+        self._fast_pass_patterns: list[re.Pattern] = (
+            list(fast_pass_patterns) if fast_pass_patterns else []
+        )
         self._dangerous_tools: set[str] = (
             dangerous_tools
             if dangerous_tools is not None
@@ -82,6 +91,32 @@ class DefaultAmygdala(Pluggable):
     def parse_correction(self, msg: str) -> tuple[str, str] | None:
         return None
 
+    def fast_pass(self, user_input: str) -> dict[str, Any] | None:
+        """Pre-filter: regex-based danger check, zero LLM cost.
+
+        Only checks ``fast_pass_patterns`` (a high-confidence subset).
+        When a fast_pass pattern matches, the input is considered
+        definitively dangerous and no further LLM assessment is needed.
+
+        Returns:
+            ``{"safe": False, "risk": "high", ...}`` if dangerous,
+            ``None`` if uncertain — caller should proceed to
+            :meth:`assess_safety`.
+        """
+        if not self._fast_pass_patterns:
+            return None
+        for pat in self._fast_pass_patterns:
+            m = pat.search(user_input)
+            if m:
+                return {
+                    "safe": False,
+                    "risk": "high",
+                    "fast_pass": True,
+                    "pattern": pat.pattern,
+                    "match": m.group(),
+                }
+        return None
+
     async def handle_rejection(
         self, msg: str, last_candidates: list[Any], hippocampus: Any,
     ) -> str:
@@ -93,6 +128,11 @@ class DefaultAmygdala(Pluggable):
         return None
 
     async def assess_safety(self, user_input: str) -> dict[str, Any]:
+        # Fast-pass pre-filter: definitive danger → immediate block
+        result = self.fast_pass(user_input)
+        if result is not None:
+            return result
+        # Existing flow: plugins → general patterns
         async for _name, r in self._run_plugs("assess_safety", user_input):
             if isinstance(r, dict) and not r.get("safe", True):
                 return r

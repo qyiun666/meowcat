@@ -35,6 +35,7 @@ class ToolSpec:
     parameters: dict[str, dict[str, str]] = field(default_factory=dict)
     risk: RiskLevel = RiskLevel.MEDIUM
     category: str = "general"
+    disable_model_invocation: bool = False
 
 
 class Tool:

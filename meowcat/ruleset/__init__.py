@@ -42,6 +42,9 @@ class Rule:
             Framework wraps it as-is inside ``<rule_content>``.
         priority: Injection order — ``"critical"`` / ``"high"`` /
             ``"medium"`` / ``"low"``.  Default ``"medium"``.
+        mode: Rule enforcement mode — ``"inject"`` (prompt injection,
+            LLM visible but ignorable) or ``"intercept"`` (Amygdala hook
+            enforcement, not rendered into prompt).  Default ``"inject"``.
         tags: Optional tags for application-layer use.
             Framework never reads or validates them.
     """
@@ -49,6 +52,7 @@ class Rule:
     name: str
     content: str
     priority: str = "medium"
+    mode: str = "inject"
     tags: list[str] = field(default_factory=list)
 
 
@@ -87,8 +91,20 @@ class RuleSet:
         rules.sort(key=lambda r: _PRIORITY_ORDER.get(r.priority, 2))
         return rules
 
+    def get_intercept_rules(self, route: str) -> list[Rule]:
+        """Return ``mode=intercept`` rules for Amygdala hook enforcement.
+
+        Intercept rules are NOT rendered into system prompt — they are
+        enforced at the Amygdala level and cannot be bypassed by the LLM.
+        """
+        return [r for r in self.resolve(route) if r.mode == "intercept"]
+
     def render(self, route: str) -> str:
         """Render rules into a system-prompt injection block.
+
+        Only ``mode=inject`` rules are rendered (the default).  Intercept
+        rules are enforced at the Amygdala hook level and excluded from
+        prompt injection.
 
         Outer structure is always XML::
 
@@ -108,7 +124,7 @@ class RuleSet:
 
         Returns an empty string when there are no rules and no blocks.
         """
-        rules = self.resolve(route)
+        rules = [r for r in self.resolve(route) if r.mode != "intercept"]
         parts: list[str] = []
 
         if self.role_block:

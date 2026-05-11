@@ -236,28 +236,28 @@ gw = Gateway(colony, front_desk=MyFrontDesk())
 
 猫由 20 个器官组成，一套 Default 实现开箱即用：
 
-| 类别 | 器官                   | 做什么                             |
-| ---- | ---------------------- | ---------------------------------- |
-| 输入 | Ears（耳朵）           | 听声音 / 看文字                    |
-| 输入 | Eyes（眼睛）           | 看图像                             |
-| 输入 | Whiskers（胡须）       | 感知环境上下文                     |
-| 脑区 | Thalamus（丘脑）       | 感觉中继 + 路由决策                |
-| 脑区 | Hippocampus（海马体）  | 记忆存储 + 实体图谱 + 知识树       |
-| 脑区 | Cortex（皮层）         | 世界观蒸馏 L0→L3                   |
-| 脑区 | Cerebrum（大脑）       | 深度思考 / LLM 推理                |
-| 脑区 | Cerebellum（小脑）     | 快速响应 / 模式匹配                |
-| 脑区 | Amygdala（杏仁核）     | 安全检查 / 风险评估                |
-| 脑区 | BrainStem（脑干）      | 提示词构建 + 生命周期 + 上下文压缩 |
-| 脑区 | Frontal（额叶）        | 专注 / 任务拆解                    |
-| 脑区 | Hypothalamus（下丘脑） | 记忆衰减 / 自维护                  |
-| 输出 | Mouth（嘴巴）          | 说话                               |
-| 输出 | Purr（呼噜）           | 流式输出                           |
-| 输出 | Tail（尾巴）           | 状态显示                           |
-| 工具 | Paws（爪子）           | **唯一**工具执行入口               |
-| 生长 | AnomalyGrowth          | 异常模式学习                       |
-| 生长 | CorrectionGrowth       | 纠正固化                           |
-| 生长 | Crystallizer           | 技能结晶                           |
-| 生长 | RoleEmergence          | 角色涌现                           |
+| 类别 | 器官                   | 做什么                               |
+| ---- | ---------------------- | ------------------------------------ |
+| 输入 | Ears（耳朵）           | 听声音 / 看文字                      |
+| 输入 | Eyes（眼睛）           | 看图像                               |
+| 输入 | Whiskers（胡须）       | 感知环境上下文                       |
+| 脑区 | Thalamus（丘脑）       | 感觉中继 + 路由决策                  |
+| 脑区 | Hippocampus（海马体）  | 记忆存储 + 实体图谱 + 知识树         |
+| 脑区 | Cortex（皮层）         | 世界观蒸馏 L0→L3                     |
+| 脑区 | Cerebrum（大脑）       | 深度思考 / LLM 推理                  |
+| 脑区 | Cerebellum（小脑）     | 快速响应 / 模式匹配                  |
+| 脑区 | Amygdala（杏仁核）     | 安全检查 / 风险评估 / fast_pass 预检 |
+| 脑区 | BrainStem（脑干）      | 提示词构建 + 生命周期 + 上下文压缩   |
+| 脑区 | Frontal（额叶）        | 专注 / 任务拆解                      |
+| 脑区 | Hypothalamus（下丘脑） | 记忆衰减 / 自维护                    |
+| 输出 | Mouth（嘴巴）          | 说话                                 |
+| 输出 | Purr（呼噜）           | 流式输出                             |
+| 输出 | Tail（尾巴）           | 状态显示                             |
+| 工具 | Paws（爪子）           | **唯一**工具执行入口                 |
+| 生长 | AnomalyGrowth          | 异常模式学习                         |
+| 生长 | CorrectionGrowth       | 纠正固化                             |
+| 生长 | Crystallizer           | 技能结晶                             |
+| 生长 | RoleEmergence          | 角色涌现                             |
 
 > **禁区**：大脑 → 爪子（`cerebrum → paws`）禁止直连。工具执行必须走 大脑 → 小脑 → 爪子。
 
@@ -443,12 +443,17 @@ nodes = cat.hippocampus.search_tree("e1", "keyword")
 from meowcat.biology.cat_self_loops import ReflectionLoop
 loop = ReflectionLoop(mode="conversation", fusion_trigger="event")
 
-# v2.1.0 规则引擎
+# v2.1.0 规则引擎 · v2.6.0 mode 硬拦截
 from meowcat.ruleset import Rule, RuleSet
 cat.rule_set = RuleSet(
-    always_on=[Rule("安全守则", "不要删除数据库", "critical")],
+    always_on=[
+        Rule("安全守则", "不要删除数据库", "critical"),
+        Rule("禁止命令", "禁止执行 rm -rf", "critical", mode="intercept"),
+    ],
     per_route={"deep_reason": [Rule("SQL规范", "参数化查询", "high")]},
 )
+# mode="intercept" 规则不进入 prompt，由 Amygdala hook 层面阻止
+intercept_rules = cat.rule_set.get_intercept_rules("chat")
 
 # v2.2.0 召唤分身猫
 worker = cat.spawn_worker("helper", "检索用户表结构")
@@ -472,6 +477,24 @@ await cat.unwear_persona()                # 脱下恢复原状
 # YAML 文件加载
 loader = PersonaLoader(dir=Path("./personas"))
 await loader.load_all(colony)
+
+# v2.6.0 Skill 层级加载 — 控制 Skill 对 LLM 的可见性
+from meowcat.tools.skill import Skill, SkillSpec, SkillRegistry
+
+# 隐藏 skill — LLM 不可见，节省上下文，用户可手动触发
+hidden = Skill(SkillSpec(
+    name="dangerous_ops", description="Dangerous",
+    disable_model_invocation=True,
+))
+registry = SkillRegistry()
+registry.register(hidden)
+
+# 只取 LLM 可见的 skill
+visible = registry.list_for_model()  # 排除 disable_model_invocation=True 的
+
+# SkillLoader YAML 解析 — SKILL.md frontmatter
+# disable_model_invocation: true    ← LLM 看不到，用户用 /name 手动触发
+# disable_model_invocation: false   ← 默认，跟现在一样
 ```
 
 > 完整装配流程和所有默认配置 → **[CATALOG.md](CATALOG.md)**

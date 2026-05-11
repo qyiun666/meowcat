@@ -1,7 +1,8 @@
-# meowcat v2.5.0 · Default Configuration & Execution Catalog
+# meowcat v2.6.0 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 23 路径 + 8 链条 + 7 循环 + 1 循环序列 + 预设目录 + 接线规则
 >
+> **v2.6.0**: 安全分级（Amygdala fast_pass + Rule mode 硬拦截）+ Skill 层级加载（disable_model_invocation）
 > **v2.5.0**: Persona 面具系统（预设角色切换，YAML 批量加载）
 > **v2.4.0**: Path/Chain/Loop 教学从 AGENTS.md 移除，CATALOG.md 成为唯一权威参考。`conversation` / `tool_execution` Loop 降级为内部实现，请用 `cat.perceive()` / `cat.do_task()`。
 > **v2.0**: Noop/Renovated 合并为一套 Default · 对话链 6→3 步 · Colony namespace 6→3 · 适配器/工具移入应用层 · 新增 KnowledgeTree
@@ -336,7 +337,7 @@ cat.hippocampus.delete_tree("proj-1")
 
 ---
 
-## VII. RuleSet 统一规则引擎 🆕 v2.1.0
+## VII. RuleSet 统一规则引擎 🆕 v2.1.0 · mode 硬拦截 v2.6.0
 
 ```python
 from meowcat.ruleset import Rule, RuleSet
@@ -344,6 +345,7 @@ from meowcat.ruleset import Rule, RuleSet
 rs = RuleSet(
     always_on=[
         Rule("安全守则", "不要删除数据库", "critical"),
+        Rule("禁止命令", "禁止执行 rm -rf", "critical", mode="intercept"),
     ],
     per_route={
         "deep_reason": [Rule("SQL规范", "必须参数化查询", "high")],
@@ -356,7 +358,17 @@ cat.rule_set = rs
 # Brainstem.build_system_prompt() 自动注入 <rules> XML 块
 # cerebrum.generate() 兜底注入（不走 Brainstem 也生效）
 # cat.rule_set = None 时行为不变
+
+# v2.6.0: mode=intercept 规则不进入 prompt，由 Amygdala hook 层面阻止
+intercept_rules = rs.get_intercept_rules("chat")  # 仅返回 mode=intercept 的规则
 ```
+
+### Rule mode
+
+| mode          | 含义                    | render() 可见 | Amygdala 拦截 |
+| ------------- | ----------------------- | ------------- | ------------- |
+| `"inject"`    | 注入 prompt，LLM 可忽略 | Yes           | No            |
+| `"intercept"` | 硬拦截，LLM 绕不过去    | No            | Yes           |
 
 ---
 
@@ -497,7 +509,100 @@ sample_dialogues:
 
 ---
 
-## X. Assembly Recipes
+## X. Amygdala Fast-Pass 安全预检 🆕 v2.6.0
+
+`fast_pass` 是高置信度正则预检，命中即拦截，零 LLM 成本。未命中再走完整 `assess_safety()` 流程。
+
+```python
+from meowcat.defaults.organs.amygdala import DefaultAmygdala
+import re
+
+amygdala = DefaultAmygdala(
+    fast_pass_patterns=[
+        re.compile(r"DROP\s+DATABASE", re.IGNORECASE),
+        re.compile(r"rm\s+-rf\s+/", re.IGNORECASE),
+    ]
+)
+
+# fast_pass 预检（同步，无 LLM 开销）
+result = amygdala.fast_pass("DROP DATABASE users;")
+# → {"safe": False, "risk": "high", "fast_pass": True, ...}
+
+result = amygdala.fast_pass("hello world")
+# → None  # 不确定，调用方应继续 assess_safety()
+
+# assess_safety 自动集成 fast_pass
+result = await amygdala.assess_safety("DROP DATABASE users;")
+# → fast_pass 命中 → 直接返回 Block，跳过后续检查
+```
+
+### 与 Rule mode=intercept 配合
+
+```python
+from meowcat.ruleset import Rule, RuleSet
+
+rs = RuleSet(always_on=[
+    Rule("禁止删除库", "DETECT: DROP DATABASE", mode="intercept"),
+])
+# 这些规则通过 rs.get_intercept_rules() 获取
+# 在 Amygdala hook 层面执行关键词匹配，LLM 看不到也无法绕过去
+```
+
+---
+
+## XI. Skill 层级加载 🆕 v2.6.0
+
+`disable_model_invocation` 控制 Skill 对 LLM 的可见性。设置为 `true` 的 Skill 不会注入 prompt，节省上下文，但用户仍可手动调用。
+
+### SkillSpec 配置
+
+```python
+from meowcat.tools.skill import Skill, SkillSpec, SkillRegistry
+
+# 普通 skill — LLM 可见
+visible = Skill(SkillSpec(
+    name="code_review", description="Review code for bugs",
+))
+# 隐藏 skill — LLM 不可见，只能手动触发
+hidden = Skill(SkillSpec(
+    name="dangerous_ops", description="Dangerous operations",
+    disable_model_invocation=True,
+))
+
+registry = SkillRegistry()
+registry.register(visible)
+registry.register(hidden)
+
+# 只取 LLM 可见的 skill
+visible_skills = registry.list_for_model()  # [code_review]
+
+# list_all 仍然能看到全部
+all_skills = registry.list_all()  # [code_review, dangerous_ops]
+```
+
+### SKILL.md 文件格式
+
+```yaml
+# SKILL.md frontmatter
+name: deploy
+description: Deploy to production
+disable_model_invocation: true # LLM 看不到，用户用 /deploy 手动触发
+---
+# Body content
+```
+
+```python
+from meowcat.plus.skill_loader import SkillLoader
+
+loader = SkillLoader(skills_dir=Path("./skills"))
+tools = loader.scan_directory()
+for tool in tools:
+    print(tool.name, tool.spec.disable_model_invocation)
+```
+
+---
+
+## XII. Assembly Recipes
 
 ```python
 from meowcat.defaults import create_cat, KW_BILINGUAL, PROMPT_ZH
@@ -552,7 +657,7 @@ await cat.loopseq_registry.run("daily_maintenance")
 
 ---
 
-## XI. File Index
+## XIII. File Index
 
 | 内容                            | 文件路径                                 |
 | :------------------------------ | :--------------------------------------- |

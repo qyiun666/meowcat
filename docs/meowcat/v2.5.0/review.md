@@ -15,15 +15,15 @@
 
 ## 发现的问题及修复
 
-| # | 问题 | 状态 |
-|---|------|------|
-| 1 | pyproject.toml version 未更新 | ✅ 已修复 |
-| 2 | v2.5.0 版本文档缺失 | ✅ 已创建 |
-| 3 | CATALOG.md unwear 描述错误（说删除工具，实际不删） | ✅ 已修复 |
-| 4 | CATALOG.md PersonaLoader rglob 模式描述错误 | ✅ 已修复 |
-| 5 | CATALOG.md KnowledgeSeed API 示例用 data= 而非 name+properties | ✅ 已修复 |
-| 6 | Ruff N806: _RISK_MAP → _risk_map | ✅ 已修复 |
-| 7 | Ruff F401: unused Any import | ✅ 已修复 |
+| #   | 问题                                                           | 状态      |
+| --- | -------------------------------------------------------------- | --------- |
+| 1   | pyproject.toml version 未更新                                  | ✅ 已修复 |
+| 2   | v2.5.0 版本文档缺失                                            | ✅ 已创建 |
+| 3   | CATALOG.md unwear 描述错误（说删除工具，实际不删）             | ✅ 已修复 |
+| 4   | CATALOG.md PersonaLoader rglob 模式描述错误                    | ✅ 已修复 |
+| 5   | CATALOG.md KnowledgeSeed API 示例用 data= 而非 name+properties | ✅ 已修复 |
+| 6   | Ruff N806: \_RISK_MAP → \_risk_map                             | ✅ 已修复 |
+| 7   | Ruff F401: unused Any import                                   | ✅ 已修复 |
 
 ## 关键决策
 
