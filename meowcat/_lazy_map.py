@@ -355,4 +355,10 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     "ToolCall": ("meowcat.tools.tool_call", "ToolCall"),
     "DoTaskResult": ("meowcat.tools.tool_call", "DoTaskResult"),
     "XmlToolCallParser": ("meowcat.tools.tool_call", "XmlToolCallParser"),
+    # -- v2.5.0 Persona --
+    "Persona": ("meowcat.persona", "Persona"),
+    "Belief": ("meowcat.persona", "Belief"),
+    "KnowledgeSeed": ("meowcat.persona", "KnowledgeSeed"),
+    "ConnectionSpec": ("meowcat.persona", "ConnectionSpec"),
+    "ReflexSpec": ("meowcat.persona", "ReflexSpec"),
 }

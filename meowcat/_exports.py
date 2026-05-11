@@ -183,6 +183,8 @@ __all__ = [
     # v2.2.0 TaskPad + do_task + spawn_worker
     "TaskPad", "TaskItem", "TaskPadStatus",
     "ToolCall", "DoTaskResult", "XmlToolCallParser",
+    # v2.5.0 Persona
+    "Persona", "Belief", "KnowledgeSeed", "ConnectionSpec", "ReflexSpec",
 ]
 # fmt: on
 
