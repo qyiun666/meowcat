@@ -1,7 +1,8 @@
-# meowcat v2.4.0 · Default Configuration & Execution Catalog
+# meowcat v2.5.0 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 23 路径 + 8 链条 + 7 循环 + 1 循环序列 + 预设目录 + 接线规则
 >
+> **v2.5.0**: Persona 面具系统（预设角色切换，YAML 批量加载）
 > **v2.4.0**: Path/Chain/Loop 教学从 AGENTS.md 移除，CATALOG.md 成为唯一权威参考。`conversation` / `tool_execution` Loop 降级为内部实现，请用 `cat.perceive()` / `cat.do_task()`。
 > **v2.0**: Noop/Renovated 合并为一套 Default · 对话链 6→3 步 · Colony namespace 6→3 · 适配器/工具移入应用层 · 新增 KnowledgeTree
 >
@@ -409,7 +410,94 @@ worker.task_pad.list_todo()             # 分身独立的待办清单
 
 ---
 
-## IX. Assembly Recipes
+## IX. Persona 面具系统 🆕 v2.5.0
+
+面具是预设的角色配置，猫戴上后暂时改变性格、信念、能力和工具。面具存储在 Colony namespace `personas` 中，支持 YAML 文件批量加载。
+
+### 9.1 数据模型
+
+```python
+from meowcat import Persona, Belief, KnowledgeSeed
+
+persona = Persona(
+    name="musk",
+    version="0.1.0",
+    description="Elon Musk 风格",
+    personality={"tone": "visionary", "language": "en+zh"},
+    beliefs=[
+        Belief(key="first_principles", value="从基本事实出发推理", confidence=0.95),
+    ],
+    capable=["engineering", "physics", "rocket_science"],
+    incapable=["poetry", "art"],
+    knowledge_seeds=[
+        KnowledgeSeed(entity_type="tech_stack", data={"preferred": "Rust"}),
+    ],
+    tools=[],
+    sample_dialogues=[("question", "answer")],
+)
+```
+
+### 9.2 使用流程
+
+```python
+from meowcat import Persona, PersonaLoader, Belief
+from pathlib import Path
+
+# 代码创建 + 注册
+musk = Persona(name="musk", personality={"tone": "visionary"}, ...)
+await colony.register_persona(musk)
+
+# YAML 文件批量加载
+loader = PersonaLoader(dir=Path("./personas"))
+personas = loader.scan()              # 扫描但不注册
+await loader.load_all(colony)         # 扫描并注册到猫舍
+
+# 猫戴面具
+await cat.wear_persona("musk")
+cat.current_persona                   # Persona(name="musk", ...)
+# → CatSelf.personality 被覆盖为面具性格
+# → Cortex 注入面具信念
+# → Hippocampus 注入知识种子
+# → SkillRegistry 注册面具工具
+
+# 脱下恢复原状
+await cat.unwear_persona()
+# → CatSelf 恢复备份的性格/能力
+# → 面具工具从 SkillRegistry 移除
+```
+
+### 9.3 YAML 文件格式
+
+```yaml
+# 文件名任意，但必须包含 PERSONA（如 PERSONA_musk.yaml）
+name: musk
+version: "1.0.0"
+description: "马斯克风格角色面具"
+personality:
+  tone: visionary
+  language: en+zh
+beliefs:
+  - key: first_principles
+    value: 从基本事实出发推理
+    confidence: 0.95
+capable:
+  - engineering
+  - physics
+incapable:
+  - poetry
+knowledge_seeds:
+  - entity_type: tech_stack
+    data:
+      preferred: Rust
+sample_dialogues:
+  - ["What do you think about AI?", "AI is the future of humanity..."]
+```
+
+> PersonaLoader 使用 `rglob("*PERSONA*.yaml")` 扫描目录，按 filename 排序加载。格式错误会打印警告并跳过该文件。
+
+---
+
+## X. Assembly Recipes
 
 ```python
 from meowcat.defaults import create_cat, KW_BILINGUAL, PROMPT_ZH
@@ -464,7 +552,7 @@ await cat.loopseq_registry.run("daily_maintenance")
 
 ---
 
-## X. File Index
+## XI. File Index
 
 | 内容                          | 文件路径                                 |
 | :---------------------------- | :--------------------------------------- |
@@ -489,6 +577,9 @@ await cat.loopseq_registry.run("daily_maintenance")
 | 规则引擎 (RuleSet) 🆕 v2.1    | `meowcat/ruleset/`                       |
 | TaskPad 任务清单 🆕 v2.2      | `meowcat/biology/task_pad.py`            |
 | ToolCall 工具调用 🆕 v2.2     | `meowcat/tools/tool_call.py`             |
+| Persona 面具系统 🆕 v2.5      | `meowcat/persona.py`                     |
+| Colony 面具存储 🆕 v2.5       | `meowcat/colony/persona_mgr.py`          |
+| PersonaLoader YAML 加载 🆕 v2.5| `meowcat/plus/persona_loader.py`         |
 | Default 器官实现              | `meowcat/defaults/organs/`               |
 | 关键词 + 提示词预设           | `meowcat/defaults/presets/`              |
 | 存储参考实现                  | `meowcat/defaults/stores.py`             |

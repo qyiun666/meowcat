@@ -392,6 +392,7 @@ The PinealGland is the hub: one distillation, both inner and outer.
 - **Prefer Four-Tier API**: Path (atomic signal) → Chain (sequence + rollback) → Loop (closed + events) → LoopSequence (orchestration)
 - **CatSelf Self-Evolution**: After each action, `after_act()` writes to desk. PinealGland periodically distills → updates beliefs and self-knowledge
 - **Inner + Outer Loops**: Inner updates self board, outer feeds Colony shared knowledge
+- **Persona System (v2.5.0)**: Pre-built role masks that cats can wear/remove at any time. A persona contains personality (overrides CatSelf), beliefs (injected into Cortex), knowledge seeds (injected into Hippocampus), and tools (registered in SkillRegistry). Register with `colony.register_persona()`, wear with `cat.wear_persona()`, remove with `cat.unwear_persona()`. Supports YAML batch loading via `PersonaLoader`.
 
 > More details on forbidden edges and write permissions → [CATALOG.md](CATALOG.md)
 
@@ -442,6 +443,24 @@ fd.plug("on_route", lambda text, ctx, colony: print(f"[audit] {ctx.user_id}: {te
 gw = Gateway(colony, front_desk=fd)
 gw.mount_adapter(HttpAdapter(port=8000))
 await gw.start()
+
+# v2.5.0 Persona system
+from meowcat import Persona, PersonaLoader, Belief
+from pathlib import Path
+
+musk = Persona(
+    name="musk",
+    personality={"tone": "visionary", "language": "en+zh"},
+    beliefs=[Belief(key="first_principles", value="Reason from first principles", confidence=0.95)],
+    capable=["engineering", "physics"],
+)
+await colony.register_persona(musk)
+await cat.wear_persona("musk")
+cat.current_persona
+await cat.unwear_persona()
+
+loader = PersonaLoader(dir=Path("./personas"))
+await loader.load_all(colony)
 ```
 
 > Full assembly flow and all default configs → **[CATALOG.md](CATALOG.md)**

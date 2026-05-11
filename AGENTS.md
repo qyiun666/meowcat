@@ -382,6 +382,7 @@ loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
 - **CatSelf 应用层管理**：v2.0 起 CatSelf 不自动创建，由应用层自行 `cat.cat_self = CatSelf()`
 - **内环 + 外环**：内环更新自己的看板，外环投到 Colony 共享知识池
 - **知识树**：`TreeNode` dataclass + Hippocampus 扩展（v2.0）
+- **面具系统 (Persona)**：预设角色面具，可随时戴上/脱下。面具含性格(覆盖CatSelf)、信念(注入Cortex)、知识种子(注入Hippocampus)、工具(注册SkillRegistry)。通过 `colony.register_persona()` 注册到猫舍，`cat.wear_persona()` 戴上，`cat.unwear_persona()` 脱下恢复原状。支持 YAML 文件批量加载（v2.5.0）
 
 > 更多约束细节见 [CATALOG.md](CATALOG.md) 禁止边和写权限约束。
 
@@ -452,6 +453,25 @@ cat.rule_set = RuleSet(
 # v2.2.0 召唤分身猫
 worker = cat.spawn_worker("helper", "检索用户表结构")
 worker.task_pad.list_todo()  # 分身有自己的待办清单
+
+# v2.5.0 面具系统
+from meowcat import Persona, PersonaLoader, Belief
+from pathlib import Path
+
+musk = Persona(
+    name="musk",
+    personality={"tone": "visionary", "language": "en+zh"},
+    beliefs=[Belief(key="first_principles", value="从基本事实出发推理", confidence=0.95)],
+    capable=["engineering", "physics"],
+)
+await colony.register_persona(musk)       # 注册面具到猫舍
+await cat.wear_persona("musk")            # 猫戴上面具
+cat.current_persona                       # 查看当前面具
+await cat.unwear_persona()                # 脱下恢复原状
+
+# YAML 文件加载
+loader = PersonaLoader(dir=Path("./personas"))
+await loader.load_all(colony)
 ```
 
 > 完整装配流程和所有默认配置 → **[CATALOG.md](CATALOG.md)**
