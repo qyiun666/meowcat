@@ -3,7 +3,7 @@
 [![中文文档](https://img.shields.io/badge/文档-中文-red.svg)](README_CN.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-2.0.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-2.4.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 
 > 🐱 **Pure personal project** — if this helps you, a ⭐ star ⭐ would mean a lot!
@@ -417,6 +417,10 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 | Version    | Date       | Highlights                                                                                                                                                                    |
 | :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v2.4.0** | 2026.05.11 | Architecture simplification — cognitive model compressed from Path/Chain/Loop to perceive() + ReflectionLoop · AGENTS.md 200 lines condensed to 2 sub-sections · bypass Loop quick reference |
+| **v2.3.0** | 2026.05.10 | 117 review fixes — import path normalization · dead code removal · EventBus robustness · exception safety · zero logic changes across 131 files |
+| **v2.2.0** | 2026.05.10 | TaskPad per-cat todo list · `do_task()` brain-tool multi-round loop · `spawn_worker()` helper cats |
+| **v2.1.0** | 2026.05.10 | RuleSet unified rule engine — attach rule set to each cat, auto-inject per route |
 | **v2.0.0** | 2026.05.10 | Framework slimming: 154→113 files, 40→14 concepts · Noop/Renovated merged · Conversation 6→3 steps · KnowledgeTree · Adapters/CLI/tools moved to app layer                    |
 | **v1.3.x** | 2026.05.06 | Task delegation, Gateway+FrontDesk, OrganPrompt, LLM model shelf, manager base classes, async lifecycle hooks                                                                 |
 | **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                              |
@@ -464,7 +468,5 @@ pytest tests/
 ---
 
 ## 📄 License
-
-[MIT](LICENSE) © 2025-2026 Axonant — built with curiosity and cat-like instincts.
 
 [MIT](LICENSE) © 2025-2026 Axonant — built with curiosity and cat-like instincts.

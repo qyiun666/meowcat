@@ -17,10 +17,9 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, Protocol
 
 from meowcat.anatomy import BRAINSTEM, HIPPOCAMPUS
-from meowcat.events import Lifecycle, EventBus
+from meowcat.events import EventBus, Lifecycle
 
 if TYPE_CHECKING:
-    from meowcat.host import OrganHost
     from meowcat.loops import LoopRegistry, LoopSequenceRegistry
     from meowcat.nervous import Nervous
 

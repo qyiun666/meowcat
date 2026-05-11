@@ -271,7 +271,12 @@ def create_cat(
     cat.tail = tail or DefaultTail()
 
     # -- Growth organs ---------------------------------------------------
-    from meowcat.defaults.organs import DefaultAnomalyGrowth, DefaultCorrectionGrowth, DefaultCrystallizer, DefaultRoleEmergence
+    from meowcat.defaults.organs import (
+        DefaultAnomalyGrowth,
+        DefaultCorrectionGrowth,
+        DefaultCrystallizer,
+        DefaultRoleEmergence,
+    )
 
     # type: ignore[attr-defined]
     cat.anomaly_growth = anomaly_growth or DefaultAnomalyGrowth()

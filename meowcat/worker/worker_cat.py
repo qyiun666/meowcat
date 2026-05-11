@@ -28,7 +28,7 @@ class SpawnWorkerMixin:
         task: str,
         *,
         allowed_organs: frozenset[str] | None = None,
-    ) -> "CatBase":
+    ) -> CatBase:
         """Summon a worker cat and stick a task on its TaskPad.
 
         The worker cat is a normal :class:`CatBase` instance with

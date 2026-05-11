@@ -234,7 +234,7 @@ gw = Gateway(colony, front_desk=MyFrontDesk())
 
 ### 4.6 身体（器官）— 干活用的
 
-猫由 20 个器官组成，一套 Default 实现开箱即用，通过 Path/Chain/Loop 编排：
+猫由 20 个器官组成，一套 Default 实现开箱即用：
 
 | 类别 | 器官                   | 做什么                             |
 | ---- | ---------------------- | ---------------------------------- |
@@ -276,104 +276,60 @@ cat.mount("brain", "hippocampus", HippocampusAgent(别人的记忆系统))
 
 ---
 
-## 5. 内置通路（Paths）— 23 条
+## 5. 两层架构 — 一张图看懂猫怎么工作
 
-一条 Path = 一次 `signal(from器官, to器官, "方法")`。
+v2.4.0 起，应用开发者只需要理解两层抽象：**打工循环**（对外干活）+ **成长循环**（自我进化）。
 
-### 5.1 记忆域（Memory）— 3 条
+### 5.1 打工循环：`perceive()` + `do_task()`
 
-| Path             | 从        | 到                           | 做什么   |
-| ---------------- | --------- | ---------------------------- | -------- |
-| `locate`         | Thalamus  | Thalamus.locate()            | 记忆检索 |
-| `remember`       | Brainstem | Hippocampus.remember()       | 存储记忆 |
-| `append_content` | Brainstem | Hippocampus.append_content() | 追加内容 |
+所有外部输入的统一入口，内置 hear → route → reason → speak：
 
-### 5.2 推理域（Reasoning）— 3 条
+```
+perceive("你好") → Ears → Thalamus → Cerebrum → Cerebellum → Mouth → 回复
 
-| Path            | 从       | 到                       | 做什么   |
-| --------------- | -------- | ------------------------ | -------- |
-| `deep_reason`   | Thalamus | Cerebrum.generate()      | 深度推理 |
-| `decide_route`  | Thalamus | Thalamus.decide_route()  | 路由决策 |
-| `assess_safety` | Amygdala | Amygdala.assess_safety() | 安全评估 |
+do_task("写代码", max_rounds=5) → 大脑 ↔ 爪子多轮循环（最多 5 轮）
+```
 
-### 5.3 输出域（Output）— 2 条
+- `cat.perceive(message)` — 接收用户输入，返回猫的回复
+- `cat.do_task(task, max_rounds=N)` — 大脑 ↔ 工具多轮循环，完成任务
+- `cat.run_loop("conversation")` / `cat.run_loop("tool_execution")` 是内部实现细节，**不要直接调用**
 
-| Path    | 从         | 到              | 做什么   |
-| ------- | ---------- | --------------- | -------- |
-| `hear`  | Ears       | Thalamus.hear() | 接收输入 |
-| `speak` | Cerebellum | Mouth.speak()   | 输出回复 |
+### 5.2 成长循环：`ReflectionLoop`
 
-### 5.4 工具 + 维护 + 合成 — 4 条
+猫做完事后怎么进步。三种模式，应用层决定什么时候激活：
 
-| Path               | 从           | 到                                       | 做什么     |
-| ------------------ | ------------ | ---------------------------------------- | ---------- |
-| `execute_tool`     | Cerebellum   | Paws.execute()                           | 执行工具   |
-| `decay`            | Hypothalamus | Hippocampus.decay()                      | 记忆衰减   |
-| `cleanup_orphans`  | Hypothalamus | Hippocampus.cleanup_orphan_connections() | 清理孤立   |
-| `compress_context` | Brainstem    | Brainstem.compress_context()             | 上下文压缩 |
+```python
+from meowcat.biology.cat_self_loops import ReflectionLoop
 
-### 5.5 生长域（Growth）— 4 条
+ReflectionLoop(mode="conversation", fusion_trigger="event")   # 对话后反思
+ReflectionLoop(mode="task", fusion_trigger="full:50")          # 草稿纸满 50 条触发
+ReflectionLoop(mode="learn", fusion_trigger="immediate")       # 立即蒸馏
+```
 
-| Path                | 从        | 到                         | 做什么   |
-| ------------------- | --------- | -------------------------- | -------- |
-| `record_anomaly`    | Brainstem | AnomalyGrowth.record()     | 记录异常 |
-| `record_correction` | Brainstem | CorrectionGrowth.record()  | 记录纠正 |
-| `crystallize`       | Brainstem | Crystallizer.crystallize() | 技能结晶 |
-| `record_pattern`    | Brainstem | RoleEmergence.record()     | 角色模式 |
+```
+写字台(草稿) → 松果体(蒸馏) → Insight[]
+                              ├── fuse_to_self   → 看板（更新自己）
+                              └── fuse_to_colony → 猫舍大看板（分享出去）
+```
 
-### 5.6 工作流域（Orchestration）— 3 条
+### 5.3 旁路 Loop（需要时手动触发）
 
-| Path                  | 从        | 到                           | 做什么     |
-| --------------------- | --------- | ---------------------------- | ---------- |
-| `workflow_create`     | Brainstem | Hippocampus.add_entity()     | 创建工作流 |
-| `workflow_checkpoint` | Brainstem | Hippocampus.append_content() | 写入检查点 |
-| `workflow_resume`     | Brainstem | Hippocampus.get_entity()     | 恢复工作流 |
+| Loop              | 触发器官     | 做什么          |
+| ----------------- | ------------ | --------------- |
+| `danger_response` | Amygdala     | 安全快速响应    |
+| `maintenance`     | Hypothalamus | 记忆衰减 + 清理 |
+| `diagnostic`      | Crystallizer | 技能结晶诊断    |
+| `growth`          | AnomalyGrowth | 异常学习        |
+| `reflection`      | Crystallizer | 执行后反思      |
 
-### 5.7 知识树域（Tree）— 4 条 🆕 v2.0
+### 5.4 内部基础设施：Path / Chain
 
-| Path            | 从        | 到                          | 做什么     |
-| --------------- | --------- | --------------------------- | ---------- |
-| `get_tree`      | Thalamus  | Hippocampus.get_tree()      | 读取知识树 |
-| `search_tree`   | Thalamus  | Hippocampus.search_tree()   | 搜索树节点 |
-| `query_subtree` | Thalamus  | Hippocampus.query_subtree() | 查询子树   |
-| `build_tree`    | Brainstem | Hippocampus.build_tree()    | 构建知识树 |
+23 条 Path、8 条 Chain 是框架内部信号系统，应用开发者无需关心。
+高级用法（直接操作 Path/Chain/Loop 注册器）见 **[CATALOG.md](CATALOG.md) §高级参考**。
 
 ---
 
-## 6. 内置链路（Chains）— 8 条
-
-| Chain              | 由哪些 Path 组成                                     | 做什么        |
-| ------------------ | ---------------------------------------------------- | ------------- |
-| `memory_search`    | locate                                               | 单步记忆搜索  |
-| `full_reasoning`   | deep_reason → speak                                  | 推理+输出     |
-| `tool_exec`        | execute_tool                                         | 工具执行      |
-| `maintenance`      | decay → cleanup_orphans                              | 记忆维护      |
-| `diagnostic`       | crystallize                                          | 技能结晶诊断  |
-| `workflow_chain`   | workflow_create → execute_tool → workflow_checkpoint | 工作流单步    |
-| `growth_chain`     | record_anomaly → crystallize                         | 异常学习→结晶 |
-| `reflection_chain` | crystallize                                          | 执行后反思    |
-
-> v2.0 变更: conversation_chain 从 6 步（hear → decide_route → locate → deep_reason → speak → remember）精简为 3 步（hear → deep_reason → speak），decide_route 吸收进 Thalamus.hear()，locate 由 deep_reason 内部触发，remember 改为 post_loop 异步事件。
-
----
-
-## 7. 内置闭环（Loops）— 7 条
-
-| Loop              | 链                    | 触发器              | 做什么            |
-| ----------------- | --------------------- | ------------------- | ----------------- |
-| `conversation`    | hear→reason→speak     | `perceive.start`    | 一次完整对话      |
-| `tool_execution`  | hear→execute→speak    | `orchestrate.start` | 一次工具执行      |
-| `danger_response` | assess_safety         | `amygdala.alert`    | 危险快速响应      |
-| `maintenance`     | decay→cleanup_orphans | `heartbeat.tick`    | 定期记忆清理      |
-| `diagnostic`      | crystallize           | 手动触发            | 结晶热点 + 诊断   |
-| `growth`          | anomaly→crystallize   | `post_action`       | 异常学习→技能结晶 |
-| `reflection`      | crystallize           | `tool_executed`     | 执行后反思        |
-
-用法：`await cat.run_loop("conversation", message="你好")`。
-
----
-
-## 8. 房间内闭环（CatSelf + ReflectionLoop）
+## 6. 房间内闭环（CatSelf + ReflectionLoop）
 
 这是猫在房间里自我进化的回路。v2.0 中 3 个独立的 Loop 类合并为统一的 `ReflectionLoop`：
 
@@ -404,7 +360,7 @@ loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
 
 ---
 
-## 9. 两个环：内环 + 外环
+## 7. 两个环：内环 + 外环
 
 ```
 内环（单猫自我进化）：
@@ -417,12 +373,12 @@ loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
 
 ---
 
-## 10. 关键概念
+## 8. 关键概念
 
 - **Slot-Plug 模式**：框架定义器官接口（Protocol），你提供具体实现。2 种风格：`ALGORITHM` | `MODEL`
 - **Cat 是唯一装配点**：所有器官挂载在 CatBase 上，通过 `cat.mount()` 注册，通过 `cat.signal()` 通信
 - **Paws 是工具唯一入口**：`cerebrum → cerebellum → paws` 是唯一合法工具执行路径
-- **四层 API**：Path（原子信号）→ Chain（序列+回滚）→ Loop（闭环+事件）→ LoopSequence（编排）
+- **两层 API**：`perceive()` / `do_task()`（打工循环）+ `ReflectionLoop`（成长循环）。高级用法见 [CATALOG.md](CATALOG.md)
 - **CatSelf 应用层管理**：v2.0 起 CatSelf 不自动创建，由应用层自行 `cat.cat_self = CatSelf()`
 - **内环 + 外环**：内环更新自己的看板，外环投到 Colony 共享知识池
 - **知识树**：`TreeNode` dataclass + Hippocampus 扩展（v2.0）
@@ -431,7 +387,7 @@ loop = ReflectionLoop(mode="learn", fusion_trigger="immediate")
 
 ---
 
-## 11. 常用 API 速查
+## 9. 常用 API 速查
 
 ```python
 from meowcat import Colony
@@ -445,19 +401,13 @@ cat = create_cat(container=colony, name="Kitty", cerebrum=MyLLM(), keyword=KW_BI
 from meowcat.biology.cat_self import CatSelf
 cat.cat_self = CatSelf()
 
-# 统一感知入口
+# 打工循环 — 统一感知入口
 reply = await cat.perceive("你好！")
 
-# Path — 原子信号
-await cat.path_registry.run("deep_reason", prompt="...")
-await cat.path_registry.run("locate", query="天气")
-
-# Chain — 路径序列
-await cat.chain_registry.run("full_reasoning", prompt="你好")
-await cat.chain_registry.run("maintenance_chain")
-
-# Loop — 闭环执行
-await cat.run_loop("conversation", message="你好！")
+# 打工循环 — 大脑 ↔ 爪子多轮
+from meowcat.tools.tool_call import XmlToolCallParser
+result = await cat.do_task("写一个登录函数", max_rounds=5)
+print(result.final_text, result.rounds, result.tool_calls)
 
 # 挂载自定义器官
 cat.mount("brain", "hippocampus", MyHippocampus())
@@ -487,7 +437,7 @@ cat.hippocampus.build_tree("e1", root)
 tree = cat.hippocampus.get_tree("e1")
 nodes = cat.hippocampus.search_tree("e1", "keyword")
 
-# v2.0 统一房间闭环
+# 成长循环 — ReflectionLoop
 from meowcat.biology.cat_self_loops import ReflectionLoop
 loop = ReflectionLoop(mode="conversation", fusion_trigger="event")
 
@@ -498,11 +448,6 @@ cat.rule_set = RuleSet(
     per_route={"deep_reason": [Rule("SQL规范", "参数化查询", "high")]},
 )
 
-# v2.2.0 大脑-工具多轮循环
-from meowcat.tools.tool_call import XmlToolCallParser
-result = await cat.do_task("写一个登录函数", max_rounds=5)
-print(result.final_text, result.rounds, result.tool_calls)
-
 # v2.2.0 召唤分身猫
 worker = cat.spawn_worker("helper", "检索用户表结构")
 worker.task_pad.list_todo()  # 分身有自己的待办清单
@@ -512,7 +457,7 @@ worker.task_pad.list_todo()  # 分身有自己的待办清单
 
 ---
 
-## 12. 安装 & 测试
+## 10. 安装 & 测试
 
 ```bash
 pip install meowcat          # 核心框架（零 I/O）

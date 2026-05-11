@@ -18,12 +18,14 @@ path adjacency hops are legal in wiring; illegal raises :class:`ReflexPathInvali
 """
 
 from __future__ import annotations
-from meowcat.wiring import Organ, Wiring
-from meowcat.protocols import StageProtocol
-from meowcat.pipeline import Pipeline
-from meowcat.perception import PerceptionContext, infer_modality
-from meowcat.events import EventBus, Lifecycle, NerveEvent
-from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
+
+import bisect
+import logging
+from collections.abc import AsyncIterator, Callable
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, ConfigDict, Field
+
 from meowcat.anatomy import (
     AMYGDALA,
     BRAINSTEM,
@@ -33,12 +35,12 @@ from meowcat.anatomy import (
     MOUTH,
     THALAMUS,
 )
-from pydantic import BaseModel, ConfigDict, Field
-
-import bisect
-import logging
-from collections.abc import AsyncIterator, Callable
-from typing import TYPE_CHECKING, Any
+from meowcat.errors import NoReflexMatchedError, ReflexPathInvalidError
+from meowcat.events import EventBus, Lifecycle, NerveEvent
+from meowcat.perception import PerceptionContext, infer_modality
+from meowcat.pipeline import Pipeline
+from meowcat.protocols import StageProtocol
+from meowcat.wiring import Organ, Wiring
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,9 @@
-# meowcat v2.2.0 · Default Configuration & Execution Catalog
+# meowcat v2.4.0 · Default Configuration & Execution Catalog
 
 > **开箱即用的一切**：20 器官 + 23 路径 + 8 链条 + 7 循环 + 1 循环序列 + 预设目录 + 接线规则
 >
-> **v2.0 核心变更**：Noop/Renovated 合并为一套 Default · 对话链 6→3 步 · Colony namespace 6→3 · 适配器/工具移入应用层 · 新增 KnowledgeTree
+> **v2.4.0**: Path/Chain/Loop 教学从 AGENTS.md 移除，CATALOG.md 成为唯一权威参考。`conversation` / `tool_execution` Loop 降级为内部实现，请用 `cat.perceive()` / `cat.do_task()`。
+> **v2.0**: Noop/Renovated 合并为一套 Default · 对话链 6→3 步 · Colony namespace 6→3 · 适配器/工具移入应用层 · 新增 KnowledgeTree
 >
 > 从 v1.x 升级 → **[MIGRATION_v2.md](MIGRATION_v2.md)**
 
@@ -63,7 +64,9 @@
 
 ---
 
-## II. Built-in Execution Flows
+## II. Built-in Execution Flows — 高级参考 🆕 v2.4.0
+
+> **AGENTS.md 不再教学 Path/Chain/Loop。** 从 v2.4.0 起，这三层的完整参考仅存于 CATALOG。应用开发者应使用 `cat.perceive()` / `cat.do_task()` 作为主入口（详见 AGENTS.md §5-§8），以下内容供高级用户和框架内部查阅。
 
 ### L1 — Path 路径 (23 built-in)
 
@@ -146,16 +149,17 @@
 
 ### L3 — Loop 循环 (7 built-in)
 
-| #   | 循环              | 链条 (内联)                               | 触发器              | 说明            |
-| :-- | :---------------- | :---------------------------------------- | :------------------ | :-------------- |
-| L1  | `conversation`    | hear → deep_reason → speak                | `perceive.start`    | 对话闭环        |
-| L2  | `tool_execution`  | hear → execute_tool → speak               | `orchestrate.start` | 工具执行闭环    |
-| L3  | `danger_response` | assess_safety                             | `amygdala.alert`    | 紧急安全闭环    |
-| L4  | `maintenance`     | maintenance_chain (decay→cleanup_orphans) | `heartbeat.tick`    | 体内稳态闭环    |
-| L5  | `diagnostic`      | diagnostic_chain (crystallize)            | (手动触发)          | 技能结晶 + 诊断 |
-| L6  | `growth`          | growth_chain (record_anomaly→crystallize) | `post_action`       | 异常学习→结晶   |
-| L7  | `reflection`      | reflection_chain (crystallize)            | `tool_executed`     | 执行后反思      |
+| #   | 循环                | 链条 (内联)                               | 触发器              | 说明                                                      |
+| :-- | :------------------ | :---------------------------------------- | :------------------ | :-------------------------------------------------------- |
+| L1  | `conversation` 🔻   | hear → deep_reason → speak                | `perceive.start`    | 对话闭环 - **v2.4.0: 内部使用，请用 `cat.perceive()`**    |
+| L2  | `tool_execution` 🔻 | hear → execute_tool → speak               | `orchestrate.start` | 工具执行闭环 - **v2.4.0: 内部使用，请用 `cat.do_task()`** |
+| L3  | `danger_response`   | assess_safety                             | `amygdala.alert`    | 紧急安全闭环                                              |
+| L4  | `maintenance`       | maintenance_chain (decay→cleanup_orphans) | `heartbeat.tick`    | 体内稳态闭环                                              |
+| L5  | `diagnostic`        | diagnostic_chain (crystallize)            | (手动触发)          | 技能结晶 + 诊断                                           |
+| L6  | `growth`            | growth_chain (record_anomaly→crystallize) | `post_action`       | 异常学习→结晶                                             |
+| L7  | `reflection`        | reflection_chain (crystallize)            | `tool_executed`     | 执行后反思                                                |
 
+> **v2.4.0**: `conversation` / `tool_execution` Loop 降级为内部实现，`cat.run_loop("conversation")` 代码层面仍可用但不再作为公开 API 导出。应用层应使用 `cat.perceive()` / `cat.do_task()`。
 > v2.0 变更: conversation loop 从 6 步简化为 3 步（hear → deep_reason → speak）。decide_route 吸收进 Thalamus.hear()，locate 由 deep_reason 内部触发，remember 改为 post_loop 异步事件。
 
 ---

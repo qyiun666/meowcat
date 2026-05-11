@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/文档-English-blue.svg)](README.md)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-2.2.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
+[![version](https://img.shields.io/badge/version-2.4.0-lightgrey.svg)](https://pypi.org/project/MeowCat/)
 [![pypi](https://img.shields.io/badge/pypi-meowcat-orange.svg)](https://pypi.org/project/meowcat/)
 [![GitHub](https://img.shields.io/badge/GitHub-Axonant%2FMeowAgent-181717?style=flat-square&logo=github)](https://github.com/Axonant/MeowAgent)
 
@@ -407,6 +407,8 @@ result = await colony.ns_get("knowledge", "weather")
 
 | 版本        | 时间       | 亮点                                                                                                                                        |
 | :---------- | :--------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
+| **v2.4.0**  | 2026.05.11 | 架构精简 — 认知模型从 Path/Chain/Loop 三层简化为 perceive() + ReflectionLoop 两层 · AGENTS.md 200 行精华为 2 个子节 · 旁路 Loop 速查                                                                 |
+| **v2.3.0**  | 2026.05.10 | 117 项审查修复 — 导入路径规范化 · 废弃代码清理 · EventBus 健壮性 · 异常安全 · 131 文件零逻辑突变                                                                                                        |
 | **v2.2.0**  | 2026.05.10 | TaskPad 每猫待办清单 · `do_task()` 脑-工具多轮循环 · `spawn_worker()` 分身猫                                                                |
 | **v2.1.0**  | 2026.05.10 | RuleSet 统一规则引擎 — 每只猫挂一个规则集，按场景自动注入                                                                                   |
 | **v2.0.0**  | 2026.05.10 | 框架瘦身：154→113 文件，40→14 概念 · Noop/Renovated 合并 · 对话 6→3 步 · 知识树 · 适配器/CLI/工具移入应用层                                 |

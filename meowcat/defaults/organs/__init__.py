@@ -18,8 +18,6 @@ from meowcat.defaults.organs.cerebellum import DefaultCerebellum
 from meowcat.defaults.organs.cerebrum import DefaultCerebrum
 from meowcat.defaults.organs.cortex import DefaultCortex
 from meowcat.defaults.organs.frontal import DefaultFrontal
-from meowcat.defaults.organs.hypothalamus import DefaultHypothalamus
-from meowcat.defaults.organs.thalamus import DefaultThalamus
 from meowcat.defaults.organs.growth import (
     DefaultAnomalyGrowth,
     DefaultCorrectionGrowth,
@@ -27,11 +25,13 @@ from meowcat.defaults.organs.growth import (
     DefaultRoleEmergence,
 )
 from meowcat.defaults.organs.hippocampus import DefaultHippocampus
+from meowcat.defaults.organs.hypothalamus import DefaultHypothalamus
 from meowcat.defaults.organs.sense import (
     DefaultEars,
     DefaultEyes,
     DefaultWhiskers,
 )
+from meowcat.defaults.organs.thalamus import DefaultThalamus
 from meowcat.defaults.organs.voice import (
     DefaultMouth,
     DefaultPaws,
