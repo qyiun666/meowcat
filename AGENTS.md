@@ -314,13 +314,13 @@ ReflectionLoop(mode="learn", fusion_trigger="immediate")       # 立即蒸馏
 
 ### 5.3 旁路 Loop（需要时手动触发）
 
-| Loop              | 触发器官     | 做什么          |
-| ----------------- | ------------ | --------------- |
-| `danger_response` | Amygdala     | 安全快速响应    |
-| `maintenance`     | Hypothalamus | 记忆衰减 + 清理 |
-| `diagnostic`      | Crystallizer | 技能结晶诊断    |
+| Loop              | 触发器官      | 做什么          |
+| ----------------- | ------------- | --------------- |
+| `danger_response` | Amygdala      | 安全快速响应    |
+| `maintenance`     | Hypothalamus  | 记忆衰减 + 清理 |
+| `diagnostic`      | Crystallizer  | 技能结晶诊断    |
 | `growth`          | AnomalyGrowth | 异常学习        |
-| `reflection`      | Crystallizer | 执行后反思      |
+| `reflection`      | Crystallizer  | 执行后反思      |
 
 ### 5.4 内部基础设施：Path / Chain
 

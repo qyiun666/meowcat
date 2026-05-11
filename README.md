@@ -387,18 +387,18 @@ Have feature ideas or want to collaborate? We'd love to hear from you — pull r
 
 ## 📊 Version History (Key Milestones)
 
-| Version    | Date       | Highlights                                                                                                                                                                    |
-| :--------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Version    | Date       | Highlights                                                                                                                                                                                   |
+| :--------- | :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **v2.4.0** | 2026.05.11 | Architecture simplification — cognitive model compressed from Path/Chain/Loop to perceive() + ReflectionLoop · AGENTS.md 200 lines condensed to 2 sub-sections · bypass Loop quick reference |
-| **v2.3.0** | 2026.05.10 | 117 review fixes — import path normalization · dead code removal · EventBus robustness · exception safety · zero logic changes across 131 files |
-| **v2.2.0** | 2026.05.10 | TaskPad per-cat todo list · `do_task()` brain-tool multi-round loop · `spawn_worker()` helper cats |
-| **v2.1.0** | 2026.05.10 | RuleSet unified rule engine — attach rule set to each cat, auto-inject per route |
-| **v2.0.0** | 2026.05.10 | Framework slimming: 154→113 files, 40→14 concepts · Noop/Renovated merged · Conversation 6→3 steps · KnowledgeTree · Adapters/CLI/tools moved to app layer                    |
-| **v1.3.x** | 2026.05.06 | Task delegation, Gateway+FrontDesk, OrganPrompt, LLM model shelf, manager base classes, async lifecycle hooks                                                                 |
-| **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                              |
-| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                        |
-| **v1.0.x** | 2026.05.02 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                          |
-| **v0.5.x** | 2026.05.01 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Slot-Plug model · 20-organ blueprint |
+| **v2.3.0** | 2026.05.10 | 117 review fixes — import path normalization · dead code removal · EventBus robustness · exception safety · zero logic changes across 131 files                                              |
+| **v2.2.0** | 2026.05.10 | TaskPad per-cat todo list · `do_task()` brain-tool multi-round loop · `spawn_worker()` helper cats                                                                                           |
+| **v2.1.0** | 2026.05.10 | RuleSet unified rule engine — attach rule set to each cat, auto-inject per route                                                                                                             |
+| **v2.0.0** | 2026.05.10 | Framework slimming: 154→113 files, 40→14 concepts · Noop/Renovated merged · Conversation 6→3 steps · KnowledgeTree · Adapters/CLI/tools moved to app layer                                   |
+| **v1.3.x** | 2026.05.06 | Task delegation, Gateway+FrontDesk, OrganPrompt, LLM model shelf, manager base classes, async lifecycle hooks                                                                                |
+| **v1.2.x** | 2026.05.05 | CatSelf unified self model, Circuit breaker, Telemetry (Tracer+Metrics), Event payload types, Colony config, Middleware refactor                                                             |
+| **v1.1.x** | 2026.05.03 | Crystallizer L1-L3, PinealGland epiphany fusion, ScribblePad, Cortex L0-L3 worldview, ActiveGrowth, Colony federation, Pluggable hooks                                                       |
+| **v1.0.x** | 2026.05.02 | Colony multi-cat container, SharedStorage, Group chat, Cross-cat signals, Gateway adapters (HTTP/WS/CLI/IPC/Webhook)                                                                         |
+| **v0.5.x** | 2026.05.01 | Extracted from MeowAgent as standalone framework · CatBase facade · Dual brain architecture · OrganHost/Wiring/Nervous subsystem split · Slot-Plug model · 20-organ blueprint                |
 
 ---
 
