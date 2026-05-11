@@ -18,6 +18,7 @@ from meowcat.colony.cat_ops import _CatOpsMixin
 from meowcat.colony.communication import _CommunicationMixin
 from meowcat.colony.config import ColonyConfig, ColonyOwner
 from meowcat.colony.namespace import _NamespaceMixin
+from meowcat.colony.persona_mgr import _PersonaMixin
 from meowcat.colony.rules import ColonyRules
 from meowcat.errors import IllegalNeuralPathError
 from meowcat.models import ModelConfig
@@ -36,6 +37,7 @@ class Colony(
     _NamespaceMixin,
     _CatOpsMixin,
     _CommunicationMixin,
+    _PersonaMixin,
 ):
     """Cat container — manages peer-to-peer collaboration + shared storage.
 
@@ -116,7 +118,7 @@ class Colony(
         )
         self._owner = owner or ColonyOwner()
         self._rules = rules or ColonyRules()
-        self._registered_ns: set[str] = {"owner", "knowledge", "cats"}
+        self._registered_ns: set[str] = {"owner", "knowledge", "cats", "personas"}
         # -- Shared Memory (lazy) -----------------------------------------
         self._memory_pool: SharedMemoryPool | None = None
         # -- Collective Growth (lazy) -------------------------------------
