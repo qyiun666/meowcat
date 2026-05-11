@@ -180,6 +180,8 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         self.rule_set: Any = None
         # v2.2.0: TaskPad — room furniture #5 (to-do list)
         self._task_pad: Any = None
+        # v2.5.0: Persona — mask system
+        self._persona: Any = None
         # v1.2.5: Current self snapshot — set by DefaultLoops before each action
         self._current_snapshot: Any = None
         # v1.0.1: allowed_organs must be assigned after all properties are set,
@@ -327,6 +329,116 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         """
         return self._current_snapshot
 
+    # v2.5.0: Persona — mask system
+
+    @property
+    def current_persona(self) -> Any:
+        """The currently worn Persona, or None.
+
+        Returns:
+            :class:`~meowcat.persona.Persona` instance, or None.
+        """
+        return self._persona
+
+    async def wear_persona(self, name: str) -> Any:
+        """Put on a persona mask.  Loads the persona from the colony's
+        ``personas/`` namespace and applies it to all relevant organs.
+
+        Steps:
+        1. Load Persona from colony namespace
+        2. Apply to CatSelf (personality + capabilities)
+        3. Inject beliefs into Cortex
+        4. Seed knowledge into Hippocampus
+        5. Register tools into SkillRegistry
+
+        Args:
+            name: Persona name registered in the colony.
+
+        Returns:
+            The Persona instance worn.
+
+        Raises:
+            ValueError: If persona not found in colony.
+        """
+        from meowcat.persona import Persona
+
+        persona_data = await self._container.get_persona(name)
+        if persona_data is None:
+            raise ValueError(
+                f"Persona '{name}' not found in colony '{self._container.colony_id}'. "
+                f"Available: {await self._container.list_personas()}",
+            )
+
+        self._persona = persona_data
+
+        # Apply to CatSelf
+        if self._cat_self is not None and hasattr(self._cat_self, "apply_persona"):
+            self._cat_self.apply_persona(persona_data)
+
+        # Inject beliefs into Cortex
+        if self.has_organ("brain", "cortex") and persona_data.beliefs:
+            cortex = self.organ("brain", "cortex")
+            for belief in persona_data.beliefs:
+                cortex.promote_to_belief(
+                    key=belief.key,
+                    value=belief.value,
+                    confidence=belief.confidence,
+                    challengeable=belief.challengeable,
+                )
+
+        # Seed knowledge into Hippocampus
+        if self.has_organ("brain", "hippocampus") and persona_data.knowledge_seeds:
+            hippo = self.organ("brain", "hippocampus")
+            for seed in persona_data.knowledge_seeds:
+                entity = {
+                    "type": seed.entity_type,
+                    "name": seed.name,
+                    "entity_id": f"persona_{name}_{seed.name}",
+                    **seed.properties,
+                }
+                hippo.add_entity(entity)
+                for conn in seed.connections:
+                    to_entity = hippo.get_by_name(conn.to)
+                    if to_entity:
+                        hippo.connect(
+                            entity["entity_id"],
+                            to_entity.get("id", to_entity.get("entity_id")),
+                            conn.relation,
+                            conn.strength,
+                        )
+
+        # Register tools into SkillRegistry
+        if persona_data.tools and self.skill_registry is not None:
+            from meowcat.tools.skill import Skill, SkillSpec
+
+            for tool_spec in persona_data.tools:
+                skill_spec = SkillSpec(
+                    name=tool_spec.name,
+                    description=tool_spec.description,
+                    parameters=tool_spec.parameters,
+                    category=tool_spec.category,
+                    source=f"persona_{name}",
+                )
+                self.skill_registry.register(Skill(skill_spec))
+
+        return persona_data
+
+    async def unwear_persona(self) -> None:
+        """Take off the current persona mask.  Restores CatSelf to its
+        pre-persona state.
+
+        Does NOT delete Hippocampus entities or unregister tools — knowledge
+        and skills persist after unmasking.
+        """
+        if self._persona is None:
+            return
+
+        # Restore CatSelf
+        if self._cat_self is not None and hasattr(self._cat_self, "remove_persona"):
+            self._cat_self.remove_persona()
+
+        self._persona = None
+
     # -- Organ container facade ---------------------------------------------
 
     def mount(
@@ -458,6 +570,9 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
             "task_pad",  # v2.2.0: room furniture #5
             "do_task",  # v2.2.0: brain-tool multi-round loop
             "spawn_worker",  # v2.2.0: summon worker cat
+            "current_persona",  # v2.5.0: persona mask
+            "wear_persona",  # v2.5.0: persona mask
+            "unwear_persona",  # v2.5.0: persona mask
         }
     )
 

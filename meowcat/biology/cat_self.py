@@ -118,6 +118,9 @@ class CatSelf(Pluggable):
         "_pineal_gland",
         "_capabilities",
         "_default_confidence",
+        "_persona_backup",       # v2.5.0: pre-persona state
+        "_persona_capable",      # v2.5.0: persona-level capable override
+        "_persona_incapable",    # v2.5.0: persona-level incapable override
     )
 
     def __init__(
@@ -142,6 +145,10 @@ class CatSelf(Pluggable):
         self._pineal_gland = pineal_gland
         self._default_confidence = default_confidence
         self._capabilities: dict[str, dict[str, Any]] = {}
+        # v2.5.0: persona mask state
+        self._persona_backup: dict[str, Any] | None = None
+        self._persona_capable: list[str] | None = None
+        self._persona_incapable: list[str] | None = None
 
     # -- Properties -------------------------------------------------
 
@@ -245,6 +252,36 @@ class CatSelf(Pluggable):
     def incapable_domains(self) -> list[str]:
         """Return domains where the cat knows it's incapable."""
         return [d for d, r in self._capabilities.items() if r["capable"] is False]
+
+    # -- Persona (v2.5.0) --------------------------------------------
+
+    def apply_persona(self, persona: Any) -> None:
+        """Apply a persona mask to CatSelf.
+
+        Saves the current personality and capabilities as a backup so
+        ``remove_persona()`` can restore them later.
+
+        Args:
+            persona: :class:`~meowcat.persona.Persona` instance.
+        """
+        self._persona_backup = {
+            "personality": dict(self._personality),
+        }
+        self._persona_capable = list(persona.capable) if persona.capable else None
+        self._persona_incapable = list(persona.incapable) if persona.incapable else None
+
+        # Overwrite personality with persona's traits
+        if persona.personality:
+            for k, v in persona.personality.items():
+                self._personality[k] = v
+
+    def remove_persona(self) -> None:
+        """Remove the current persona mask, restoring the pre-persona state."""
+        if self._persona_backup is not None:
+            self._personality = self._persona_backup.get("personality", {})
+            self._persona_backup = None
+        self._persona_capable = None
+        self._persona_incapable = None
 
     # -- Loop nodes -------------------------------------------------
 
@@ -359,9 +396,15 @@ class CatSelf(Pluggable):
                 _log.warning(
                     "_build_snapshot: reflexes access failed", error=str(e)[:120])
 
-        # v2.0: metacognition is now built-in (always available)
-        snap.capable_domains = self.capable_domains()
-        snap.incapable_domains = self.incapable_domains()
+        # v2.5.0: persona-capable overrides metacognition
+        if self._persona_capable is not None:
+            snap.capable_domains = self._persona_capable
+        else:
+            snap.capable_domains = self.capable_domains()
+        if self._persona_incapable is not None:
+            snap.incapable_domains = self._persona_incapable
+        else:
+            snap.incapable_domains = self.incapable_domains()
 
         if self._scribble_pad is not None:
             snap.scribble_count = self._scribble_pad.count()
