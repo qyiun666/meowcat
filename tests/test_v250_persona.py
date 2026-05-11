@@ -45,7 +45,8 @@ class TestPersonaDataclass:
             version="1.0.0",
             description="Elon thinking",
             personality={"tone": "visionary", "language": "en+zh"},
-            beliefs=[Belief(key="fp", value="first principles", confidence=0.95)],
+            beliefs=[
+                Belief(key="fp", value="first principles", confidence=0.95)],
             capable=["engineering"],
             incapable=["poetry"],
             knowledge_seeds=[
@@ -53,7 +54,8 @@ class TestPersonaDataclass:
                     entity_type="company",
                     name="SpaceX",
                     properties={"industry": "aerospace"},
-                    connections=[ConnectionSpec(to="Tesla", relation="also_ceo", strength=0.9)],
+                    connections=[ConnectionSpec(
+                        to="Tesla", relation="also_ceo", strength=0.9)],
                 )
             ],
             sample_dialogues=[("Q", "A")],
@@ -83,7 +85,8 @@ class TestPersonaDataclass:
                     entity_type="concept",
                     name="gravity",
                     properties={"unit": "m/s^2"},
-                    connections=[ConnectionSpec(to="mass", relation="related")],
+                    connections=[ConnectionSpec(
+                        to="mass", relation="related")],
                 )
             ],
             sample_dialogues=[("你好", "你好！有什么可以帮你的？")],
@@ -130,7 +133,8 @@ class TestColonyPersona:
     @pytest.mark.anyio
     async def test_get_persona(self):
         colony = make_test_colony()
-        p = Persona(name="musk", personality={"tone": "visionary"}, capable=["engineering"])
+        p = Persona(name="musk", personality={
+                    "tone": "visionary"}, capable=["engineering"])
         await colony.register_persona(p)
 
         loaded = await colony.get_persona("musk")
@@ -164,7 +168,8 @@ class TestColonyPersona:
     async def test_register_persona_not_persona(self):
         colony = make_test_colony()
         with pytest.raises(TypeError, match="Expected Persona"):
-            await colony.register_persona("not a persona")  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            await colony.register_persona("not a persona")
 
     @pytest.mark.anyio
     async def test_persona_namespace_registered(self):
@@ -177,7 +182,8 @@ class TestColonyPersona:
         p = Persona(
             name="dev",
             beliefs=[
-                Belief(key="clean_code", value="always write tests", confidence=0.95),
+                Belief(key="clean_code",
+                       value="always write tests", confidence=0.95),
                 Belief(key="dry", value="don't repeat yourself", confidence=0.9),
             ],
         )
@@ -218,7 +224,8 @@ class TestCatWearUnwear:
         worn = await cat.wear_persona("musk")
         assert worn is not None
         assert cat.current_persona.name == "musk"
-        assert cat.cat_self.personality == {"tone": "visionary", "language": "en+zh"}
+        assert cat.cat_self.personality == {
+            "tone": "visionary", "language": "en+zh"}
 
         # Unwear
         await cat.unwear_persona()
@@ -260,7 +267,8 @@ class TestCatWearUnwear:
 
 class TestCatSelfPersona:
     def test_apply_persona(self):
-        cs = CatSelf.with_defaults(personality={"tone": "default", "custom": "val"})
+        cs = CatSelf.with_defaults(
+            personality={"tone": "default", "custom": "val"})
         persona = Persona(
             name="test",
             personality={"tone": "evil"},
@@ -296,7 +304,8 @@ class TestCatSelfPersona:
 
     def test_snapshot_with_persona_capable(self):
         cs = CatSelf.with_defaults()
-        persona = Persona(name="test", capable=["coding"], incapable=["design"])
+        persona = Persona(name="test", capable=[
+                          "coding"], incapable=["design"])
         cs.apply_persona(persona)
 
         snap = cs._build_snapshot()
@@ -457,7 +466,8 @@ sample_dialogues:
             loader = PersonaLoader(dir=Path(tmpdir))
             personas = loader.scan()
             assert len(personas) == 1
-            assert personas[0].sample_dialogues == [("你好", "你好！"), ("再见", "再见！")]
+            assert personas[0].sample_dialogues == [
+                ("你好", "你好！"), ("再见", "再见！")]
 
     def test_load_name_falls_back_to_filename(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -489,7 +499,8 @@ class TestPersonaIntegration:
         musk = Persona(
             name="musk",
             personality={"tone": "visionary", "language": "en+zh"},
-            beliefs=[Belief(key="first_principles", value="reason from basics", confidence=0.95)],
+            beliefs=[Belief(key="first_principles",
+                            value="reason from basics", confidence=0.95)],
             capable=["engineering", "physics", "business"],
             incapable=["creative_writing", "political_correctness"],
         )
@@ -505,7 +516,8 @@ class TestPersonaIntegration:
         # Step 2: snapshot reflects persona
         snap = cat.cat_self._build_snapshot()
         assert snap.capable_domains == ["engineering", "physics", "business"]
-        assert snap.incapable_domains == ["creative_writing", "political_correctness"]
+        assert snap.incapable_domains == [
+            "creative_writing", "political_correctness"]
         assert "visionary" in str(cat.cat_self.personality)
 
         # Step 3: unwear restores

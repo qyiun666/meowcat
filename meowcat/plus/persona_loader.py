@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from meowcat.persona import Persona
 
@@ -63,7 +63,8 @@ class PersonaLoader:
                 persona = self._load_persona(persona_file)
                 if persona is not None:
                     self._personas.append(persona)
-                    logger.debug("Loaded persona: %s from %s", persona.name, persona_file)
+                    logger.debug("Loaded persona: %s from %s",
+                                 persona.name, persona_file)
             except Exception as exc:
                 logger.warning("Failed to load %s: %s", persona_file, exc)
         return list(self._personas)

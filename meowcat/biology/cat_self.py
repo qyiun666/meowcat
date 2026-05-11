@@ -267,8 +267,10 @@ class CatSelf(Pluggable):
         self._persona_backup = {
             "personality": dict(self._personality),
         }
-        self._persona_capable = list(persona.capable) if persona.capable else None
-        self._persona_incapable = list(persona.incapable) if persona.incapable else None
+        self._persona_capable = list(
+            persona.capable) if persona.capable else None
+        self._persona_incapable = list(
+            persona.incapable) if persona.incapable else None
 
         # Overwrite personality with persona's traits
         if persona.personality:

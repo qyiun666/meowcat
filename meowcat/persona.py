@@ -181,14 +181,15 @@ class Persona:
         if tools_data:
             from meowcat.tools.tool import RiskLevel, ToolSpec
 
-            _RISK_MAP = {
+            risk_map = {
                 "low": RiskLevel.LOW,
                 "medium": RiskLevel.MEDIUM,
                 "high": RiskLevel.HIGH,
             }
             for td in tools_data:
                 risk_str = td.pop("risk", "medium")
-                risk = _RISK_MAP.get(risk_str, RiskLevel.MEDIUM) if isinstance(risk_str, str) else risk_str
+                risk = risk_map.get(risk_str, RiskLevel.MEDIUM) if isinstance(
+                    risk_str, str) else risk_str
                 tools.append(ToolSpec(**td, risk=risk))
 
         sample = data.get("sample_dialogues", [])

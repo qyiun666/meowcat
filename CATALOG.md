@@ -493,7 +493,7 @@ sample_dialogues:
   - ["What do you think about AI?", "AI is the future of humanity..."]
 ```
 
-> PersonaLoader 使用 `rglob("*PERSONA*.yaml")` 扫描目录，按 filename 排序加载。格式错误会打印警告并跳过该文件。
+> PersonaLoader 使用 `rglob("PERSONA.yaml")` 扫描目录，格式错误会打印警告并跳过该文件。
 
 ---
 
@@ -554,43 +554,43 @@ await cat.loopseq_registry.run("daily_maintenance")
 
 ## XI. File Index
 
-| 内容                          | 文件路径                                 |
-| :---------------------------- | :--------------------------------------- |
-| 公共 API (延迟加载)           | `meowcat/__init__.py`                    |
-| 器官坐标 / 类别 / PlugStyle   | `meowcat/anatomy.py`                     |
-| 器官规格定义                  | `meowcat/biology/organ_spec.py`          |
-| CatBase 装配逻辑              | `meowcat/assembly.py`                    |
-| OrganHost 挂载/校验           | `meowcat/host.py`                        |
-| Wiring 神经接线图             | `meowcat/wiring.py`                      |
-| Nervous 信号调度 + 断路器     | `meowcat/nervous.py`                     |
-| 事件总线                      | `meowcat/events.py`                      |
-| 遥测                          | `meowcat/telemetry.py`                   |
-| Path / BUILTIN_PATHS (23)     | `meowcat/path.py`                        |
-| Chain / BUILTIN_CHAINS (8)    | `meowcat/chain.py`                       |
-| Loop / BUILTIN_LOOPS (7)      | `meowcat/loops.py`                       |
-| Reflex / 反射弧 (2)           | `meowcat/reflex.py`                      |
-| CatSelf + ReflectionLoop      | `meowcat/biology/cat_self.py`            |
-| PinealGland 顿悟融合          | `meowcat/biology/pineal_gland.py`        |
-| Cortex L0-L3 世界观           | `meowcat/biology/cortex.py`              |
-| ScribblePad 草稿纸            | `meowcat/biology/scribble_pad.py`        |
-| 知识树 (TreeNode) 🆕          | `meowcat/tree.py`                        |
-| 规则引擎 (RuleSet) 🆕 v2.1    | `meowcat/ruleset/`                       |
-| TaskPad 任务清单 🆕 v2.2      | `meowcat/biology/task_pad.py`            |
-| ToolCall 工具调用 🆕 v2.2     | `meowcat/tools/tool_call.py`             |
-| Persona 面具系统 🆕 v2.5      | `meowcat/persona.py`                     |
-| Colony 面具存储 🆕 v2.5       | `meowcat/colony/persona_mgr.py`          |
-| PersonaLoader YAML 加载 🆕 v2.5| `meowcat/plus/persona_loader.py`         |
-| Default 器官实现              | `meowcat/defaults/organs/`               |
-| 关键词 + 提示词预设           | `meowcat/defaults/presets/`              |
-| 存储参考实现                  | `meowcat/defaults/stores.py`             |
-| create_cat 工厂               | `meowcat/defaults/factory.py`            |
-| Hippocampus 默认实现          | `meowcat/defaults/organs/hippocampus.py` |
-| 工具/技能/Paws 核心           | `meowcat/tools/`                         |
-| 可选扩展 (chroma_store 等)    | `meowcat/plus/`                          |
-| Colony 多猫容器               | `meowcat/colony/`                        |
-| Gateway 皮肤 + FrontDesk 前台 | `meowcat/gateway/`                       |
-| 器官适配器                    | `meowcat/adapters/`                      |
-| 管理器模块 (11 个)            | `meowcat/*.py`                           |
+| 内容                            | 文件路径                                 |
+| :------------------------------ | :--------------------------------------- |
+| 公共 API (延迟加载)             | `meowcat/__init__.py`                    |
+| 器官坐标 / 类别 / PlugStyle     | `meowcat/anatomy.py`                     |
+| 器官规格定义                    | `meowcat/biology/organ_spec.py`          |
+| CatBase 装配逻辑                | `meowcat/assembly.py`                    |
+| OrganHost 挂载/校验             | `meowcat/host.py`                        |
+| Wiring 神经接线图               | `meowcat/wiring.py`                      |
+| Nervous 信号调度 + 断路器       | `meowcat/nervous.py`                     |
+| 事件总线                        | `meowcat/events.py`                      |
+| 遥测                            | `meowcat/telemetry.py`                   |
+| Path / BUILTIN_PATHS (23)       | `meowcat/path.py`                        |
+| Chain / BUILTIN_CHAINS (8)      | `meowcat/chain.py`                       |
+| Loop / BUILTIN_LOOPS (7)        | `meowcat/loops.py`                       |
+| Reflex / 反射弧 (2)             | `meowcat/reflex.py`                      |
+| CatSelf + ReflectionLoop        | `meowcat/biology/cat_self.py`            |
+| PinealGland 顿悟融合            | `meowcat/biology/pineal_gland.py`        |
+| Cortex L0-L3 世界观             | `meowcat/biology/cortex.py`              |
+| ScribblePad 草稿纸              | `meowcat/biology/scribble_pad.py`        |
+| 知识树 (TreeNode) 🆕            | `meowcat/tree.py`                        |
+| 规则引擎 (RuleSet) 🆕 v2.1      | `meowcat/ruleset/`                       |
+| TaskPad 任务清单 🆕 v2.2        | `meowcat/biology/task_pad.py`            |
+| ToolCall 工具调用 🆕 v2.2       | `meowcat/tools/tool_call.py`             |
+| Persona 面具系统 🆕 v2.5        | `meowcat/persona.py`                     |
+| Colony 面具存储 🆕 v2.5         | `meowcat/colony/persona_mgr.py`          |
+| PersonaLoader YAML 加载 🆕 v2.5 | `meowcat/plus/persona_loader.py`         |
+| Default 器官实现                | `meowcat/defaults/organs/`               |
+| 关键词 + 提示词预设             | `meowcat/defaults/presets/`              |
+| 存储参考实现                    | `meowcat/defaults/stores.py`             |
+| create_cat 工厂                 | `meowcat/defaults/factory.py`            |
+| Hippocampus 默认实现            | `meowcat/defaults/organs/hippocampus.py` |
+| 工具/技能/Paws 核心             | `meowcat/tools/`                         |
+| 可选扩展 (chroma_store 等)      | `meowcat/plus/`                          |
+| Colony 多猫容器                 | `meowcat/colony/`                        |
+| Gateway 皮肤 + FrontDesk 前台   | `meowcat/gateway/`                       |
+| 器官适配器                      | `meowcat/adapters/`                      |
+| 管理器模块 (11 个)              | `meowcat/*.py`                           |
 
 > v2.0 移除: `meowcat/cli/`, `meowcat/plus/gateway/`, `meowcat/plus/tools/`, `meowcat/plus/browser.py`, `meowcat/plus/mcp_client.py`, `meowcat/defaults/renovated/`, `meowcat/colony/delegation.py`, `meowcat/colony/federation.py`, `meowcat/colony/transports.py`, `meowcat/colony/registry.py`, `meowcat/colony/llm_shelf.py`, `meowcat/biology/fusion_cycle.py`, `meowcat/biology/metacognition.py`, `meowcat/biology/roles.py`, `meowcat/biology/cat_self_loops.py` (重写)
 
@@ -598,4 +598,5 @@ await cat.loopseq_registry.run("daily_maintenance")
 
 > **README** = 门面：亮点 + 生态 + 快速开始
 > **CATALOG** = 配置手册：默认装配 + 执行流 + 预设 + 接线
+> **AGENTS** = 应用开发者心智模型
 > **AGENTS** = 应用开发者心智模型

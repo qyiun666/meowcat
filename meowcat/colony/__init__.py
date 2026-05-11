@@ -118,7 +118,8 @@ class Colony(
         )
         self._owner = owner or ColonyOwner()
         self._rules = rules or ColonyRules()
-        self._registered_ns: set[str] = {"owner", "knowledge", "cats", "personas"}
+        self._registered_ns: set[str] = {
+            "owner", "knowledge", "cats", "personas"}
         # -- Shared Memory (lazy) -----------------------------------------
         self._memory_pool: SharedMemoryPool | None = None
         # -- Collective Growth (lazy) -------------------------------------
