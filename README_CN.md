@@ -222,8 +222,8 @@ from meowcat.biology.cat_self import CatSelf
 cat.cat_self = CatSelf()
 
 async def main():
-    # 路径: 深度推理
-    result = await cat.path_registry.run("deep_reason", prompt="天为什么是蓝的？")
+    # 路径: 深度推理（高级 API）
+    result = await cat.path_registry.run(cat, "deep_reason", prompt="天为什么是蓝的？")
     print(result)
 
     # perceive(): 统一感知入口（yield StageEvent 对象）

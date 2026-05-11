@@ -232,8 +232,8 @@ from meowcat.biology.cat_self import CatSelf
 cat.cat_self = CatSelf()
 
 async def main():
-    # Path: deep reasoning
-    result = await cat.path_registry.run("deep_reason", prompt="Why is the sky blue?")
+    # Path: deep reasoning (advanced API)
+    result = await cat.path_registry.run(cat, "deep_reason", prompt="Why is the sky blue?")
     print(result)
 
     # perceive(): unified entry (yields StageEvent objects)

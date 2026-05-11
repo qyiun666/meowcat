@@ -401,8 +401,9 @@ cat = create_cat(container=colony, name="Kitty", cerebrum=MyLLM(), keyword=KW_BI
 from meowcat.biology.cat_self import CatSelf
 cat.cat_self = CatSelf()
 
-# 打工循环 — 统一感知入口
-reply = await cat.perceive("你好！")
+# 打工循环 — 统一感知入口 (async generator)
+async for ev in cat.perceive("你好！"):
+    print(ev)
 
 # 打工循环 — 大脑 ↔ 爪子多轮
 from meowcat.tools.tool_call import XmlToolCallParser
