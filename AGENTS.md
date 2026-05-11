@@ -3,7 +3,7 @@
 > 🎯 **你的身份**：meowcat 应用开发者。你 `pip install meowcat`，然后 `from meowcat import CatBase` 构建自己的 AI Agent。
 > 先读此文件建立心智模型（3 分钟），再看 [CATALOG.md](CATALOG.md) 查默认配置，看 [README_CN.md](README_CN.md) 了解项目亮点。
 >
-> **v2.0 破坏性变更**：从 v1.x 升级前先读 [MIGRATION_v2.md](MIGRATION_v2.md)。
+> **v2.0 破坏性变更**：从 v1.x 升级前先读 [MIGRATION_v2.md](MIGRATION_v2.md) (中文) · [MIGRATION_v2_EN.md](MIGRATION_v2_EN.md) (English)
 
 ---
 

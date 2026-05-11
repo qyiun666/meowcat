@@ -16,7 +16,7 @@ An AI agent framework built on a cat's biological blueprint. Define your organs,
 >
 > 20 organs · 23 paths · 8 chains · 7 loops · full default config reference → **[CATALOG.md](CATALOG.md)**
 >
-> ⚠️ **v2.0 breaking changes** — read **[MIGRATION_v2.md](MIGRATION_v2.md)** before upgrading from v1.x.
+> ⚠️ **v2.0 breaking changes** — read **[MIGRATION_v2_EN.md](MIGRATION_v2_EN.md)** (English) · **[MIGRATION_v2.md](MIGRATION_v2.md)** (中文) before upgrading from v1.x.
 
 ---
 
@@ -151,45 +151,17 @@ Multi-round brain-tool loop `do_task()`: cerebrum interleaves reasoning and tool
 ## 🏗️ Architecture at a Glance
 
 ```
-                             ┌──────────────────────────────┐
-  External World ──────────► │  Gateway (Skin)               │
-                             │  ┌────────────────────────┐   │
-                             │  │  FrontDesk (Reception)  │   │  on_route plugins: security, audit, rate-limit
-                             │  └────────┬───────────────┘   │
-                             └───────────┼───────────────────┘
-                                         │
-                           1 Colony : 1 Gateway : N Adapters *
-                                         │           (* app-layer provided)
-  ┌──────────────────────────────────────▼──────────────────────────────────────┐
-  │                           Colony (Multi-Cat Container)                       │
-  │                                                                              │
-  │   ┌─────────────────────────────────────┐   ┌────────────────────────────┐  │
-  │   │  Shared Board                       │   │  Communication              │  │
-  │   │  owner/ knowledge/ cats/             │   │  signal_between, broadcast  │  │
-  │   └─────────────────────────────────────┘   └────────────────────────────┘  │
-  │                                                                              │
-  │   ┌─ cat.perceive() ────────────────────────────────────────────────────┐   │
-  │   │                                                                       │   │
-  │   │   ┌──────────┐    ┌──────────┐    ┌──────────────────────────────┐   │   │
-  │   │   │ SENSES   │───►│ THALAMUS │───►│         BRAIN REGIONS        │   │   │
-  │   │   │ Ears     │    │ (Relay)  │    │ Cerebrum Cerebellum Amygdala  │   │   │
-  │   │   │ Eyes     │    └──────────┘    │ Frontal Hippocampus Cortex    │   │   │
-  │   │   │ Whiskers │                    │ Hypothalamus Brainstem        │   │   │
-  │   │   └──────────┘                    └──────────────┬───────────────┘   │   │
-  │   │                                                  │                    │   │
-  │   │                              ┌───────────────────▼───────────────┐   │   │
-  │   │                              │           EFFECTORS               │   │   │
-  │   │                              │  Mouth (speak)  Purr (stream)     │   │   │
-  │   │                              │  Tail (status)  Paws (tools)      │   │   │
-  │   │                              └───────────────────────────────────┘   │   │
-  │   │                                                                       │   │
-  │   │   ┌──────────────────────────────────────────────────────────────┐   │   │
-  │   │   │  GROWTH: PinealGland · AnomalyGrowth · CorrectionGrowth     │   │   │
-  │   │   │          Crystallizer · RoleEmergence                        │   │   │
-  │   │   └──────────────────────────────────────────────────────────────┘   │   │
-  │   └───────────────────────────────────────────────────────────────────────┘   │
-  └──────────────────────────────────────────────────────────────────────────────┘
+Gateway → Colony → Cat
+                      ├── perceive() / do_task()   ← Work Loop
+                      └── ReflectionLoop           ← Growth Loop
 ```
+
+meowcat presents a **two-layer model**:
+
+- **Work Loop** — `perceive()` / `do_task()` — the cat's conscious activity. Hear → Route → Reason → Speak. Tools via brain↔paws multi-round loop.
+- **Growth Loop** — `ReflectionLoop` — self-improvement. Scribbles → distill → fuse into CatSelf and Colony.
+
+For the full 20-organ blueprint, see [AGENTS.md](AGENTS.md) and [CATALOG.md](CATALOG.md).
 
 ---
 
