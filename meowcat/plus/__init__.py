@@ -14,11 +14,13 @@ from __future__ import annotations
 
 from meowcat.plus.chroma_store import ChromaStore
 from meowcat.plus.crystallizer import Crystallizer, DefaultDetector
+from meowcat.plus.persona_loader import PersonaLoader
 from meowcat.plus.skill_loader import SkillLoader
 
 __all__ = [
     "ChromaStore",
     "SkillLoader",
+    "PersonaLoader",
     "Crystallizer",
     "DefaultDetector",
 ]

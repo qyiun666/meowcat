@@ -173,6 +173,7 @@ _LAZY_MAP: dict[str, tuple[str, str]] = {
     # — plus (concrete implementations) —
     "ChromaStore": ("meowcat.plus", "ChromaStore"),
     "SkillLoader": ("meowcat.plus", "SkillLoader"),
+    "PersonaLoader": ("meowcat.plus", "PersonaLoader"),
     "Crystallizer": ("meowcat.plus", "Crystallizer"),
     "DefaultDetector": ("meowcat.plus", "DefaultDetector"),
     # — storage —

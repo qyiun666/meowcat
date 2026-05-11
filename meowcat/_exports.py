@@ -108,6 +108,8 @@ __all__ = [
     "CircuitState",
     # v1.1.15 SKILL.md Loader
     "SkillLoader",
+    # v2.5.0 Persona Loader
+    "PersonaLoader",
     # v1.1.16 General Tools
     "ChromaStore", "get_shared_client", "close_shared_client",
     # v1.1.17 Crystallizer
