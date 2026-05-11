@@ -29,3 +29,8 @@ Thumbs.db
 .opencode/
 .qoder/
 docs/
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
