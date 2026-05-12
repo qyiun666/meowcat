@@ -84,6 +84,18 @@ class TestWiringFreeze:
         w.freeze()
         assert w.is_allowed(("brain", "a"), ("brain", "b"))
 
+    def test_freeze_idempotent(self) -> None:
+        w = Wiring()
+        w.freeze()
+        w.freeze()  # 不应抛
+        assert w.frozen
+
+    def test_frozen_property(self) -> None:
+        w = Wiring()
+        assert not w.frozen
+        w.freeze()
+        assert w.frozen
+
 
 class TestWiringSnapshot:
     """WiringSnapshot 不可变快照。"""
@@ -97,6 +109,24 @@ class TestWiringSnapshot:
         assert not snap.is_allowed(("brain", "x"), ("brain", "y"))
         assert len(snap.allowed) == 1
         assert len(snap.forbidden) == 1
+
+    def test_snapshot_allowed_forbidden_props(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        w.forbid(("a", "x"), ("c", "z"))
+        snap = w.snapshot()
+        assert isinstance(snap.allowed, frozenset)
+        assert isinstance(snap.forbidden, frozenset)
+        assert ((("a", "x"), ("b", "y"))) in snap.allowed
+        assert ((("a", "x"), ("c", "z"))) in snap.forbidden
+
+    def test_snapshot_is_immutable(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        snap = w.snapshot()
+        with pytest.raises(AttributeError):
+            # type: ignore[union-attr]
+            snap.allowed.add((("x", "y"), ("z", "w")))
 
 
 class TestWiringIntrospection:
@@ -171,3 +201,112 @@ class TestWiringEdgeTypes:
         assert organ[0] == "brain"
         assert organ[1] == "cerebrum"
 
+
+# -- from v0.5.1: 补充契约测试 ----------------------------------
+
+
+class TestWiringConnect:
+    """v0.5.1: connect / connect_many / 幂等 / 参数校验。"""
+
+    def test_connect_basic(self) -> None:
+        w = Wiring()
+        w.connect(("brain", "cerebellum"), ("sense", "paws"))
+        assert w.is_allowed(("brain", "cerebellum"), ("sense", "paws"))
+
+    def test_connect_idempotent(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        w.connect(("a", "x"), ("b", "y"))
+        assert w.is_allowed(("a", "x"), ("b", "y"))
+
+    def test_connect_many(self) -> None:
+        w = Wiring()
+        edges: list[Edge] = [
+            (("a", "x"), ("b", "y")),
+            (("b", "y"), ("c", "z")),
+        ]
+        w.connect_many(edges)
+        assert w.is_allowed(("a", "x"), ("b", "y"))
+        assert w.is_allowed(("b", "y"), ("c", "z"))
+
+    def test_connect_rejects_invalid_organ_type(self) -> None:
+        w = Wiring()
+        with pytest.raises(ValueError, match="must be .*str.*str"):
+            w.connect(("x", "y"), "not-a-tuple")  # type: ignore[arg-type]
+
+    def test_connect_rejects_empty_string_category(self) -> None:
+        w = Wiring()
+        with pytest.raises(ValueError, match="must be .*str.*str"):
+            w.connect(("", "y"), ("b", "z"))
+
+    def test_connect_rejects_wrong_length_tuple(self) -> None:
+        w = Wiring()
+        with pytest.raises(ValueError, match="must be .*str.*str"):
+            w.connect(("x", "y", "z"), ("a", "b"))  # type: ignore[arg-type]
+
+
+class TestWiringForbid:
+    """v0.5.1: forbid / forbid_many / 黑名单优先。"""
+
+    def test_forbid_basic(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        w.forbid(("a", "x"), ("b", "y"))
+        assert not w.is_allowed(("a", "x"), ("b", "y"))
+
+    def test_forbid_many(self) -> None:
+        w = Wiring()
+        w.forbid_many([
+            (("a", "x"), ("b", "y")),
+            (("b", "y"), ("c", "z")),
+        ])
+        assert not w.is_allowed(("a", "x"), ("b", "y"))
+        assert not w.is_allowed(("b", "y"), ("c", "z"))
+
+    def test_forbid_priority_over_connect(self) -> None:
+        w = Wiring()
+        w.connect(("brain", "cerebrum"), ("sense", "paws"))
+        w.forbid(("brain", "cerebrum"), ("sense", "paws"))
+        assert not w.is_allowed(("brain", "cerebrum"), ("sense", "paws"))
+
+    def test_forbid_idempotent(self) -> None:
+        w = Wiring()
+        w.forbid(("a", "x"), ("b", "y"))
+        w.forbid(("a", "x"), ("b", "y"))
+        assert not w.is_allowed(("a", "x"), ("b", "y"))
+
+
+class TestWiringQuery:
+    """v0.5.1: is_allowed / assert_allowed / edges / forbids。"""
+
+    def test_is_allowed_unknown_edge_returns_false(self) -> None:
+        w = Wiring()
+        assert not w.is_allowed(("a", "x"), ("b", "y"))
+
+    def test_assert_allowed_raises_on_forbidden(self) -> None:
+        w = Wiring()
+        w.forbid(("brain", "cerebrum"), ("sense", "paws"))
+        with pytest.raises(IllegalNeuralPathError, match="Illegal neural path"):
+            w.assert_allowed(("brain", "cerebrum"), ("sense", "paws"))
+
+    def test_assert_allowed_raises_on_unconnected(self) -> None:
+        w = Wiring()
+        with pytest.raises(IllegalNeuralPathError):
+            w.assert_allowed(("a", "x"), ("b", "y"))
+
+    def test_assert_allowed_passes_on_connected(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        w.assert_allowed(("a", "x"), ("b", "y"))  # 不抛即通过
+
+    def test_edges_returns_frozenset(self) -> None:
+        w = Wiring()
+        w.connect(("a", "x"), ("b", "y"))
+        assert isinstance(w.edges(), frozenset)
+        assert ((("a", "x"), ("b", "y"))) in w.edges()
+
+    def test_forbids_returns_frozenset(self) -> None:
+        w = Wiring()
+        w.forbid(("a", "x"), ("b", "y"))
+        assert isinstance(w.forbids(), frozenset)
+        assert ((("a", "x"), ("b", "y"))) in w.forbids()

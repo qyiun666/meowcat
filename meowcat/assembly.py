@@ -360,8 +360,6 @@ class CatBase(LifecycleMixin, DiagnosticMixin, SignalSystemMixin, DoTaskMixin, S
         Raises:
             ValueError: If persona not found in colony.
         """
-        from meowcat.persona import Persona
-
         persona_data = await self._container.get_persona(name)
         if persona_data is None:
             raise ValueError(

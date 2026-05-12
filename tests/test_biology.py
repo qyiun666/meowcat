@@ -14,6 +14,8 @@ v1.0.1: 移除 KITTEN_FORBIDDEN_METHODS / apply_kitten_wiring（KittenBase 已�
 
 from __future__ import annotations
 
+import pytest
+
 from meowcat import biology
 from meowcat.biology import (
     ANOMALY_GROWTH,
@@ -113,3 +115,98 @@ class TestApplyDefaultWiring:
         apply_default_wiring(w)
         assert not w.frozen
 
+
+# -- from v0.5.1: 补充器官坐标 / 默认 wiring 契约测试 -----------
+
+
+class TestOrganCoordinates:
+    """v0.5.1: 器官坐标非空 str、分类正确、不悬空。"""
+
+    @pytest.mark.parametrize("organ", [
+        biology.THALAMUS, biology.HIPPOCAMPUS, biology.CEREBRUM,
+        biology.CEREBELLUM, biology.AMYGDALA,
+        biology.FRONTAL, biology.HYPOTHALAMUS, biology.CORTEX,
+        biology.BRAINSTEM,
+        biology.EARS, biology.EYES, biology.WHISKERS, biology.PAWS,
+        biology.MOUTH, biology.PURR, biology.TAIL,
+    ])
+    def test_organ_tuple_non_empty_strings(self, organ) -> None:
+        assert isinstance(organ, tuple)
+        assert len(organ) == 2
+        assert isinstance(organ[0], str) and len(organ[0]) > 0
+        assert isinstance(organ[1], str) and len(organ[1]) > 0
+
+    def test_brain_regions_contains_all_brain_organs(self) -> None:
+        brain_organs = {
+            biology.THALAMUS, biology.HIPPOCAMPUS, biology.CEREBRUM,
+            biology.CEREBELLUM,
+            biology.AMYGDALA, biology.FRONTAL, biology.HYPOTHALAMUS,
+            biology.CORTEX, biology.BRAINSTEM,
+        }
+        assert set(biology.BRAIN_REGIONS) == brain_organs
+
+    def test_sensors_contains_ears_eyes_whiskers(self) -> None:
+        assert set(biology.SENSORS) == {
+            biology.EARS, biology.EYES, biology.WHISKERS}
+
+    def test_voices_contains_mouth_purr_tail(self) -> None:
+        assert set(biology.VOICES) == {
+            biology.MOUTH, biology.PURR, biology.TAIL}
+
+    def test_effectors_contains_paws_mouth_purr_tail(self) -> None:
+        assert set(biology.EFFECTORS) == {
+            biology.PAWS, biology.MOUTH, biology.PURR, biology.TAIL,
+        }
+
+
+class TestDefaultWiring:
+    """v0.5.1: BUILTIN_NERVOUS_SYSTEM / FORBIDDEN_PATHS / apply_default_wiring。"""
+
+    def test_builtin_nervous_system_not_empty(self) -> None:
+        assert len(biology.BUILTIN_NERVOUS_SYSTEM) > 0
+
+    def test_builtin_edges_are_valid_pairs(self) -> None:
+        for frm, to in biology.BUILTIN_NERVOUS_SYSTEM:
+            assert isinstance(frm, tuple) and len(frm) == 2
+            assert isinstance(to, tuple) and len(to) == 2
+            assert frm[0] and frm[1] and to[0] and to[1]
+
+    def test_forbidden_paths_not_empty(self) -> None:
+        assert len(biology.FORBIDDEN_PATHS) > 0
+
+    def test_apply_default_wiring(self) -> None:
+        w = Wiring()
+        biology.apply_default_wiring(w)
+
+        # 感官 → 丘脑 连通
+        assert w.is_allowed(biology.EARS, biology.THALAMUS)
+        assert w.is_allowed(biology.EYES, biology.THALAMUS)
+
+        # 海马 ↔ 大脑 双向
+        assert w.is_allowed(biology.HIPPOCAMPUS, biology.CEREBRUM)
+        assert w.is_allowed(biology.CEREBRUM, biology.HIPPOCAMPUS)
+
+        # 大脑 → 小脑 → paws
+        assert w.is_allowed(biology.CEREBRUM, biology.CEREBELLUM)
+        assert w.is_allowed(biology.CEREBELLUM, biology.PAWS)
+
+        # 禁止：大脑不直连四肢/嘴
+        assert not w.is_allowed(biology.CEREBRUM, biology.PAWS)
+        assert not w.is_allowed(biology.CEREBRUM, biology.MOUTH)
+
+        # 脑干可到各处脑区
+        assert w.is_allowed(biology.BRAINSTEM, biology.THALAMUS)
+        assert w.is_allowed(biology.BRAINSTEM, biology.CEREBELLUM)
+
+    def test_forbidden_overrides_allowed_in_default(self) -> None:
+        w = Wiring()
+        w.connect(biology.CEREBRUM, biology.PAWS)
+        w.forbid(biology.CEREBRUM, biology.PAWS)
+        assert not w.is_allowed(biology.CEREBRUM, biology.PAWS)
+
+    def test_apply_default_wiring_is_idempotent(self) -> None:
+        w = Wiring()
+        biology.apply_default_wiring(w)
+        allowed_before = len(w.edges())
+        biology.apply_default_wiring(w)
+        assert len(w.edges()) == allowed_before  # set 去重

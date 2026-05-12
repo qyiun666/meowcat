@@ -19,7 +19,6 @@ from meowcat.tools.matcher import KeywordToolMatcher, _tokenize
 from meowcat.tools.paws import PawsEngine
 from meowcat.tools.tool import RiskLevel, Tool, ToolRegistry, ToolSpec
 
-
 # ── ToolSpec & RiskLevel tests ──────────────────────────────────────
 
 

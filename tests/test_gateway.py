@@ -12,9 +12,8 @@
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pytest
 
@@ -27,7 +26,6 @@ from meowcat.gateway.protocol import (
     SignalContext,
 )
 from meowcat.testing import make_test_colony
-
 
 # =============================================================================
 # SignalContext

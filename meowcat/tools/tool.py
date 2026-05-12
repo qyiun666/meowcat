@@ -168,7 +168,8 @@ class ToolRegistry:
     def register(self, tool: Tool) -> None:
         """Register a tool. Same-named tool will be overwritten."""
         if tool.name in self._tools:
-            logger.warning("Tool '%s' already registered, overwriting", tool.name)
+            logger.warning(
+                "Tool '%s' already registered, overwriting", tool.name)
         self._tools[tool.name] = tool
         cat = tool.spec.category
         self._by_category.setdefault(cat, []).append(tool.name)
