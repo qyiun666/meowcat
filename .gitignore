@@ -30,6 +30,9 @@ Thumbs.db
 .qoder/
 docs/
 
+# Local notes (not for GitHub)
+架构全景.md
+
 # Coverage
 .coverage
 coverage.xml
